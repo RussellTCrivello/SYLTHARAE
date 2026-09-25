@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Notifications') }}{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/notifications.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="bi bi-chat-dots me-2"></i>
+                {{ _('Notifications') }}
+            </h1>
+            <p class="text-muted mb-0">{{ _('System alerts and notifications') }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" onclick="scanForNotifications()" id="scanBtn">
+                <i class="bi bi-search me-2"></i>
+                <span id="scanBtnText">{{ _('Scan for Duplicates & Future Dates') }}</span>
+                <span class="spinner-border spinner-border-sm ms-2 d-none" id="scanSpinner" role="status"></span>
+            </button>
+            <button class="btn btn-outline-primary" onclick="markAllAsRead()">
+                <i class="bi bi-check-all me-2"></i>
+                {{ _('Mark All Read') }}
+            </button>
+            <button class="btn btn-outline-secondary" onclick="refreshAll()">
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                {{ _('Refresh') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Page Tips -->
+    {% from 'components/page_tips.html' import page_tips %}
+        {% call page_tips() %}
+
+    <div class="tips-section">
+        <div class="tips-section-title">
+            <i class="bi bi-bell"></i>
+            {{ _('Notifications Overview') }}
+        </div>
+        <ul class="tips-list">
+            <li>{{ _('Notifications alert you to important system events, issues, and findings') }}</li>
+            <li>{{ _('View all notifications, or filter by type (duplicates, future dates, etc.)') }}</li>
+            <li>{{ _('Notifications help you identify data quality issues and anomalies') }}</li>
+            <li>{{ _('Mark notifications as read to keep track of what you\'ve reviewed') }}</li>
+        </ul>
+    </div>
+    <div class="tips-section">
+        <div class="tips-section-title">
+            <i class="bi bi-files"></i>
+            {{ _('Duplicate Files') }}
+        </div>
+        <ul class="tips-list">
+            <li>{{ _('Duplicate file notifications identify files that appear multiple times in your system') }}</li>
+            <li>{{ _('Use "Scan for Duplicates" to find files with identical content or metadata') }}</li>
+            <li>{{ _('Review duplicate notifications to decide which files to keep or remove') }}</li>
+            <li>{{ _('Resolve duplicates to clean up your file library and save storage space') }}</li>
+        </ul>
+    </div>
+    <div class="tips-section">
+        <div class="tips-section-title">
+            <i class="bi bi-calendar-event"></i>
+            {{ _('Future Dates') }}
+        </div>
+        <ul class="tips-list">
+            <li>{{ _('Future date notifications flag files with dates in the future, which may indicate data errors') }}</li>
+            <li>{{ _('Scan for future dates to identify files that may need date corrections') }}</li>
+            <li>{{ _('Review and correct file dates to ensure data accuracy') }}</li>
+            <li>{{ _('Mark notifications as resolved after addressing the issues') }}</li>
+        </ul>
+    </div>
+{% endcall %}
+
+    <!-- Tab Navigation -->
+    <div class="notifications-tabs">
+        <button class="tab-btn active" data-tab="all" onclick="switchTab('all')">
+            <i class="bi bi-bell-fill"></i>
+            <span>{{ _('All Notifications') }}</span>
+        </button>
+        <button class="tab-btn" data-tab="duplicates" onclick="switchTab('duplicates')">
+            <i class="bi bi-files"></i>
+            <span>{{ _('Duplicate Files') }}</span>
+        </button>
+        <button class="tab-btn" data-tab="future" onclick="switchTab('future')">
+            <i class="bi bi-calendar-event"></i>
+            <span>{{ _('Future Files') }}</span>
+        </button>
+    </div>
+
+    <!-- Tab Content: All Notifications -->
+    <div class="tab-content active" id="tab-all">
+        <!-- Statistics -->
+        <div class="tab-stats">
+            <div class="tab-stat-badge">
+                <strong>{{ _('Total') }}:</strong> <span id="statAllTotal">0</span>
+            </div>
+            <div class="tab-stat-badge">
+                <strong>{{ _('Unread') }}:</strong> <span id="statAllUnread">0</span>
+            </div>
+            <div class="tab-stat-badge">
+                <strong>{{ _('Read') }}:</strong> <span id="statAllRead">0</span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-controls-grid">
+            <div class="search-input-wrapper">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchAll" class="search-input" placeholder="{{ _('Search notifications...') }}" 
+                       onkeyup="handleSearch(event, 'all')">
+            </div>
+            <div class="filter-group">
+                <label for="sortByAll" class="filter-label">{{ _('Sort by') }}:</label>
+                <select id="sortByAll" class="form-select" onchange="setSort('all', this.value)">
+                    <option value="created_at_desc">{{ _('Newest First') }}</option>
+                    <option value="created_at_asc">{{ _('Oldest First') }}</option>
+                    <option value="priority_desc">{{ _('Priority: High to Low') }}</option>
+                    <option value="priority_asc">{{ _('Priority: Low to High') }}</option>
+                    <option value="title_asc">{{ _('Title: A-Z') }}</option>
+                    <option value="title_desc">{{ _('Title: Z-A') }}</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sourceFilterAll" class="filter-label">{{ _('Source') }}:</label>
+                <select id="sourceFilterAll" class="form-select" onchange="setFilter('all', 'source', this.value)">
+                    <option value="">{{ _('All') }}</option>
+                    {% for sid, sname in sources.items() %}
+                    <option value="{{ sid }}">{{ sname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sideFilterAll" class="filter-label">{{ _('Destination') }}:</label>
+                <select id="sideFilterAll" class="form-select" onchange="setFilter('all', 'side', this.value)">
+                    <option value="">{{ _('All') }}</option>
+                    {% for sid, sname in sides.items() %}
+                    <option value="{{ sid }}">{{ sname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub-tab="all" onclick="switchSubTab('all', 'all')">
+                <i class="bi bi-inbox-fill"></i>
+                <span>{{ _('All Notifications') }}</span>
+                <span class="sub-tab-count" id="allCountAll">0</span>
+            </button>
+            <button class="sub-tab-btn" data-sub-tab="unread" onclick="switchSubTab('all', 'unread')">
+                <i class="bi bi-envelope-fill"></i>
+                <span>{{ _('Unread') }}</span>
+                <span class="sub-tab-count" id="unreadCountAll">0</span>
+            </button>
+            <button class="sub-tab-btn" data-sub-tab="read" onclick="switchSubTab('all', 'read')">
+                <i class="bi bi-envelope-open-fill"></i>
+                <span>{{ _('Read') }}</span>
+                <span class="sub-tab-count" id="readCountAll">0</span>
+            </button>
+        </div>
+
+        <!-- Sub-tab Content -->
+        <div class="sub-tab-content active" id="sub-tab-all-all">
+            <div class="messages-list" id="messagesAllAll"></div>
+        </div>
+        <div class="sub-tab-content" id="sub-tab-all-unread">
+            <div class="messages-list" id="messagesAllUnread"></div>
+        </div>
+        <div class="sub-tab-content" id="sub-tab-all-read">
+            <div class="messages-list" id="messagesAllRead"></div>
+        </div>
+    </div>
+
+    <!-- Tab Content: Duplicate Files -->
+    <div class="tab-content" id="tab-duplicates">
+        <!-- Statistics -->
+        <div class="tab-stats">
+            <div class="tab-stat-badge">
+                <strong>{{ _('Total') }}:</strong> <span id="statDuplicatesTotal">0</span>
+            </div>
+            <div class="tab-stat-badge">
+                <strong>{{ _('Unread') }}:</strong> <span id="statDuplicatesUnread">0</span>
+            </div>
+            <div class="tab-stat-badge">
+                <strong>{{ _('Read') }}:</strong> <span id="statDuplicatesRead">0</span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-controls-grid">
+            <div class="search-input-wrapper">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchDuplicates" class="search-input" placeholder="{{ _('Search duplicate files...') }}" 
+                       onkeyup="handleSearch(event, 'duplicates')">
+            </div>
+            <div class="filter-group">
+                <label for="sortByDuplicates" class="filter-label">{{ _('Sort by') }}:</label>
+                <select id="sortByDuplicates" class="form-select" onchange="setSort('duplicates', this.value)">
+                    <option value="created_at_desc">{{ _('Newest First') }}</option>
+                    <option value="created_at_asc">{{ _('Oldest First') }}</option>
+                    <option value="priority_desc">{{ _('Priority: High to Low') }}</option>
+                    <option value="priority_asc">{{ _('Priority: Low to High') }}</option>
+                    <option value="title_asc">{{ _('Title: A-Z') }}</option>
+                    <option value="title_desc">{{ _('Title: Z-A') }}</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sourceFilterDuplicates" class="filter-label">{{ _('Source') }}:</label>
+                <select id="sourceFilterDuplicates" class="form-select" onchange="setFilter('duplicates', 'source', this.value)">
+                    <option value="">{{ _('All') }}</option>
+                    {% for sid, sname in sources.items() %}
+                    <option value="{{ sid }}">{{ sname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sideFilterDuplicates" class="filter-label">{{ _('Destination') }}:</label>
+                <select id="sideFilterDuplicates" class="form-select" onchange="setFilter('duplicates', 'side', this.value)">
+                    <option value="">{{ _('All') }}</option>
+                    {% for sid, sname in sides.items() %}
+                    <option value="{{ sid }}">{{ sname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub-tab="all" onclick="switchSubTab('duplicates', 'all')">
+                <i class="bi bi-inbox-fill"></i>
+                <span>{{ _('All Notifications') }}</span>
+                <span class="sub-tab-count" id="allCountDuplicates">0</span>
+            </button>
+            <button class="sub-tab-btn" data-sub-tab="unread" onclick="switchSubTab('duplicates', 'unread')">
+                <i class="bi bi-envelope-fill"></i>
+                <span>{{ _('Unread') }}</span>
+                <span class="sub-tab-count" id="unreadCountDuplicates">0</span>
+            </button>
+            <button class="sub-tab-btn" data-sub-tab="read" onclick="switchSubTab('duplicates', 'read')">
+                <i class="bi bi-envelope-open-fill"></i>
+                <span>{{ _('Read') }}</span>
+                <span class="sub-tab-count" id="readCountDuplicates">0</span>
+            </button>
+        </div>
+
+        <!-- Sub-tab Content -->
+        <div class="sub-tab-content active" id="sub-tab-duplicates-all">
+            <div class="messages-list" id="messagesDuplicatesAll"></div>
+        </div>
+        <div class="sub-tab-content" id="sub-tab-duplicates-unread">
+            <div class="messages-list" id="messagesDuplicatesUnread"></div>
+        </div>
+        <div class="sub-tab-content" id="sub-tab-duplicates-read">
+            <div class="messages-list" id="messagesDuplicatesRead"></div>
+        </div>
+    </div>
+
+    <!-- Tab Content: Future Files -->
+    <div class="tab-content" id="tab-future">
+        <!-- Statistics -->
+        <div class="tab-stats">
+            <div class="tab-stat-badge">
+                <strong>{{ _('Total') }}:</strong> <span id="statFutureTotal">0</span>
+            </div>
+            <div class="tab-stat-badge">
+                <strong>{{ _('Unread') }}:</strong> <span id="statFutureUnread">0</span>
+            </div>
+            <div class="tab-stat-badge">
+                <strong>{{ _('Read') }}:</strong> <span id="statFutureRead">0</span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-controls-grid">
+            <div class="search-input-wrapper">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchFuture" class="search-input" placeholder="{{ _('Search future files...') }}" 
+                       onkeyup="handleSearch(event, 'future')">
+            </div>
+            <div class="filter-group">
+                <label for="sortByFuture" class="filter-label">{{ _('Sort by') }}:</label>
+                <select id="sortByFuture" class="form-select" onchange="setSort('future', this.value)">
+                    <option value="created_at_desc">{{ _('Newest First') }}</option>
+                    <option value="created_at_asc">{{ _('Oldest First') }}</option>
+                    <option value="priority_desc">{{ _('Priority: High to Low') }}</option>
+                    <option value="priority_asc">{{ _('Priority: Low to High') }}</option>
+                    <option value="title_asc">{{ _('Title: A-Z') }}</option>
+                    <option value="title_desc">{{ _('Title: Z-A') }}</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sourceFilterFuture" class="filter-label">{{ _('Source') }}:</label>
+                <select id="sourceFilterFuture" class="form-select" onchange="setFilter('future', 'source', this.value)">
+                    <option value="">{{ _('All') }}</option>
+                    {% for sid, sname in sources.items() %}
+                    <option value="{{ sid }}">{{ sname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sideFilterFuture" class="filter-label">{{ _('Destination') }}:</label>
+                <select id="sideFilterFuture" class="form-select" onchange="setFilter('future', 'side', this.value)">
+                    <option value="">{{ _('All') }}</option>
+                    {% for sid, sname in sides.items() %}
+                    <option value="{{ sid }}">{{ sname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub-tab="all" onclick="switchSubTab('future', 'all')">
+                <i class="bi bi-inbox-fill"></i>
+                <span>{{ _('All Notifications') }}</span>
+                <span class="sub-tab-count" id="allCountFuture">0</span>
+            </button>
+            <button class="sub-tab-btn" data-sub-tab="unread" onclick="switchSubTab('future', 'unread')">
+                <i class="bi bi-envelope-fill"></i>
+                <span>{{ _('Unread') }}</span>
+                <span class="sub-tab-count" id="unreadCountFuture">0</span>
+            </button>
+            <button class="sub-tab-btn" data-sub-tab="read" onclick="switchSubTab('future', 'read')">
+                <i class="bi bi-envelope-open-fill"></i>
+                <span>{{ _('Read') }}</span>
+                <span class="sub-tab-count" id="readCountFuture">0</span>
+            </button>
+        </div>
+
+        <!-- Sub-tab Content -->
+        <div class="sub-tab-content active" id="sub-tab-future-all">
+            <div class="messages-list" id="messagesFutureAll"></div>
+        </div>
+        <div class="sub-tab-content" id="sub-tab-future-unread">
+            <div class="messages-list" id="messagesFutureUnread"></div>
+        </div>
+        <div class="sub-tab-content" id="sub-tab-future-read">
+            <div class="messages-list" id="messagesFutureRead"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Message Detail Modal -->
+<div class="message-detail-modal" id="messageDetailModal" onclick="closeMessageDetail(event)">
+    <div class="message-detail-content" onclick="event.stopPropagation()">
+        <div class="message-detail-header">
+            <h3 id="detailTitle">{{ _('Notification Details') }}</h3>
+            <button class="message-detail-close" onclick="closeMessageDetail()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="message-detail-body" id="detailBody">
+            <!-- Content will be loaded here -->
+        </div>
+        <div class="message-detail-actions">
+            <button class="btn btn-outline-primary" id="detailMarkReadBtn" onclick="markAsReadFromDetail()">
+                <i class="bi bi-check me-2"></i>
+                <span id="markReadText">{{ _('Mark as Read') }}</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Notifications Page Data -->
+<script type="application/json" id="notifications-page-data">{{ {
+    "sources": sources|tojson,
+    "sides": sides|tojson
+}|tojson }}</script>
+
+<!-- Notifications Page JavaScript - External file -->
+<script type="module" src="{{ url_for('static', filename='js/pages/notifications-page.js') }}"></script>
+
+{% endblock %}

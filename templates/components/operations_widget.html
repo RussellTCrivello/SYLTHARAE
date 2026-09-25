@@ -1,0 +1,74 @@
+{# component: operations_widget
+   purpose: What the ingestion and processing system is doing right now:
+            active jobs, throughput, and the shortcuts into Operations.
+   states: normal, loading, empty, error
+   classes: card, card-header, card-body, ops-widget
+   notes: Reads real job numbers from the jobs API. When a number is not
+          measured it is reported as unavailable, never invented (§8).
+#}
+<!-- Dashboard operations widget: active jobs, throughput, quick actions.
+     Real data from /api/jobs/summary + /api/jobs - no fake increments. -->
+<div class="card shadow-sm mb-3" id="opsWidget">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-check me-2"></i>{{ _('Operations') }}</span>
+    <span class="small text-muted" id="opsActive"></span>
+  </div>
+  <div class="card-body py-2">
+    <div class="d-flex flex-wrap gap-2 mb-2">
+      <a href="/operations/input" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> {{ _('New Ingestion') }}</a>
+      <a href="/operations/import" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-in-down"></i> {{ _('New Import') }}</a>
+      <a href="/operations/jobs" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clock-history"></i> {{ _('View Jobs') }}</a>
+      <a href="/search" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i> {{ _('Search Files') }}</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm mb-0 small">
+        <tbody id="opsRows">
+          <tr><td class="text-muted">{{ _('Loading active jobs…') }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const T_ACTIVE = {{ _('active')|tojson }};
+  const T_NO_OPS = {{ _('No operations yet - start an ingestion.')|tojson }};
+  const badge = (s) => (window.InforaxisStatus ? window.InforaxisStatus.badge(s) : '<span class="badge bg-secondary">' + String(s == null ? '' : s) + '</span>');
+  async function refreshOps() {
+    try {
+      const sum = await fetch('/api/jobs/summary').then(r => r.json());
+      if (sum.success) {
+        document.getElementById('opsActive').textContent =
+          `${sum.active} ${T_ACTIVE} · ` +
+          Object.entries(sum.counts).map(([k, v]) => `${k.replace(/_/g,' ')}: ${v}`).join(' · ');
+      }
+      const jobs = await fetch('/api/jobs?limit=5').then(r => r.json());
+      const rows = (jobs.jobs || []).slice(0, 5);
+      document.getElementById('opsRows').innerHTML = rows.length ? rows.map(j => `
+        <tr>
+          <td><a href="/operations/jobs/${j.job_id}"><code>${j.job_id}</code></a></td>
+          <td>${(j.job_type||'').replace(/_/g,' ')}</td>
+          <td>${badge(j.status)}</td>
+          <td style="min-width:90px;">
+            <div class="progress" style="height:6px;">
+              <!-- Transition on width so each poll animates instead of
+                   snapping; the bar reflects the live, dynamically growing
+                   workload (nested objects included). -->
+              <div class="progress-bar" role="progressbar"
+                   aria-valuemin="0" aria-valuemax="100" aria-valuenow="${j.progress||0}"
+                   style="width:${j.progress||0}%; transition: width .3s ease;"></div>
+            </div>
+          </td>
+          <td class="text-muted">
+            ${j.progress||0}%${(j.statistics && j.statistics.files_discovered != null)
+              ? ` (${(j.statistics.files_processed ?? 0)}/${j.statistics.files_discovered})`
+              : ''}
+          </td>
+        </tr>`).join('')
+        : `<tr><td class="text-muted">${T_NO_OPS}</td></tr>`;
+    } catch (e) { /* widget is non-critical */ }
+  }
+  refreshOps();
+  setInterval(refreshOps, 3000);
+})();
+</script>

@@ -1,0 +1,109 @@
+{# component: table
+   purpose: The frame a list of records is read in, and the rows that stand in
+            for a list that is empty, still loading or failed. Ten tables in
+            this application were written with ten different class
+            combinations; this is the one they become.
+   states: normal, empty, filtered, selected, loading, error
+   classes: table, table-hover, table-sm, table-striped, align-middle,
+            table-responsive, empty-state, spinner-border
+   notes: The frame and the standing rows only - a page still writes its own
+          <thead> and <tbody>, because what a column means and how a cell is
+          rendered are the page's business. The page tells the component how
+          many columns there are so a standing row can span them.
+#}
+{% from 'components/states.html' import empty_state, filtered_state, loading_state, error_state %}
+{#
+   Usage:
+
+       {% from 'components/table.html' import data_table, table_empty_row %}
+       {% from 'components/states.html' import empty_state %}
+
+       {% call data_table(id='wordsTable', variant='hover align-middle') %}
+           <thead>…</thead>
+           <tbody id="wordsTableBody">
+               {% if words %}
+                   {% for word in words %}…{% endfor %}
+               {% else %}
+                   {{ table_empty_row(7, message=_('No words found.'),
+                                      filtered=filters_applied) }}
+               {% endif %}
+           </tbody>
+       {% endcall %}
+#}
+
+{% macro data_table(id=None, variant='hover align-middle', responsive=True,
+                    extra_class=None, caption=None, extra_style=None,
+                    selected_ids=None) %}
+{%- set class_name = 'table table-' ~ variant ~ (' ' ~ extra_class if extra_class) -%}
+{%- if responsive -%}<div class="table-responsive">{%- endif -%}
+<table class="{{ class_name }}"{% if id %} id="{{ id }}"{% endif %}
+       {% if extra_style %}style="{{ extra_style }}"{% endif %}
+       {% if selected_ids is not none %}data-selected-count="{{ selected_ids|length }}"{% endif %}>
+    {% if caption %}<caption class="visually-hidden">{{ caption }}</caption>{% endif %}
+    {{ caller() }}
+</table>
+{%- if responsive -%}</div>{%- endif -%}
+{% endmacro %}
+
+
+{% macro table_empty_row(columns, title=None, message=None, icon='bi-inbox',
+                         filtered=False, action_label=None, action_href=None,
+                         action_onclick=None, action_icon=None) %}
+{#- The stand-in row for a list with nothing to show. `filtered` says the
+    records exist but the filters exclude them, which is a different thing to
+    tell a reader than "there is nothing here". -#}
+<tr>
+    <td colspan="{{ columns }}" class="text-center py-4">
+        {% if filtered %}
+            {{ filtered_state(title=title, message=message, icon='bi-funnel',
+                              action_label=action_label, action_href=action_href,
+                              action_onclick=action_onclick,
+                              action_icon=action_icon or 'bi-x-circle') }}
+        {% else %}
+            {{ empty_state(title=title, message=message, icon=icon,
+                           action_label=action_label, action_href=action_href,
+                           action_onclick=action_onclick,
+                           action_icon=action_icon) }}
+        {% endif %}
+    </td>
+</tr>
+{% endmacro %}
+
+
+{% macro table_loading_row(columns, message=None) %}
+<tr>
+    <td colspan="{{ columns }}" class="text-center py-4">{{ loading_state(message=message) }}</td>
+</tr>
+{% endmacro %}
+
+
+{% macro table_error_row(columns, message=None, retry_onclick=None) %}
+<tr>
+    <td colspan="{{ columns }}" class="text-center py-4">
+        {{ error_state(message=message, action_label=(_('Try again') if retry_onclick else None),
+                       action_onclick=retry_onclick) }}
+    </td>
+</tr>
+{% endmacro %}
+
+
+{% macro select_all_checkbox(target_id='selectAllCheckbox', onchange='toggleSelectAll()') %}
+{#- The one way this application offers "choose every row on this page". -#}
+<input type="checkbox" id="{{ target_id }}" onchange="{{ onchange }}"
+       aria-label="{{ _('Select all rows on this page') }}">
+{% endmacro %}
+
+
+{% macro sort_header(label, key, onclick='sortBy', width=None, extra_class=None) %}
+{#- A column that can be sorted, with the control screen readers can use. -#}
+<th{% if width %} style="width:{{ width }}"{% endif %}{{ ' class=' ~ extra_class if extra_class }}>
+    <div class="d-flex align-items-center">
+        <span>{{ label }}</span>
+        <button class="btn btn-sm btn-link p-0 ms-1"
+                onclick="{{ onclick }}('{{ key }}')"
+                title="{{ _('Sort by') }} {{ label }}" id="sortBtn-{{ key }}">
+            <i class="bi bi-arrow-down-up" id="sortIcon-{{ key }}"></i>
+        </button>
+    </div>
+</th>
+{% endmacro %}

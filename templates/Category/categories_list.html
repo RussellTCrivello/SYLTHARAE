@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Categories Management') }}{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/categories-list.css') }}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='dist/css/select2.min.css') }}" rel="stylesheet" />
+{% endblock %}
+
+{% from 'components/breadcrumbs.html' import breadcrumbs %}
+{% block breadcrumb %}{{ breadcrumbs() }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">
+            <i class="bi bi-tags me-2"></i>
+            {{ _('Categories Management') }} ({{ total_categories|default(0) }})
+        </h1>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary" onclick="openCategoryModal()">
+            <i class="bi bi-plus-circle me-2"></i>
+            {{ _('Add Category') }}
+        </button>
+        <button type="button" class="btn btn-warning" onclick="findDuplicates()">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {{ _('Find Duplicates') }}
+        </button>
+        <button class="btn btn-outline-primary" onclick="location.reload()">
+            <i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}
+        </button>
+    </div>
+</div>
+
+<!-- Page Tips -->
+{% from 'components/page_tips.html' import page_tips %}
+{% from 'components/filter_bar.html' import search_group %}
+    {% call page_tips() %}
+
+<div class="tips-section">
+    <div class="tips-section-title">
+        <i class="bi bi-tags"></i>
+        {{ _('Managing Categories') }}
+    </div>
+    <ul class="tips-list">
+        <li>{{ _('Categories help organize and classify your files for easier management and retrieval') }}</li>
+        <li>{{ _('Click "Add Category" to create a new category with a name and optional description') }}</li>
+        <li>{{ _('Edit existing categories by clicking the edit icon next to each category') }}</li>
+        <li>{{ _('Delete categories that are no longer needed, but be aware this may affect file classifications') }}</li>
+    </ul>
+</div>
+<div class="tips-section">
+    <div class="tips-section-title">
+        <i class="bi bi-funnel"></i>
+        {{ _('Finding and Filtering') }}
+    </div>
+    <ul class="tips-list">
+        <li>{{ _('Use the search box to quickly find categories by name') }}</li>
+        <li>{{ _('Filter categories by various criteria using the filter options') }}</li>
+        <li>{{ _('Sort categories by name, file count, or creation date') }}</li>
+        <li>{{ _('Use "Find Duplicates" to identify and merge duplicate categories') }}</li>
+    </ul>
+</div>
+<div class="tips-section">
+    <div class="tips-section-title">
+        <i class="bi bi-graph-up"></i>
+        {{ _('Category Statistics') }}
+    </div>
+    <ul class="tips-list">
+        <li>{{ _('View statistics cards showing total categories, files per category, and other metrics') }}</li>
+        <li>{{ _('See which categories have the most files associated with them') }}</li>
+        <li>{{ _('Monitor category usage to identify frequently used or unused categories') }}</li>
+    </ul>
+</div>
+<div class="tips-warning">
+    <strong>{{ _('Warning:') }}</strong> {{ _('Deleting a category will remove it from all associated files. Consider merging categories instead of deleting them.') }}
+</div>
+{% endcall %}
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-2">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background: var(--alert-info-bg); color: var(--primary-color);">
+                <i class="bi bi-tags"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-card-label">{{ _('Total Categories') }}</div>
+                <div class="stat-card-value" id="totalCategoriesCount">{{ total_categories|default(0) }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background: var(--alert-info-bg); color: var(--info-color, #06b6d4);">
+                <i class="bi bi-funnel"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-card-label">{{ _('Filtered Categories') }}</div>
+                <div class="stat-card-value" id="filteredCategoriesCount">{{ total_categories|default(0) }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background: var(--alert-success-bg); color: var(--success-color);">
+                <i class="bi bi-eye"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-card-label">{{ _('Visible Categories') }}</div>
+                <div class="stat-card-value" id="visibleCategoriesCount">{{ total_categories|default(0) }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background: var(--alert-warning-bg); color: var(--warning-color);">
+                <i class="bi bi-table"></i>
+            </div>
+            <div class="stat-card-content">
+                <div class="stat-card-label">{{ _('Page') }}</div>
+                <div class="stat-card-value" id="currentPageInfo">1 / 1</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="file-filters-section mb-3">
+    <div class="filter-controls-grid">
+        {{ search_group('categorySearch', _("Search Categories"), _("Search categories..."), onclear='clearSearch()') }}
+
+        <div class="filter-group">
+            <label for="sortBy" class="filter-label">
+                <i class="bi bi-arrow-down-up"></i>
+                {{ _('Sort By') }}
+            </label>
+            <select class="form-select" id="sortBy" onchange="applyFilters()">
+                <option value="name-asc">{{ _('Name (A-Z)') }}</option>
+                <option value="name-desc">{{ _('Name (Z-A)') }}</option>
+                <option value="id-asc">{{ _('ID (Low-High)') }}</option>
+                <option value="id-desc">{{ _('ID (High-Low)') }}</option>
+                <option value="files-asc">{{ _('Files (Low-High)') }}</option>
+                <option value="files-desc">{{ _('Files (High-Low)') }}</option>
+                <option value="words-asc">{{ _('Words (Low-High)') }}</option>
+                <option value="words-desc">{{ _('Words (High-Low)') }}</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="displayFormat" class="filter-label">
+                <i class="bi bi-layout-three-columns"></i>
+                {{ _('Display Format') }}
+            </label>
+            <select class="form-select" id="displayFormat" onchange="changeDisplayFormat()">
+                <option value="grid">{{ _('Grid') }}</option>
+                <option value="table">{{ _('Table') }}</option>
+                <option value="list">{{ _('List') }}</option>
+                <option value="compact">{{ _('Compact') }}</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="itemsPerPage" class="filter-label">
+                <i class="bi bi-list-ol"></i>
+                {{ _('Per Page') }}
+            </label>
+            <select class="form-select" id="itemsPerPage" onchange="changePageSize()">
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="all">{{ _('All') }}</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination info above table -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <small class="text-muted" id="searchResultsInfo" aria-live="polite">{{ _('Loading...') }}</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllFilters()">
+            <i class="bi bi-x-circle me-1"></i>{{ _('Clear Filters') }}
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportCategories()">
+            <i class="bi bi-download me-1"></i>{{ _('Export') }}
+        </button>
+    </div>
+</div>
+
+<!-- Categories Display Area -->
+<div class="stat-card view-mode-grid" id="categoriesDisplayContainer">
+    <!-- Grid View (Default) -->
+    <div class="view-grid" id="categoriesGrid">
+        {% for category in categories %}
+        <div class="category-card category-item" 
+             data-name="{{ category.name|lower }}" 
+             data-category-id="{{ category.id }}"
+             data-file-count="{{ category.file_count|default(0) }}"
+             data-word-count="{{ category.word_count|default(0) }}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-secondary">#{{ category.id }}</span>
+            </div>
+            <h5 class="mb-3"><strong>{{ category.name }}</strong></h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <small class="text-muted d-block">{{ _('Files') }}</small>
+                    <span class="badge bg-primary">{{ category.file_count|default(0) }}</span>
+                </div>
+                <div>
+                    <small class="text-muted d-block">{{ _('Words') }}</small>
+                    <span class="badge bg-info">{{ category.word_count|default(0) }}</span>
+                </div>
+            </div>
+            <div class="btn-group w-100" role="group">
+                <a href="{{ url_for('category_words', category_id=category.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> {{ _('View') }}
+                </a>
+                <button class="btn btn-sm btn-outline-success add-word-btn" 
+                        data-category-id="{{ category.id }}" 
+                        data-category-name="{{ category.name|tojson }}">
+                    <i class="bi bi-plus"></i> {{ _('Add Word') }}
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Table View -->
+    <div class="view-table">
+        <div class="table-wrapper categories-table-wrapper">
+            <table class="table table-hover align-middle categories-table" id="categoriesTable" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="width:70px">#</th>
+                        <th>
+                            <div class="d-flex align-items-center">
+                                <span>{{ _('Category Name') }}</span>
+                                <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortByColumn('name')" title="{{ _('Sort by name') }}" id="sortBtn-name">
+                                    <i class="bi bi-arrow-down-up" id="sortIcon-name"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th style="width:120px">
+                            <div class="d-flex align-items-center">
+                                <span>{{ _('Files') }}</span>
+                                <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortByColumn('files')" title="{{ _('Sort by files') }}" id="sortBtn-files">
+                                    <i class="bi bi-arrow-down-up" id="sortIcon-files"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th style="width:120px">
+                            <div class="d-flex align-items-center">
+                                <span>{{ _('Words') }}</span>
+                                <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortByColumn('words')" title="{{ _('Sort by words') }}" id="sortBtn-words">
+                                    <i class="bi bi-arrow-down-up" id="sortIcon-words"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th style="width:250px">{{ _('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesTableBody">
+                    {% for category in categories %}
+                    <tr class="category-item" 
+                        data-name="{{ category.name|lower }}" 
+                        data-category-id="{{ category.id }}"
+                        data-file-count="{{ category.file_count|default(0) }}"
+                        data-word-count="{{ category.word_count|default(0) }}">
+                        <td><span class="badge bg-secondary">#{{ category.id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="category-name"><strong>{{ category.name }}</strong></span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-primary">{{ category.file_count|default(0) }}</span></td>
+                        <td><span class="badge bg-info">{{ category.word_count|default(0) }}</span></td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('category_words', category_id=category.id) }}" class="btn btn-outline-primary" title="{{ _('View Words') }}">
+                                    <i class="bi bi-eye"></i> {{ _('View') }}
+                                </a>
+                                <button class="btn btn-outline-success add-word-btn" 
+                                        data-category-id="{{ category.id }}" 
+                                        data-category-name="{{ category.name|tojson }}" 
+                                        title="{{ _('Add Word') }}">
+                                    <i class="bi bi-plus"></i> {{ _('Add Word') }}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- List View -->
+    <div class="view-list">
+        <div class="list-group" id="categoriesList">
+            {% for category in categories %}
+            <div class="list-group-item d-flex justify-content-between align-items-center category-item" 
+                 data-name="{{ category.name|lower }}" 
+                 data-category-id="{{ category.id }}"
+                 data-file-count="{{ category.file_count|default(0) }}"
+                 data-word-count="{{ category.word_count|default(0) }}">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-secondary">#{{ category.id }}</span>
+                    <div>
+                        <strong class="category-name">{{ category.name }}</strong>
+                        <div class="d-flex gap-2 mt-1">
+                            <span class="badge bg-primary">{{ category.file_count|default(0) }} {{ _('Files') }}</span>
+                            <span class="badge bg-info">{{ category.word_count|default(0) }} {{ _('Words') }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-group btn-group-sm">
+                    <a href="{{ url_for('category_words', category_id=category.id) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-eye"></i> {{ _('View') }}
+                    </a>
+                    <button class="btn btn-outline-success add-word-btn" 
+                            data-category-id="{{ category.id }}" 
+                            data-category-name="{{ category.name|tojson }}">
+                        <i class="bi bi-plus"></i> {{ _('Add Word') }}
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Compact View -->
+    <div class="view-compact" id="categoriesCompact">
+        {% for category in categories %}
+        <span class="category-badge category-item" 
+              data-name="{{ category.name|lower }}" 
+              data-category-id="{{ category.id }}"
+              data-file-count="{{ category.file_count|default(0) }}"
+              data-word-count="{{ category.word_count|default(0) }}">
+            <span class="badge bg-secondary">#{{ category.id }}</span>
+            <span class="category-name">{{ category.name }}</span>
+            <span class="badge bg-primary">{{ category.file_count|default(0) }}F</span>
+            <span class="badge bg-info">{{ category.word_count|default(0) }}W</span>
+            <a href="{{ url_for('category_words', category_id=category.id) }}" class="btn btn-sm btn-link p-0" title="{{ _('View Words') }}">
+                <i class="bi bi-eye"></i>
+            </a>
+        </span>
+        {% endfor %}
+    </div>
+    
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state-content">
+            <i class="bi bi-inbox"></i>
+            <p>{{ _('No categories found') }}</p>
+            <button type="button" class="btn btn-primary" onclick="openCategoryModal()">
+                <i class="bi bi-plus-circle me-2"></i>
+                {{ _('Add First Category') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination-container mt-3" id="pagination"></div>
+
+<!-- Category Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalLabel">{{ _('Add Category') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <input type="hidden" id="categoryId" name="category_id">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">{{ _('Category Name') }}</label>
+                        <input type="text" class="form-control" id="categoryName" name="category_name" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="button" class="btn btn-primary" onclick="saveCategory()">{{ _('Save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Word to Category Modal -->
+<div class="modal fade" id="addWordToCategoryModal" tabindex="-1" aria-labelledby="addWordToCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addWordToCategoryModalLabel">{{ _('Add Word to Category') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addWordToCategoryForm">
+                    <input type="hidden" id="targetCategoryId" name="category_id">
+                    <div class="mb-3">
+                        <label for="wordSelect" class="form-label">{{ _('Select Word') }}</label>
+                        <select class="form-control" id="wordSelect" name="word_id" style="width: 100%;" required>
+                            <option value="">{{ _('Search for a word...') }}</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="button" class="btn btn-primary" onclick="saveWordToCategory()">{{ _('Add Word') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Duplicate Categories Modal -->
+<div class="modal fade" id="duplicatesModal" tabindex="-1" aria-labelledby="duplicatesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="duplicatesModalLabel">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    {{ _('Duplicate Categories') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <div id="duplicatesLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">{{ _('Loading...') }}</span>
+                    </div>
+                    <p class="mt-2">{{ _('Searching for duplicates...') }}</p>
+                </div>
+                <div id="duplicatesContent" style="display: none;">
+                    <div id="duplicatesSummary" class="alert alert-info mb-3"></div>
+                    <div id="duplicatesList" class="list-group"></div>
+                </div>
+                <div id="duplicatesEmpty" class="text-center py-4" style="display: none;">
+                    <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                    <p class="mt-3 text-muted">{{ _('No duplicate categories found!') }}</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                <button type="button" class="btn btn-danger" id="removeDuplicatesBtn" onclick="removeDuplicates()" style="display: none;">
+                    <i class="bi bi-trash me-2"></i>
+                    {{ _('Remove Duplicates') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="application/json" id="categories-page-data">{{ {
+    "translations": {
+        "addCategory": _('Add Category'),
+        "editCategory": _('Edit Category'),
+        "categoryAdded": _('Category added successfully'),
+        "categoryUpdated": _('Category updated successfully'),
+        "categoryDeleted": _('Category deleted successfully'),
+        "error": _('Error'),
+        "confirmDelete": _('Are you sure you want to delete this category?'),
+        "deleteCategory": _('Delete'),
+        "wordAdded": _('Word added to category successfully'),
+        "wordRemoved": _('Word removed from category successfully'),
+        "loading": _('Loading...'),
+        "noWords": _('No words in this category'),
+        "remove": _('Remove'),
+        "categories": _('categories'),
+        "filtered": _('filtered'),
+        "noCategoriesFound": _('No categories found'),
+        "category": _('Category'),
+        "actions": _('Actions'),
+        "previous": _('Previous'),
+        "next": _('Next'),
+        "searchWord": _('Search for a word...'),
+        "addWordToCategory": _('Add Word to Category'),
+        "totalCategories": _('Total Categories'),
+        "filteredCategories": _('Filtered Categories'),
+        "visibleCategories": _('Visible Categories'),
+        "page": _('Page'),
+        "showing": _('Showing'),
+        "of": _('of'),
+        "total": _('total'),
+        "view": _('View'),
+        "addWord": _('Add Word'),
+        "files": _('Files'),
+        "words": _('Words'),
+        "findDuplicates": _('Find Duplicates'),
+        "duplicateCategories": _('Duplicate Categories'),
+        "noDuplicatesFound": _('No duplicate categories found!'),
+        "searchingDuplicates": _('Searching for duplicates...'),
+        "removeDuplicates": _('Remove Duplicates'),
+        "duplicatesRemoved": _('Duplicates removed successfully'),
+        "errorFindingDuplicates": _('Error finding duplicates'),
+        "errorRemovingDuplicates": _('Error removing duplicates'),
+        "keep": _('Keep'),
+        "remove": _('Remove'),
+        "duplicateGroup": _('Duplicate Group'),
+        "totalDuplicates": _('Total Duplicates'),
+        "totalToRemove": _('Total to Remove'),
+        "confirmRemoveDuplicates": _('Are you sure you want to remove all duplicate categories? This action cannot be undone.'),
+        "removing": _('Removing...'),
+        "merged": _('merged')
+    }
+}|tojson }}</script>
+<script>
+// Ensure jQuery is loaded before Select2
+(function() {
+    function loadSelect2() {
+        if (typeof jQuery !== 'undefined') {
+            const script = document.createElement('script');
+            script.src = "{{ url_for('static', filename='dist/js/select2.min.js') }}";
+            script.onload = function() {
+                console.log('Select2 loaded successfully');
+            };
+            script.onerror = function() {
+                console.error('Failed to load Select2');
+            };
+            document.head.appendChild(script);
+        } else {
+            setTimeout(loadSelect2, 50);
+        }
+    }
+    loadSelect2();
+})();
+</script>
+<script src="{{ url_for('static', filename='js/pages/categories-list-page.js') }}"></script>
+{% endblock %}

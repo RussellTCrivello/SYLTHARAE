@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('File Types') }}{% endblock %}
+{% block page_type %}file-types{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/file-type-workspace.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<main class="file-type-workspace">
+    <header class="page-header file-type-header">
+        <div>
+            <p class="file-type-eyebrow">{{ _('Ingestion classification') }}</p>
+            <h1 class="page-title"><i class="bi bi-file-earmark-break me-2" aria-hidden="true"></i>{{ _('Browse by file type') }}</h1>
+            <p class="file-type-intro">
+                {{ _('Files are grouped by their detected format after ingestion. Choose a format to browse its filenames, inspect records, or export a names list.') }}
+            </p>
+        </div>
+        <nav class="file-type-actions" aria-label="{{ _('File type workspace actions') }}">
+            <a class="btn btn-outline-secondary" href="{{ url_for('files.files_list') }}">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{{ _('File Library') }}
+            </a>
+            <button type="button" class="btn btn-outline-primary" data-export-names="all" data-format="csv">
+                <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i>{{ _('All filenames CSV') }}
+            </button>
+            <button type="button" class="btn btn-primary" data-export-names="all" data-format="excel">
+                <i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>{{ _('All filenames Excel') }}
+            </button>
+        </nav>
+    </header>
+
+    <section class="file-type-summary" aria-label="{{ _('Indexed file summary') }}">
+        <div class="file-type-summary-icon"><i class="bi bi-collection" aria-hidden="true"></i></div>
+        <div>
+            <strong>{{ "{:,}".format(total_files|int) }}</strong>
+            <span>{{ _('indexed documents') }}</span>
+        </div>
+        <div class="file-type-summary-divider" aria-hidden="true"></div>
+        <div>
+            <strong>{{ file_types|length }}</strong>
+            <span>{{ _('detected formats') }}</span>
+        </div>
+    </section>
+
+    {% if file_types %}
+    <div class="file-type-table-wrap">
+        <table class="table file-type-table">
+            <caption class="visually-hidden">{{ _('Indexed documents grouped by detected file format') }}</caption>
+            <thead>
+                <tr>
+                    <th scope="col">{{ _('Format') }}</th>
+                    <th scope="col" class="text-end">{{ _('Documents') }}</th>
+                    <th scope="col" class="text-end">{{ _('Total size') }}</th>
+                    <th scope="col">{{ _('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in file_types %}
+                <tr>
+                    <th scope="row">
+                        <span class="file-type-chip">{{ item.label }}</span>
+                        <code>{{ item.file_type }}</code>
+                    </th>
+                    <td class="text-end file-type-count">{{ "{:,}".format(item.file_count|int) }}</td>
+                    <td class="text-end">{{ item.total_size|filesizeformat }}</td>
+                    <td>
+                        <div class="file-type-row-actions">
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="{{ url_for('files.files_list', file_type=item.file_type) }}">
+                                <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{{ _('Browse filenames') }}
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-export-names="type" data-file-type="{{ item.file_type }}" data-format="csv">
+                                {{ _('Names CSV') }}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-export-names="type" data-file-type="{{ item.file_type }}" data-format="excel">
+                                {{ _('Names Excel') }}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="file-type-empty" role="status">
+        <i class="bi bi-inbox" aria-hidden="true"></i>
+        <h2>{{ _('No indexed files yet') }}</h2>
+        <p>{{ _('File formats and counts appear here after documents are ingested.') }}</p>
+    </div>
+    {% endif %}
+</main>
+
+<script type="application/json" id="file-types-page-data">{{ {
+    "translations": {
+        "filenamePrompt": _('Name this filename export (leave blank for an automatic name):'),
+        "exportReady": _('Filename export ready.'),
+        "exportFailed": _('Could not export the filename list.'),
+        "exportLimit": _('This filename export exceeds the synchronous limit. Narrow the list and try again.'),
+        "csrfError": _('Your session expired. Refresh the page and try again.')
+    }
+}|tojson }}</script>
+{% endblock %}
