@@ -96,3 +96,6 @@ sample_data/
 .probe/
 .test_runtime/
 .docs-appdata/
+
+# written by install.py
+.install_state.json

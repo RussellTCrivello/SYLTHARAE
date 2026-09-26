@@ -142,7 +142,9 @@ def _run_main():
     host = os.environ.get('FLASK_HOST', '0.0.0.0')
     port = int(os.environ.get('FLASK_PORT', '5000'))
     print(f"[OK] Starting web server on http://127.0.0.1:{port} (press CTRL+C to stop)")
-    app.run(debug=debug_mode, host=host, port=port)
+    from apps.web.serve import serve
+
+    serve(app, host, port, debug=debug_mode)
 
 
 if __name__ == '__main__':
