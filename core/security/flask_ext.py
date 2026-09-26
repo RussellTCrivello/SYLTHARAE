@@ -203,6 +203,11 @@ def init_auth(app) -> None:
         if not getattr(g.get("user"), "is_authenticated", False):
             return None  # unauthenticated handled by the auth hook above
 
+        if getattr(g.user, "must_change_password", False):
+            gate = _password_change_gate(app, full_endpoint)
+            if gate is not None:
+                return gate
+
         if request.method in ("GET", "HEAD", "OPTIONS"):
             # Settings pages/config can expose system configuration.
             # AUDIT (SEC-03): the original test was
@@ -373,6 +378,37 @@ def _unauthorized():
     if request.path.startswith("/api/") or request.is_json:
         return jsonify({"error": "Authentication required", "code": "unauthenticated"}), 401
     return redirect("/auth/login?next=" + request.path)
+
+
+#: What an account flagged ``must_change_password`` may still reach: the
+#: change-password flow itself, its own identity, sign-out, and the page shell
+#: that carries the change-password banner.
+PASSWORD_CHANGE_ALLOWED_ENDPOINTS = frozenset(
+    {"auth.change_password", "auth.me", "auth.logout", "index"}
+)
+
+
+def _password_change_gate(app, full_endpoint: str):
+    """AUDIT-AUTH-01: a temporary password must be replaced before use.
+
+    ``must_change_password`` is set on the generated first-run password, on
+    accounts an administrator creates, on admin resets and on recovery
+    passwords, and every one of those paths promises the change is *forced*.
+    It used to be a banner only: the temporary credential worked indefinitely
+    for every page and API. Now the account can reach the change-password
+    flow and the shell page that hosts it, and nothing else, until it has.
+    """
+    if full_endpoint in PASSWORD_CHANGE_ALLOWED_ENDPOINTS:
+        return None
+    if (request.method in ("GET", "HEAD")
+            and request.path in app.config["AUTH_SETTINGS_ANY_USER_READ_PATHS"]):
+        return None  # the theme the shell page loads
+    if request.path.startswith("/api/") or request.is_json or request.method not in ("GET", "HEAD"):
+        return jsonify({
+            "error": "You must change your temporary password before continuing.",
+            "code": "password_change_required",
+        }), 403
+    return redirect("/")
 
 
 def _forbidden():

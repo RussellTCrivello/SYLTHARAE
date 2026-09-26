@@ -145,3 +145,40 @@ class TestSideScopedHashExists:
         assert service.hash_exists(h, src, side + 100000) is False
         assert service.hash_exists(h, src) is True
         assert service.hash_exists(f"missing-{_UNIQUE}", src, side) is False
+
+
+class TestTemporaryPasswordIsForcedToChange:
+    """AUDIT-AUTH-01: ``must_change_password`` was a banner, not a gate."""
+
+    def _client(self, app, suffix):
+        from core.security.service import get_auth_service
+
+        auth = get_auth_service()
+        username, password = f"temp_{suffix}_{_UNIQUE}", "temporary-password-123"
+        if auth.get_user_by_username(username) is None:
+            auth.create_user(username, password, role="analyst", must_change_password=True)
+        client = app.test_client()
+        assert client.post("/auth/login", json={"username": username,
+                                                "password": password}).status_code == 200
+        return client
+
+    def test_apis_and_pages_are_closed_until_the_password_changes(self, app):
+        client = self._client(app, "closed")
+        resp = client.get("/api/dashboard/stats")
+        assert resp.status_code == 403
+        assert resp.get_json()["code"] == "password_change_required"
+        assert client.post("/api/paths", json={}).status_code == 403
+        page = client.get("/search")
+        assert page.status_code == 302 and page.headers["Location"].endswith("/")
+        assert client.get("/auth/me").status_code == 200
+        assert client.get("/").status_code == 200  # the shell with the banner
+
+    def test_changing_the_password_opens_the_account(self, app):
+        client = self._client(app, "opened")
+        resp = client.post("/auth/change-password", json={"new_password": "a-brand-new-password-456"})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        assert client.get("/api/dashboard/stats").status_code != 403
+        assert client.get("/search").status_code == 200
+
+    def test_accounts_without_the_flag_are_unaffected(self, viewer_client):
+        assert viewer_client.get("/search").status_code == 200
