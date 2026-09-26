@@ -1,5 +1,52 @@
 # Changelog
 
+## v2.1.1 — 2026-09-25 — security and production-readiness patch
+
+A full audit of v2.1.0; [AUDIT_REPORT.md](AUDIT_REPORT.md) has the details and
+the test evidence. Every fix ships with a regression test that fails on
+v2.1.0. Defaults are unchanged and nothing needs migrating. The only new
+capability, the Waitress server, is opt-in.
+
+### Security
+- **Setup probes locked after install** (AUDIT-SETUP-01): `/api/setup/system-check` and `test-database` were still anonymous after installation. They now return 401 for anonymous users and 403 for non-admins.
+- **Temporary passwords are enforced** (AUDIT-AUTH-01): an account with an admin-issued temporary password can only reach the change-password flow until it has changed it.
+- **SQL injection** fixed in `/api/archives/geolocation` sorting (AUDIT-SQLI-01).
+- **Stored XSS** fixed on the dashboard and path-analysis pages, which rendered file names and words unescaped (AUDIT-XSS-01).
+- **HSTS is actually sent** in production over HTTPS (AUDIT-HSTS-01). It is never sent on plain HTTP.
+- **7z bombs** are rejected from the declared sizes, before anything is written (AUDIT-ARCH-01).
+- **Real client IPs behind a proxy**: set `TRUSTED_PROXY_COUNT` (AUDIT-PROXY-01). Rate limits, lockouts and the audit log previously saw only the proxy.
+- **Dependencies**: `PyPDF2` replaced by `pypdf>=6`, `Pillow>=12.3` (AUDIT-DEP-01). `pip-audit` finds no known vulnerabilities in `requirements.txt`.
+- Forensic MD5/SHA-1 digests are marked `usedforsecurity=False`, so they work on FIPS-mode Python.
+
+### Operations
+- **Production WSGI server**: `pip install -e ".[server]"` and set `WSGI_SERVER=waitress` (with `WAITRESS_THREADS`, default 32) (AUDIT-OPS-01). Production must not run on the built-in server; see [docs/OPERATIONS.md](docs/OPERATIONS.md).
+- **`/health` is healthy right after installation** (AUDIT-HEALTH-01). It used to report `degraded` until the first restart.
+- **Configuration is honoured** (AUDIT-CONF-01): `LOG_LEVEL` now takes effect, and `DB_POOL_MIN/MAX_CONNECTIONS` are accepted. Variables that nothing reads are labelled *reserved* in `.env.example`.
+- `libpff-python` (PST) is now the optional `pst` extra, so `pip install -r requirements.txt` works on a clean machine.
+
+### Fixes
+- `ContentDBService.hash_exists(side_id=…)` raised `AttributeError` on every call (AUDIT-DB-01).
+- `/api/paths` errors returned 500 because of an undefined logger (AUDIT-PY-01).
+- Duplicate dict keys in the search algorithms dropped entries (AUDIT-PY-02).
+- `date.today()` defaults no longer freeze at import time (AUDIT-DATE-01).
+- Four actions failed with 400 because their requests omitted the CSRF token (AUDIT-CSRF-01).
+- Removed an unreachable duplicate error handler in the storage pipeline.
+
+### Documentation and tooling
+- New guides: [README](README.md), [OPERATIONS](docs/OPERATIONS.md), [CONFIGURATION](docs/CONFIGURATION.md), [SECURITY](docs/SECURITY.md), [ARCHITECTURE](docs/ARCHITECTURE.md) (Mermaid diagrams), [DOMAIN_MODEL](docs/DOMAIN_MODEL.md), [DATABASE](docs/DATABASE.md), [INSTALL](docs/INSTALL.md), [DEVELOPMENT](docs/DEVELOPMENT.md), [TESTING](docs/TESTING.md), [PRODUCTIZATION_MAP](docs/PRODUCTIZATION_MAP.md) and a [docs index](docs/README.md).
+- Generated references: modules and HTTP routes (`tools/docs/generate_reference.py`) and the database schema (`tools/docs/generate_schema.py`). Tests fail when they go stale.
+- `tools/smoke/live_smoke.py`: an end-to-end smoke test against a running production-configured server.
+- New tests check every documentation link and anchor, the job state diagram against the code, and version consistency.
+- The schema-reference test no longer depends on test order.
+
+### Upgrading from v2.1.0
+1. Back up the database ([OPERATIONS.md §4](docs/OPERATIONS.md#4-backups)).
+2. `git pull` (or unpack the release), then `pip install -r requirements.txt`. For production, also run `pip install -e ".[server]"`.
+3. Optional, recommended in production: add `WSGI_SERVER=waitress` and, behind a proxy, `TRUSTED_PROXY_COUNT=1` to `.env`.
+4. Restart. There are no new migrations.
+
+Users who still hold a temporary password will be asked to change it at their next sign-in.
+
 ## v2.1.0 — 2026-09-25 — first production release
 
 First operational release of SYLTHARAE.

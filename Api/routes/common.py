@@ -219,7 +219,7 @@ def register_common_routes(app, babel_instance):
             from version import get_version
             app_version = get_version()
         except ImportError:
-            app_version = "2.1.0"
+            app_version = "unknown"  # version.py is the single source of truth
         
         context = {
             'now': datetime.now,

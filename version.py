@@ -3,8 +3,8 @@ Centralized Version Management
 Single source of truth for application versioning
 """
 
-__version__ = "2.1.0"
-__version_info__ = (2, 1, 0)
+__version__ = "2.1.1"
+__version_info__ = (2, 1, 1)
 
 # Build metadata
 __build_date__ = "2026-09-25"
