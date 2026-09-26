@@ -29,7 +29,7 @@ Database module - Centralized exports for all database functionality.
   - `transaction(self)` - Transaction context manager
 - `get_postgres_connection(**kwargs)` - Get a PostgreSQL connection
 - `get_db_connection(**kwargs)` - Get a database connection (alias for get_postgres_connection)
-- `get_db_config()` - Get database configuration as dictionary
+- `get_db_config()` - Get database configuration as dictionary.
 - `get_source(name_or_id)` - Get source by name or ID (backward compatibility - prefers ID if integer)
 - `get_side(name_or_id)` - Get side by name or ID
 - `update_source(source_id, **kwargs)` - Update source (placeholder - implement based on repository)
