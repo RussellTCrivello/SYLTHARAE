@@ -122,6 +122,17 @@ def test_the_file_details_modal_call_is_not_throttled_per_file(admin_client, pg_
 
 
 @pytest.mark.usefixtures("rate_limited_app")
+def test_the_theme_every_page_loads_is_not_throttled_while_browsing(admin_client):
+    """Each page load reads /api/settings/theme (get_theme_settings); 75 a minute pass.
+
+    Under the default limit the live browser smoke saw 429s here, and behind
+    a proxy every user of one NAT address shares that budget.
+    """
+    codes = {admin_client.get("/api/settings/theme").status_code for _ in range(75)}
+    assert 429 not in codes, codes
+
+
+@pytest.mark.usefixtures("rate_limited_app")
 def test_a_rate_limited_sign_in_says_so_in_json(client):
     """The sign-in form parses the answer as JSON. The limiter's default 429 is
     an HTML page, so the form failed to parse it and told a locked-out user
