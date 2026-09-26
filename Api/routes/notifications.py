@@ -16,6 +16,7 @@ from core.monitoring.notification_display import format_title_message, display_p
 from Api.utils import execute_query
 import logging
 from core.errors import client_error, client_safe_message
+from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
 
 logger = logging.getLogger(__name__)
 
@@ -289,6 +290,12 @@ def register_notification_routes(app):
             logger.error(f"Error refreshing notifications: {e}")
             return client_error(e, subsystem='Api.routes.notifications', success_key='success', status=500)
     
+    # The sidebar badge reads this on every page load and then every 30 s per
+    # open tab (base-page-handler.js): five idle tabs alone reach the 600/hour
+    # default, after which the badge - and each page boot - got 429 (live
+    # browser smoke through nginx). An interactive read; see
+    # INTERACTIVE_READ_LIMIT.
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
     @app.route('/api/notifications/stats', methods=['GET'])
     def get_notification_stats():
         """Get notification statistics"""

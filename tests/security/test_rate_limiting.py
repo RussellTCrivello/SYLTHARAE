@@ -133,6 +133,20 @@ def test_the_theme_every_page_loads_is_not_throttled_while_browsing(admin_client
 
 
 @pytest.mark.usefixtures("rate_limited_app")
+@pytest.mark.parametrize("path", ["/api/i18n/catalog?locale=en", "/api/notifications/stats"])
+def test_the_reads_every_page_boot_makes_are_not_throttled_while_browsing(admin_client, path):
+    """RATE-01 covered the theme but not the other per-page reads.
+
+    The live browser smoke through nginx got 429 from both after ~600 page
+    views from one address (the hourly default); the notification badge also
+    polls every 30 s per open tab, so five idle tabs alone reach it. 75 calls
+    exceed the 60/minute default, so this fails without the interactive limit.
+    """
+    codes = {admin_client.get(path).status_code for _ in range(75)}
+    assert 429 not in codes, codes
+
+
+@pytest.mark.usefixtures("rate_limited_app")
 def test_a_rate_limited_sign_in_says_so_in_json(client):
     """The sign-in form parses the answer as JSON. The limiter's default 429 is
     an HTML page, so the form failed to parse it and told a locked-out user
