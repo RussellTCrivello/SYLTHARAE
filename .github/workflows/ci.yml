@@ -65,7 +65,11 @@ jobs:
           python -c "import pgserver, cv2, pymupdf, waitress; print('ok')"
 
       - name: Test suites (unit, integration, security, e2e, front end, docs)
-        run: python -m pytest tests -p no:cacheprovider -q -rfEs
+        run: python -m pytest tests -p no:cacheprovider -q -rfEs --junitxml=pytest-report.xml
+
+      - name: Report test results as annotations
+        if: always()
+        run: test -f pytest-report.xml && python tools/ci/junit_annotations.py pytest-report.xml || true
 
       - name: Package build
         run: |
