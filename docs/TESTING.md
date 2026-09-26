@@ -128,6 +128,34 @@ Two defects this procedure found have been fixed with regression tests:
 (AUDIT-HEALTH-01), and the schema-reference test depended on test order. See
 [AUDIT_REPORT.md](../AUDIT_REPORT.md).
 
+## Browser smoke test
+
+`tools/smoke/browser_smoke.mjs` checks what the server-side tests cannot:
+that the pages still work in a real browser under the Content-Security-Policy,
+which runs no inline script ([SECURITY.md](SECURITY.md)). Run it against the
+same running server as the live smoke test, after `install`:
+
+    npm install --prefix /tmp/smoke-tools puppeteer-core     # once
+    NODE_PATH=/tmp/smoke-tools/node_modules CHROME_PATH=/usr/bin/chromium \
+      SMOKE_ADMIN_PASSWORD='choose-a-strong-one' \
+      SMOKE_BASE_URL=http://localhost:5055 node tools/smoke/browser_smoke.mjs
+
+Any Chrome or Chromium works. Use `localhost`, because browsers keep `Secure`
+session cookies there without TLS. The script signs in and crawls every
+same-origin page linked from the dashboard. It never follows delete, export,
+download or logout links. On each page it fails on:
+
+* a CSP violation, or a console message saying the browser refused something;
+* an uncaught page error;
+* `data-on-*` handlers on a page that did not load the declarative runtime;
+* a handler whose function is not reachable from `window` after the page's
+  scripts, modules included, have run. Such a control does nothing on click.
+
+It then dispatches real clicks and a failing image to confirm that handlers
+run with `this` bound, bubble to ancestors, honour `return false` and run
+`data-on-error`. It does not click arbitrary controls, because some delete
+data. Exit status is non-zero on any failure.
+
 ## Adding tests
 
 * Put the test in the lowest layer that can prove the behaviour.

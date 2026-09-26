@@ -87,6 +87,19 @@ class TestThePolicy:
         assert directives.get("base-uri") == ["'self'"]
 
 
+    def test_the_documented_policy_is_the_served_policy(self, client):
+        """docs/SECURITY.md quotes the policy; it must be the one we send."""
+        served = client.get("/auth/login").headers["Content-Security-Policy"]
+        security = (PROJECT_ROOT / "docs" / "SECURITY.md").read_text(encoding="utf-8")
+        assert f"`{served}`" in security, (
+            "docs/SECURITY.md quotes a different Content-Security-Policy than "
+            f"the application serves:\n{served}")
+        assert "'unsafe-inline' in the CSP" not in security
+        development = (PROJECT_ROOT / "docs" / "DEVELOPMENT.md").read_text(encoding="utf-8")
+        assert "tests/unit/test_csp_no_inline_script.py" in development
+        assert "data-on-click" in development
+
+
 # ---------------------------------------------------------------------------
 # The sources
 # ---------------------------------------------------------------------------

@@ -113,19 +113,39 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
   (`static/js/modules/core/utils.js`). File names, words, paths and every
   other database value are attacker-controlled - they come from ingested
   files (AUDIT-XSS-01).
-* **Headers** on every response: `Content-Security-Policy` (`default-src
-  'self'`, `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'`),
+* **Headers** on every response: `Content-Security-Policy` (below),
   `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
   `Referrer-Policy: strict-origin-when-cross-origin`, a restrictive
   `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`, and
   `Strict-Transport-Security` in production over HTTPS (AUDIT-HSTS-01).
   Pages and `/api/*` responses are `no-store`.
-* **`'unsafe-inline'` in the CSP.** Some legacy templates still contain
-  inline `<script>` blocks and inline event handlers, so `script-src` allows
-  inline code. This weakens the CSP as an XSS backstop; the escaping rules
-  above are the primary control. Removing it requires moving those blocks
-  into `static/js/pages/` modules - tracked in
-  [AUDIT_REPORT.md](../AUDIT_REPORT.md).
+* **Content-Security-Policy.** Every page is served with:
+
+  `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'`
+
+  `script-src 'self'` means the browser runs no inline script, no `eval`
+  and no `javascript:` URL, so markup injected despite the escaping above
+  cannot execute (RES-CSP-01, resolved in 2.2.0):
+  * Event handlers are `data-on-<event>="expression"` attributes (for
+    example `data-on-click="applyFilters()"`), run by
+    `static/js/modules/core/declarative-events.js`. It parses the expression
+    with a small interpreter - calls, member access, literals, `this`,
+    `event`, `return false` and `.style` assignment - and never uses `eval`
+    or `Function`. Because it still lets markup call page functions, it
+    refuses `eval`, `Function`, string timers, `fetch`, `constructor`,
+    `__proto__`, HTML-writing sinks and similar names, both by name and by
+    identity. Output escaping is still the primary control.
+  * Page scripts are static files; server values reach them through
+    `<script type="application/json" id="…-page-data">` blocks, which the
+    browser does not execute.
+  * `tests/unit/test_csp_no_inline_script.py` fails on any inline handler,
+    inline `<script>`, `javascript:` URL or string evaluation in a template,
+    a script or a served page. `tools/smoke/browser_smoke.mjs` loads every
+    page in a real browser under this policy
+    ([TESTING.md](TESTING.md#browser-smoke-test)).
+  * `style-src` still allows `'unsafe-inline'`: templates use `style`
+    attributes, and Settings applies administrator-authored custom CSS.
+    Injected CSS cannot run script, so this is an accepted residual.
 * The original-file viewer opts into `X-Frame-Options: SAMEORIGIN` for the
   one response that must be framed by the application itself.
 

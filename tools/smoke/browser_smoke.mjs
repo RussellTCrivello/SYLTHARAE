@@ -206,6 +206,8 @@ if (tab) {
     const after = await page.evaluate(() => document.querySelector('.active')?.outerHTML.slice(0, 80));
     check('a Settings tab switches on click without errors', problems.length === 0,
         `${problems.join(' | ')} before=${before} after=${after}`);
+} else {
+    console.log('SKIP Settings tab click -- no tab control matched');
 }
 
 // An image that fails to load falls back through data-on-error (base.html logo).

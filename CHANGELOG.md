@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Security
+- **No inline script: the CSP is `script-src 'self'`** (RES-CSP-01). `'unsafe-inline'` is gone, so injected markup can no longer run script. The 599 inline handler attributes are now `data-on-<event>` attributes with the same expressions, run by `static/js/modules/core/declarative-events.js`, a restricted interpreter that never uses `eval`. The 17 inline `<script>` blocks are now static files that read server values from `application/json` blocks. The 403/404/500 pages no longer use `javascript:` links. See [docs/SECURITY.md](docs/SECURITY.md).
+- A rate-limited sign-in now says "Too many attempts. Wait a minute and try again." instead of "An internal error occurred". The limiter's 429 page is replaced by JSON for JSON and API callers.
+
+### Fixes
+- File page: the **Full screen** button did nothing, because its function was module-scoped. The metadata tab's **Save Changes** button saved nothing but announced "Metadata saved successfully!", and no route stores a file's name or notes. That button and the Notes box are removed, and File Name is shown read-only.
+- Files list: removed the "quick preview" eye button. It called a placeholder that only logged to the console.
+
+### Documentation and tooling
+- `tools/smoke/browser_smoke.mjs` signs in with a real Chrome/Chromium, crawls every page and fails on any CSP violation, page error or unreachable handler ([docs/TESTING.md](docs/TESTING.md#browser-smoke-test)).
+- The generated component and Inspector counts dropped (for example, hand-written badge chips 70→68) because template-only scans no longer see code that moved into `static/js`. The code moved; it was not migrated. The action-surface audit now counts button-state code in the login and install-wizard scripts, which it could not see while that code was inline.
+
 ## v2.1.1 — 2026-09-25 — security and production-readiness patch
 
 A full audit of v2.1.0; [AUDIT_REPORT.md](AUDIT_REPORT.md) has the details and
