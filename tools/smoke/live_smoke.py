@@ -72,6 +72,7 @@ class ProxySession(requests.Session):
     def request(self, method, url, **kw):
         if not url.startswith("http"):
             url = BASE + url
+        kw.setdefault("timeout", 60)
         if method.upper() not in ("GET", "HEAD") and self.token:
             kw.setdefault("headers", {})["X-CSRFToken"] = self.token
         if method.upper() not in ("GET", "HEAD"):
@@ -136,13 +137,13 @@ def main(phase):
     check(f"[{phase}] /health healthy", r.status_code == 200 and r.json().get("status") == "healthy", r.text[:120])
     check(f"[{phase}] HSTS on proxied HTTPS", "max-age" in r.headers.get("Strict-Transport-Security", ""), r.headers.get("Strict-Transport-Security"))
     if REAL_PROXY:
-        plain = requests.get(HTTP_URL + "/health", allow_redirects=False)
+        plain = requests.get(HTTP_URL + "/health", allow_redirects=False, timeout=30)
         check(f"[{phase}] plain HTTP redirects to HTTPS, without HSTS",
               plain.status_code == 301 and plain.headers.get("Location", "").startswith("https://")
               and "Strict-Transport-Security" not in plain.headers,
               f"{plain.status_code} {plain.headers.get('Location')}")
     else:
-        plain = requests.get(BASE + "/health")
+        plain = requests.get(BASE + "/health", timeout=30)
         check(f"[{phase}] no HSTS on plain HTTP", "Strict-Transport-Security" not in plain.headers)
     check(f"[{phase}] anonymous API -> 401", s.get("/api/search", params={"query": "x"}).status_code == 401)
     r = login(s, "admin", "wrong-password-123")
