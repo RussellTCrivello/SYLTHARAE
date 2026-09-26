@@ -75,7 +75,7 @@ def _line(text: str, index: int) -> int:
 # ---------------------------------------------------------------------------
 class TestThePolicy:
     def test_script_src_allows_no_inline_script_and_no_eval(self, client):
-        policy = client.get("/login").headers["Content-Security-Policy"]
+        policy = client.get("/auth/login").headers["Content-Security-Policy"]
         directives = {part.split()[0]: part.split()[1:]
                       for part in (p.strip() for p in policy.split(";")) if part}
         assert directives["script-src"] == ["'self'"], policy
@@ -147,8 +147,20 @@ class TestTheSources:
         ``const``/``let``, so a name defined only that way would silently break."""
         sources = {path: path.read_text(encoding="utf-8") for path in _scripts()}
         corpus = "\n".join(sources.values())
-        defined = set(re.findall(r"(?m)^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)", corpus))
-        defined |= set(re.findall(r"(?m)^var\s+([A-Za-z_$][\w$]*)", corpus))
+        # A top-level function or var is global only in a classic script. In an
+        # ES module it is module-scoped, and a handler naming it does nothing -
+        # file-detail-page.js had exactly that bug (toggleFullscreen).
+        loaded_as_module = set(re.findall(
+            r"""<script[^>]*type=["']module["'][^>]*filename=['"]([^'"]+)['"]""",
+            "\n".join(p.read_text(encoding="utf-8") for p in _templates())))
+        defined = set()
+        for path, text in sources.items():
+            relative = path.relative_to(SCRIPTS).as_posix()
+            if (f"js/{relative}" in loaded_as_module
+                    or re.search(r"(?m)^\s*(?:import\s[^(]|export\s)", text)):
+                continue
+            defined |= set(re.findall(r"(?m)^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)", text))
+            defined |= set(re.findall(r"(?m)^var\s+([A-Za-z_$][\w$]*)", text))
         defined |= set(re.findall(r"\b(?:window|globalThis)\.([A-Za-z_$][\w$]*)\s*=(?!=)", corpus))
         defined |= set(re.findall(r"\bwindow\[\s*['\"]([A-Za-z_$][\w$]*)['\"]\s*\]\s*=", corpus))
         for block in re.findall(r"Object\.assign\(\s*window\s*,\s*\{(.*?)\}\s*\)", corpus, re.S):
@@ -252,10 +264,13 @@ class TestTheServedPages:
 
     def test_the_standalone_pages_render_without_inline_script(self, client):
         """Login, first-admin and the install wizard do not extend base.html."""
-        for path in ("/login",):
-            html = client.get(path).get_data(as_text=True)
-            assert not HANDLER_ATTRIBUTE.search(html), path
-            assert not INLINE_SCRIPT.search(html), path
+        response = client.get("/auth/login")
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert 'id="login-form"' in html, "this is not the login page"
+        assert "js/pages/login-page.js" in html
+        assert not HANDLER_ATTRIBUTE.search(html)
+        assert not INLINE_SCRIPT.search(html)
         for template in ("auth/first_admin.html", "Setup/install_wizard.html", "auth/login.html"):
             text = (TEMPLATES / template).read_text(encoding="utf-8")
             assert not INLINE_SCRIPT.search(text), template

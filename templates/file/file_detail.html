@@ -528,7 +528,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label">{{ _('File Name') }}</label>
-                                        <input type="text" class="form-control" value="{{ file[1] }}" id="metaName">
+                                        <input type="text" class="form-control" value="{{ file[1] }}" id="metaName" readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">{{ _('File Type') }}</label>
@@ -550,17 +550,11 @@
                                         <label class="form-label">{{ _('Date Created') }}</label>
                                         <input type="text" class="form-control" value="{{ file[7]|format_date('%Y-%m-%d %H:%M:%S') }}" readonly>
                                     </div>
-                                    <div class="col-12">
-                                        <label class="form-label">{{ _('Notes') }}</label>
-                                        <textarea class="form-control" rows="5" id="metaNotes" 
-                                                  placeholder="{{ _('Add your notes about this document...') }}"></textarea>
-                                    </div>
                                 </div>
-                                <div class="mt-4">
-                                    <button type="button" class="btn btn-primary" data-on-click="saveMetadata()">
-                                        <i class="bi bi-save me-2"></i>{{ _('Save Changes') }}
-                                    </button>
-                                </div>
+                                {#- No route stores a file's name or notes, so the page offers
+                                    no editor and no "Save Changes": the old button logged
+                                    the values and announced "Metadata saved successfully!"
+                                    while saving nothing. -#}
                             </form>
                         </div>
                     </div>
@@ -669,7 +663,6 @@
         "invalidDataFormat": _('Invalid data format'),
         "noValidFrequencyData": _('No valid frequency data'),
         "contentCopiedToClipboard": _('Content copied to clipboard!'),
-        "metadataSavedSuccessfully": _('Metadata saved successfully!'),
         "shareLinkCopiedToClipboard": _('Share link copied to clipboard!'),
         "error": _('Error')
     }

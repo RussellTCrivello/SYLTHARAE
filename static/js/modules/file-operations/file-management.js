@@ -451,13 +451,6 @@ const FileManagement = {
                 window.alert(errorMsg);
             }
         }
-    },
-    
-    // ==================== PREVIEW ====================
-    quickPreview(fileId) {
-        // Placeholder for quick preview functionality
-        console.log('Quick preview for file:', fileId);
-        // You can implement a modal preview here
     }
 };
 

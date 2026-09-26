@@ -404,9 +404,9 @@
                         </div>
                     </div>
                     <div class="file-card-actions">
-                        <button class="btn btn-sm btn-primary" data-on-click="quickPreview({{ file[0] }}); event.stopPropagation();">
-                            <i class="bi bi-eye"></i>
-                        </button>
+                        {#- The "quick preview" eye button called a placeholder that only
+                            logged to the console (and was not even loaded here); the
+                            file page below is the preview. -#}
                         <a href="{{ url_for('files.file_detail', file_id=file[0], **nav_params) }}"
                            class="btn btn-sm btn-outline-primary" 
                            data-on-click="event.stopPropagation();">

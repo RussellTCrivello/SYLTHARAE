@@ -581,6 +581,9 @@ window.changePageSize = changePageSize;
 window.jumpToPage = jumpToPage;
 window.copyContent = copyContent;
 window.downloadContent = downloadContent;
+// The Full screen button is wired with data-on-click, which resolves names on
+// window; a module's functions are not global (it never worked inline either).
+window.toggleFullscreen = toggleFullscreen;
 
 // ==================== PAGINATION ====================
 
@@ -929,15 +932,6 @@ function downloadContent() {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-}
-
-// ==================== METADATA ACTIONS ====================
-
-function saveMetadata() {
-    const name = document.getElementById('metaName').value.trim();
-    const notes = document.getElementById('metaNotes').value.trim();
-    console.log('Saving metadata:', { name, notes });
-    alert(translations.metadataSavedSuccessfully);
 }
 
 // ==================== FULLSCREEN & SHARE ====================

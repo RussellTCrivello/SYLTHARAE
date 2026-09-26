@@ -23,6 +23,7 @@ happened once in this product:
 from __future__ import annotations
 
 import pathlib
+import re
 import shutil
 import subprocess
 
@@ -579,6 +580,32 @@ class TestTheRecordPageRendersThem:
         assert 'data-on-click="toggleFullscreen()"' in html, (
             "full screen is a control, and it stays: it changes how the page "
             "is shown, not what the record is")
+        # It must also be callable: data-on-click resolves names on window, and
+        # the page script is a module (found by the browser smoke, RES-CSP-01).
+        script = (PROJECT_ROOT / "static/js/pages/file-detail-page.js").read_text(encoding="utf-8")
+        assert "window.toggleFullscreen = toggleFullscreen" in script
+
+    def test_the_metadata_tab_does_not_pretend_to_save(self, admin_client, record):
+        """No route stores a file's name or notes. The tab had a "Save Changes"
+        button whose handler logged the values and announced "Metadata saved
+        successfully!" - and it was not even reachable (module scope)."""
+        html = admin_client.get(f"/file/{record['file_id']}").get_data(as_text=True)
+        assert "saveMetadata" not in html
+        assert "Metadata saved successfully" not in html
+        assert 'id="metaNotes"' not in html, "notes typed here would be discarded"
+        name = re.search(r'<input[^>]*id="metaName"[^>]*>', html)
+        assert name and "readonly" in name.group(0)
+        script = (PROJECT_ROOT / "static/js/pages/file-detail-page.js").read_text(encoding="utf-8")
+        assert "function saveMetadata" not in script
+
+    def test_the_file_list_has_no_placeholder_preview(self, admin_client, record):
+        """The eye button called quickPreview, a placeholder that only logged -
+        and not loaded on the page. The card's open link is the preview."""
+        html = admin_client.get("/files").get_data(as_text=True)
+        assert "quickPreview" not in html
+        for relative in ("static/js/modules/file-operations/file-management.js",
+                         "static/js/managers/function-manager.js"):
+            assert "quickPreview" not in (PROJECT_ROOT / relative).read_text(encoding="utf-8")
 
 
 class TestTheSurfaceRuntimeIsReal:

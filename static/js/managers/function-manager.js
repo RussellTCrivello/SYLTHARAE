@@ -302,7 +302,6 @@ if (typeof window !== 'undefined') {
     window.bulkExport = fileManagement.bulkExport.bind(fileManagement);
     window.bulkDelete = fileManagement.bulkDelete.bind(fileManagement);
     window.deleteFile = fileManagement.deleteFile.bind(fileManagement);
-    window.quickPreview = fileManagement.quickPreview.bind(fileManagement);
     // Expose applyFilters for files list page (override the generic one from filters module)
     window.applyFileFilters = fileManagement.applyFilters.bind(fileManagement);
     window.navigateToPage = fileManagement.navigateToPage.bind(fileManagement);
