@@ -4,7 +4,8 @@
 
 Job logs are not always at hand (they live in blob storage); annotations are
 shown on the pull request and returned by the checks API. One ::notice:: line
-carries the totals, one ::error:: line lists every failed test with the first
+carries the totals and one more lists every skipped test with its reason, so
+no skip is silent; one ::error:: line lists every failed test with the first
 line of its message (GitHub shows only ten error annotations per step), then
 one per failure with its message. Exit status is always 0: pytest's own status
 decides the job.
@@ -29,6 +30,16 @@ def main(path):
     suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
     totals = {k: sum(int(s.get(k, 0)) for s in suites) for k in ("tests", "failures", "errors", "skipped")}
     print("::notice title=pytest totals::" + ", ".join(f"{k}={v}" for k, v in totals.items()))
+    skipped = []
+    for c in root.iter("testcase"):
+        node = c.find("skipped")
+        if node is not None:
+            reason = (node.get("message") or node.text or "").strip().splitlines()[:1]
+            skipped.append(f"{c.get('classname', '')}::{c.get('name', '')}"
+                           + (f"  --  {reason[0][:300]}" if reason else ""))
+    if skipped:
+        print(f"::notice title={_escape_property(f'{len(skipped)} skipped tests')}::"
+              + _escape("\n".join(skipped))[:60000])
     failed = []
     for c in root.iter("testcase"):
         node = c.find("failure") if c.find("failure") is not None else c.find("error")
