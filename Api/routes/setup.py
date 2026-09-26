@@ -130,6 +130,32 @@ def _reject_if_initialized():
     return None
 
 
+def _require_setup_window_or_admin():
+    """Gate the wizard's diagnostic endpoints once installation is complete.
+
+    AUDIT-SETUP-01: ``/api/setup/system-check`` and ``/api/setup/test-database``
+    are public so the first-run wizard can use them before any account exists.
+    They were never closed afterwards, so on an installed system an anonymous
+    visitor could fingerprint the host and make the server open PostgreSQL
+    connections to arbitrary hosts and ports (network probing / credential
+    guessing). After initialization they are administrator diagnostics.
+
+    Returns ``None`` when the request may proceed, otherwise a response.
+    """
+    if not _is_initialized():
+        return None
+    from flask import g
+
+    user = g.get("user")
+    if not getattr(user, "is_authenticated", False):
+        return jsonify({"ok": False, "error": "Authentication required",
+                        "code": "unauthenticated"}), 401
+    if not user.has_role("admin"):
+        return jsonify({"ok": False, "error": "Insufficient permissions",
+                        "code": "forbidden"}), 403
+    return None
+
+
 # ── Page ──
 @setup_bp.route("/setup", methods=["GET"])
 def setup_page():
@@ -141,6 +167,9 @@ def setup_page():
 # ── Step 1: System check ──
 @setup_bp.route("/api/setup/system-check", methods=["GET"])
 def system_check():
+    gate = _require_setup_window_or_admin()
+    if gate is not None:
+        return gate
     from core.installer import check_system
     checks = check_system()
     all_ok = all(c.get("ok", False) for c in checks.values())
@@ -150,6 +179,9 @@ def system_check():
 # ── Step 2: Test database ──
 @setup_bp.route("/api/setup/test-database", methods=["POST"])
 def test_database():
+    gate = _require_setup_window_or_admin()
+    if gate is not None:
+        return gate
     from core.installer import test_database_connection
 
     data = request.get_json(silent=True)

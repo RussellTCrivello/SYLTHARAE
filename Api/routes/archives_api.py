@@ -1621,7 +1621,10 @@ def api_archives_geolocation():
             limit = 1
         search = request.args.get('search', '').strip()
         sort_by = request.args.get('sort_by', 'id')
-        sort_dir = request.args.get('sort_dir', 'desc').lower()
+        # AUDIT-SQLI-01: the direction is interpolated into ORDER BY, so it
+        # must be one of two literals - never the raw request value (it was
+        # only lower-cased, which let any authenticated user inject SQL).
+        sort_dir = 'asc' if str(request.args.get('sort_dir', 'desc')).strip().lower() == 'asc' else 'desc'
         
         # Build query - files with coordinates
         joins = [

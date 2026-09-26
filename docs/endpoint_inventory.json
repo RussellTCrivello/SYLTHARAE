@@ -1,0 +1,3875 @@
+[
+  {
+    "endpoint": "_sec08_boom",
+    "rule": "/_test/sec08/boom",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "conftest",
+    "classification": "TEST_ENDPOINT",
+    "owned_by": null,
+    "internal": false
+  },
+  {
+    "endpoint": "analysis_batch",
+    "rule": "/analysis/batch",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analysis",
+    "classification": "USER_INTERFACE",
+    "owned_by": "batch_analysis",
+    "internal": false
+  },
+  {
+    "endpoint": "analysis_batch_process",
+    "rule": "/analysis/batch/process",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "analysis",
+    "classification": "ACTION",
+    "owned_by": "batch_analysis",
+    "internal": false
+  },
+  {
+    "endpoint": "analyst_categorization_page",
+    "rule": "/analyst/categorization",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "USER_INTERFACE",
+    "owned_by": "analyst_categorization",
+    "internal": false
+  },
+  {
+    "endpoint": "analytics.api_analytics_sides",
+    "rule": "/api/analytics/sides",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_analytics_sources",
+    "rule": "/api/analytics/sources",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_category_distribution",
+    "rule": "/api/analytics/category-distribution",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_content_statistics",
+    "rule": "/api/analytics/content-statistics",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_dashboard_summary",
+    "rule": "/api/analytics/dashboard-summary",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_file_type_distribution",
+    "rule": "/api/analytics/file-type-distribution",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_analytics",
+    "rule": "/api/analytics/path/analytics",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_category_files",
+    "rule": "/api/analytics/path/category-files",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_category_words_analysis",
+    "rule": "/api/analytics/path/category-words-analysis",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_category_words_detail",
+    "rule": "/api/analytics/path/category-words-detail",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_classifications",
+    "rule": "/api/analytics/path/classifications",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_files",
+    "rule": "/api/analytics/path/files",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_hierarchy",
+    "rule": "/api/analytics/path-hierarchy",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_word_files",
+    "rule": "/api/analytics/path/word-files",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_path_words",
+    "rule": "/api/analytics/path/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_paths_hierarchical",
+    "rule": "/api/analytics/paths/structure",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_paths_hierarchical",
+    "rule": "/api/analytics/paths/hierarchical",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_processing_statistics",
+    "rule": "/api/analytics/processing-statistics",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_search_files",
+    "rule": "/api/analytics/search-files",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_storage_stats",
+    "rule": "/api/analytics/storage-stats",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_timeline_data",
+    "rule": "/api/analytics/timeline-data",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analytics.api_word_frequency",
+    "rule": "/api/analytics/word-frequency",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "analytics",
+    "module": "analytics",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "analyze_file_for_events",
+    "rule": "/api/notifications/analyze-file/<int:file_id>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_all_categories_words",
+    "rule": "/api/categories/all-words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_analysts",
+    "rule": "/api/analyst/analysts",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_assign",
+    "rule": "/api/analyst/assign",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_assignments",
+    "rule": "/api/analyst/assignments",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_categories",
+    "rule": "/api/analyst/categories",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_category_create",
+    "rule": "/api/analyst/categories",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_category_delete",
+    "rule": "/api/analyst/categories/<int:category_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_category_update",
+    "rule": "/api/analyst/categories/<int:category_id>",
+    "methods": [
+      "PATCH"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_export",
+    "rule": "/api/analyst/export",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_log",
+    "rule": "/api/analyst/log",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_remove",
+    "rule": "/api/analyst/remove",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_analyst_stats",
+    "rule": "/api/analyst/stats",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analyst_categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_archives_files",
+    "rule": "/api/archives/files",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "archives",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_archives_search",
+    "rule": "/api/archives/search",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "archives",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_autocomplete",
+    "rule": "/api/search/autocomplete",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_categories",
+    "rule": "/api/categories",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_categories_search",
+    "rule": "/api/categories/search",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_category_words",
+    "rule": "/api/categories/<int:category_id>/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_clear_search_history",
+    "rule": "/api/search/history",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_dashboard_categories_filtered",
+    "rule": "/api/dashboard/categories-filtered",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_dashboard_files_filtered",
+    "rule": "/api/dashboard/files-filtered",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_dashboard_keywords_filtered",
+    "rule": "/api/dashboard/keywords-filtered",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_dashboard_sides_filtered",
+    "rule": "/api/dashboard/sides-filtered",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_dashboard_similar_files",
+    "rule": "/api/dashboard/similar-files",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_dashboard_sources_filtered",
+    "rule": "/api/dashboard/sources-filtered",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_dashboard_stats",
+    "rule": "/api/dashboard/stats",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_dashboard_words",
+    "rule": "/api/dashboard/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_delete_category",
+    "rule": "/api/categories/<int:category_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_delete_keyword",
+    "rule": "/api/keywords/<int:keyword_id>/delete",
+    "methods": [
+      "DELETE",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_delete_saved_search",
+    "rule": "/api/search/saved/<int:search_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_email_words_all",
+    "rule": "/api/email-words/all",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_email_words_files",
+    "rule": "/api/email-words/files",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_export_search_filenames",
+    "rule": "/api/search/export-filenames",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_export_search_results",
+    "rule": "/api/search/export",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_file_details",
+    "rule": "/api/file/<int:file_id>/details",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_find_duplicate_categories",
+    "rule": "/api/categories/find-duplicates",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_get_category",
+    "rule": "/api/categories/<int:category_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_get_saved_search",
+    "rule": "/api/search/saved/<int:search_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_get_saved_searches",
+    "rule": "/api/search/saved",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_keywords",
+    "rule": "/api/keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_remove_duplicate_categories",
+    "rule": "/api/categories/remove-duplicates",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_remove_word_from_category",
+    "rule": "/api/categories/<int:category_id>/words/<int:word_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_save_search",
+    "rule": "/api/search/saved",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_search",
+    "rule": "/api/search",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_search_history",
+    "rule": "/api/search/history",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_side_categories_keywords",
+    "rule": "/api/archives/side-categories-keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "archives",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_side_detail",
+    "rule": "/api/sides/<int:side_id>",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_side_duplicate",
+    "rule": "/api/sides/<int:side_id>/duplicate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_sides",
+    "rule": "/api/sides",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_source_categories_keywords",
+    "rule": "/api/archives/source-categories-keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "archives",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_source_detail",
+    "rule": "/api/sources/<int:source_id>",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_source_duplicate",
+    "rule": "/api/sources/<int:source_id>/duplicate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_source_export",
+    "rule": "/api/sources/<int:source_id>/export",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_sources",
+    "rule": "/api/sources",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_suggestions",
+    "rule": "/api/search/suggestions",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_update_saved_search",
+    "rule": "/api/search/saved/<int:search_id>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_words",
+    "rule": "/api/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_words_bulk_delete",
+    "rule": "/api/words/bulk-delete",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_words_create",
+    "rule": "/api/words",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_words_search",
+    "rule": "/api/words/search",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_addresses",
+    "rule": "/api/archives/addresses",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_categories",
+    "rule": "/api/archives/categories",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_geolocation",
+    "rule": "/api/archives/geolocation",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_hashs",
+    "rule": "/api/archives/hashs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_keywords",
+    "rule": "/api/archives/keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_sides",
+    "rule": "/api/archives/sides",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_sources",
+    "rule": "/api/archives/sources",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_titles",
+    "rule": "/api/archives/titles",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_titles_all",
+    "rule": "/api/archives/titles/all",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_api.api_archives_titles_count",
+    "rule": "/api/archives/titles/count",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "archives_api",
+    "module": "archives_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "archives_page",
+    "rule": "/archives",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "archives",
+    "classification": "USER_INTERFACE",
+    "owned_by": "archives",
+    "internal": false
+  },
+  {
+    "endpoint": "auth.api_create_user",
+    "rule": "/api/auth/users",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.api_delete_user",
+    "rule": "/api/auth/users/<int:user_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.api_list_users",
+    "rule": "/api/auth/users",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.api_reset_password",
+    "rule": "/api/auth/users/<int:user_id>/reset-password",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.api_update_user",
+    "rule": "/api/auth/users/<int:user_id>",
+    "methods": [
+      "PATCH"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.change_password",
+    "rule": "/auth/change-password",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.first_admin_create",
+    "rule": "/auth/first-admin",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.first_admin_page",
+    "rule": "/auth/first-admin",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.login",
+    "rule": "/auth/login",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.login_page",
+    "rule": "/auth/login",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.logout",
+    "rule": "/auth/logout",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "auth.me",
+    "rule": "/auth/me",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "auth",
+    "module": "auth",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "bulk_delete_keywords",
+    "rule": "/api/keywords/bulk-delete",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "categories_list",
+    "rule": "/categories",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "USER_INTERFACE",
+    "owned_by": "categories",
+    "internal": false
+  },
+  {
+    "endpoint": "category_add",
+    "rule": "/category/add",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "ACTION",
+    "owned_by": "categories",
+    "internal": false
+  },
+  {
+    "endpoint": "category_check",
+    "rule": "/api/category/check",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "category_words",
+    "rule": "/categories/<int:category_id>/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "USER_INTERFACE",
+    "owned_by": "categories",
+    "internal": false
+  },
+  {
+    "endpoint": "charts_dashboard",
+    "rule": "/dashboard/charts",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "dashboard",
+    "classification": "USER_INTERFACE",
+    "owned_by": "charts_dashboard",
+    "internal": false
+  },
+  {
+    "endpoint": "clear_cache_ui_alias",
+    "rule": "/api/cache/clear",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "comprehensive_dashboard",
+    "rule": "/dashboard/comprehensive",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "dashboard",
+    "classification": "USER_INTERFACE",
+    "owned_by": "comprehensive_dashboard",
+    "internal": false
+  },
+  {
+    "endpoint": "concurrency.dashboard",
+    "rule": "/concurrency/",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "concurrency",
+    "module": "concurrency",
+    "classification": "INTERNAL_PAGE",
+    "owned_by": "concurrency_monitor",
+    "internal": true
+  },
+  {
+    "endpoint": "concurrency.get_async_tasks",
+    "rule": "/concurrency/api/async-tasks",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "concurrency",
+    "module": "concurrency",
+    "classification": "API_ENDPOINT",
+    "owned_by": "concurrency_monitor",
+    "internal": true
+  },
+  {
+    "endpoint": "concurrency.get_metrics",
+    "rule": "/concurrency/api/metrics",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "concurrency",
+    "module": "concurrency",
+    "classification": "API_ENDPOINT",
+    "owned_by": "concurrency_monitor",
+    "internal": true
+  },
+  {
+    "endpoint": "concurrency.get_pools",
+    "rule": "/concurrency/api/pools",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "concurrency",
+    "module": "concurrency",
+    "classification": "API_ENDPOINT",
+    "owned_by": "concurrency_monitor",
+    "internal": true
+  },
+  {
+    "endpoint": "concurrency.get_processes",
+    "rule": "/concurrency/api/processes",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "concurrency",
+    "module": "concurrency",
+    "classification": "API_ENDPOINT",
+    "owned_by": "concurrency_monitor",
+    "internal": true
+  },
+  {
+    "endpoint": "concurrency.get_threads",
+    "rule": "/concurrency/api/threads",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "concurrency",
+    "module": "concurrency",
+    "classification": "API_ENDPOINT",
+    "owned_by": "concurrency_monitor",
+    "internal": true
+  },
+  {
+    "endpoint": "content_analysis.analyze_batch",
+    "rule": "/api/analysis/batch",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "content_analysis",
+    "module": "content_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "content_analysis.analyze_file",
+    "rule": "/api/analysis/file/<int:file_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "content_analysis",
+    "module": "content_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "content_analysis.get_entities",
+    "rule": "/api/analysis/entities/<int:file_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "content_analysis",
+    "module": "content_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "content_analysis.get_sentiment",
+    "rule": "/api/analysis/sentiment/<int:file_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "content_analysis",
+    "module": "content_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "content_analysis.get_statistics",
+    "rule": "/api/analysis/statistics/<int:file_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "content_analysis",
+    "module": "content_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "content_analysis.get_topics",
+    "rule": "/api/analysis/topics/<int:file_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "content_analysis",
+    "module": "content_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "cursor_api.api_query_cursor",
+    "rule": "/api/query/cursor",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "cursor_api",
+    "module": "cursor_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "cursor_api.api_query_integrity",
+    "rule": "/api/query/integrity",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "cursor_api",
+    "module": "cursor_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "cursor_api.api_query_stream",
+    "rule": "/api/query/stream",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "cursor_api",
+    "module": "cursor_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "delete_keyword_api",
+    "rule": "/api/keywords/<int:keyword_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "delete_word_api",
+    "rule": "/api/words/<int:word_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "dismiss_notification",
+    "rule": "/api/notifications/<int:notification_id>/dismiss",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "email_words",
+    "rule": "/email-words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "USER_INTERFACE",
+    "owned_by": "email_words",
+    "internal": false
+  },
+  {
+    "endpoint": "error_dashboard.get_error_metrics",
+    "rule": "/api/errors/metrics",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "error_dashboard",
+    "module": "error_dashboard",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "error_dashboard.get_error_patterns",
+    "rule": "/api/errors/patterns",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "error_dashboard",
+    "module": "error_dashboard",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "error_dashboard.get_error_stats",
+    "rule": "/api/errors/stats",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "error_dashboard",
+    "module": "error_dashboard",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "error_dashboard.get_recent_errors",
+    "rule": "/api/errors/recent",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "error_dashboard",
+    "module": "error_dashboard",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "experience_action",
+    "rule": "/api/experience/actions/<action_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "experience_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "experience_actions",
+    "rule": "/api/experience/actions",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "experience_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "experience_contract",
+    "rule": "/api/experience/contracts/<interface_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "experience_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "experience_contracts",
+    "rule": "/api/experience/contracts",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "experience_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "experience_coverage",
+    "rule": "/api/experience/coverage",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "experience_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "experience_inspect",
+    "rule": "/api/experience/inspect",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "experience_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "experience_permissions",
+    "rule": "/api/experience/permissions",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "experience_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "export_keywords",
+    "rule": "/api/keywords/export",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "favicon",
+    "rule": "/favicon.ico",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "app",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_classification_page",
+    "rule": "/analysis/classification",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analytics",
+    "classification": "USER_INTERFACE",
+    "owned_by": "classification",
+    "internal": false
+  },
+  {
+    "endpoint": "files.api_cancel_task",
+    "rule": "/upload/cancel/<task_id>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "ACTION",
+    "owned_by": "input_ingestion",
+    "internal": false
+  },
+  {
+    "endpoint": "files.api_file_type_statistics",
+    "rule": "/api/files/types",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.bulk_delete_files",
+    "rule": "/files/bulk-delete",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "ACTION",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.bulk_export_files",
+    "rule": "/files/export",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "ACTION",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.delete_file",
+    "rule": "/file/<int:file_id>/delete",
+    "methods": [
+      "DELETE",
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "ACTION",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.export_file_names",
+    "rule": "/api/files/names/export",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.export_selected_contacts",
+    "rule": "/api/files/extract-contacts/export",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.export_selected_first_pages",
+    "rule": "/api/files/first-pages/export",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.file_chart_data",
+    "rule": "/file/<int:file_id>/chart-data",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.file_content_lazy",
+    "rule": "/file/<int:file_id>/content",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.file_content_page",
+    "rule": "/file/<int:file_id>/content/page",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.file_detail",
+    "rule": "/file/<int:file_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.file_export",
+    "rule": "/api/files/<int:file_id>/export",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.file_full_content",
+    "rule": "/file/<int:file_id>/full-content",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.file_search_all_pages",
+    "rule": "/file/<int:file_id>/search",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.file_types_page",
+    "rule": "/files/types",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.files_list",
+    "rule": "/files",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.get_active_tasks",
+    "rule": "/upload/active-tasks",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": "input_ingestion",
+    "internal": true
+  },
+  {
+    "endpoint": "files.group_similar_search_results",
+    "rule": "/api/search/group-similar",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.original_file_content",
+    "rule": "/api/file/<int:file_id>/original/content",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.original_file_info",
+    "rule": "/api/file/<int:file_id>/original",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.pause_task",
+    "rule": "/upload/pause/<task_id>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "ACTION",
+    "owned_by": "input_ingestion",
+    "internal": false
+  },
+  {
+    "endpoint": "files.resume_task",
+    "rule": "/upload/resume/<task_id>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "ACTION",
+    "owned_by": "input_ingestion",
+    "internal": false
+  },
+  {
+    "endpoint": "files.serve_file",
+    "rule": "/api/file/serve",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.serve_file_by_id",
+    "rule": "/api/file/<int:file_id>/serve",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "files.upload_page",
+    "rule": "/upload",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "REDIRECT",
+    "owned_by": "input_ingestion",
+    "internal": false
+  },
+  {
+    "endpoint": "files.upload_progress",
+    "rule": "/upload/progress/<task_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": "input_ingestion",
+    "internal": true
+  },
+  {
+    "endpoint": "get_cache_stats_ui_alias",
+    "rule": "/api/cache/stats",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "get_csrf_token",
+    "rule": "/api/csrf-token",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "app",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "get_keyword",
+    "rule": "/api/keywords/<int:keyword_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "get_notification",
+    "rule": "/api/notifications/<int:notification_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "get_notification_stats",
+    "rule": "/api/notifications/stats",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "get_notifications",
+    "rule": "/api/notifications",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "get_paginated_notifications",
+    "rule": "/api/notifications/paginated",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications_page",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "get_upcoming_events",
+    "rule": "/api/notifications/upcoming",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "get_word",
+    "rule": "/api/words/<int:word_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "health.health",
+    "rule": "/health",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "health",
+    "module": "health",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "import_export.batch_import_files",
+    "rule": "/api/import-export/batch-import",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "import_export",
+    "module": "import_export",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "import_export.batch_import_from_csv",
+    "rule": "/api/import-export/batch-import/csv",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "import_export",
+    "module": "import_export",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "import_export.export_database_backup",
+    "rule": "/api/import-export/backup/export",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "import_export",
+    "module": "import_export",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "import_export.export_settings",
+    "rule": "/api/import-export/settings/export",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "import_export",
+    "module": "import_export",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "import_export.import_database_backup",
+    "rule": "/api/import-export/backup/import",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "import_export",
+    "module": "import_export",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "import_export.import_settings",
+    "rule": "/api/import-export/settings/import",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "import_export",
+    "module": "import_export",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "import_export_page",
+    "rule": "/import-export",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "import_export",
+    "classification": "USER_INTERFACE",
+    "owned_by": "import_export_console",
+    "internal": false
+  },
+  {
+    "endpoint": "index",
+    "rule": "/",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "dashboard",
+    "classification": "USER_INTERFACE",
+    "owned_by": "dashboard",
+    "internal": false
+  },
+  {
+    "endpoint": "interface_detail",
+    "rule": "/api/interfaces/<interface_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "interfaces_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "interfaces_coverage",
+    "rule": "/api/interfaces/coverage",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "interfaces_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "interfaces_inventory",
+    "rule": "/api/interfaces/inventory",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "interfaces_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "interfaces_registry",
+    "rule": "/api/interfaces",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "interfaces_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "keyword_check",
+    "rule": "/api/keyword/check",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "keyword_detail",
+    "rule": "/keywords/<int:keyword_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "USER_INTERFACE",
+    "owned_by": "keywords",
+    "internal": false
+  },
+  {
+    "endpoint": "keywords_add",
+    "rule": "/keywords/add",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "USER_INTERFACE",
+    "owned_by": "keywords",
+    "internal": false
+  },
+  {
+    "endpoint": "keywords_list",
+    "rule": "/keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "USER_INTERFACE",
+    "owned_by": "keywords",
+    "internal": false
+  },
+  {
+    "endpoint": "mark_notification_read",
+    "rule": "/api/notifications/<int:notification_id>/read",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "merge_all_duplicates",
+    "rule": "/api/keywords/merge-all-duplicates",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "merge_duplicates",
+    "rule": "/api/keywords/merge-duplicates",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "notifications_page",
+    "rule": "/notifications",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications_page",
+    "classification": "USER_INTERFACE",
+    "owned_by": "notifications",
+    "internal": false
+  },
+  {
+    "endpoint": "operations_api.api_cancel_job",
+    "rule": "/api/jobs/<job_id>/cancel",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_chunked_cancel",
+    "rule": "/api/input/uploads/chunked/<upload_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_chunked_chunk",
+    "rule": "/api/input/uploads/chunked/<upload_id>/chunk/<int:index>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_chunked_complete",
+    "rule": "/api/input/uploads/chunked/<upload_id>/complete",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_chunked_start",
+    "rule": "/api/input/uploads/chunked/start",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_chunked_status",
+    "rule": "/api/input/uploads/chunked/<upload_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_create_import_job",
+    "rule": "/api/import/jobs",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_create_input_job",
+    "rule": "/api/input/jobs",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_delete_job",
+    "rule": "/api/jobs/<job_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_get_job",
+    "rule": "/api/jobs/<job_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_import_preview",
+    "rule": "/api/import/preview",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_import_validate",
+    "rule": "/api/import/validate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_input_create_side",
+    "rule": "/api/input/sides",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_input_create_source",
+    "rule": "/api/input/sources",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_input_options_info",
+    "rule": "/api/input/options-info",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_input_sides",
+    "rule": "/api/input/sides",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_input_sources",
+    "rule": "/api/input/sources",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_input_upload",
+    "rule": "/api/input/uploads",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_job_errors",
+    "rule": "/api/jobs/<job_id>/errors",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_job_events",
+    "rule": "/api/jobs/<job_id>/events",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_job_results",
+    "rule": "/api/jobs/<job_id>/results",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_job_stream",
+    "rule": "/api/jobs/stream",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_jobs_summary",
+    "rule": "/api/jobs/summary",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_list_import_jobs",
+    "rule": "/api/import/jobs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_list_input_jobs",
+    "rule": "/api/input/jobs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_list_jobs",
+    "rule": "/api/jobs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_pause_job",
+    "rule": "/api/jobs/<job_id>/pause",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_resume_job",
+    "rule": "/api/jobs/<job_id>/resume",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_api.api_retry_job",
+    "rule": "/api/jobs/<job_id>/retry",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "operations_api",
+    "module": "operations_api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "operations_import_page",
+    "rule": "/operations/import",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "operations_pages",
+    "classification": "USER_INTERFACE",
+    "owned_by": "import_center",
+    "internal": false
+  },
+  {
+    "endpoint": "operations_input_page",
+    "rule": "/operations/input",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "operations_pages",
+    "classification": "USER_INTERFACE",
+    "owned_by": "input_ingestion",
+    "internal": false
+  },
+  {
+    "endpoint": "operations_job_detail_page",
+    "rule": "/operations/jobs/<job_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "operations_pages",
+    "classification": "USER_INTERFACE",
+    "owned_by": "jobs",
+    "internal": false
+  },
+  {
+    "endpoint": "operations_jobs_page",
+    "rule": "/operations/jobs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "operations_pages",
+    "classification": "USER_INTERFACE",
+    "owned_by": "jobs",
+    "internal": false
+  },
+  {
+    "endpoint": "path_analysis_page",
+    "rule": "/analytics/path-analysis",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "analytics",
+    "classification": "USER_INTERFACE",
+    "owned_by": "path_analysis",
+    "internal": false
+  },
+  {
+    "endpoint": "paths.api_create_path",
+    "rule": "/api/paths",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "paths",
+    "module": "paths",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "paths.api_get_path",
+    "rule": "/api/paths/<int:path_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "paths",
+    "module": "paths",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "paths.api_list_paths",
+    "rule": "/api/paths",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "paths",
+    "module": "paths",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "performance.analyze_performance",
+    "rule": "/api/performance/analyze",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "performance",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "performance.cleanup_cache",
+    "rule": "/api/performance/cache/cleanup",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "performance",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "performance.clear_cache",
+    "rule": "/api/performance/cache/clear",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "performance",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "performance.get_cache_stats",
+    "rule": "/api/performance/cache/stats",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "performance",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "performance.get_index_analysis",
+    "rule": "/api/performance/indexes",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "performance",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "performance.get_performance_report",
+    "rule": "/api/performance/report",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "performance",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "performance.get_slow_queries",
+    "rule": "/api/performance/queries/slow",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "performance",
+    "module": "performance",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "preview.get_file_preview",
+    "rule": "/api/preview/<int:file_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "preview",
+    "module": "preview",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "preview.get_file_preview_image",
+    "rule": "/api/preview/<int:file_id>/image",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "preview",
+    "module": "preview",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "refresh_notifications",
+    "rule": "/api/notifications/refresh",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "retry_file_analysis",
+    "rule": "/api/analysis/retry/<int:file_id>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "saved_searches_page",
+    "rule": "/search/saved",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "USER_INTERFACE",
+    "owned_by": "search",
+    "internal": false
+  },
+  {
+    "endpoint": "scan_for_notifications",
+    "rule": "/api/notifications/scan",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "notifications",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "search_advanced",
+    "rule": "/search/advanced",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "USER_INTERFACE",
+    "owned_by": "search",
+    "internal": false
+  },
+  {
+    "endpoint": "search_advanced_api",
+    "rule": "/search/advanced",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "ACTION",
+    "owned_by": "search",
+    "internal": false
+  },
+  {
+    "endpoint": "search_enhanced_page",
+    "rule": "/search/enhanced",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "USER_INTERFACE",
+    "owned_by": "search",
+    "internal": false
+  },
+  {
+    "endpoint": "search_page",
+    "rule": "/search",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "USER_INTERFACE",
+    "owned_by": "search",
+    "internal": false
+  },
+  {
+    "endpoint": "set_language",
+    "rule": "/set_language/<language>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "common",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.batch_update_settings",
+    "rule": "/api/settings/batch",
+    "methods": [
+      "POST",
+      "PUT"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.create_backup",
+    "rule": "/api/settings/backups",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.export_settings",
+    "rule": "/api/settings/export",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.get_all_settings",
+    "rule": "/api/settings/",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.get_category_settings",
+    "rule": "/api/settings/<category>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.get_database_settings",
+    "rule": "/api/settings/database",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.get_interfaces",
+    "rule": "/api/settings/interfaces",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.get_single_setting",
+    "rule": "/api/settings/<category>/<key>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.get_storage_settings",
+    "rule": "/api/settings/storage",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.get_theme_settings",
+    "rule": "/api/settings/theme",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.import_settings",
+    "rule": "/api/settings/import",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.list_backups",
+    "rule": "/api/settings/backups",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.reload_settings",
+    "rule": "/api/settings/reload",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.remove_logo",
+    "rule": "/api/settings/logo/remove",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.reset_interfaces",
+    "rule": "/api/settings/interfaces/reset",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.reset_to_defaults",
+    "rule": "/api/settings/reset",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.restore_backup",
+    "rule": "/api/settings/backups/<filename>/restore",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.settings_page",
+    "rule": "/api/settings/page",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": "settings",
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.theme_custom_css",
+    "rule": "/api/settings/theme/custom_css",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.toggle_interface",
+    "rule": "/api/settings/interfaces/<interface_id>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.update_database_settings",
+    "rule": "/api/settings/database",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.update_single_setting",
+    "rule": "/api/settings/<category>/<key>",
+    "methods": [
+      "POST",
+      "PUT"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.update_storage_setting",
+    "rule": "/api/settings/storage/<key>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.update_theme_bulk",
+    "rule": "/api/settings/theme/bulk",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.update_theme_setting",
+    "rule": "/api/settings/theme/<key>",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.upload_logo",
+    "rule": "/api/settings/logo/upload",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_api.validate_settings",
+    "rule": "/api/settings/validate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "settings_api",
+    "module": "routes",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "settings_page_direct",
+    "rule": "/settings",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "routes",
+    "classification": "USER_INTERFACE",
+    "owned_by": "settings",
+    "internal": false
+  },
+  {
+    "endpoint": "setup.check_setup_status",
+    "rule": "/api/setup/check",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "setup",
+    "module": "setup",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "setup.run_installation",
+    "rule": "/api/setup/install",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "setup",
+    "module": "setup",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "setup.setup_page",
+    "rule": "/setup",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "setup",
+    "module": "setup",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "setup.system_check",
+    "rule": "/api/setup/system-check",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "setup",
+    "module": "setup",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "setup.test_database",
+    "rule": "/api/setup/test-database",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "setup",
+    "module": "setup",
+    "classification": "SYSTEM_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "side_add",
+    "rule": "/side/add",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "sides",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sides",
+    "internal": false
+  },
+  {
+    "endpoint": "side_categories_keywords",
+    "rule": "/sides/<int:side_id>/categories-keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "sides",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sides",
+    "internal": false
+  },
+  {
+    "endpoint": "side_detail",
+    "rule": "/sides/<int:side_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "sides",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sides",
+    "internal": false
+  },
+  {
+    "endpoint": "side_edit",
+    "rule": "/sides/<int:side_id>/edit",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "sides",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sides",
+    "internal": false
+  },
+  {
+    "endpoint": "sides_list",
+    "rule": "/sides",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "sides",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sides",
+    "internal": false
+  },
+  {
+    "endpoint": "source_add",
+    "rule": "/source/add",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "sources",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sources",
+    "internal": false
+  },
+  {
+    "endpoint": "source_categories_keywords",
+    "rule": "/sources/<int:source_id>/categories-keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "sources",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sources",
+    "internal": false
+  },
+  {
+    "endpoint": "source_detail",
+    "rule": "/sources/<int:source_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "sources",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sources",
+    "internal": false
+  },
+  {
+    "endpoint": "source_edit",
+    "rule": "/sources/<int:source_id>/edit",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "sources",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sources",
+    "internal": false
+  },
+  {
+    "endpoint": "sources_list",
+    "rule": "/sources",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "sources",
+    "classification": "USER_INTERFACE",
+    "owned_by": "sources",
+    "internal": false
+  },
+  {
+    "endpoint": "translations.get_available_locales",
+    "rule": "/api/translations/available",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "translations",
+    "module": "translations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "translations.get_current_locale",
+    "rule": "/api/translations/locale",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "translations",
+    "module": "translations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "translations.get_i18n_catalog",
+    "rule": "/api/i18n/catalog",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "translations",
+    "module": "translations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "translations.get_translations",
+    "rule": "/api/translations",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "translations",
+    "module": "translations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "translations.save_translation_management_catalog_api",
+    "rule": "/api/translations/manage/catalog",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "translations",
+    "module": "translations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "translations.translation_management_catalog_api",
+    "rule": "/api/translations/manage/catalog",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "translations",
+    "module": "translations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "translations.translation_management_page",
+    "rule": "/translations/manage",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "translations",
+    "module": "translations",
+    "classification": "USER_INTERFACE",
+    "owned_by": "translation_manager",
+    "internal": false
+  },
+  {
+    "endpoint": "update_keyword",
+    "rule": "/api/keywords/<int:keyword_id>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "update_keyword_associations",
+    "rule": "/api/keywords/update-associations",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "update_word_api",
+    "rule": "/api/words/<int:word_id>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "users_page",
+    "rule": "/users",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "auth",
+    "classification": "USER_INTERFACE",
+    "owned_by": "users",
+    "internal": false
+  },
+  {
+    "endpoint": "word_detail",
+    "rule": "/words/<int:word_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "USER_INTERFACE",
+    "owned_by": "words",
+    "internal": false
+  },
+  {
+    "endpoint": "words_add",
+    "rule": "/words/add",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "USER_INTERFACE",
+    "owned_by": "words",
+    "internal": false
+  },
+  {
+    "endpoint": "words_categorys_add",
+    "rule": "/api/words-categorys/add",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "words_list",
+    "rule": "/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "words",
+    "classification": "USER_INTERFACE",
+    "owned_by": "words",
+    "internal": false
+  }
+]

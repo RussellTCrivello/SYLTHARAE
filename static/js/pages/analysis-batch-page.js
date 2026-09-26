@@ -102,9 +102,10 @@ async function startAnalysis() {
             requestBody.ui_settings = currentTemplateConfig.ui;
         }
         
+        // AUDIT-CSRF-01: every mutating request must carry the CSRF token.
         const response = await fetch('/analysis/batch/process', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': (window.CSRF && window.CSRF.getToken()) || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''},
             body: JSON.stringify(requestBody)
         });
         
@@ -302,7 +303,7 @@ async function retryFile(fileId, buttonElement) {
     try {
         const response = await fetch(`/api/analysis/retry/${fileId}`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': (window.CSRF && window.CSRF.getToken()) || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''}
         });
         
         const data = await response.json();

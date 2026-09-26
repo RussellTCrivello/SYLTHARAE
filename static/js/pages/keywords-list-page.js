@@ -1250,9 +1250,10 @@ if (typeof window.translations === 'undefined') {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + translations.merging;
         
+        // AUDIT-CSRF-01: the request was rejected (400) without the token.
         fetch('/api/keywords/merge-all-duplicates', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (window.CSRF && window.CSRF.getToken()) || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' }
         })
         .then(response => response.json())
         .then(data => {

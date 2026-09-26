@@ -1661,9 +1661,10 @@ async function saveToSearchHistory(query, filters) {
     if (!query || !query.trim()) return; // Don't save empty queries
     
     try {
+        // AUDIT-CSRF-01: search history was never saved without the token.
         const response = await fetch('/api/search/history', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (window.CSRF && window.CSRF.getToken()) || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' },
             body: JSON.stringify({ 
                 query: query.trim(),
                 filters: filters || {},

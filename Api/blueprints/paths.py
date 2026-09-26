@@ -1,9 +1,13 @@
+import logging
+
 from core.errors import client_error
 from flask import Blueprint, request, jsonify
 
 from Api.models.paths import PathCreate
 from Api.services.paths import PathsService
 from Api.repositories.paths import PathsRepository
+
+logger = logging.getLogger(__name__)
 
 
 paths_bp = Blueprint("paths", __name__, url_prefix="/api/paths")

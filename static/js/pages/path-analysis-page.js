@@ -3,6 +3,9 @@
  * Extracted from Analysis/path_analysis.html
  */
 
+// AUDIT-XSS-01: path segments, words and file names are ingested data.
+import { escapeAttribute } from '../modules/core/utils.js';
+
 // Load translations from JSON script tag
 let translations = {};
 
@@ -383,7 +386,7 @@ function createPathNode(node, depth = 0) {
     item.innerHTML = `
         ${expandBtnHtml}
         <i class="bi ${iconClass} icon" style="${iconColor}"></i>
-        <span class="path-name">${node.name}</span>
+        <span class="path-name">${escapeHtml(node.name)}</span>
         <span class="path-stats">${fileCount}</span>
     `;
     
@@ -1703,7 +1706,7 @@ function renderWordCloud(words) {
         const fontSize = Math.min(0.875 + (fileCount / maxCount) * 0.5, 1.5);
         wordItem.style.fontSize = fontSize + 'rem';
         wordItem.innerHTML = `
-            ${wordText} <span class="count">(${fileCount})</span>
+            ${escapeHtml(wordText)} <span class="count">(${fileCount})</span>
         `;
         wordItem.onclick = () => {
             // Navigate to search with this word
@@ -2060,9 +2063,9 @@ function renderFiles(files) {
             <div class="file-card-header">
                 <div class="file-card-icon">${fileIcon}</div>
                 <div class="file-card-info">
-                    <div class="file-card-name" title="${file.name}">${file.name}</div>
+                    <div class="file-card-name" title="${escapeAttribute(file.name)}">${escapeHtml(file.name)}</div>
                     <div class="file-card-meta">
-                        <span><i class="bi bi-file-earmark"></i> ${file.type || translations.unknownType}</span>
+                        <span><i class="bi bi-file-earmark"></i> ${escapeHtml(file.type || translations.unknownType)}</span>
                         <span><i class="bi bi-hdd"></i> ${formatFileSize(file.size)}</span>
                     </div>
                 </div>
@@ -2070,7 +2073,7 @@ function renderFiles(files) {
             <div class="file-card-meta">
                 <span><i class="bi bi-calendar"></i> ${file.created ? new Date(file.created).toLocaleDateString() : translations.nA}</span>
             </div>
-            <span class="file-status-badge ${statusClass}">${file.status}</span>
+            <span class="file-status-badge ${statusClass}">${escapeHtml(file.status)}</span>
         `;
         
         grid.appendChild(card);
@@ -2603,12 +2606,12 @@ function renderModalFiles(files, category) {
                 <div class="modal-file-header">
                     <div class="modal-file-icon">${fileIcon}</div>
                     <div class="modal-file-info">
-                        <div class="modal-file-name">${file.name}</div>
+                        <div class="modal-file-name">${escapeHtml(file.name)}</div>
                         <div class="modal-file-meta">
-                            <span><i class="bi bi-file-earmark"></i> ${file.type || translations.unknownType}</span>
+                            <span><i class="bi bi-file-earmark"></i> ${escapeHtml(file.type || translations.unknownType)}</span>
                             <span><i class="bi bi-hdd"></i> ${formatFileSize(file.size)}</span>
                             ${file.created ? `<span><i class="bi bi-calendar"></i> ${new Date(file.created).toLocaleDateString()}</span>` : ''}
-                            <span><i class="bi bi-circle-fill" style="font-size: 0.5rem; color: ${file.status === translations.read ? 'var(--success-color)' : 'var(--danger-color)'};"></i> ${file.status}</span>
+                            <span><i class="bi bi-circle-fill" style="font-size: 0.5rem; color: ${file.status === translations.read ? 'var(--success-color)' : 'var(--danger-color)'};"></i> ${escapeHtml(file.status)}</span>
                         </div>
                     </div>
                 </div>
@@ -3142,12 +3145,12 @@ function renderWordFiles(files, wordText, wordDisplay, categoryId = null, catego
                 <div class="modal-file-header">
                     <div class="modal-file-icon">${fileIcon}</div>
                     <div class="modal-file-info">
-                        <div class="modal-file-name">${file.name}</div>
+                        <div class="modal-file-name">${escapeHtml(file.name)}</div>
                         <div class="modal-file-meta">
-                            <span><i class="bi bi-file-earmark"></i> ${file.type || translations.unknownType}</span>
+                            <span><i class="bi bi-file-earmark"></i> ${escapeHtml(file.type || translations.unknownType)}</span>
                             <span><i class="bi bi-hdd"></i> ${formatFileSize(file.size)}</span>
                             ${file.created ? `<span><i class="bi bi-calendar"></i> ${new Date(file.created).toLocaleDateString()}</span>` : ''}
-                            <span><i class="bi bi-circle-fill" style="font-size: 0.5rem; color: ${file.status === translations.read ? 'var(--success-color)' : 'var(--danger-color)'};"></i> ${file.status}</span>
+                            <span><i class="bi bi-circle-fill" style="font-size: 0.5rem; color: ${file.status === translations.read ? 'var(--success-color)' : 'var(--danger-color)'};"></i> ${escapeHtml(file.status)}</span>
                         </div>
                     </div>
                 </div>

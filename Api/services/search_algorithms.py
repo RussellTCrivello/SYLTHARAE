@@ -153,8 +153,6 @@ class QueryExpander:
         # Common word variations
         self.variations = {
             'analyze': ['analysis', 'analyzing', 'analyzed'],
-            'analyze': ['analysis', 'analyzing', 'analyzed'],
-            'create': ['creation', 'creating', 'created'],
             'create': ['creation', 'creating', 'created'],
         }
     

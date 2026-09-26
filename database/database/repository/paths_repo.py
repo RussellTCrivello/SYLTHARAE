@@ -15,7 +15,7 @@ class PathsRepository(BaseRepository):
         file_status="Unread",
         context_id=None,
         file_date=None,
-        date_creation=date.today(),
+        date_creation=None,
         coordinates="",
         extraction_provenance=None,
         processing_status="discovered",
@@ -33,6 +33,8 @@ class PathsRepository(BaseRepository):
         ``hierarchy_path`` record the container lineage of extracted
         occurrences.
         """
+        # AUDIT-DATE-01: default resolved per call, not once at import time.
+        date_creation = date_creation or date.today()
         params = (
             file_name,
             file_path,

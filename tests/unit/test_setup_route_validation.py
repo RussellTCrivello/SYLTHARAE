@@ -50,6 +50,8 @@ def test_setup_wizard_page_renders_its_required_controls(setup_client, monkeypat
 def test_database_test_requires_a_json_object_and_validates_before_connecting(
     setup_client, monkeypatch
 ):
+    # The endpoint is only open during the first-run window (AUDIT-SETUP-01).
+    monkeypatch.setattr(setup_routes, "_is_initialized", lambda: False)
     calls = []
     monkeypatch.setattr(
         "core.installer.test_database_connection",

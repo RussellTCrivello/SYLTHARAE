@@ -129,6 +129,14 @@ _SQL = {
         WHERE h.hash = %s AND c.source_id = %s
         LIMIT 1
     """,
+    "hash_live_for_source_side": """
+        SELECT 1
+        FROM paths p
+        JOIN hash_contexts c ON c.id = p.context_id
+        JOIN hashs h ON h.id = c.hash_id
+        WHERE h.hash = %s AND c.source_id = %s AND c.side_id = %s
+        LIMIT 1
+    """,
     "hash_live_anywhere": """
         SELECT 1
         FROM paths p
@@ -343,12 +351,21 @@ class DeduplicationService:
         return (path_id is not None, path_id)
 
     def hash_exists_with_live_path(
-        self, content_hash: str, source_id: Optional[int] = None
+        self, content_hash: str, source_id: Optional[int] = None,
+        side_id: Optional[int] = None,
     ) -> bool:
-        """True when the content has any live occurrence (optionally scoped)."""
+        """True when the content has any live occurrence (optionally scoped).
+
+        ``side_id`` narrows a source-scoped check to one (source, side)
+        context; it is ignored without a ``source_id``.
+        """
         with self._cursor() as (_, cur):
             if source_id is None:
                 cur.execute(_SQL["hash_live_anywhere"], (content_hash,))
+            elif side_id is not None:
+                cur.execute(
+                    _SQL["hash_live_for_source_side"], (content_hash, source_id, side_id)
+                )
             else:
                 cur.execute(
                     _SQL["hash_live_for_source"], (content_hash, source_id)

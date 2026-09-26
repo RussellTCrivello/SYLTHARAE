@@ -71,6 +71,22 @@ template_dir = os.path.join(project_root, 'templates')
 static_dir = os.path.join(project_root, 'static')
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
+# AUDIT-PROXY-01: behind a TLS-terminating reverse proxy every request
+# arrives from the proxy's address over plain HTTP, so rate limits, lockouts
+# and the audit log would see one client and ``request.is_secure`` would be
+# false. Trust X-Forwarded-For/-Proto/-Host only when the operator declares
+# how many proxies sit in front of the app (default 0 = trust nothing, since
+# a directly exposed server must not believe client-supplied headers).
+try:
+    _trusted_proxies = max(0, int(os.environ.get('TRUSTED_PROXY_COUNT', '0') or 0))
+except ValueError:
+    _trusted_proxies = 0
+if _trusted_proxies:
+    from werkzeug.middleware.proxy_fix import ProxyFix
+
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=_trusted_proxies,
+                            x_proto=_trusted_proxies, x_host=_trusted_proxies)
+
 
 # Configure Flask-Babel for internationalization
 # RTL languages: ar, fa, he, ur
@@ -359,7 +375,11 @@ def add_security_headers(response):
     response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
     response.headers.setdefault('Cross-Origin-Opener-Policy', 'same-origin')
     # HSTS is only meaningful over TLS; harmless otherwise but only sent in production.
-    if app.config.get('FLASK_ENV') == 'production':
+    # AUDIT-HSTS-01: this used app.config['FLASK_ENV'], which is never set
+    # (Flask 3 removed it), so HSTS was never sent. Read the documented
+    # environment variable, and only send the header on a TLS request.
+    if (os.environ.get('FLASK_ENV', 'production').strip().lower() == 'production'
+            and request.is_secure):
         response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
     return response
 
