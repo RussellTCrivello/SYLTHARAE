@@ -628,7 +628,7 @@ Shared installation services — single source of truth for all setup operations
 - `ensure_runtime_directories() -> Dict[str, str]` - Create all required runtime directories. Returns name→path mapping.
 - `mark_system_initialized() -> bool` - Write the filesystem marker that indicates a successful installation.
 - `verify_installation(host: str = 'localhost', port: int = 5432, user: str = 'postgres', password: str = '', database: str = 'analysis') -> Dict[str, Any]` - Run post-install checks and return structured results.
-- `run_installation(config: Dict[str, str]) -> Dict[str, Any]` - Execute the complete installation sequence.
+- `run_installation(config: Dict[str, str], client_ip: str = '') -> Dict[str, Any]` - Execute the complete installation sequence.
 
 ### `core/interfaces/__init__.py`
 
