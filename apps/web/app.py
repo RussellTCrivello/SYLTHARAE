@@ -55,8 +55,11 @@ try:
     sys.stdout.reconfigure(line_buffering=True)
 except (AttributeError, ValueError, OSError):
     pass
+# AUDIT-CONF-01: LOG_LEVEL was written to .env by the installer and documented
+# in .env.example, but the level was hard-coded to INFO.
+_log_level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").strip().upper(), None)
 logging.basicConfig(
-    level=logging.INFO,
+    level=_log_level if isinstance(_log_level, int) else logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
