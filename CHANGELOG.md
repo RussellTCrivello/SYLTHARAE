@@ -33,6 +33,7 @@ Read [Upgrading from v2.1.1](#upgrading-from-v211) first.
 - Static files are sent `Cache-Control: no-cache` (revalidated with ETag) instead of a contradictory `no-cache, max-age=31536000, immutable` (CACHE-02). Browsers already revalidated; the one-year part would have kept old JavaScript after an upgrade had it been honoured.
 
 ### Fixes
+- **Word documents lost paragraphs** (DOCX-DROP-01). The DOCX reader silently left out some paragraphs: 12-18 % of a 40-section document in testing, a different set each time, with no error and a completed job. It now reads every paragraph and table, in order. Affected since v2.1.0; see *Upgrading* for text that is already stored.
 - The sidebar showed "Version 2.0.0" on every release: nothing supplied the version to templates. It now shows the running version, and so does the sign-in page.
 - File page: the **Full screen** button did nothing, because its function was module-scoped. The metadata tab's **Save Changes** button saved nothing but announced "Metadata saved successfully!", and no route stores a file's name or notes. That button and the Notes box are removed, and File Name is shown read-only.
 - **`/api/analysis/*` answered 500 on every request** (ANALYSIS-01): the routes called engine methods that never existed. `file`, `statistics` and `batch` now work; unknown files are 404, and engine errors no longer reach the client. `sentiment`, `topics` and `entities` were never implemented and now answer 501.
@@ -72,6 +73,7 @@ site in particular.
 - **Check that the server still starts.** A setting that used to be ignored now stops it (exit status 2), with a message that says what to change: for example a non-numeric `TRUSTED_PROXY_COUNT`.
 - **systemd**: if you based a unit on v2.1.1's, compare it with `deploy/systemd/syltharae.service` (every path it writes is listed under `ReadWritePaths`).
 - **OCR**: after upgrading, run `python tools/ci/ocr_selfcheck.py --require tesseract` if you use Tesseract. Files ingested earlier keep the text and provenance recorded at the time. They are not re-read: re-submitting identical files is recognised as a duplicate, and reprocessing is registered but not built (`files.reprocess`; see REPROCESS-01 in [AUDIT_REPORT.md](AUDIT_REPORT.md#residual-items-at-v220)).
+- **Word documents: re-import affected `.docx` files** (DOCX-DROP-02). Text stored for `.docx` files by an earlier version may lack paragraphs, so they are missing from search and the file page. Upgrading does not repair it, and importing the same file again does not either, because identical files share their stored text. For each affected document, delete every copy of it, then import it again.
 - API clients: `POST /auth/change-password` requires `current_password`; `/api/analysis/batch` takes only `{"file_ids": [...]}`.
 - Database migrations: none.
 

@@ -55,7 +55,7 @@ code uses when the variable is unset.
 | `SECURITY_LOCKOUT_MINUTES` | `15` | Lockout duration. |
 | `SECURITY_SESSION_HOURS` | `12` | Absolute session lifetime. |
 | `SECURITY_SESSION_IDLE_HOURS` | `6` | Idle timeout. |
-| `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_PER_HOUR` | `60` / `600` | Default per-client API limits. Some endpoints are stricter: login is 10/min, and source/side creation is 20/min. |
+| `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_PER_HOUR` | `60` / `600` | Default per-client limits for endpoints without their own. Many set a stricter one in code (`@limiter.limit`), for example sign-in 10/min, search 30/min, search export 6/min, ingestion and import jobs 10/min, source and side creation 20/min; the reads interactive pages repeat use `INTERACTIVE_READ_LIMIT` (600/min). |
 | `RATELIMIT_STORAGE_URI` | `memory://` | Flask-Limiter storage. Memory is per process, which is correct for a single Waitress process. Use `redis://…` if you run several processes. |
 
 See [SECURITY.md](SECURITY.md) for the model these settings feed.
