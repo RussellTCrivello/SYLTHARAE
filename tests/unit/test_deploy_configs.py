@@ -125,6 +125,30 @@ def _unit():
     return parser
 
 
+def test_systemd_unit_names_every_runtime_file_kept_in_the_install_dir():
+    """ReadWritePaths grants /opt/syltharae because the app writes there.
+
+    The unit's comment is the operator's list of what gets written; each path
+    is derived from the code's own constants so the list cannot drift.
+    """
+    from Api.services import search_history
+    from core.path_utils import setup_path
+
+    root = Path(__file__).resolve().parents[2]
+    written = [
+        search_history.HISTORY_FILE,
+        search_history.SAVED_SEARCHES_FILE,
+        Path(setup_path()) / ".app_instance.lock",
+        root / "data" / "settings.json",      # settings_manager: first store location
+        root / "data" / "settings_backups",   # settings_manager: backups beside it
+    ]
+    comment = " ".join(line.lstrip("# ") for line in UNIT_TEXT.splitlines() if line.startswith("#"))
+    for path in written:
+        rel = Path(path).resolve().relative_to(root).as_posix()
+        assert rel in comment, f"{rel} is written at runtime but not listed in the unit"
+    assert "/opt/syltharae" in _unit()["Service"]["ReadWritePaths"]
+
+
 def test_systemd_unit_runs_one_hardened_process():
     service = _unit()["Service"]
     assert service["ExecStart"].endswith("python run_web.py")
