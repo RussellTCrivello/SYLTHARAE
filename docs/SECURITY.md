@@ -38,7 +38,12 @@ and a compromised administrator account.
   account for `SECURITY_LOCKOUT_MINUTES` (15). Both sign-in and password
   changes count. The sign-in and change-password endpoints are each limited
   to 10 requests per minute per client, and answer `429` JSON
-  (`code: rate_limited`) when the limit is hit.
+  (`code: rate_limited`) when the limit is hit. Every other endpoint has the
+  default limits (`RATE_LIMIT_PER_MINUTE`, `RATE_LIMIT_PER_HOUR`), except the
+  read-only calls interactive pages repeat - the theme, interface strings and
+  notification count each page loads, archive sections, reader chunks, job
+  polling - which have a bounded 600 per minute (`INTERACTIVE_READ_LIMIT` in
+  `core/security/rate_limit.py`), so ordinary browsing is not refused.
 * **Changing your own password** (`POST /auth/change-password`) requires the
   current password, so an unattended browser or a stolen session cannot take
   the account over (RES-AUTH-02, fixed in 2.2.0):
@@ -132,7 +137,8 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
   `Referrer-Policy: strict-origin-when-cross-origin`, a restrictive
   `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`, and
   `Strict-Transport-Security` in production over HTTPS (AUDIT-HSTS-01).
-  Pages and `/api/*` responses are `no-store`.
+  Pages and `/api/*` responses are `no-store`; static files are `no-cache`
+  (revalidated by ETag).
 * **Content-Security-Policy.** Every page is served with:
 
   `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'`
@@ -159,7 +165,8 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
     ([TESTING.md](TESTING.md#browser-smoke-test)).
   * `style-src` still allows `'unsafe-inline'`: templates use `style`
     attributes, and Settings applies administrator-authored custom CSS.
-    Injected CSS cannot run script, so this is an accepted residual.
+    Injected CSS cannot run script, so this is an accepted residual
+    (RES-CSP-02 in [AUDIT_REPORT.md](../AUDIT_REPORT.md#residual-items-at-v220)).
 * The original-file viewer opts into `X-Frame-Options: SAMEORIGIN` for the
   one response that must be framed by the application itself.
 
@@ -211,8 +218,9 @@ pip install pip-audit && pip-audit -r requirements.txt
 
 CI runs `pip-audit` on every push, and bandit against
 [`tools/security/bandit-baseline.json`](../tools/security/bandit-baseline.json):
-the baseline holds only the documented residuals SQL-01 (B608), XML-01 (B314)
-and BIND-01 (B104) ([AUDIT_REPORT.md](../AUDIT_REPORT.md)), so any new
+the baseline holds only the documented residuals RES-SQL-01 (B608),
+RES-XML-01 (B314) and RES-BIND-01 (B104)
+([AUDIT_REPORT.md](../AUDIT_REPORT.md#residual-items-at-v220)), so any new
 medium- or high-severity finding fails the build.
 
 Front-end libraries are vendored under `static/` (no CDN), so an offline

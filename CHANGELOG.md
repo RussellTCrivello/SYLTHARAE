@@ -13,6 +13,8 @@ Read [Upgrading from v2.1.1](#upgrading-from-v211) first.
 - **Shipped configurations**: [`deploy/nginx/syltharae.conf`](deploy/nginx/syltharae.conf) (HTTP→HTTPS redirect, TLS 1.2/1.3, HTTP/2, overwritten `X-Forwarded-*` headers, 2 GB uploads, unbuffered event streams, no version disclosure) and [`deploy/systemd/syltharae.service`](deploy/systemd/syltharae.service) (sandboxed; `systemd-analyze security` rates it 3.2, "OK"). Tests run `nginx -t` on the config and check the unit ([docs/OPERATIONS.md](docs/OPERATIONS.md)).
 - **Start-up checks** (`apps/web/deployment.py`): `run_web.py` refuses to start, with exit status 2 and a message saying what to change, when `FLASK_DEBUG` is on in production, `TRUSTED_PROXY_COUNT` is not a whole number (it used to be ignored silently), or `FLASK_PORT` is invalid. It warns about the development server in production, missing Waitress, a trusted proxy that clients can bypass, a missing TLS proxy and a short secret key. `verify_readiness.py` reports the same, and its `--json` output is now valid JSON.
 - `run_web.py` no longer suggests Gunicorn or uWSGI: background jobs run in the server process, so one process serves one database.
+- **nginx keeps HTTP/2 connections open for the session** (DEPLOY-H2-GOAWAY): at nginx's default of 1000 requests per connection, the browser lost the scripts it had just requested whenever nginx closed the connection, so roughly every 20th page loaded with controls that did nothing. The shipped site sets `keepalive_requests 100000` and `keepalive_time 1h`.
+- The systemd unit lists every file the application writes in its install directory (DEPLOY-RW-01).
 
 ### Licence
 - **SYLTHARAE is licensed under the GNU AGPL-3.0-or-later** ([LICENSE](LICENSE), [docs/LICENSING.md](docs/LICENSING.md)). The PDF reader's PyMuPDF dependency is AGPL. `pyproject.toml` declared `Proprietary`; it now declares `AGPL-3.0-or-later`, and wheels carry the licence and the notices. The build needs setuptools 77 or newer.
@@ -27,28 +29,51 @@ Read [Upgrading from v2.1.1](#upgrading-from-v211) first.
 - **No cleartext administrator password in `.env`** (INSTALL-ENV-01). The setup wizard wrote `APP_ADMIN_PASSWORD` there, where it outlived every password change. It also left out `WSGI_SERVER` and `TRUSTED_PROXY_COUNT`, so a restart from `.env` alone fell back to the development server with no proxy trust. Both are now written.
 - The administrator created by the setup wizard is audited with the wizard user's address; it was empty.
 - A rate-limited sign-in now says "Too many attempts. Wait a minute and try again." instead of "An internal error occurred". The limiter's 429 page is replaced by JSON for JSON and API callers.
+- **Ordinary browsing no longer hits the rate limit** (RATE-01). The reads every page makes on load - theme, interface strings, notification count - were refused under the default limits: the notification badge alone polls every 30 seconds per tab, so five open tabs used up the hourly budget. They now have the bounded interactive limit (600/minute) that the file and job pages already used.
+- Static files are sent `Cache-Control: no-cache` (revalidated with ETag) instead of a contradictory `no-cache, max-age=31536000, immutable` (CACHE-02). Browsers already revalidated; the one-year part would have kept old JavaScript after an upgrade had it been honoured.
 
 ### Fixes
 - The sidebar showed "Version 2.0.0" on every release: nothing supplied the version to templates. It now shows the running version, and so does the sign-in page.
 - File page: the **Full screen** button did nothing, because its function was module-scoped. The metadata tab's **Save Changes** button saved nothing but announced "Metadata saved successfully!", and no route stores a file's name or notes. That button and the Notes box are removed, and File Name is shown read-only.
 - **`/api/analysis/*` answered 500 on every request** (ANALYSIS-01): the routes called engine methods that never existed. `file`, `statistics` and `batch` now work; unknown files are 404, and engine errors no longer reach the client. `sentiment`, `topics` and `entities` were never implemented and now answer 501.
 - PDF reading uses `import pymupdf`; the `fitz` name now prints a deprecation notice. The minimum is `PyMuPDF>=1.24.3`.
+- **OCR with Tesseract works as designed** (OCR-TESS-01). When Tesseract was installed, images and scanned PDF pages bypassed the OCR engine layer: no confidence or word boxes were stored, turned pages were read as junk, small text was lost, a missing language pack silently became English, and a failure to read word data was reported as "no confidence". Now every image, scanned PDF page and image embedded in an Office document goes through the engine layer (`core/ocr`), with Tesseract preferred and RapidOCR as the fallback on hosts without it ([ARCHITECTURE.md §5.1](docs/ARCHITECTURE.md#51-ocr-engine-layer)):
+  - each recognised word carries its confidence (0-1) and bounding box in the source image's pixels. The stored confidence is their mean, and `null` only with a recorded reason;
+  - rotated and upside-down pages are read the right way up (each orientation is read and scored; a confident reading is checked against the page turned 180 degrees);
+  - small text is enlarged and compared with the original; images up to 40,000 pixels always get this search, larger ones when their characters measure as text;
+  - scanned PDF pages are rendered at the scan's own resolution (at least 144, at most 300 dpi, within a 16-megapixel budget) instead of a fixed 144 dpi, which discarded detail;
+  - very large images are read without being refused or enlarged (enlargement stays within a 16-megapixel budget);
+  - each requested language is also read alone, and a confidence that cannot be read is recorded with the reason (`confidence_error`) instead of silently as none;
+  - a missing language pack is logged, and the file records it in `extraction_provenance.ocr.missing_languages` (OCR-LANG-02). It used to be in the log only.
+  The stored OCR provenance is described in [DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md). The 17 OCR tests CI failed, and what fixed each, are in [AUDIT_REPORT.md](AUDIT_REPORT.md#v220-follow-up).
 - Files list: removed the "quick preview" eye button. It called a placeholder that only logged to the console.
 
 ### Documentation and tooling
 - **Continuous integration** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): every push and pull request runs the documented install, all test suites (with PostgreSQL, Node.js and nginx required, so nothing passes by skipping: `REQUIRE_POSTGRES=1`), the package build, ruff's correctness rules, bandit against [its baseline](tools/security/bandit-baseline.json), `pip-audit` and the licence check.
 - `tools/smoke/live_smoke.py` runs through a real TLS reverse proxy when `SMOKE_BASE_URL` is `https://`, and checks more: cookie flags, security headers, uploads and downloads, duplicates, analysis, event streams, re-login after a password change, the audit log's client address, HTTP/2 and the TLS floor.
 - The install instructions upgrade `setuptools` with `pip`: the copy a new virtual environment ships can carry known vulnerabilities.
-- `tools/smoke/browser_smoke.mjs` signs in with a real Chrome/Chromium, crawls every page and fails on any CSP violation, page error or unreachable handler ([docs/TESTING.md](docs/TESTING.md#browser-smoke-test)).
+- `tools/smoke/browser_smoke.mjs` signs in with a real Chrome/Chromium, crawls every page and fails on any CSP violation, page error, unreachable handler, same-origin 4xx/5xx response or request that never completed ([docs/TESTING.md](docs/TESTING.md#browser-smoke-test)).
+- **OCR self-check** (`tools/ci/ocr_selfcheck.py`): reports each engine, its version and languages, and how it reads upright, turned and small sample text through the ingestion reader, with a remediation for each problem. CI runs it with `--require tesseract` before the tests; operators can run it after changing Tesseract. It classifies each sample as success, low confidence, wrong text, no text, invocation failed or unavailable ([docs/OPERATIONS.md](docs/OPERATIONS.md#ocr-self-check), installation in [docs/INSTALL.md](docs/INSTALL.md#ocr-engines-and-language-packs)).
+- CI annotations list every skipped test with its reason, so a skip is never only a count.
+- The live smoke test also checks OCR through the deployed stack, and its install phase honours `SMOKE_DB_PORT` and `SMOKE_DB_USER`.
 - The generated component and Inspector counts dropped (for example, hand-written badge chips 70→68) because template-only scans no longer see code that moved into `static/js`. The code moved; it was not migrated. The action-surface audit now counts button-state code in the login and install-wizard scripts, which it could not see while that code was inline.
 
 ### Upgrading from v2.1.1
+This release has no database migrations, but it is **not** a drop-in upgrade:
+existing deployments must review and update their configuration, the nginx
+site in particular.
+
+- **Update your nginx configuration.** Compare it with `deploy/nginx/syltharae.conf`:
+  - the proxy must *set* `X-Forwarded-For` to `$remote_addr`. Appending (`$proxy_add_x_forwarded_for`) passes on whatever the client sent;
+  - with HTTP/2, add `keepalive_requests 100000;` and `keepalive_time 1h;` to the TLS server block, or pages intermittently load without their scripts (DEPLOY-H2-GOAWAY);
+  - then run `nginx -t` and reload.
 - **Remove `APP_ADMIN_PASSWORD` from `.env`** if the setup wizard wrote it. It is read only while no account exists.
 - **Put the serving settings in `.env`** (`WSGI_SERVER=waitress`, `TRUSTED_PROXY_COUNT`) if you set them only in a shell, so that a restart keeps them.
 - **Check that the server still starts.** A setting that used to be ignored now stops it (exit status 2), with a message that says what to change: for example a non-numeric `TRUSTED_PROXY_COUNT`.
-- **Proxy configuration**: compare yours with `deploy/nginx/syltharae.conf`. The proxy must *set* `X-Forwarded-For` to `$remote_addr`; appending (`$proxy_add_x_forwarded_for`) passes on whatever the client sent.
+- **systemd**: if you based a unit on v2.1.1's, compare it with `deploy/systemd/syltharae.service` (every path it writes is listed under `ReadWritePaths`).
+- **OCR**: after upgrading, run `python tools/ci/ocr_selfcheck.py --require tesseract` if you use Tesseract. Files ingested earlier keep the text and provenance recorded at the time. They are not re-read: re-submitting identical files is recognised as a duplicate, and reprocessing is registered but not built (`files.reprocess`; see REPROCESS-01 in [AUDIT_REPORT.md](AUDIT_REPORT.md#residual-items-at-v220)).
 - API clients: `POST /auth/change-password` requires `current_password`; `/api/analysis/batch` takes only `{"file_ids": [...]}`.
-- Migrations: none.
+- Database migrations: none.
 
 ## v2.1.1 — 2026-09-25 — security and production-readiness patch
 

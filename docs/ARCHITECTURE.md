@@ -106,10 +106,10 @@ For every request, in order:
 | Authentication | `core/security/flask_ext.py` | Loads the user from the opaque session token (validated against `sessions`, idle and absolute expiry). Anonymous: 401 for `/api/*`, redirect to `/auth/login` for pages, unless the endpoint is in `PUBLIC_ENDPOINTS`. An account with a temporary password (`must_change_password`) can reach only the change-password flow and the home page until it has changed it. |
 | Authorisation | `flask_ext._enforce_role_policy` | Safe methods: any authenticated user, except admin-read blueprints (settings, concurrency, error dashboard). Mutations: analyst or admin; admin blueprints: admin only. View decorators may only tighten. |
 | CSRF | Flask-WTF | Every POST/PUT/PATCH/DELETE needs `X-CSRFToken` (or a form field). |
-| Rate limit | Flask-Limiter | Per client address; defaults 60/min and 600/h, stricter on login. |
+| Rate limit | Flask-Limiter | Per client address; defaults 60/min and 600/h, stricter on login; the reads interactive pages repeat (page-boot theme, strings and notification count; archive sections, reader chunks, job polling) have a bounded 600/min instead (`INTERACTIVE_READ_LIMIT`). |
 | View | `Api/routes/*` | Validates input, calls a service, returns HTML or JSON. |
 | Errors | `apps/web/app.py` | 404/500/CSRF handlers return a generic message; details go to the log (`Hdg_Err_Ex_Log`), never to the client. |
-| Headers | `after_request` hooks | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, COOP, HSTS (production + HTTPS); `no-store` for pages and `/api/*`, a one-year immutable cache for static files. |
+| Headers | `after_request` hooks | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, COOP, HSTS (production + HTTPS); `no-store` for pages and `/api/*`; static files `no-cache`, revalidated by ETag (their URLs are mostly unversioned, so a long cache would keep old JavaScript after an upgrade). |
 
 ## 5. Ingestion pipeline
 
@@ -179,6 +179,103 @@ Key properties:
   compression-ratio and time limits, and rejects unsafe member paths.
 * **Honest progress.** Progress is derived from worker state and the ledger,
   never estimated.
+
+### 5.1 OCR engine layer
+
+Text that exists only as pixels is read by one engine layer, `core/ocr/`
+(`engines.py`). Every reader that needs OCR goes through it, so a page
+carries the same provenance whichever engine ran:
+
+| Reader | When it uses OCR | Input |
+|---|---|---|
+| `reader_file/readers/read_img_fast.py` (`ImageFileReader`) | every image file | the image |
+| `reader_file/readers/read_pdf.py` | pages with 30 or fewer characters of text layer | the page, rendered at the density of its densest embedded image (`ocr_render_zoom`: 144-300 dpi, at most 16 MP) |
+| `reader_file/readers/read_office.py` (DOCX and other Office packages) | embedded images | each image is written out as a child object and read by `ImageFileReader` through the ordinary child pipeline |
+
+```
+reader ─ get_ocr_engine() ──────────── first available of ENGINE_PREFERENCE:
+   │                                     1. TesseractEngine (pytesseract + system binary)
+   │                                     2. RapidOcrEngine  (PP-OCRv4 under ONNX Runtime, pip only)
+   │                                     none → recorded as ocr_required_engine_unavailable
+   ├─ installed_ocr_languages()          requested heb, eng, ara (DEFAULT_OCR_LANGUAGES); a missing
+   │                                     pack is logged and recorded as missing_ocr_languages
+   └─ recognize_best(engine, preprocessed, original, languages)
+         ├─ engine.recognize(preprocessed)          shared binarisation (_fast_preprocess)
+         └─ engine.recognize(original)              only when the first reading is doubtful
+               (confidence < 0.75) or had to be enlarged; the better one is kept
+               → OcrResult: text, blocks, engine, engine_version, language,
+                 input_variant, rotation, scale, blocks_error
+```
+
+**Tesseract path** (`TesseractEngine.recognize`):
+
+1. *Upright reading* with every requested language loaded, at a legible
+   size: when the median word box is under 20 px, copies enlarged x2 up to
+   the factor reaching 32 px (at most x4, and never past 16 MP) compete
+   with the original, and an enlargement is kept only when it reads better.
+2. *Orientation.* A confident upright reading (mean confidence at least
+   0.75 **and** at least half the letters in words of three or more) is
+   still compared with the page turned 180 degrees, because confidence
+   cannot tell a line from itself upside down. A doubtful one starts the
+   search: the other three orientations, and, when the dark marks measure
+   small (`_glyph_size`, from 6 px, or any size on images up to 40 000 px),
+   the same orientations enlarged. The search stops at the first confident
+   reading. Tesseract's own orientation detector (OSD) is not used: it
+   declines anything shorter than a few lines.
+3. *Script.* With several languages, each language also reads the page on
+   its own and the best-scoring reading wins, because the combined model
+   lets each word pick a model and misreads mixed text.
+
+Readings are compared with `_reading_score`: the sum over words of at least
+three letters or digits of length times confidence squared. Mean confidence
+alone would prefer the one-glyph fragments a turned page produces.
+
+**RapidOCR path.** The fallback reads turned text itself
+(`handles_orientation`) and has fixed models (Latin and Chinese): it does
+**not** read Hebrew or Arabic. Hosts without Tesseract get OCR, but only
+for those scripts. `recognize_best` applies the same retry on the original
+image.
+
+**Provenance and confidence.**
+
+* Each block is one word: text, confidence and a box `(x0, y0, x1, y1)`
+  in the pixels of the image the reader passed. Boxes are mapped back
+  through any rotation and enlargement.
+* Tesseract's 0-100 word confidence becomes 0.0-1.0. Its `-1` ("not a
+  word") and malformed values (missing, non-numeric, out of range) become
+  `None` and are logged, never guessed.
+* `mean_confidence` is the mean over blocks that carry one. `None` means
+  "no measurement", never "low": there was no text, or the word data could
+  not be read and `blocks_error` says why.
+* `rotation` is the counter-clockwise degrees the input was turned before
+  the reading was kept, `scale` the enlargement, `input_variant` which
+  input produced it (`preprocessed` or `original`).
+* The self-check (`tools/ci/ocr_selfcheck.py`) reads its samples through
+  `ImageFileReader.read_file`, so it reports the confidence ingestion
+  stores.
+* `StoragePipeline._ocr_provenance` writes these fields to
+  `extraction_provenance.ocr` ([DOMAIN_MODEL.md §1.5](DOMAIN_MODEL.md)).
+  `GET /api/file/<id>/details` returns them; the file details view shows
+  the engine, confidence and "derived". Recognised text is always marked as
+  derived (`ocr_derived`).
+
+**Failure is recorded, not hidden.**
+
+* An engine error is logged, stored in
+  `extraction_provenance.diagnostics.engine_error` and makes the file
+  `partially_processed` with the reason in its status detail.
+* A missing language pack is logged at ERROR and listed in
+  `extraction_provenance.ocr.missing_languages`.
+* With no engine at all, an image stores `diagnostics.error` "No OCR
+  engine available" and `diagnostics.reason`
+  `ocr_required_engine_unavailable`.
+* A PDF page that needed OCR keeps its own text layer, if it has one
+  (`text_layer_fallback`).
+* A retry that fails keeps the first reading.
+
+Installing engines and language packs: [INSTALL.md](INSTALL.md#ocr-engines-and-language-packs).
+Checking a host: [OPERATIONS.md](OPERATIONS.md#ocr-self-check).
+Tests: [TESTING.md](TESTING.md#ocr-tests).
 
 ## 6. Jobs
 

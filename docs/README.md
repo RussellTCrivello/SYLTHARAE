@@ -27,7 +27,7 @@ Start with the task you have.
 |---|---|
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Setup, where things go, quality gates, commit and release conventions |
 | [TESTING.md](TESTING.md) | Test layers, the disposable database, running tests, generated-document checks, the live smoke test |
-| [../AUDIT_REPORT.md](../AUDIT_REPORT.md) | The v2.1.1 audit: findings, fixes, residual items, test evidence |
+| [../AUDIT_REPORT.md](../AUDIT_REPORT.md) | The v2.1.1 audit and the v2.2.0 follow-up: findings, fixes, the CI OCR failure matrix, residual items, test evidence |
 | [../CHANGELOG.md](../CHANGELOG.md) | Release history |
 
 ## Generated references (do not edit by hand)
