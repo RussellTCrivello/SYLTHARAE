@@ -195,19 +195,25 @@ check('a real click runs the handler, then its ancestor, with this bound',
     JSON.stringify(dispatched.calls) === JSON.stringify([['inner', 'v1'], ['outer']]), JSON.stringify(dispatched));
 check('return false prevents the default action', dispatched.prevented === true);
 
-// The Settings tabs are wired with data-on-click; switching one is harmless.
+// The Settings tabs are Bootstrap tabs (data-bs-toggle, run by bootstrap.js
+// under the CSP); switching one is harmless. A missing tab is a failure.
 await page.goto(`${BASE}/settings`, {waitUntil: 'networkidle0'});
-const tab = await page.$('[data-on-click*="switchTab"], [data-on-click*="showTab"], [data-on-click*="Tab("]');
+const tab = await page.$('[role="tab"]:not(.active)');
 if (tab) {
-    const before = await page.evaluate(() => document.querySelector('.active')?.outerHTML.slice(0, 80));
     problems = [];
+    const target = await tab.evaluate((el) => el.getAttribute('data-bs-target'));
     await tab.click();
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    const after = await page.evaluate(() => document.querySelector('.active')?.outerHTML.slice(0, 80));
-    check('a Settings tab switches on click without errors', problems.length === 0,
-        `${problems.join(' | ')} before=${before} after=${after}`);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const shown = await page.evaluate((sel) => {
+        const pane = document.querySelector(sel);
+        return Boolean(pane && pane.classList.contains('active') && pane.classList.contains('show'));
+    }, target);
+    const selected = await tab.evaluate((el) => el.classList.contains('active'));
+    check('a Settings tab shows its pane on click, without errors',
+        shown && selected && problems.length === 0,
+        `${target} shown=${shown} selected=${selected} ${problems.join(' | ')}`);
 } else {
-    console.log('SKIP Settings tab click -- no tab control matched');
+    check('the Settings page has tabs', false, 'no [role="tab"] control');
 }
 
 // An image that fails to load falls back through data-on-error (base.html logo).
