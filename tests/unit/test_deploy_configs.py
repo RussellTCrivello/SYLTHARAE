@@ -216,3 +216,15 @@ def test_readiness_json_survives_checks_that_print(monkeypatch, capsys):
     out, err = capsys.readouterr()
     assert json.loads(out)["results"][0]["name"] == "noisy"
     assert "library notice" in err
+
+
+def test_nginx_keeps_http2_connections_below_the_goaway_race():
+    """DEPLOY-H2-GOAWAY: at the default keepalive_requests (1000) nginx closed
+    the browser's HTTP/2 connection every ~20 page views, and the scripts a page
+    had just requested on it failed with net::ERR_FAILED - the live browser
+    smoke found pages whose handlers were never defined. The limit must be far
+    above a session's request count, with keepalive_time bounding the lifetime.
+    """
+    [requests] = _directives("keepalive_requests")
+    assert int(requests) >= 100000
+    assert _directives("keepalive_time") == ["1h"]
