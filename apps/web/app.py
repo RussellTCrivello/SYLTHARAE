@@ -42,7 +42,7 @@ from core.monitoring.monitor import PerformanceMonitor
 from core.security.rate_limit import limiter
 from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
-from functools import wraps
+from functools import lru_cache, wraps
 from flask import make_response, request
 import time
 
@@ -350,6 +350,35 @@ def after_request(response):
         # Add timing header
         response.headers['X-Response-Time'] = f"{duration:.3f}"
     return response
+
+# ---------------------------------------------------------------------------
+# Release information on every page: the running version, and - because
+# SYLTHARAE is AGPL-3.0-or-later (section 13) - where its users can get the
+# corresponding source. Whoever runs a modified copy must point
+# SOURCE_CODE_URL at their modified source (docs/LICENSING.md).
+# ---------------------------------------------------------------------------
+DEFAULT_SOURCE_CODE_URL = 'https://github.com/RussellTCrivello/SYLTHARAE'
+
+
+def source_code_url():
+    """The configured source URL; only http(s) URLs are accepted."""
+    return _validated_source_code_url((os.environ.get('SOURCE_CODE_URL') or '').strip())
+
+
+@lru_cache(maxsize=8)
+def _validated_source_code_url(configured):
+    if configured.lower().startswith(('https://', 'http://')):
+        return configured
+    if configured:  # logged once per value, not on every page
+        logger.warning("SOURCE_CODE_URL must be an http(s) URL; using %s", DEFAULT_SOURCE_CODE_URL)
+    return DEFAULT_SOURCE_CODE_URL
+
+
+@app.context_processor
+def inject_release_info():
+    from version import get_version
+    return {'version': get_version(), 'source_code_url': source_code_url()}
+
 
 # ---------------------------------------------------------------------------
 # SEC-09: Browser security headers on every response

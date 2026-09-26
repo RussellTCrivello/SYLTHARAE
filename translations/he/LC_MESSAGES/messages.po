@@ -10141,3 +10141,9 @@ msgstr "סקירה וניהול של מחרוזות מתורגמות בכל המ
 
 msgid "Too many attempts. Wait a minute and try again."
 msgstr "יותר מדי ניסיונות. המתינו דקה ונסו שוב."
+
+msgid "Source code"
+msgstr "קוד מקור"
+
+msgid "SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code."
+msgstr "SYLTHARAE היא תוכנה חופשית ברישיון GNU AGPL-3.0 ואילך. קבלו את קוד המקור שלה."

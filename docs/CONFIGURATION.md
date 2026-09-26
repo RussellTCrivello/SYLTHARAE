@@ -27,6 +27,7 @@ code uses when the variable is unset.
 | `WSGI_SERVER` | `flask` | `flask` is the built-in development server. `waitress` is the production server and needs `pip install -e ".[server]"`. If Waitress is missing, the app logs a warning and falls back. See [OPERATIONS.md](OPERATIONS.md). |
 | `WAITRESS_THREADS` | `32` (minimum `4`) | Worker threads when `WSGI_SERVER=waitress`. SSE job streams hold a thread each. |
 | `TRUSTED_PROXY_COUNT` | `0` | How many reverse proxies to trust for `X-Forwarded-For/Proto/Host`. `0` ignores the headers. Set it to `1` behind a single nginx/IIS/Caddy that **overwrites** those headers. This is the only place proxy trust is decided. |
+| `SOURCE_CODE_URL` | `https://github.com/RussellTCrivello/SYLTHARAE` | The **Source code** link on every page, which is the AGPL-3.0 section 13 source offer. If you run a modified copy for others, point it at your modified source ([LICENSING.md](LICENSING.md)). Only `http(s)` URLs are accepted; anything else logs a warning and uses the default. |
 | `AUTO_INSTALL` | `1` | When `1`, `run_web.py` tries to install missing core dependencies from `wheels/` (inside a venv only). Set it to `0` on managed hosts. |
 | `LOG_LEVEL` | `INFO` | Root log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`). Invalid values fall back to `INFO`. |
 

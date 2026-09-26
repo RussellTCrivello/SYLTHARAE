@@ -2,11 +2,18 @@
 
 ## Unreleased
 
+### Licence
+- **SYLTHARAE is licensed under the GNU AGPL-3.0-or-later** ([LICENSE](LICENSE), [docs/LICENSING.md](docs/LICENSING.md)). The PDF reader's PyMuPDF dependency is AGPL. `pyproject.toml` declared `Proprietary`; it now declares `AGPL-3.0-or-later`, and wheels carry the licence and the notices. The build needs setuptools 77 or newer.
+- Every page, including the sign-in page, links to the source code, as section 13 requires for network use. If you run a modified copy, set `SOURCE_CODE_URL` to your source ([CONFIGURATION](docs/CONFIGURATION.md)).
+- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) lists the vendored MIT libraries and the OFL fonts. The Inter and Noto Sans Arabic fonts shipped without the licence text the OFL requires; it is added.
+- `tools/licenses/check_licenses.py` fails when a Python dependency's licence is incompatible with AGPL-3.0 or has not been reviewed. Today, 116 of 116 installed packages are compatible.
+
 ### Security
 - **No inline script: the CSP is `script-src 'self'`** (RES-CSP-01). `'unsafe-inline'` is gone, so injected markup can no longer run script. The 599 inline handler attributes are now `data-on-<event>` attributes with the same expressions, run by `static/js/modules/core/declarative-events.js`, a restricted interpreter that never uses `eval`. The 17 inline `<script>` blocks are now static files that read server values from `application/json` blocks. The 403/404/500 pages no longer use `javascript:` links. See [docs/SECURITY.md](docs/SECURITY.md).
 - A rate-limited sign-in now says "Too many attempts. Wait a minute and try again." instead of "An internal error occurred". The limiter's 429 page is replaced by JSON for JSON and API callers.
 
 ### Fixes
+- The sidebar showed "Version 2.0.0" on every release: nothing supplied the version to templates. It now shows the running version, and so does the sign-in page.
 - File page: the **Full screen** button did nothing, because its function was module-scoped. The metadata tab's **Save Changes** button saved nothing but announced "Metadata saved successfully!", and no route stores a file's name or notes. That button and the Notes box are removed, and File Name is shown read-only.
 - Files list: removed the "quick preview" eye button. It called a placeholder that only logged to the console.
 

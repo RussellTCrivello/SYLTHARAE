@@ -90,6 +90,15 @@ explains how to regenerate them.
   [screen inspector evidence](docs/SCREEN_INSPECTOR_EVIDENCE.md),
   [action surface audit](docs/ACTION_SURFACE_AUDIT.md)
 
+## Licence
+
+SYLTHARAE is free software under the GNU Affero General Public License,
+version 3 or later ([LICENSE](LICENSE)). If you run a modified copy for other
+people over a network, you must offer them your source. Set `SOURCE_CODE_URL`
+for the **Source code** link every page shows. Third-party files keep their
+own licences ([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). See
+[docs/LICENSING.md](docs/LICENSING.md).
+
 ## Project status
 
 Current release: see [CHANGELOG.md](CHANGELOG.md) and `version.py`. Report

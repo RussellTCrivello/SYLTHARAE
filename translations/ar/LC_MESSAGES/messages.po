@@ -10303,3 +10303,9 @@ msgstr "مراجعة وإدارة النصوص الموطّنة في جميع ا
 
 msgid "Too many attempts. Wait a minute and try again."
 msgstr "محاولات كثيرة جدًا. انتظر دقيقة ثم حاول مرة أخرى."
+
+msgid "Source code"
+msgstr "الشيفرة المصدرية"
+
+msgid "SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code."
+msgstr "SYLTHARAE برنامج حر مرخّص بموجب GNU AGPL-3.0 أو أحدث. احصل على شيفرته المصدرية."

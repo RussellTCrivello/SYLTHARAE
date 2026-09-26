@@ -246,13 +246,18 @@
             {% include 'components/sidebar_nav.html' %}
         </nav>
 
-        <!-- Sidebar Footer: installation version only. Language selection is
-             available once in the top bar, including at narrow viewports. -->
+        <!-- Sidebar Footer: the running version and the AGPL-3.0 section 13
+             source offer. Language selection is in the top bar. -->
         <div class="sidebar-footer">
             <span class="sidebar-version">
                 <i class="bi bi-info-circle" aria-hidden="true"></i>
-                {{ _('Version') }} {{ version|default('2.0.0') }}
+                {{ _('Version') }} {{ version }}
             </span>
+            <a class="sidebar-version sidebar-source" href="{{ source_code_url }}" rel="noopener" target="_blank"
+               title="{{ _('SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code.') }}">
+                <i class="bi bi-code-slash" aria-hidden="true"></i>
+                {{ _('Source code') }} (AGPL-3.0)
+            </a>
         </div>
     </div>
     

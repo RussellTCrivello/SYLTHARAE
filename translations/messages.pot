@@ -12647,3 +12647,9 @@ msgstr ""
 #: apps/web/app.py static/js/pages/login-page.js
 msgid "Too many attempts. Wait a minute and try again."
 msgstr ""
+
+msgid "Source code"
+msgstr ""
+
+msgid "SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code."
+msgstr ""
