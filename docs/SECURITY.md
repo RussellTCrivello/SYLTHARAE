@@ -125,7 +125,7 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
   inline code. This weakens the CSP as an XSS backstop; the escaping rules
   above are the primary control. Removing it requires moving those blocks
   into `static/js/pages/` modules - tracked in
-  [AUDIT_REPORT.md](AUDIT_REPORT.md).
+  [AUDIT_REPORT.md](../AUDIT_REPORT.md).
 * The original-file viewer opts into `X-Frame-Options: SAMEORIGIN` for the
   one response that must be framed by the application itself.
 

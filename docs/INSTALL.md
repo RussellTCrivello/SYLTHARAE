@@ -287,7 +287,7 @@ python -m pytest tests/integration tests/security
 ```
 
 Documentation is tested too; after changing code that feeds a generated
-document, regenerate it as described in [README.md](README.md#generated-documents).
+document, regenerate it as described in [README.md](../README.md#generated-documents).
 
 ## Troubleshooting
 
