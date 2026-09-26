@@ -76,6 +76,15 @@ def _no_decoder(monkeypatch):
     """Make the environment look like the machine that reported the defect."""
     monkeypatch.setattr("core.archive_safety.find_rar_decoder", lambda: None)
     monkeypatch.setattr("core.archive_safety.configure_rar_decoder", lambda: None)
+    # rarfile probes PATH itself (unrar, unar, 7z, bsdtar) and caches the first
+    # tool that works; without this a machine with any of them installed would
+    # decode the members and the tests would describe a different machine.
+
+    def _no_tool(*_args, **_kwargs):
+        raise rarfile.RarCannotExec("Cannot find working tool")
+
+    monkeypatch.setattr(rarfile, "CURRENT_SETUP", None)
+    monkeypatch.setattr(rarfile, "tool_setup", _no_tool)
 
 
 def _write(tmp_path, name, data):

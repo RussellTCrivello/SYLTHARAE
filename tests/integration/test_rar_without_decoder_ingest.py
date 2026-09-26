@@ -69,6 +69,17 @@ def corpus(pg_db, tmp_path_factory, monkeypatch_module):
     monkeypatch_module.setattr(
         "core.archive_safety.configure_rar_decoder", lambda: None
     )
+    # rarfile also probes PATH itself (unrar, unar, 7z, bsdtar) and caches the
+    # first tool that works, so a runner with any of them installed would
+    # otherwise decode the archive and this would test a different machine.
+    # Make its probe fail the way it does when nothing is installed.
+    import rarfile
+
+    def _no_tool(*_args, **_kwargs):
+        raise rarfile.RarCannotExec("Cannot find working tool")
+
+    monkeypatch_module.setattr(rarfile, "CURRENT_SETUP", None)
+    monkeypatch_module.setattr(rarfile, "tool_setup", _no_tool)
 
     tag = f"_rar_{next(_SEQ)}"
     conn = psycopg2.connect(
