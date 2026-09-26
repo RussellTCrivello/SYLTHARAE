@@ -531,7 +531,7 @@ class ContentDBService:
         if words and len(words) > 100000:
             logger.info(
                 "Processing large word list (%s words) for hash_id %s",
-                f"{len(words):,}", path_id,
+                f"{len(words):,}", hash_id,
             )
 
         # 1. Bulk insert words - the repository batches internally for large lists.

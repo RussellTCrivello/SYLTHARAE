@@ -46,8 +46,23 @@ from functools import wraps
 from flask import make_response, request
 import time
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+# Setup logging.
+# stdout is line-buffered so every print() line flushes as ONE write;
+# together with the line-oriented stderr handler, log records and printed
+# lines can only interleave AT line boundaries - never mid-line
+# ("Progress: 2/11INFO:werkzeug..." in captured logs).
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+except (AttributeError, ValueError, OSError):
+    pass
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+# Werkzeug's per-request INFO access logs flooded the output and were the
+# records that visibly merged with progress prints; keep warnings and above.
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # Initialize Flask app with modern config

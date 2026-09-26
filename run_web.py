@@ -19,9 +19,18 @@ from pathlib import Path
 if sys.platform == "win32":
     for _stream in (sys.stdout, sys.stderr):
         try:
-            _stream.reconfigure(encoding="utf-8", errors="replace")
+            _stream.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
         except (AttributeError, ValueError):
             pass
+
+# Line-buffer stdout on every platform so print() lines flush atomically;
+# merged stdout/stderr logs then interleave only at line boundaries, never
+# mid-line ("Progress: 2/11INFO:werkzeug...").
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError, OSError):
+        pass
 
 # Auto-install check: Only run if AUTO_INSTALL is not disabled
 if os.environ.get('AUTO_INSTALL', '1') == '1':

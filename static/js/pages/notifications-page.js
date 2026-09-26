@@ -375,10 +375,13 @@ notificationsPage.loadTabData = async function(tab) {
             unreadNotifications = this.sortNotifications(unreadNotifications, this.filters[tab].sort_by, this.filters[tab].sort_order);
             readNotifications = this.sortNotifications(readNotifications, this.filters[tab].sort_by, this.filters[tab].sort_order);
             
-            this.renderNotifications(allNotifications, tab, 'all');
-            this.renderNotifications(unreadNotifications, tab, 'unread');
-            this.renderNotifications(readNotifications, tab, 'read');
-            this.updateCategoryStats(tab, data.notifications);
+            // data.summary holds EXACT counts over the full filtered set
+            // (computed by SQL); array lengths only reflect the current page.
+            const summary = data.summary || null;
+            this.renderNotifications(allNotifications, tab, 'all', summary && summary.total);
+            this.renderNotifications(unreadNotifications, tab, 'unread', summary && summary.unread);
+            this.renderNotifications(readNotifications, tab, 'read', summary && summary.read);
+            this.updateCategoryStats(tab, data.notifications, summary);
             
             const sortSelect = document.getElementById(`sortBy${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
             if (sortSelect) {
@@ -400,7 +403,7 @@ notificationsPage.loadTabData = async function(tab) {
     }
 };
 
-notificationsPage.renderNotifications = function(notifications, tab, section) {
+notificationsPage.renderNotifications = function(notifications, tab, section, exactCount) {
     const listId = `messages${tab.charAt(0).toUpperCase() + tab.slice(1)}${section.charAt(0).toUpperCase() + section.slice(1)}`;
     const messagesList = document.getElementById(listId);
     const countId = `${section}Count${tab.charAt(0).toUpperCase() + tab.slice(1)}`;
@@ -410,11 +413,12 @@ notificationsPage.renderNotifications = function(notifications, tab, section) {
     const markReadTitle = window.appTranslations?.['Mark as Read'] || 'Mark as Read';
     const dismissTitle = window.appTranslations?.['Dismiss'] || 'Dismiss';
     
+    const count = (typeof exactCount === 'number') ? exactCount : notifications.length;
     if (countElement) {
-        countElement.textContent = notifications.length;
+        countElement.textContent = count;
     }
     if (subTabCountElement) {
-        subTabCountElement.textContent = notifications.length;
+        subTabCountElement.textContent = count;
     }
     
     if (notifications.length === 0) {
@@ -510,10 +514,15 @@ notificationsPage.sortNotifications = function(notifications, sortBy, sortOrder)
     return sorted;
 };
 
-notificationsPage.updateCategoryStats = function(tab, notifications) {
-    const total = notifications.length;
-    const unread = notifications.filter(n => !n.read).length;
-    const read = notifications.filter(n => n.read).length;
+notificationsPage.updateCategoryStats = function(tab, notifications, summary) {
+    // Prefer the server's exact SQL counts; fall back to the page arrays
+    // only when a response predates the summary field.
+    const total = summary && typeof summary.total === 'number'
+        ? summary.total : notifications.length;
+    const unread = summary && typeof summary.unread === 'number'
+        ? summary.unread : notifications.filter(n => !n.read).length;
+    const read = summary && typeof summary.read === 'number'
+        ? summary.read : notifications.filter(n => n.read).length;
     
     if (tab === 'all') {
         const statAllTotal = document.getElementById('statAllTotal');

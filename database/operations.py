@@ -176,6 +176,39 @@ class KeywordOperations:
         )
         return row[0] if row else None
 
+    def insert_keyword_path_relationships(self, hash_id: int, keyword_counts) -> int:
+        """Persist ``{keyword_id: count}`` keyword matches for a document.
+
+        Keyword links are content-derived data and live on the canonical
+        content row (``keywords_hashs``, keyed by ``hash_id`` since m0011), so
+        every occurrence/path of the same bytes shares them.  The bulk insert
+        goes through the keywords_hashs repository - the same writer the
+        ingestion and association-refresh paths use.
+
+        Args:
+            hash_id: The canonical content (``hashs.id``) the matches belong to.
+            keyword_counts: Mapping of keyword_id to occurrence count.
+
+        Returns:
+            Number of keyword relationships written (0 for an empty mapping).
+
+        Raises:
+            Exception: Propagated from the repository so callers can log the
+                real cause (previously the update-associations route passed
+                this mapping to ``process_keywords_for_content``, which expects
+                a word-id sequence, and every file with matches failed with
+                ``unhashable type: 'slice'``).
+        """
+        if not keyword_counts:
+            return 0
+        self.db_service.keywords_hashs_repo.bulk_insert_keywords_hashs(
+            hash_id, dict(keyword_counts)
+        )
+        return len(keyword_counts)
+
+    #: Explicit name matching the m0011 content-identity model.
+    insert_keyword_hash_relationships = insert_keyword_path_relationships
+
 
 class WordOperations:
     """Operations for word management"""

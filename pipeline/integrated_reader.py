@@ -37,6 +37,23 @@ from concurrency import (
 
 logger = logging.getLogger(__name__)
 
+
+def _report_progress(message: str) -> None:
+    """Report single-line progress without ever splitting a log line.
+
+    A carriage-return progress line (no newline) left a partial line on
+    stdout, so any log record emitted before the next progress update glued
+    itself onto that fragment - e.g. ``Progress: 2/11INFO:werkzeug...`` when
+    stdout and stderr are merged.  On an interactive terminal the in-place
+    redraw is kept (serialized by :mod:`core.console`); whenever output is
+    captured, progress goes through the logger as one atomic, ordered record
+    on the same stream as every other log line.
+    """
+    if console.supports_inplace_progress():
+        console.progress(message)
+    else:
+        logger.info(message)
+
 #: Serializes the carriage-return progress lines so concurrent workers cannot
 #: interleave two writes into one garbled line.
 _PROGRESS_PRINT_LOCK = threading.Lock()
@@ -996,54 +1013,71 @@ class IntegratedFileReader:
         processed_count = int(final_stats.get('completed', 0) or 0)
         failed_count = int(final_stats.get('failed', 0) or 0)
         if failed_count > 0:
+            # logger only: the old print() twin duplicated this warning in
+            # merged logs (once via stderr, once via stdout).
             logger.warning(
                 "⚠️  %d file(s) could not be processed; see the error log for the "
                 "specific cause of each.", failed_count,
             )
-            print(f"\n⚠️  Warning: {failed_count} files could not be processed")
-        
+
         # Finalize checkpoint if checkpoint manager is active
+        checkpoint_line = None
         if self.checkpoint_manager:
             self.checkpoint_manager.finalize()
             checkpoint_stats = self.checkpoint_manager.get_statistics()
-            print(f"\n💾 Checkpoint saved: {checkpoint_stats['processed_count']} files processed")
-        
-        # PRODUCTION: Final summary
+            checkpoint_line = f"💾 Checkpoint saved: {checkpoint_stats['processed_count']} files processed"
+
+        # PRODUCTION: Final summary - emitted as ONE block so no log record
+        # can land between the lines when stdout and stderr are captured
+        # together.
         #
         # Counts come from the ledger, which includes everything the run
         # discovered - archive members, email attachments and embedded objects -
         # not from the top-level tree the folders happened to contain.
         ledger_view = final_stats.get('ledger', {}) or {}
+        summary_lines = []
+        if failed_count > 0:
+            summary_lines.append(f"⚠️  Warning: {failed_count} files could not be processed")
+        if checkpoint_line:
+            summary_lines.append(checkpoint_line)
         # The container's outcome is reported by the router that opened it; a
         # nested summary here would restate the parent's ledger (see nested_run).
         if not nested_run:
-            print("\n📊 Processing Summary:")
-            print(f"   Total files found: {final_stats.get('total', total_files)}")
+            summary_lines.append("📊 Processing Summary:")
+            summary_lines.append(f"   Total files found: {final_stats.get('total', total_files)}")
             nested = ledger_view.get('files_nested', 0)
             if nested:
-                print(f"   of which nested (extracted from {ledger_view.get('containers_opened', 0)} "
-                      f"container(s)): {nested}")
-            print(f"   Files processed: {processed_count}")
+                summary_lines.append(
+                    f"   of which nested (extracted from {ledger_view.get('containers_opened', 0)} "
+                    f"container(s)): {nested}"
+                )
+            summary_lines.append(f"   Files processed: {processed_count}")
             if failed_count > 0:
-                print(f"   Files with issues: {failed_count}")
+                summary_lines.append(f"   Files with issues: {failed_count}")
             if self._partial_run or ledger_view.get('files_pending'):
                 # Never let a partial run read as a success.
-                print(f"   ⚠️  RUN INCOMPLETE: {ledger_view.get('files_pending', 0)} "
-                      f"discovered file(s) were not processed")
+                summary_lines.append(
+                    f"   ⚠️  RUN INCOMPLETE: {ledger_view.get('files_pending', 0)} "
+                    f"discovered file(s) were not processed"
+                )
             if final_stats.get('skipped'):
-                print(f"   Files skipped (already processed): {final_stats['skipped']}")
+                summary_lines.append(f"   Files skipped (already processed): {final_stats['skipped']}")
             if final_stats.get('unsupported'):
-                print(f"   Files unsupported by any reader: {final_stats['unsupported']}")
+                summary_lines.append(f"   Files unsupported by any reader: {final_stats['unsupported']}")
             retained = final_stats.get('results_retained')
             if retained is not None and final_stats.get('results_truncated'):
-                print(f"   Per-file results retained in memory: {retained} "
-                      f"({final_stats['results_truncated']} released after reporting; "
-                      f"all were stored)")
+                summary_lines.append(
+                    f"   Per-file results retained in memory: {retained} "
+                    f"({final_stats['results_truncated']} released after reporting; "
+                    f"all were stored)"
+                )
             if self.enable_storage and self.storage_pipeline:
                 storage_stats = self.get_storage_statistics()
-                print(f"   Files stored in database: {storage_stats.get('completed', 0)}")
-                print(f"   Duplicate files: {storage_stats.get('duplicates', 0)}")
-                print(f"   Storage failures: {storage_stats.get('failed', 0)}")
+                summary_lines.append(f"   Files stored in database: {storage_stats.get('completed', 0)}")
+                summary_lines.append(f"   Duplicate files: {storage_stats.get('duplicates', 0)}")
+                summary_lines.append(f"   Storage failures: {storage_stats.get('failed', 0)}")
+        if summary_lines:
+            console.block([""] + summary_lines)
 
         return results
     
@@ -1427,7 +1461,7 @@ class IntegratedFileReader:
                 self._notify_progress()
                 self._discard_finished_thread(thread_id)
                 completed += 1
-                console.progress(f"Progress: {completed}/{total_files}")
+                _report_progress(f"Progress: {completed}/{total_files}")
                 return
             elif thread.metrics.state == ThreadState.ERROR:
                 handle_error(
@@ -1488,7 +1522,7 @@ class IntegratedFileReader:
 
             self._discard_finished_thread(thread_id)
             completed += 1
-            console.progress(f"Progress: {completed}/{total_files}")
+            _report_progress(f"Progress: {completed}/{total_files}")
             self._notify_progress()
 
         while True:
@@ -1584,7 +1618,7 @@ class IntegratedFileReader:
             )
             
             completed += 1
-            console.progress(f"Progress: {completed}/{len(files)}")
+            _report_progress(f"Progress: {completed}/{len(files)}")
             
             if task_result:
                 if task_result.success:
@@ -1638,7 +1672,7 @@ class IntegratedFileReader:
                 )
                 break
 
-            console.progress(f"Progress: {idx}/{len(files)}")
+            _report_progress(f"Progress: {idx}/{len(files)}")
 
             result = self._process_file_worker(file_info)
             self._count_processed_bytes(result)

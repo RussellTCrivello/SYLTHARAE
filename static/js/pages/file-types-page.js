@@ -41,7 +41,7 @@ async function exportNames(button, messages) {
     const suggested = scope === 'all'
         ? 'all_indexed_filenames'
         : `${typeSlug || 'selected'}_filenames`;
-    const filename = window.prompt(
+    const filename = await window.prompt(
         messages.filenamePrompt || 'Name this filename export (leave blank for an automatic name):',
         suggested);
     if (filename === null) return;

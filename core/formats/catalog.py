@@ -53,6 +53,9 @@ class FormatFamily(str, Enum):
     VIDEO = "video"
     DATABASE = "database"
     EBOOK = "ebook"
+    DIAGRAM = "diagram"
+    """draw.io / diagrams.net documents (plain mxfile XML or its ZIP form)."""
+
     TEXT = "text"
     DATA = "data"
     EXECUTABLE = "executable"
@@ -78,6 +81,7 @@ READER_BY_FAMILY: Dict[FormatFamily, str] = {
     FormatFamily.VIDEO: "read_video",
     FormatFamily.DATABASE: "read_database",
     FormatFamily.EBOOK: "read_ebook",
+    FormatFamily.DIAGRAM: "read_diagram",
     FormatFamily.TEXT: "read_remaining",
     FormatFamily.DATA: "read_remaining",
     FormatFamily.EXECUTABLE: "read_remaining",
@@ -457,6 +461,10 @@ _SPECS: Tuple[FormatSpec, ...] = (
           "Microsoft Reader book"),
     _spec("ebook.pdb", FormatFamily.EBOOK, ".pdb", "application/x-palm-database",
           "Palm database / e-book"),
+    # -------------------------------------------------------------- diagram
+    _spec("diagram.drawio", FormatFamily.DIAGRAM, ".drawio",
+          "application/vnd.jgraph.mxfile", "draw.io / diagrams.net diagram",
+          (".dio",)),
     # ----------------------------------------------------------------- text
     _spec("text.plain", FormatFamily.TEXT, ".txt", "text/plain", "Plain text",
           (".log", ".md", ".srt", ".vtt", ".ics", ".ini", ".cfg", ".conf",

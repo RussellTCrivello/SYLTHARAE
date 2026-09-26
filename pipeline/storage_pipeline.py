@@ -963,9 +963,14 @@ class StoragePipeline:
                         storage_details.append(f"   Database Record: paths.id = {path_id}")
                         
                         success_message = "\n".join(storage_details)
+                        # Single output path: logger.info only.  The print()
+                        # twin wrote the same block to stdout while the logger
+                        # wrote it to stderr - merged logs showed the whole
+                        # "FILE SUCCESSFULLY STORED" block twice per file, and
+                        # the buffered stdout copy glued mid-line onto the
+                        # next log record ("...paths.id = 18INFO:pipeline...").
                         logger.info(success_message)
-                        print(success_message)
-                        
+
                         return path_id
                     else:
                         error_msg = storage_result.get('error', 'Unknown error')
@@ -998,12 +1003,26 @@ class StoragePipeline:
                     import traceback
                     logger.debug(f"Storage error traceback for '{file_name_display}': {traceback.format_exc()}")
                     
-                    # Check if it's a connection error that can be retried
+                    # RETRY POLICY: only transient failures are retried.
+                    # The previous else-branch retried EVERY exception until
+                    # retry_count >= max_retries, so a deterministic defect
+                    # (e.g. NameError from a code bug) burned all three
+                    # attempts and printed three full tracebacks for the
+                    # identical failure.  Non-retryable errors now fail fast:
+                    # one report, one traceback, files_failed += 1.
                     is_conn_err = is_connection_error(doc_error)
                     if is_conn_err and retry_count < max_retries:
                         retry_count += 1
                         logger.warning(
                             f"Connection error detected, retrying storage for '{file_name_display}' "
+                            f"(attempt {retry_count}/{max_retries})..."
+                        )
+                        time.sleep(1.0 * retry_count)
+                        continue
+                    elif is_retryable_error(doc_error) and retry_count < max_retries:
+                        retry_count += 1
+                        logger.warning(
+                            f"Retryable storage error for '{file_name_display}', retrying "
                             f"(attempt {retry_count}/{max_retries})..."
                         )
                         time.sleep(1.0 * retry_count)
@@ -1022,16 +1041,8 @@ class StoragePipeline:
                             'retry_count': retry_count
                         }
                     )
-                    
-                    # Only fail if all retries exhausted
-                    if retry_count >= max_retries:
-                        self.stats['files_failed'] += 1
-                        return None
-                    else:
-                        # Continue to retry
-                        retry_count += 1
-                        time.sleep(1.0 * retry_count)
-                        continue
+                    self.stats['files_failed'] += 1
+                    return None
                 
                 
             except Exception as e:

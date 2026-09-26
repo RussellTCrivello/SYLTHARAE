@@ -38,8 +38,11 @@ function filterSavedSearches() {
 
 // Rename a saved search (Edit action)
 async function renameSavedSearch(searchId, currentName) {
-    const newName = prompt(translations.renamePrompt || 'Enter a new name for this search:', currentName);
-    if (newName === null) return; // cancelled
+    // alert-replacement.js overrides window.prompt with a Promise-based modal,
+    // so this MUST be awaited: calling .trim() on the Promise threw
+    // "name.trim is not a function" and the saved search never renamed.
+    const newName = await prompt(translations.renamePrompt || 'Enter a new name for this search:', currentName);
+    if (newName === null || newName === undefined) return; // cancelled
     const trimmed = (typeof newName === 'string' ? newName : '').trim();
     if (!trimmed) return;
     if (trimmed === currentName) return;

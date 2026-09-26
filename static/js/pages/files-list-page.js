@@ -97,7 +97,7 @@ window.exportSelectedFileNames = async function(format = 'csv') {
         return;
     }
 
-    const filename = window.prompt(
+    const filename = await window.prompt(
         message('filenameExportPrompt', 'Name this filename export (leave blank for an automatic name):'),
         `selected_filenames_${new Date().toISOString().slice(0, 10)}`);
     if (filename === null) return;
