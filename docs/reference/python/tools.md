@@ -12,9 +12,11 @@ Print a JUnit XML report's failures as GitHub Actions annotations.
 
 ### `tools/ci/ocr_selfcheck.py`
 
-Report what the installed OCR engines actually do, as GitHub annotations.
+OCR self-check: what the installed OCR engines actually do on this host.
 
-- `main()`
+- `classify(out, expected = EXPECTED)` - Classify one ``ImageFileReader.read_file`` result: (status, detail).
+- `run(require = None, languages = ('heb', 'eng', 'ara'))` - Run every stage; return the report (a JSON-serialisable dict).
+- `main(argv = None)`
 
 ### `tools/docs/__init__.py`
 

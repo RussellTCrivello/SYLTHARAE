@@ -64,8 +64,20 @@ jobs:
           nginx -v
           python -c "import pgserver, cv2, pymupdf, waitress; print('ok')"
 
-      - name: OCR engine self-check (records the tesseract the tests run against)
-        run: python tools/ci/ocr_selfcheck.py
+      # Fails here, with the stage and a remediation, when tesseract or a
+      # language pack is missing or cannot read a clean sample, rather than
+      # as scattered OCR test failures later. Turned/small samples are
+      # reported; the test suite asserts them.
+      - name: OCR engine self-check (tesseract required, heb/eng/ara)
+        run: python tools/ci/ocr_selfcheck.py --require tesseract --languages heb,eng,ara --json ocr-selfcheck.json
+
+      - name: Keep the OCR self-check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocr-selfcheck
+          path: ocr-selfcheck.json
+          if-no-files-found: warn
 
       - name: Test suites (unit, integration, security, e2e, front end, docs)
         run: python -m pytest tests -p no:cacheprovider -q -rfEs --junitxml=pytest-report.xml
