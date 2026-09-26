@@ -86,6 +86,9 @@ Notes:
   requirements and offered as the `pst` extra: `pip install -e ".[pst]"`.
   Without it, a PST file is recorded with the error "pypff package not
   installed" instead of stopping the run.
+* **Verified clean install** (Python 3.11, Linux): `pip install -r
+  requirements.txt` resolves in under a minute with `pip check` clean,
+  selecting `Pillow 12.3`, `pypdf 6.x` and `moviepy 1.0.3`.
 * **moviepy and Pillow:** Pillow is pinned to `>=12.3` for security fixes.
   `moviepy 2.2.x` declares `pillow<12`, so pip resolves to `moviepy 1.0.3` on
   a fresh install. Both work: the video reader imports either API
@@ -147,7 +150,10 @@ python run_web.py          # Windows: start.bat
 2. runs `core.init` - settings, the resource coordinator, and an idempotent
    schema upgrade (all pending migrations) when the database is reachable;
 3. refuses to start with `FLASK_DEBUG=true` while `FLASK_ENV=production`;
-4. serves on `FLASK_HOST:FLASK_PORT` (default `0.0.0.0:5000`).
+4. serves on `FLASK_HOST:FLASK_PORT` (default `0.0.0.0:5000`) - with
+   Flask's built-in server by default, which is fine for development and a
+   single workstation, or with **Waitress** when `WSGI_SERVER=waitress`
+   (the production setting; see Step 10 and [OPERATIONS.md](OPERATIONS.md)).
 
 Open `http://127.0.0.1:5000`. On a fresh installation every page redirects
 to the **setup wizard** at `/setup`, which:
@@ -217,6 +223,10 @@ anonymous browser to the login page, and ingesting a small folder from the
 
 * Keep `FLASK_ENV=production` and `FLASK_DEBUG=false`, and set a long
   random `FLASK_SECRET_KEY`.
+* **Use the production server:** `pip install -e ".[server]"` and set
+  `WSGI_SERVER=waitress` (optionally `WAITRESS_THREADS`, default 32). Do not
+  run production on the built-in development server. Run it as a service
+  (systemd or NSSM examples in [OPERATIONS.md](OPERATIONS.md#1-production-serving)).
 * **Serve over HTTPS.** Production marks the session cookie `Secure`, so a
   browser will not send it back over plain HTTP to any host other than
   `localhost`: sign-in appears to succeed and then bounces back to the login
