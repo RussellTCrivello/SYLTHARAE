@@ -170,8 +170,14 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
 * Database credentials live in `.env` (git-ignored) or the environment. The
   settings API never returns the database password.
 * `verify_readiness.py` scans for committed credentials and refuses debug
-  mode in production; `run_web.py` refuses `FLASK_DEBUG=true` with
-  `FLASK_ENV=production`.
+  mode in production. `run_web.py` refuses to start (exit status 2) with
+  `FLASK_DEBUG=true` in production, a non-numeric `TRUSTED_PROXY_COUNT` or an
+  invalid port, and warns about unsafe production settings
+  ([OPERATIONS.md](OPERATIONS.md#start-up-checks)).
+* The setup wizard's `.env` (mode 0600) holds the database password and the
+  secret key but not the administrator's password (INSTALL-ENV-01): the
+  account is created in the database, and `APP_ADMIN_PASSWORD` is read only
+  while no account exists.
 * Errors returned to clients are generic (`client_error`, SEC-08); details
   are logged server-side only.
 
@@ -182,9 +188,16 @@ resource, detail, client address, time): `login.success`, `login.failed`,
 `login.locked`, `logout`, `password.change`, `user.create`, `user.update`,
 `user.delete`, `user.password_reset`, `user.password_recovery`,
 `user.first_admin_created`, `bootstrap.initial_admin_created`,
-`setup.initial_admin_created`, `jobs.cancel`. Behind a reverse proxy set
-`TRUSTED_PROXY_COUNT` so the recorded address is the client's, not the
-proxy's (AUDIT-PROXY-01).
+`setup.initial_admin_created`, `jobs.cancel`, `password.change_failed`,
+`password.change_locked`. Behind a reverse proxy set `TRUSTED_PROXY_COUNT` so
+the recorded address is the client's, not the proxy's (AUDIT-PROXY-01).
+
+The address is always the one `TRUSTED_PROXY_COUNT` establishes
+(`request.remote_addr`), the same one rate limiting uses. The sign-in,
+sign-out and password records used to take the first `X-Forwarded-For` value
+themselves, which any client can write (AUDIT-PROXY-02). The live smoke test
+sends a forged `X-Forwarded-For` on every request and checks that it never
+reaches the log.
 
 ## 8. Dependencies
 
@@ -196,18 +209,25 @@ proxy's (AUDIT-PROXY-01).
 pip install pip-audit && pip-audit -r requirements.txt
 ```
 
+CI runs `pip-audit` on every push, and bandit against
+[`tools/security/bandit-baseline.json`](../tools/security/bandit-baseline.json):
+the baseline holds only the documented residuals SQL-01 (B608), XML-01 (B314)
+and BIND-01 (B104) ([AUDIT_REPORT.md](../AUDIT_REPORT.md)), so any new
+medium- or high-severity finding fails the build.
+
 Front-end libraries are vendored under `static/` (no CDN), so an offline
 installation loads nothing from the internet.
 
 ## 9. Deployment checklist
 
-- [ ] HTTPS in front of the app, `TRUSTED_PROXY_COUNT` set to the number of proxies
+- [ ] HTTPS in front of the app (`deploy/nginx/syltharae.conf`), `TRUSTED_PROXY_COUNT` set to the number of proxies, `FLASK_HOST=127.0.0.1`
+- [ ] [Deployment verification](OPERATIONS.md#deployment-verification) done: redirect, sign-in, HSTS, client addresses in the audit log
 - [ ] `FLASK_ENV=production`, `FLASK_DEBUG=false`, long random `FLASK_SECRET_KEY`
 - [ ] Initial admin password changed; `initial_admin_password.txt` gone
 - [ ] Every person has their own account with the narrowest role
 - [ ] `INGESTION_ROOTS` limited to the evidence folders
 - [ ] Database role limited to its own database; PostgreSQL not exposed publicly
-- [ ] `RATELIMIT_STORAGE_URI` set when running more than one process
+- [ ] One server process per database (the rate-limit counters live in it)
 - [ ] Backups of PostgreSQL and `APP_DATA_DIR`, and a tested restore
 - [ ] `python verify_readiness.py` passes
 
@@ -216,5 +236,11 @@ installation loads nothing from the internet.
 `tests/security/` covers authentication and authorisation per role, CSRF,
 rate limiting, import/export gating, interface visibility, settings error
 hygiene, job security and the audit remediations
-(`test_audit_remediation.py`). `tests/unit/test_audit_remediation_static.py`
-holds the static front-end checks (escaping, CSRF headers).
+(`test_audit_remediation.py`), the password change (`test_change_password.py`)
+and the reverse-proxy contract (`test_proxy_deployment.py`: sign-in through a
+proxy, the 400 when a proxy drops the host name, the audit address, HSTS
+conditions, forwarded headers ignored without a trusted proxy).
+`tests/unit/test_audit_remediation_static.py` holds the static front-end
+checks (escaping, CSRF headers). `tools/smoke/live_smoke.py` and
+`browser_smoke.mjs` check the same through a real nginx, over HTTPS
+([TESTING.md](TESTING.md)).

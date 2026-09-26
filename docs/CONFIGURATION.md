@@ -20,13 +20,13 @@ code uses when the variable is unset.
 | Variable | Default | Effect |
 |---|---|---|
 | `FLASK_ENV` | `production` | `production` enables secure cookies, HSTS on HTTPS requests and production error pages. Use `development` only on a trusted workstation. |
-| `FLASK_DEBUG` | `False` | Werkzeug debugger and reloader. **Never enable in production**, because it allows code execution. It also forces the built-in server. |
+| `FLASK_DEBUG` | `False` | Werkzeug debugger and reloader. **Never enable in production**, because it allows code execution: with `FLASK_ENV=production`, `run_web.py` refuses to start (exit status 2). It also forces the built-in server. |
 | `FLASK_HOST` | `0.0.0.0` | Bind address. Use `127.0.0.1` behind a reverse proxy on the same host. |
-| `FLASK_PORT` | `5000` | Bind port. |
-| `FLASK_SECRET_KEY` | none (the wizard generates one) | Signs sessions and CSRF tokens. Changing it logs everyone out. |
-| `WSGI_SERVER` | `flask` | `flask` is the built-in development server. `waitress` is the production server and needs `pip install -e ".[server]"`. If Waitress is missing, the app logs a warning and falls back. See [OPERATIONS.md](OPERATIONS.md). |
+| `FLASK_PORT` | `5000` | Bind port. A value that is not a port number stops the server (exit status 2). |
+| `FLASK_SECRET_KEY` | none (the wizard generates one) | Signs sessions and CSRF tokens. Changing it logs everyone out. Production warns at start-up when it is shorter than 32 characters. |
+| `WSGI_SERVER` | `flask` | `flask` is the built-in development server. `waitress` is the production server and needs `pip install -e ".[server]"`. If Waitress is missing, the app logs a warning and falls back. See [OPERATIONS.md](OPERATIONS.md). The setup wizard writes it to `.env` (`waitress` in production when installed), with `TRUSTED_PROXY_COUNT`. |
 | `WAITRESS_THREADS` | `32` (minimum `4`) | Worker threads when `WSGI_SERVER=waitress`. SSE job streams hold a thread each. |
-| `TRUSTED_PROXY_COUNT` | `0` | How many reverse proxies to trust for `X-Forwarded-For/Proto/Host`. `0` ignores the headers. Set it to `1` behind a single nginx/IIS/Caddy that **overwrites** those headers. This is the only place proxy trust is decided. |
+| `TRUSTED_PROXY_COUNT` | `0` | How many reverse proxies to trust for `X-Forwarded-For/Proto/Host`. `0` ignores the headers. Set it to `1` behind a single nginx/IIS/Caddy that **overwrites** those headers (`2` behind a load balancer and nginx). This is the only place proxy trust is decided: rate limits, lockouts and the audit log all use the address it establishes. A value that is not a whole number stops the server (exit status 2); it used to be ignored. See [OPERATIONS.md](OPERATIONS.md#reverse-proxy-and-tls). |
 | `SOURCE_CODE_URL` | `https://github.com/RussellTCrivello/SYLTHARAE` | The **Source code** link on every page, which is the AGPL-3.0 section 13 source offer. If you run a modified copy for others, point it at your modified source ([LICENSING.md](LICENSING.md)). Only `http(s)` URLs are accepted; anything else logs a warning and uses the default. |
 | `AUTO_INSTALL` | `1` | When `1`, `run_web.py` tries to install missing core dependencies from `wheels/` (inside a venv only). Set it to `0` on managed hosts. |
 | `LOG_LEVEL` | `INFO` | Root log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`). Invalid values fall back to `INFO`. |
@@ -49,7 +49,7 @@ code uses when the variable is unset.
 | Variable | Default | Effect |
 |---|---|---|
 | `APP_ADMIN_USERNAME` | `admin` | First administrator, created by the wizard / bootstrap. |
-| `APP_ADMIN_PASSWORD` | empty | Used once, to create that account. Remove it from `.env` afterwards. |
+| `APP_ADMIN_PASSWORD` | empty | Read only while no account exists, to create that account. The setup wizard creates the administrator itself and does not store the password; if you set it by hand, remove it afterwards. |
 | `PASSWORD_MIN_LENGTH` | `12` | Minimum length for new passwords. |
 | `SECURITY_MAX_FAILED_LOGINS` | `5` | Failed attempts before the account is locked. |
 | `SECURITY_LOCKOUT_MINUTES` | `15` | Lockout duration. |

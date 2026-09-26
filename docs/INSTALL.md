@@ -238,31 +238,23 @@ anonymous browser to the login page, and ingesting a small folder from the
   exposed server - clients could then forge their address.
 * For a closed LAN without TLS, use `FLASK_ENV=staging` and accept that
   session cookies travel in clear text.
-* With more than one server process, point `RATELIMIT_STORAGE_URI` at Redis
-  or Memcached so limits are shared (the default is per-process memory).
+* Run one server process per database (background jobs run inside it), so
+  the default in-memory rate-limit counters are shared by every request.
+  `RATELIMIT_STORAGE_URI` (Redis or Memcached) exists for other layouts.
 * Give the database role only the privileges on its own database, and back
   up both PostgreSQL (`pg_dump`) and `APP_DATA_DIR`. See
   [OPERATIONS.md](OPERATIONS.md).
 
-Example nginx site:
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name syltharae.example.org;
-    ssl_certificate     /etc/ssl/certs/syltharae.pem;
-    ssl_certificate_key /etc/ssl/private/syltharae.key;
-    client_max_body_size 2g;              # match OPERATIONS_MAX_UPLOAD_MB
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_read_timeout 600s;
-    }
-}
-```
+**Reverse proxy and service files ship with the release**:
+[`deploy/nginx/syltharae.conf`](../deploy/nginx/syltharae.conf) (HTTPS with
+HTTP/2, HTTP→HTTPS redirect, the proxy headers the application trusts, 2 GB
+uploads) and [`deploy/systemd/syltharae.service`](../deploy/systemd/syltharae.service).
+Install them as described in
+[OPERATIONS.md](OPERATIONS.md#reverse-proxy-and-tls), then run the
+[deployment verification](OPERATIONS.md#deployment-verification). If you
+write your own proxy configuration, it must *set* `X-Forwarded-For` to
+`$remote_addr`: appending with `$proxy_add_x_forwarded_for` passes on
+whatever address the client claims.
 
 ## Offline installation (air-gapped hosts)
 
