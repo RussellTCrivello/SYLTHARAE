@@ -58,7 +58,7 @@ git checkout v2.1.1        # or the latest release tag
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
-python -m pip install --upgrade pip wheel
+python -m pip install --upgrade pip setuptools wheel
 ```
 
 On Windows `setup.bat` does Steps 3-4 for you: it finds Python (`py -3` or
@@ -98,6 +98,8 @@ Notes:
 * **Headless servers:** if `import rapidocr_onnxruntime` fails with
   `libGL.so.1`, either install `libgl1` or replace the desktop wheel:
   `pip uninstall -y opencv-python && pip install --force-reinstall --no-deps opencv-python-headless`.
+  `pip check` then reports that `rapidocr-onnxruntime requires opencv-python`:
+  expected, since the headless wheel provides the same `cv2` module.
 
 ## Step 5 - Configure
 
