@@ -316,7 +316,7 @@ The suite starts its own throw-away PostgreSQL server through `pgserver`, so
 it needs no database configuration:
 
 ```bash
-pip install -e ".[dev]"          # pytest, pgserver, ruff, bandit
+pip install -e ".[dev]"          # pytest, pgserver, pyzipper, ruff, bandit
 python -m pytest tests/unit                  # fast, mostly without a database
 python -m pytest tests/integration tests/security
 ```

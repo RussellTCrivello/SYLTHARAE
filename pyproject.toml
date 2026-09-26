@@ -64,6 +64,7 @@ dev = [
     "ruff>=0.4",
     "bandit>=1.7",
     "pgserver>=0.1",
+    "pyzipper>=0.3.6",  # builds the AES-encrypted ZIP fixture; test-only
 ]
 
 [project.scripts]

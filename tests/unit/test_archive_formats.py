@@ -305,8 +305,12 @@ def test_encrypted_7z_is_detected_at_the_safety_layer(tmp_path):
 
 
 def test_encrypted_zip_is_reported_as_encrypted(reader, tmp_path):
-    """Uses pyzipper when present; skipped rather than faked when it is not."""
-    pyzipper = pytest.importorskip("pyzipper", reason="pyzipper not installed")
+    """pyzipper (a declared ``dev`` dependency) writes a real AES-encrypted ZIP.
+
+    Imported directly, not via importorskip: a missing test dependency must
+    fail the run, not quietly skip the encrypted-archive check.
+    """
+    import pyzipper
     path = tmp_path / "locked.zip"
     with pyzipper.AESZipFile(str(path), "w",
                              compression=pyzipper.ZIP_DEFLATED,
