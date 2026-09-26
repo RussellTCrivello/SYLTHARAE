@@ -550,7 +550,7 @@ class OfficeFileReader(BaseReader):
                         try:
                             with ole.openstream(entry) as handle:
                                 data = handle.read()
-                            record['md5'] = hashlib.md5(data).hexdigest()
+                            record['md5'] = hashlib.md5(data, usedforsecurity=False).hexdigest()
                             record['sha256'] = hashlib.sha256(data).hexdigest()
                         except Exception as exc:
                             record['error'] = str(exc)

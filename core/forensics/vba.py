@@ -77,7 +77,7 @@ class MacroProject:
 
 
 def _hashes(data: bytes) -> Tuple[str, str]:
-    return hashlib.md5(data).hexdigest(), hashlib.sha256(data).hexdigest()
+    return hashlib.md5(data, usedforsecurity=False).hexdigest(), hashlib.sha256(data).hexdigest()
 
 
 def _extract_with_olevba(path: str) -> Tuple[List[Dict[str, object]], Dict[str, object], Optional[str]]:
@@ -133,7 +133,7 @@ def _extract_with_olevba(path: str) -> Tuple[List[Dict[str, object]], Dict[str, 
                 "name": vba_filename,
                 "line_count": code.count("\n") + 1 if code else 0,
                 "source": code,
-                "md5": hashlib.md5(code.encode("utf-8", "replace")).hexdigest(),
+                "md5": hashlib.md5(code.encode("utf-8", "replace"), usedforsecurity=False).hexdigest(),
             })
         metadata["truncated"] = truncated
     except Exception as exc:
