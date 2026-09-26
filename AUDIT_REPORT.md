@@ -74,3 +74,61 @@ was reproduced deterministically before the fix.
 | RES-DEP-02 | Info | `rapidocr-onnxruntime` depends on the full `opencv-python`, which needs `libGL`. On headless Linux, `import cv2` fails and OCR, image and video readers degrade. | Documented workaround: swap in `opencv-python-headless` ([INSTALL.md](docs/INSTALL.md), [DEVELOPMENT.md](docs/DEVELOPMENT.md)). Windows and desktop hosts are unaffected. |
 | RES-PST-01 | Info | PST mailboxes need the optional `libpff-python` (the `pst` extra), whose build needs a C toolchain. | Without it, PST files are recorded with an explanatory error rather than skipped silently. |
 | RES-OPS-02 | Info | Waitress is opt-in (`WSGI_SERVER=waitress`); the default remains the built-in server, so existing `start.bat` workflows keep working. | Production docs require Waitress and never recommend the development server ([OPERATIONS.md](docs/OPERATIONS.md)). |
+
+## Test evidence
+
+Same environment for both columns: Python 3.11.2, PostgreSQL 16.2
+(`pgserver`), Node 22, and `opencv-python-headless` (see RES-DEP-02).
+Counts come from `pytest -rA`.
+
+| Suite | v2.1.0 (baseline, `13b7ace`) | v2.1.1 (`e96b173`) |
+|---|---|---|
+| Unit (`tests/unit`) | 1757 passed, 21 failed, 11 errors, 2 skipped | **1855 passed, 0 failed**, 2 skipped |
+| Integration + security + e2e | 696 passed, 7 failed | **722 passed, 0 failed** |
+| `pip-audit -r requirements.txt` | known CVEs (PyPDF2, Pillow floor) | **no known vulnerabilities** |
+| Clean-venv `pip install -r requirements.txt` + `pip check` | fails (`libpff-python` C build) | **succeeds** in about 50 s; `pip check` clean |
+| ruff critical rules (E9, F63, F7, F82) | 1 (F821) | **0** |
+
+The two skips are expected: `pyzipper` is optional, and one screen-inspector
+check has no markup bindings to inspect yet.
+
+### Classification of baseline failures
+
+| Class | Baseline failures | Resolution |
+|---|---|---|
+| **PRE-EXISTING**: generated documents missing or stale (interface registry, evidence, endpoint inventory, component library, experience contract, screen inspector, action surface, productization map, domain model) | 19 unit failures and 11 unit errors, 2 integration | Generated with the project's own generators; missing documents written |
+| **PRE-EXISTING**: registry icon `bi bi-person-check` (`invalid_icon`) | 1 unit, 1 integration | AUDIT-UI-01 |
+| **PRE-EXISTING**: phantom repository call (`.hashs_repo`) | 1 unit | AUDIT-DB-01 |
+| **PRE-EXISTING**: stale compiled `.mo` catalogs (`ar`, `he`, `fa`, `hr`) | 4 integration | Catalogs recompiled |
+| **ENVIRONMENTAL**: `import cv2` fails without `libGL` (full `opencv-python` pulled in by RapidOCR) | about 80 unit failures in an earlier run without the headless build | Documented workaround (RES-DEP-02); zero with it applied |
+| **FAIL** introduced on this branch | 1: `test_schema_reference` order dependence (TEST-ORDER-01) | Fixed in `b3d6f02` |
+| **BLOCKED** | none | none |
+
+### Live smoke test
+
+`tools/smoke/live_smoke.py` ran against a `git archive` of the release commit,
+served by Waitress 3.0.2 with `FLASK_ENV=production` and
+`TRUSTED_PROXY_COUNT=1`, behind a simulated TLS proxy, on a new database:
+
+| Phase | Result |
+|---|---|
+| install (wizard: DB test, install, second install refused) | 4/4 |
+| run1 (health, HSTS only on HTTPS, 401s, CSRF ×3, allowlist, ingest, search ×5, notifications, exports, users and password gate, role denial, logout) | 29/29 |
+| **restart** without `FLASK_ENV` in the environment, so production mode had to come from the wizard's `.env`, then run2 | 29/29; 0 ERROR lines in the server log |
+| re-ingest the same folder into the same source and side | 0 stored, 4 duplicates (idempotent) |
+
+Search for the keyword found all five files: text, CSV, DOCX, the ZIP's
+duplicate memo and the nested `inner/notes.txt`. The duplicate inside the
+ZIP is stored as a second occurrence (`bundle.zip::copy_of_memo.txt`,
+parent = the ZIP) of the same content hash as `memo.txt`, as the identity
+model requires.
+
+## Manual actions that remain
+
+* **Licence.** The repository has no LICENSE file. Choosing one is the
+  owner's decision.
+* **CSP hardening (RES-CSP-01)** and **current-password check (RES-AUTH-02)**
+  are planned for the next minor release.
+* **Production cut-over** is per deployment: install the `server` extra, set
+  `WSGI_SERVER=waitress` and `TRUSTED_PROXY_COUNT`, and put TLS in front
+  ([OPERATIONS.md](docs/OPERATIONS.md)).
