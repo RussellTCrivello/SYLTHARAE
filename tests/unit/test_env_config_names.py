@@ -73,3 +73,15 @@ def test_every_documented_live_variable_is_read_by_code():
     doc = (REPO / "docs" / "CONFIGURATION.md").read_text(encoding="utf-8")
     for name in reserved:
         assert name in example and name in doc
+
+
+def test_database_get_db_config_honours_env_changed_at_runtime(monkeypatch):
+    """AUDIT-HEALTH-01: env set after settings were cached must win (ARCH-02)."""
+    from database import get_db_config
+    from settings import get_database_config
+    get_database_config()  # make sure the settings object is cached first
+    monkeypatch.setenv("DB_HOST", "/run/after-install-socket")
+    monkeypatch.setenv("DB_NAME", "installed_db")
+    monkeypatch.setenv("DB_PORT", "5433")
+    cfg = get_db_config()
+    assert (cfg["host"], cfg["database"], cfg["port"]) == ("/run/after-install-socket", "installed_db", 5433)
