@@ -71,6 +71,28 @@ def pdf_reader():
     return PDFFileReader()
 
 
+def _diagnosis(out, path, engine):
+    """One line saying what the reader and the engine did with ``path``.
+
+    A string, so pytest does not shorten it (a dict message is cut to a few
+    keys, which hid why this case failed in CI but not locally).
+    """
+    import json
+
+    Image = pytest.importorskip("PIL.Image")
+    original = Image.open(path).convert("RGB")
+    direct = engine.recognize(original, ["heb", "eng", "ara"])
+    return json.dumps({
+        "reader": {k: out.get(k) for k in ("text", "ocr_confidence", "ocr_input_variant",
+                                          "ocr_rotation", "ocr_engine", "ocr_engine_version")},
+        "extraction_info": out.get("extraction_info"),
+        "glyph_size": ocr_engines._glyph_size(original),
+        "engine_on_original": {"text": direct.text, "confidence": direct.mean_confidence,
+                               "scale": direct.scale, "rotation": direct.rotation,
+                               "error": direct.error},
+    }, default=str, ensure_ascii=False)
+
+
 def make_image(tmp_path, marker, font_size=44, canvas=(1100, 260), angle=0,
                scale=1, name="case.png", colour="white"):
     Image = pytest.importorskip("PIL.Image")
@@ -179,12 +201,13 @@ class TestResolution:
         path = make_image(tmp_path, "LOWRESTEST 7712", font_size=7,
                           canvas=(200, 50), name="low.png")
         out = read_image(image_reader, path)
-        assert out["ocr_successful"] is True, out["extraction_info"]
+        why = _diagnosis(out, path, engine)
+        assert out["ocr_successful"] is True, why
         compact = out["text"].replace(" ", "")
-        assert "LOWRESTEST" in compact, out["text"]
-        assert "7712" in compact, out["text"]
+        assert "LOWRESTEST" in compact, why
+        assert "7712" in compact, why
         assert out.get("ocr_input_variant") == "original", (
-            "expected the un-preprocessed retry to have produced this result"
+            "expected the un-preprocessed retry to have produced this result: " + why
         )
 
     def test_retry_only_fires_when_confidence_is_low(self, engine, tmp_path):
@@ -520,3 +543,152 @@ class TestEngineFailure:
         assert result.text == "from-original"
         assert result.input_variant == "original"
         assert result.mean_confidence == pytest.approx(0.95)
+
+
+class _TwoVariantEngine:
+    """Returns a scripted reading per input variant ("pre" / "original")."""
+
+    name = "two-variant"
+
+    def __init__(self, readings):
+        self.readings, self.calls = readings, []
+
+    def available(self):
+        return True
+
+    def version(self):
+        return "0.0"
+
+    def recognize(self, image, languages=None):
+        self.calls.append(image)
+        text, confidence, scale = self.readings[image]
+        return ocr_engines.OcrResult(text=text, attempted=True, engine=self.name, engine_version="0.0",
+                                     blocks=[ocr_engines.OcrBlock(text, confidence)], scale=scale)
+
+
+class TestSmallTextRetry:
+    """Measured with tesseract 5.3.4 (CI): the preprocessed
+    "ROTATEDIMAGE_270_9911" read "..._9311" at 0.83 after a x4 enlargement;
+    the confidence gate alone kept it, while the original read it exactly."""
+
+    def test_an_enlarged_first_pass_is_checked_against_the_original(self):
+        engine = _TwoVariantEngine({"pre": ("ROTATEDIMAGE_270_9311", 0.83, 4.0),
+                                    "original": ("ROTATEDIMAGE_270_9911", 0.90, 2.0)})
+        result = recognize_best(engine, "pre", "original")
+        assert engine.calls == ["pre", "original"]
+        assert result.text == "ROTATEDIMAGE_270_9911"
+        assert result.input_variant == "original"
+
+    def test_a_confident_normal_sized_first_pass_is_not_read_twice(self):
+        engine = _TwoVariantEngine({"pre": ("ORDINARY TEXT", 0.93, 1.0),
+                                    "original": ("never read", 0.99, 1.0)})
+        result = recognize_best(engine, "pre", "original")
+        assert engine.calls == ["pre"]
+        assert result.input_variant == "preprocessed"
+
+    def test_the_enlarged_first_pass_is_kept_when_the_original_is_worse(self):
+        engine = _TwoVariantEngine({"pre": ("SMALL TEXT 42", 0.88, 2.0),
+                                    "original": ("SMALL TEXT 4", 0.61, 2.0)})
+        result = recognize_best(engine, "pre", "original")
+        assert result.text == "SMALL TEXT 42"
+        assert result.input_variant == "preprocessed"
+
+
+def _pdf_page_with_image(pymupdf, image_px, rect, page_size=(400, 1100), rotate=0):
+    Image = pytest.importorskip("PIL.Image")
+    png = io.BytesIO()
+    Image.new("RGB", image_px, "white").save(png, format="PNG")
+    doc = pymupdf.open()
+    page = doc.new_page(width=page_size[0], height=page_size[1])
+    page.insert_image(pymupdf.Rect(*rect), stream=png.getvalue(), rotate=rotate)
+    return pymupdf.open(stream=doc.tobytes())[0]
+
+
+class TestPdfRenderResolution:
+    """Scanned PDF pages are rasterised at their scan's own pixel density.
+
+    Measured: a fixed 2x rendered a 1000px-wide scan placed 400pt wide at
+    800px, and tesseract 5.3.4 read "PDFROTATED_180_7744" as Hebrew junk; at
+    the scan's resolution (2.5x) it read it exactly at 0.91."""
+
+    @pytest.fixture
+    def pymupdf(self):
+        return pytest.importorskip("pymupdf")
+
+    def test_a_dense_scan_is_rendered_at_its_own_resolution(self, pymupdf):
+        from reader_file.readers.read_pdf import ocr_render_zoom
+
+        page = _pdf_page_with_image(pymupdf, (1000, 300), (0, 0, 400, 1100))  # placed 400x120pt
+        assert ocr_render_zoom(page) == pytest.approx(2.5)
+
+    def test_a_rotated_placement_counts_the_same(self, pymupdf):
+        from reader_file.readers.read_pdf import ocr_render_zoom
+
+        # Turned 90 degrees it occupies 120x400pt: the same 0.4 scale as
+        # 400x120pt unturned, but a bbox whose sides are swapped.
+        page = _pdf_page_with_image(pymupdf, (1000, 300), (0, 0, 120, 400), rotate=90)
+        assert ocr_render_zoom(page) == pytest.approx(2.5, rel=0.01)
+
+    def test_never_below_the_historical_144_dpi(self, pymupdf):
+        from reader_file.readers.read_pdf import MIN_OCR_ZOOM, ocr_render_zoom
+
+        page = _pdf_page_with_image(pymupdf, (200, 550), (0, 0, 400, 1100))  # 0.5 px/pt
+        assert ocr_render_zoom(page) == MIN_OCR_ZOOM == 2.0
+
+    def test_never_above_300_dpi(self, pymupdf):
+        from reader_file.readers.read_pdf import MAX_OCR_ZOOM, ocr_render_zoom
+
+        page = _pdf_page_with_image(pymupdf, (4000, 11000), (0, 0, 400, 1100))  # 10 px/pt
+        assert ocr_render_zoom(page) == pytest.approx(MAX_OCR_ZOOM) == pytest.approx(300 / 72)
+
+    def test_the_pixel_budget_bounds_a_large_page(self, pymupdf):
+        from reader_file.readers.read_pdf import MAX_OCR_PAGE_PIXELS, ocr_render_zoom
+
+        page = _pdf_page_with_image(pymupdf, (4000, 1000), (0, 0, 1000, 250), page_size=(1400, 1400))
+        zoom = ocr_render_zoom(page)  # the image asks for 4x; 1400pt square allows ~2.86x
+        assert 1400 * 1400 * zoom * zoom <= MAX_OCR_PAGE_PIXELS * 1.0001
+        assert zoom == pytest.approx((MAX_OCR_PAGE_PIXELS / (1400 * 1400)) ** 0.5)
+
+    def test_an_unreadable_image_list_falls_back_and_says_so(self, caplog):
+        from reader_file.readers.read_pdf import MIN_OCR_ZOOM, ocr_render_zoom
+
+        class Page:
+            number = 4
+            rect = type("R", (), {"width": 595, "height": 842})()
+
+            def get_image_info(self):
+                raise RuntimeError("broken xref")
+
+        with caplog.at_level("WARNING"):
+            assert ocr_render_zoom(Page()) == MIN_OCR_ZOOM
+        assert "Cannot list the images on PDF page 5" in caplog.text
+
+    def test_the_reader_renders_and_records_the_scan_resolution(self, pymupdf, tmp_path, monkeypatch):
+        Image = pytest.importorskip("PIL.Image")
+        ImageDraw = pytest.importorskip("PIL.ImageDraw")
+        import reader_file.readers.read_pdf as read_pdf
+
+        img = Image.new("RGB", (1000, 300), "white")
+        ImageDraw.Draw(img).text((60, 100), "RENDER 1180", fill="black")
+        png = io.BytesIO()
+        img.rotate(180).save(png, format="PNG")
+        doc = pymupdf.open()
+        doc.new_page(width=400, height=1100).insert_image(pymupdf.Rect(0, 0, 400, 1100), stream=png.getvalue())
+        path = tmp_path / "scan.pdf"
+        path.write_bytes(doc.tobytes())
+
+        seen = []
+
+        class Recorder(_TwoVariantEngine):
+            name = "tesseract"
+
+            def recognize(self, image, languages=None):
+                seen.append(image.size)
+                return ocr_engines.OcrResult(text="RENDER 1180", attempted=True, engine=self.name,
+                                             engine_version="0.0", blocks=[ocr_engines.OcrBlock("RENDER", 0.9)])
+
+        monkeypatch.setattr(read_pdf, "get_ocr_engine", lambda: Recorder({}))
+        monkeypatch.setattr(read_pdf, "installed_ocr_languages", lambda engine, req, label, rec: list(req))
+        page = read_pdf.PDFFileReader().read_pdf_file(str(path))["pages"][0]
+        assert seen and seen[0] == (1000, 2750)  # 2.5x of 400x1100pt, not 2x (800x2200)
+        assert page["ocr_render_dpi"] == 180

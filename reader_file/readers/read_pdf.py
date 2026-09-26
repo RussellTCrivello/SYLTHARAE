@@ -12,6 +12,7 @@ Improvements:
 
 import os
 import io
+import math
 from pathlib import Path
 from typing import Dict, Any, Optional, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -39,14 +40,53 @@ from core.ocr import get_ocr_engine, recognize_best
 
 from .base_reader import BaseReader
 
+logger = logging.getLogger(__name__)
+
+#: Scanned pages are rasterised for OCR at no less than this zoom (144 dpi),
+#: the reader's historical fixed resolution ...
+MIN_OCR_ZOOM = 2.0
+#: ... and no more than 300 dpi, the resolution tesseract's documentation
+#: recommends for OCR.
+MAX_OCR_ZOOM = 300 / 72
+#: Pixels per rendered page (the engine's own enlargement budget).
+MAX_OCR_PAGE_PIXELS = 16_000_000
+
+
+def ocr_render_zoom(page) -> float:
+    """Zoom at which to rasterise ``page`` for OCR.
+
+    A fixed 2x (144 dpi) threw away pixels whenever a page's scan was denser:
+    measured, a 1000px-wide scan placed 400pt wide was rendered 800px wide,
+    and tesseract 5.3.4 then read "PDFROTATED_180_7744" as Hebrew junk while
+    at the scan's own resolution (2.5x) it read it exactly (0.91; 5.5.1 went
+    from 0.76 with a misread to exact at 0.90). So the page is rendered at
+    the pixel density of its densest embedded image, within MIN_OCR_ZOOM,
+    MAX_OCR_ZOOM and MAX_OCR_PAGE_PIXELS. Density is measured by area
+    (pixels over points squared), so a rotated placement counts the same.
+    """
+    zoom = MIN_OCR_ZOOM
+    try:
+        images = page.get_image_info()
+    except Exception as exc:
+        logger.warning("Cannot list the images on PDF page %s (%s: %s); rendering at %d dpi",
+                       getattr(page, "number", -1) + 1, type(exc).__name__, exc, round(72 * zoom))
+        images = []
+    for info in images:
+        x0, y0, x1, y1 = info.get("bbox") or (0, 0, 0, 0)
+        placed = (x1 - x0) * (y1 - y0)
+        pixels = (info.get("width") or 0) * (info.get("height") or 0)
+        if placed > 0 and pixels > 0:
+            zoom = max(zoom, math.sqrt(pixels / placed))
+    area = page.rect.width * page.rect.height
+    budget = math.sqrt(MAX_OCR_PAGE_PIXELS / area) if area > 0 else MIN_OCR_ZOOM
+    return max(MIN_OCR_ZOOM, min(zoom, MAX_OCR_ZOOM, budget))
+
 from Hdg_Err_Ex_Log import (
     handle_error,
     ErrorCategory,
     ErrorSeverity,
     format_validation_error
 )
-
-logger = logging.getLogger(__name__)
 
 
 class PDFFileReader(BaseReader):
@@ -508,6 +548,7 @@ class PDFFileReader(BaseReader):
                 
                 # Prepare page data for parallel processing
                 page_data_list = []
+                render_dpi = {}  # page index -> resolution it was rasterised at for OCR
                 
                 try:
                     for page_num in range(len(doc)):
@@ -552,8 +593,9 @@ class PDFFileReader(BaseReader):
                             else:
                                 # Page needs OCR - ensure we still track the page number
                                 try:
-                                    mat = fitz.Matrix(2.0, 2.0)  # 2x resolution
-                                    pix = page.get_pixmap(matrix=mat, alpha=False)
+                                    zoom = ocr_render_zoom(page)
+                                    render_dpi[page_num] = round(72 * zoom)
+                                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
                                     img_bytes = pix.tobytes("png")
                                     
                                     page_data_list.append((
@@ -614,6 +656,8 @@ class PDFFileReader(BaseReader):
                                 self.yield_periodically(completed_count, interval=3, aggressive=True)
                                 
                                 page_result = future.result()
+                                if page_result.get("ocr_derived") and futures[future] in render_dpi:
+                                    page_result["ocr_render_dpi"] = render_dpi[futures[future]]
                                 result["pages"].append(page_result)
                             except Exception as ocr_error:
                                 # If OCR fails for a page, we should still have the page number

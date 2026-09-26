@@ -989,8 +989,15 @@ def recognize_best(
 
     The shared preprocessing is a hard binarisation tuned for tesseract. For
     small images it discards the anti-aliasing that helps a neural engine, so
-    the retry is gated on measured confidence rather than applied blindly: a
-    confident first pass costs nothing extra.
+    the retry is gated rather than applied blindly: a confident first pass on
+    normal-sized text costs nothing extra.
+
+    The gate is low confidence, or a first pass the engine had to enlarge
+    (``scale > 1``: its evidence that the text is small, which is where
+    binarisation destroys strokes). Confidence alone is not enough there:
+    measured with tesseract 5.3.4, the preprocessed "ROTATEDIMAGE_270_9911"
+    read "..._9311" at 0.83, while the original read it exactly at 0.90; a
+    7px line read nothing preprocessed and exactly from the original.
 
     ``original`` is optional; when omitted this behaves exactly like
     ``engine.recognize``.
@@ -1002,7 +1009,8 @@ def recognize_best(
         return result
 
     confidence = result.mean_confidence
-    if result.succeeded and confidence is not None and confidence >= threshold:
+    small_text = (result.scale or 1.0) > 1.0
+    if result.succeeded and confidence is not None and confidence >= threshold and not small_text:
         return result
 
     # The retry must never turn a partial success into a total failure: some

@@ -149,6 +149,7 @@ Optimized PDF Reader - 10x Faster Performance
   - `process_page_optimized(self, page_data)` - Optimized page processing - uses shared OCR functions from read_img_fast
   - `read_pdf_file(self, filepath, max_workers = None, languages = None)` - Highly optimized PDF reader with parallel processing and multi-language OCR
   - `batch_process_pdfs(self, pdf_paths, max_workers = 4)` - Process multiple PDFs in parallel
+- `ocr_render_zoom(page) -> float` - Zoom at which to rasterise ``page`` for OCR.
 
 ### `reader_file/readers/read_remaining.py`
 
