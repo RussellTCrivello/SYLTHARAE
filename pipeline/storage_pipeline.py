@@ -1530,6 +1530,12 @@ class StoragePipeline:
                 # Pages read after turning them (their text was sideways or
                 # upside down in the file).
                 provenance["rotated_pages"] = rotated
+            missing = sorted({code for p in ocr_pages
+                              for code in (p.get("missing_ocr_languages") or [])})
+            if missing:
+                # Requested languages whose models were not installed: these
+                # pages were read without them (installed_ocr_languages).
+                provenance["missing_languages"] = missing
             return provenance
 
         if content.get("ocr_attempted") is None:
@@ -1547,7 +1553,12 @@ class StoragePipeline:
         if content.get("ocr_rotation"):
             # Degrees (counter-clockwise) the image was turned before reading.
             provenance["rotation"] = content["ocr_rotation"]
-        blocks_error = (content.get("extraction_info") or {}).get("ocr_blocks_error")
+        info = content.get("extraction_info") or {}
+        if info.get("missing_ocr_languages"):
+            # Requested languages whose models were not installed: the image
+            # was read without them (installed_ocr_languages).
+            provenance["missing_languages"] = list(info["missing_ocr_languages"])
+        blocks_error = info.get("ocr_blocks_error")
         if blocks_error:
             # Why ``confidence`` is None although text was recognised.
             provenance["confidence_error"] = blocks_error

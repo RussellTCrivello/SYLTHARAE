@@ -74,7 +74,8 @@ REMEDIATION = {
         "(the standard tesseract-ocr-* packages) and the engine version."
     ),
     "low_confidence": (
-        "Text was read with low confidence; ingestion will keep it and flag it. "
+        "Text was read with low confidence; ingestion keeps such text and stores "
+        "the confidence with the file (extraction_provenance.ocr.confidence). "
         "Check the tessdata models if clean samples read this way."
     ),
     "missing_languages": (

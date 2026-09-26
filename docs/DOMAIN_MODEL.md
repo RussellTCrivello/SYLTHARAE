@@ -51,7 +51,23 @@ Invariants the system maintains:
 4. System classification and analyst decisions never overwrite each other.
 5. Provenance is explicit: `extraction_provenance` records which extractor
    (including OCR) produced the text, so recognised text is never presented
-   as if it were native text.
+   as if it were native text. For OCR, `extraction_provenance.ocr` holds
+   `engine`, `engine_version`, `derived: true`, `language`, `confidence`
+   and `input_variant` (`preprocessed`, or `original` when the reading of
+   the unprocessed image was kept). Images add `attempted` and `successful`
+   (OCR ran; it produced text) and `rotation` (degrees the image was turned
+   before reading) when it was turned; PDFs add `ocr_pages`,
+   `total_pages`, `engines` and `rotated_pages`, and their `confidence` is
+   the mean over the OCR pages.
+   `confidence` is the engine's mean word confidence scaled to 0-1. It is
+   `null` only when text was recognised but the engine's word data could not
+   be read; `confidence_error` then says why, and a warning is logged. A
+   value outside the engine's range is rejected, not clamped. A requested
+   language whose model is not installed is never silently replaced by
+   English: the text is read with the installed ones, an error is logged,
+   and `missing_languages` lists the missing codes (for a PDF, over its OCR
+   pages). The OCR self-check reports missing packs before ingestion
+   ([OPERATIONS.md](OPERATIONS.md#ocr-self-check)).
 
 ## 2. Work domains
 

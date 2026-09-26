@@ -776,6 +776,32 @@ class TestStoredOcrProvenance:
         assert prov["confidence"] is None
         assert prov["confidence_error"] == "image_to_data failed: OSError: x"
 
+    def test_missing_languages_are_recorded_for_an_image(self):
+        """A file read without a requested language model says so after
+        ingestion, not only in the log of the run."""
+        prov = self._provenance({
+            "ocr_attempted": True, "ocr_successful": True, "ocr_engine": "tesseract",
+            "ocr_confidence": 0.9,
+            "extraction_info": {"missing_ocr_languages": ["heb", "ara"]},
+        })
+        assert prov["missing_languages"] == ["heb", "ara"]
+
+    def test_missing_languages_are_collected_over_a_pdfs_ocr_pages(self):
+        prov = self._provenance({"pages": [
+            {"page_number": 1, "method": "ocr_tesseract", "ocr_engine": "tesseract",
+             "ocr_confidence": 0.9, "missing_ocr_languages": ["heb"]},
+            {"page_number": 2, "method": "ocr_tesseract", "ocr_engine": "tesseract",
+             "ocr_confidence": 0.8, "missing_ocr_languages": ["ara", "heb"]},
+        ]})
+        assert prov["missing_languages"] == ["ara", "heb"]
+
+    def test_no_missing_languages_key_when_every_model_is_installed(self):
+        prov = self._provenance({
+            "ocr_attempted": True, "ocr_successful": True, "ocr_engine": "tesseract",
+            "ocr_confidence": 0.9, "extraction_info": {},
+        })
+        assert "missing_languages" not in prov
+
     def test_an_upright_image_with_confidence_keeps_the_existing_shape(self):
         prov = self._provenance({
             "ocr_attempted": True, "ocr_successful": True, "ocr_engine": "tesseract",
