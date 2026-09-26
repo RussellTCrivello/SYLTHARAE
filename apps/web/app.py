@@ -307,11 +307,16 @@ logger.info("✅ Gzip compression enabled")
 @app.after_request
 def add_performance_headers(response):
     """Add performance and caching headers to all responses"""
-    # Cache static assets for 1 year
+    # CACHE-02: static assets are revalidated on every use (a cheap 304 via
+    # ETag/Last-Modified). Most asset URLs, and every ES-module import inside
+    # them, carry no version, so a long-lived "immutable" cache would pin the
+    # previous release's JavaScript in browsers after an upgrade. Flask already
+    # sends no-cache; the max-age/immutable once added here contradicted it.
     if request.endpoint and 'static' in request.endpoint:
-        response.cache_control.max_age = 31536000
+        response.cache_control.no_cache = True
+        response.cache_control.max_age = None
+        response.cache_control.immutable = False
         response.cache_control.public = True
-        response.cache_control.immutable = True
     # CACHE-01: API responses are per-user, fast-changing data (a PATCH to
     # /api/auth/users/<id> was invisible to the browser's immediate re-read
     # of /api/auth/users for up to 5 minutes). Never let browsers reuse them.
