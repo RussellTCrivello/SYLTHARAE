@@ -50,6 +50,8 @@ def test_setup_wizard_page_renders_its_required_controls(setup_client, monkeypat
 def test_database_test_requires_a_json_object_and_validates_before_connecting(
     setup_client, monkeypatch
 ):
+    # The endpoint is only open during the first-run window (AUDIT-SETUP-01).
+    monkeypatch.setattr(setup_routes, "_is_initialized", lambda: False)
     calls = []
     monkeypatch.setattr(
         "core.installer.test_database_connection",
@@ -97,10 +99,10 @@ def test_database_test_requires_a_json_object_and_validates_before_connecting(
 
 def test_install_rejects_non_object_json_without_running_installer(setup_client, monkeypatch):
     monkeypatch.setattr(setup_routes, "_reject_if_initialized", lambda: None)
-    calls = []
+    calls, ips = [], []
     monkeypatch.setattr(
         "core.installer.run_installation",
-        lambda config: calls.append(config) or {"ok": True},
+        lambda config, client_ip="": calls.append(config) or ips.append(client_ip) or {"ok": True},
     )
 
     for body in (None, [], "not an object"):
@@ -115,10 +117,10 @@ def test_install_validates_configuration_bounds_and_relationships_before_running
     setup_client, monkeypatch
 ):
     monkeypatch.setattr(setup_routes, "_reject_if_initialized", lambda: None)
-    calls = []
+    calls, ips = [], []
     monkeypatch.setattr(
         "core.installer.run_installation",
-        lambda config: calls.append(config) or {"ok": True},
+        lambda config, client_ip="": calls.append(config) or ips.append(client_ip) or {"ok": True},
     )
     base = {
         "db_password": "database secret",
@@ -149,10 +151,10 @@ def test_install_passes_normalized_bounded_configuration_to_installer(
     setup_client, monkeypatch
 ):
     monkeypatch.setattr(setup_routes, "_reject_if_initialized", lambda: None)
-    calls = []
+    calls, ips = [], []
     monkeypatch.setattr(
         "core.installer.run_installation",
-        lambda config: calls.append(config) or {"ok": True},
+        lambda config, client_ip="": calls.append(config) or ips.append(client_ip) or {"ok": True},
     )
     response = setup_client.post(
         "/api/setup/install",
@@ -206,4 +208,6 @@ def test_install_passes_normalized_bounded_configuration_to_installer(
         "RATE_LIMIT_PER_HOUR": "1000",
         "FILE_PROCESSING_TIMEOUT": "1800",
     }]
+    # The administrator's creation is audited with the wizard user's address.
+    assert ips == ["127.0.0.1"]
     assert not setup_routes._install_lock.locked()

@@ -5,15 +5,18 @@ System-wide notification management endpoints
 
 from flask import request, jsonify
 from flask_babel import gettext as _
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from core.monitoring.notification_service import (
     get_notification_service,
     NotificationType,
-    NotificationPriority
+    NotificationPriority,
+    notification_from_row,
 )
+from core.monitoring.notification_display import format_title_message, display_payload
 from Api.utils import execute_query
 import logging
 from core.errors import client_error, client_safe_message
+from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
 
 logger = logging.getLogger(__name__)
 
@@ -67,113 +70,11 @@ def register_notification_routes(app):
                 limit=limit
             )
             
-            # Convert to JSON-serializable format with translation
-            notifications_data = []
-            for n in notifications:
-                # Translate title and message for all notification types
-                title = n.title
-                message = n.message
-                
-                if n.type == NotificationType.SIMILAR_FILES:
-                    # Translate similar files notifications
-                    if n.file_name:
-                        title = _('Similar Files Detected: %(file_name)s', file_name=n.file_name)
-                    else:
-                        title = _('Similar Files Detected')
-                    similar_count = n.metadata.get('similar_count', 0) if n.metadata else 0
-                    similarity_threshold = n.metadata.get('similarity_threshold', 0.8) if n.metadata else 0.8
-                    threshold_percent = int(similarity_threshold * 100)
-                    message = _('Found %(count)s similar file(s) with similarity ≥ %(threshold)s%%', 
-                               count=similar_count, threshold=threshold_percent)
-                
-                elif n.type == NotificationType.FUTURE_EVENT:
-                    # Translate future event notifications
-                    if n.event_date:
-                        date_str = n.event_date.strftime('%Y-%m-%d')
-                        title = _('Future Event Detected: %(date)s', date=date_str)
-                    else:
-                        title = _('Future Event Detected')
-                    if n.file_name:
-                        message = _('Future-focused content found in %(file_name)s', file_name=n.file_name)
-                    else:
-                        message = _('Future-focused content found')
-                
-                elif n.type == NotificationType.FUTURE_DATE:
-                    # Translate future date notifications
-                    if n.event_date:
-                        date_str = n.event_date.strftime('%Y-%m-%d')
-                        title = _('Future Date Detected: %(date)s', date=date_str)
-                        days_until = n.metadata.get('days_until', 0) if n.metadata else 0
-                        if n.file_name:
-                            if days_until > 0:
-                                message = _('Future date found in %(file_name)s (%(days)s days away)', 
-                                           file_name=n.file_name, days=days_until)
-                            else:
-                                message = _('Future date found in %(file_name)s', file_name=n.file_name)
-                        else:
-                            if days_until > 0:
-                                message = _('Future date found (%(days)s days away)', days=days_until)
-                            else:
-                                message = _('Future date found')
-                    else:
-                        title = _('Future Date Detected')
-                        message = _('Future date found')
-                
-                elif n.type == NotificationType.PROCESSING_COMPLETE:
-                    # Translate processing complete notifications
-                    title = _('Processing Complete')
-                    if n.file_name:
-                        message = _('File processing completed: %(file_name)s', file_name=n.file_name)
-                    else:
-                        message = _('File processing completed')
-                
-                elif n.type == NotificationType.BATCH_COMPLETE:
-                    # Translate batch complete notifications
-                    title = _('Batch Processing Complete')
-                    batch_count = n.metadata.get('batch_count', 0) if n.metadata else 0
-                    if batch_count > 0:
-                        message = _('Batch processing completed: %(count)s file(s) processed', count=batch_count)
-                    else:
-                        message = _('Batch processing completed')
-                
-                elif n.type == NotificationType.ERROR:
-                    # Translate error notifications
-                    if not title or title == n.message:
-                        title = _('Error')
-                    if n.file_name:
-                        message = _('Error in %(file_name)s: %(error)s', 
-                                   file_name=n.file_name, error=n.message)
-                    else:
-                        message = n.message  # Keep original error message
-                
-                elif n.type == NotificationType.WARNING:
-                    # Translate warning notifications
-                    if not title or title == n.message:
-                        title = _('Warning')
-                    message = n.message  # Keep original warning message
-                
-                elif n.type == NotificationType.INFO:
-                    # Translate info notifications
-                    if not title or title == n.message:
-                        title = _('Information')
-                    message = n.message  # Keep original info message
-                
-                notifications_data.append({
-                    'id': n.id,
-                    'type': n.type.value,
-                    'priority': n.priority.value,
-                    'title': title,
-                    'message': message,
-                    'file_id': n.file_id,
-                    'file_name': n.file_name,
-                    'file_path': n.file_path,
-                    'event_date': n.event_date.isoformat() if n.event_date else None,
-                    'metadata': n.metadata,
-                    'created_at': n.created_at.isoformat(),
-                    'read': n.read,
-                    'dismissed': n.dismissed
-                })
-            
+            # Single shared formatter keeps displayed titles/messages
+            # accurate and identical across every endpoint (see
+            # core/monitoring/notification_display.py).
+            notifications_data = [display_payload(n, _) for n in notifications]
+
             return jsonify({
                 'success': True,
                 'notifications': notifications_data,
@@ -195,86 +96,7 @@ def register_notification_routes(app):
             
             events_data = []
             for n in upcoming:
-                # Translate title and message for all notification types
-                title = n.title
-                message = n.message
-                
-                if n.type == NotificationType.SIMILAR_FILES:
-                    if n.file_name:
-                        title = _('Similar Files Detected: %(file_name)s', file_name=n.file_name)
-                    else:
-                        title = _('Similar Files Detected')
-                    similar_count = n.metadata.get('similar_count', 0) if n.metadata else 0
-                    similarity_threshold = n.metadata.get('similarity_threshold', 0.8) if n.metadata else 0.8
-                    threshold_percent = int(similarity_threshold * 100)
-                    message = _('Found %(count)s similar file(s) with similarity ≥ %(threshold)s%%', 
-                               count=similar_count, threshold=threshold_percent)
-                
-                elif n.type == NotificationType.FUTURE_EVENT:
-                    if n.event_date:
-                        date_str = n.event_date.strftime('%Y-%m-%d')
-                        title = _('Future Event Detected: %(date)s', date=date_str)
-                    else:
-                        title = _('Future Event Detected')
-                    if n.file_name:
-                        message = _('Future-focused content found in %(file_name)s', file_name=n.file_name)
-                    else:
-                        message = _('Future-focused content found')
-                
-                elif n.type == NotificationType.FUTURE_DATE:
-                    if n.event_date:
-                        date_str = n.event_date.strftime('%Y-%m-%d')
-                        title = _('Future Date Detected: %(date)s', date=date_str)
-                        days_until = n.metadata.get('days_until', 0) if n.metadata else 0
-                        if n.file_name:
-                            if days_until > 0:
-                                message = _('Future date found in %(file_name)s (%(days)s days away)', 
-                                           file_name=n.file_name, days=days_until)
-                            else:
-                                message = _('Future date found in %(file_name)s', file_name=n.file_name)
-                        else:
-                            if days_until > 0:
-                                message = _('Future date found (%(days)s days away)', days=days_until)
-                            else:
-                                message = _('Future date found')
-                    else:
-                        title = _('Future Date Detected')
-                        message = _('Future date found')
-                
-                elif n.type == NotificationType.PROCESSING_COMPLETE:
-                    title = _('Processing Complete')
-                    if n.file_name:
-                        message = _('File processing completed: %(file_name)s', file_name=n.file_name)
-                    else:
-                        message = _('File processing completed')
-                
-                elif n.type == NotificationType.BATCH_COMPLETE:
-                    title = _('Batch Processing Complete')
-                    batch_count = n.metadata.get('batch_count', 0) if n.metadata else 0
-                    if batch_count > 0:
-                        message = _('Batch processing completed: %(count)s file(s) processed', count=batch_count)
-                    else:
-                        message = _('Batch processing completed')
-                
-                elif n.type == NotificationType.ERROR:
-                    if not title or title == n.message:
-                        title = _('Error')
-                    if n.file_name:
-                        message = _('Error in %(file_name)s: %(error)s', 
-                                   file_name=n.file_name, error=n.message)
-                    else:
-                        message = n.message
-                
-                elif n.type == NotificationType.WARNING:
-                    if not title or title == n.message:
-                        title = _('Warning')
-                    message = n.message
-                
-                elif n.type == NotificationType.INFO:
-                    if not title or title == n.message:
-                        title = _('Information')
-                    message = n.message
-                
+                title, message = format_title_message(n, _)
                 events_data.append({
                     'id': n.id,
                     'title': title,
@@ -303,115 +125,41 @@ def register_notification_routes(app):
         """Get a single notification by ID"""
         try:
             notification_service = get_notification_service()
-            notification_service.refresh_notifications()
-            
-            # Get all notifications and find the one with matching ID
-            all_notifications = notification_service.get_notifications(limit=10000)
-            notification = next((n for n in all_notifications if n.id == notification_id), None)
-            
+            # Direct row lookup - no forced refresh, no linear scan of
+            # an in-memory list capped at 10 000 entries.
+            row = execute_query(
+                """
+                SELECT id, type, priority, title, message, file_id, file_name,
+                       file_path, event_date, metadata, created_at, read, dismissed
+                FROM alerts
+                WHERE id = %s AND dismissed = FALSE
+                """,
+                (notification_id,),
+                fetch="one"
+            )
+            notification = notification_from_row(row) if row else None
+
+            if notification is None:
+                # Fallback covers pending (temp-id) notifications in memory.
+                notification = next(
+                    (
+                        n for n in notification_service.get_notifications(limit=5000)
+                        if n.id == notification_id
+                    ),
+                    None,
+                )
+
             if not notification:
                 return jsonify({
                     'success': False,
                     'error': 'Notification not found'
                 }), 404
-            
-            # Translate title and message for all notification types
-            title = notification.title
-            message = notification.message
-            
-            if notification.type == NotificationType.SIMILAR_FILES:
-                if notification.file_name:
-                    title = _('Similar Files Detected: %(file_name)s', file_name=notification.file_name)
-                else:
-                    title = _('Similar Files Detected')
-                similar_count = notification.metadata.get('similar_count', 0) if notification.metadata else 0
-                similarity_threshold = notification.metadata.get('similarity_threshold', 0.8) if notification.metadata else 0.8
-                threshold_percent = int(similarity_threshold * 100)
-                message = _('Found %(count)s similar file(s) with similarity ≥ %(threshold)s%%', 
-                           count=similar_count, threshold=threshold_percent)
-            
-            elif notification.type == NotificationType.FUTURE_EVENT:
-                if notification.event_date:
-                    date_str = notification.event_date.strftime('%Y-%m-%d')
-                    title = _('Future Event Detected: %(date)s', date=date_str)
-                else:
-                    title = _('Future Event Detected')
-                if notification.file_name:
-                    message = _('Future-focused content found in %(file_name)s', file_name=notification.file_name)
-                else:
-                    message = _('Future-focused content found')
-            
-            elif notification.type == NotificationType.FUTURE_DATE:
-                if notification.event_date:
-                    date_str = notification.event_date.strftime('%Y-%m-%d')
-                    title = _('Future Date Detected: %(date)s', date=date_str)
-                    days_until = notification.metadata.get('days_until', 0) if notification.metadata else 0
-                    if notification.file_name:
-                        if days_until > 0:
-                            message = _('Future date found in %(file_name)s (%(days)s days away)', 
-                                       file_name=notification.file_name, days=days_until)
-                        else:
-                            message = _('Future date found in %(file_name)s', file_name=notification.file_name)
-                    else:
-                        if days_until > 0:
-                            message = _('Future date found (%(days)s days away)', days=days_until)
-                        else:
-                            message = _('Future date found')
-                else:
-                    title = _('Future Date Detected')
-                    message = _('Future date found')
-            
-            elif notification.type == NotificationType.PROCESSING_COMPLETE:
-                title = _('Processing Complete')
-                if notification.file_name:
-                    message = _('File processing completed: %(file_name)s', file_name=notification.file_name)
-                else:
-                    message = _('File processing completed')
-            
-            elif notification.type == NotificationType.BATCH_COMPLETE:
-                title = _('Batch Processing Complete')
-                batch_count = notification.metadata.get('batch_count', 0) if notification.metadata else 0
-                if batch_count > 0:
-                    message = _('Batch processing completed: %(count)s file(s) processed', count=batch_count)
-                else:
-                    message = _('Batch processing completed')
-            
-            elif notification.type == NotificationType.ERROR:
-                if not title or title == notification.message:
-                    title = _('Error')
-                if notification.file_name:
-                    message = _('Error in %(file_name)s: %(error)s', 
-                               file_name=notification.file_name, error=notification.message)
-                else:
-                    message = notification.message
-            
-            elif notification.type == NotificationType.WARNING:
-                if not title or title == notification.message:
-                    title = _('Warning')
-                message = notification.message
-            
-            elif notification.type == NotificationType.INFO:
-                if not title or title == notification.message:
-                    title = _('Information')
-                message = notification.message
-            
+
+            payload = display_payload(notification, _)
+
             return jsonify({
                 'success': True,
-                'notification': {
-                    'id': notification.id,
-                    'type': notification.type.value,
-                    'priority': notification.priority.value,
-                    'title': title,
-                    'message': message,
-                    'file_id': notification.file_id,
-                    'file_name': notification.file_name,
-                    'file_path': notification.file_path,
-                    'event_date': notification.event_date.isoformat() if notification.event_date else None,
-                    'metadata': notification.metadata,
-                    'created_at': notification.created_at.isoformat(),
-                    'read': notification.read,
-                    'dismissed': notification.dismissed
-                }
+                'notification': payload
             })
         
         except Exception as e:
@@ -504,7 +252,10 @@ def register_notification_routes(app):
                 file_path=file_path,
                 content=content
             )
-            
+
+            # Persist before responding so the payload carries real ids.
+            notification_service.flush_pending_notifications()
+
             return jsonify({
                 'success': True,
                 'notifications_created': len(notifications),
@@ -528,46 +279,34 @@ def register_notification_routes(app):
         """Refresh notifications from database"""
         try:
             notification_service = get_notification_service()
-            notification_service.refresh_notifications()
-            
+            count = notification_service.refresh_notifications()
+
             return jsonify({
                 'success': True,
                 'message': 'Notifications refreshed successfully',
-                'count': len(notification_service.get_notifications(limit=10000))
+                'count': count
             })
         except Exception as e:
             logger.error(f"Error refreshing notifications: {e}")
             return client_error(e, subsystem='Api.routes.notifications', success_key='success', status=500)
     
+    # The sidebar badge reads this on every page load and then every 30 s per
+    # open tab (base-page-handler.js): five idle tabs alone reach the 600/hour
+    # default, after which the badge - and each page boot - got 429 (live
+    # browser smoke through nginx). An interactive read; see
+    # INTERACTIVE_READ_LIMIT.
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
     @app.route('/api/notifications/stats', methods=['GET'])
     def get_notification_stats():
         """Get notification statistics"""
         try:
             notification_service = get_notification_service()
             
-            # Refresh to ensure we have latest data
-            notification_service.refresh_notifications()
-            
-            all_notifications = notification_service.get_notifications(limit=10000)
-            
-            stats = {
-                'total': len(all_notifications),
-                'unread': len([n for n in all_notifications if not n.read]),
-                'by_type': {},
-                'by_priority': {},
-                'upcoming_events': len(notification_service.get_upcoming_events(days_ahead=30))
-            }
-            
-            # Count by type
-            for n in all_notifications:
-                type_val = n.type.value
-                stats['by_type'][type_val] = stats['by_type'].get(type_val, 0) + 1
-            
-            # Count by priority
-            for n in all_notifications:
-                priority_val = n.priority.value
-                stats['by_priority'][priority_val] = stats['by_priority'].get(priority_val, 0) + 1
-            
+            # Exact SQL aggregates (COUNT/GROUP BY).  No forced refresh,
+            # no in-memory scan: totals stay correct at any table size and
+            # the 30-second stats poll stops racing concurrent refreshes.
+            stats = notification_service.get_stats()
+
             return jsonify({
                 'success': True,
                 'stats': stats
@@ -586,11 +325,12 @@ def register_notification_routes(app):
                 NotificationType,
                 NotificationPriority
             )
-            from datetime import date, datetime
-            import json
-            
+
             notification_service = get_notification_service()
-            notifications_created = []
+            # Collected as (kind, notification, extra); the JSON response is
+            # built AFTER the flush so it reports the real database ids, not
+            # the temporary negative queue ids.
+            created_items = []
             
             # 1. Find duplicate files (same hash, different paths)
             logger.info("Scanning for duplicate files...")
@@ -610,7 +350,23 @@ def register_notification_routes(app):
             """
             
             duplicate_results = execute_query(duplicate_query, None, fetch="all")
-            
+
+            # One query loads every hash key that already has a duplicate
+            # notification - including DISMISSED ones, so a dismissed
+            # duplicate is not resurrected on the next scan.  Set membership
+            # replaces the previous per-hash existence probe (N+1 queries).
+            existing_hash_rows = execute_query(
+                """
+                SELECT metadata->>'hash'
+                FROM alerts
+                WHERE type = %s
+                  AND metadata->>'hash' IS NOT NULL
+                """,
+                (NotificationType.SIMILAR_FILES.value,),
+                fetch="all"
+            ) or []
+            existing_hashes = {r[0] for r in existing_hash_rows}
+
             duplicate_count = 0
             for row in duplicate_results or []:
                 hash_value, file_count, primary_file_id = row
@@ -637,20 +393,9 @@ def register_notification_routes(app):
                 primary_file_name = file_names[0] if file_names else 'Unknown'
                 primary_file_path = file_paths[0] if file_paths else ''
                 
-                # Check if notification already exists for this hash
-                existing = execute_query(
-                    """
-                    SELECT id FROM alerts 
-                    WHERE type = %s 
-                    AND metadata->>'hash' = %s
-                    AND dismissed = FALSE
-                    LIMIT 1
-                    """,
-                    (NotificationType.SIMILAR_FILES.value, hash_value),
-                    fetch="one"
-                )
-                
-                if not existing:
+                # Skip hashes that already produced a notification (in any
+                # state - dismissed notifications stay dismissed)
+                if hash_value not in existing_hashes:
                     from core.monitoring.notification_service import Notification
                     
                     # Create a readable message with file names
@@ -678,11 +423,8 @@ def register_notification_routes(app):
                         created_at=datetime.now()
                     )
                     notification = notification_service._save_notification(notification)
-                    notifications_created.append({
-                        'type': 'duplicate',
-                        'id': notification.id,
-                        'title': notification.title
-                    })
+                    created_items.append(('duplicate', notification, None))
+                    existing_hashes.add(hash_value)
                     duplicate_count += 1
             
             # 2. Find files with future dates in content
@@ -693,25 +435,47 @@ def register_notification_routes(app):
             future_analyzer = FutureEventsAnalyzer()
             today = date.today()
             
-            # Get all files with content (m0011: contents is keyed by hash,
-            # reached through the path's content identity context)
+            # One row PER PATH: EXISTS instead of "DISTINCT p.id, ..., c.id".
+            # Paths whose content has several chunks used to be scanned once
+            # per chunk, which inflated "files processed" and wasted content
+            # loads.  (m0011: contents is keyed by hash, reached through the
+            # path's content identity context.)
             files_query = """
-                SELECT DISTINCT p.id, p.file_name, p.file_path, c.id as content_id
+                SELECT p.id, p.file_name, p.file_path
                 FROM paths p
                 JOIN hash_contexts hc ON hc.id = p.context_id
-                INNER JOIN contents c ON c.hash_id = hc.hash_id
                 WHERE p.file_status = 'Read'
+                  AND EXISTS (SELECT 1 FROM contents c WHERE c.hash_id = hc.hash_id)
                 ORDER BY p.id DESC
                 LIMIT 5000
             """
-            
+
             files_with_content = execute_query(files_query, None, fetch="all")
-            
+
+            # Single preload of every (file_id, event_date) future-date alert
+            # for the candidate files - replaces a per-file existence query of
+            # up to 5 000 queries per scan.  Dismissed alerts are included so
+            # they are not resurrected either.
+            candidate_ids = [row[0] for row in files_with_content or []]
+            existing_future_pairs = set()
+            if candidate_ids:
+                for pair_row in execute_query(
+                    """
+                    SELECT file_id, event_date
+                    FROM alerts
+                    WHERE type = %s
+                      AND file_id = ANY(%s)
+                    """,
+                    (NotificationType.FUTURE_DATE.value, candidate_ids),
+                    fetch="all"
+                ) or []:
+                    existing_future_pairs.add((pair_row[0], pair_row[1]))
+
             future_date_count = 0
             processed_files = 0
             
             for row in files_with_content or []:
-                file_id, file_name, file_path, content_id = row
+                file_id, file_name, file_path = row
                 processed_files += 1
                 
                 # Load content
@@ -732,21 +496,9 @@ def register_notification_routes(app):
                         earliest_date, context, position = future_dates[0]
                         days_until = (earliest_date - today).days
                         
-                        # Check if notification already exists for this file and date
-                        existing = execute_query(
-                            """
-                            SELECT id FROM alerts 
-                            WHERE type = %s 
-                            AND file_id = %s
-                            AND event_date = %s
-                            AND dismissed = FALSE
-                            LIMIT 1
-                            """,
-                            (NotificationType.FUTURE_DATE.value, file_id, earliest_date),
-                            fetch="one"
-                        )
-                        
-                        if not existing:
+                        # Skip (file, date) pairs that already produced a
+                        # notification (in any state)
+                        if (file_id, earliest_date) not in existing_future_pairs:
                             from core.monitoring.notification_service import Notification
                             notification = Notification(
                                 id=None,
@@ -767,24 +519,31 @@ def register_notification_routes(app):
                                 created_at=datetime.now()
                             )
                             notification = notification_service._save_notification(notification)
-                            notifications_created.append({
-                                'type': 'future_date',
-                                'id': notification.id,
-                                'title': notification.title,
-                                'date': earliest_date.isoformat()
-                            })
+                            created_items.append(('future_date', notification, earliest_date.isoformat()))
+                            existing_future_pairs.add((file_id, earliest_date))
                             future_date_count += 1
                 
                 except Exception as e:
                     logger.debug(f"Error processing file {file_id} for future dates: {e}")
                     continue
             
-            # Flush pending notifications
+            # Persist, then build the response with real ids.
             notification_service.flush_pending_notifications()
-            
+
             # Refresh notifications cache to ensure new notifications are available
             notification_service.refresh_notifications()
-            
+
+            notifications_created = []
+            for kind, created_notification, extra in created_items:
+                entry = {
+                    'type': kind,
+                    'id': created_notification.id,
+                    'title': created_notification.title
+                }
+                if extra is not None:
+                    entry['date'] = extra
+                notifications_created.append(entry)
+
             logger.info(f"Scan completed: {duplicate_count} duplicates, {future_date_count} future dates, {processed_files} files processed")
             
             return jsonify({

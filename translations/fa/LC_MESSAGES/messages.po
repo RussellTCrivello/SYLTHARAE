@@ -10434,3 +10434,21 @@ msgstr "تنها تطبیق واژه‌های کامل"
 #: core/interfaces/registry.py
 msgid "Review and manage localized strings across every screen."
 msgstr "بازبینی و مدیریت متن‌های بومی‌سازی‌شده در همهٔ صفحه‌ها."
+
+msgid "Too many attempts. Wait a minute and try again."
+msgstr "تلاش‌های بیش از حد. یک دقیقه صبر کنید و دوباره تلاش کنید."
+
+msgid "Source code"
+msgstr "کد منبع"
+
+msgid "SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code."
+msgstr "SYLTHARAE نرم‌افزاری آزاد تحت مجوز GNU AGPL-3.0 یا نسخه‌های بعدی است. کد منبع آن را دریافت کنید."
+
+msgid "Current Password"
+msgstr "گذرواژه فعلی"
+
+msgid "Enter your current password."
+msgstr "گذرواژه فعلی خود را وارد کنید."
+
+msgid "The new password must be different from the current one."
+msgstr "گذرواژه جدید باید با گذرواژه فعلی متفاوت باشد."

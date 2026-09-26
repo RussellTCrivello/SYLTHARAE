@@ -33,7 +33,7 @@
             <a href="{{ url_for('search_advanced') }}" class="btn btn-analyst-outline">
                 <i class="bi bi-search me-1"></i>{{ _('Categorize from Search') }}
             </a>
-            <button type="button" class="btn btn-analyst" onclick="exportAnalystCsv()">
+            <button type="button" class="btn btn-analyst" data-on-click="exportAnalystCsv()">
                 <i class="bi bi-download me-1"></i>{{ _('Export CSV') }}
             </button>
         </div>
@@ -128,10 +128,10 @@
                                placeholder="{{ _('File name or path…') }}">
                     </div>
                     <div class="analyst-filter-group analyst-filter-actions">
-                        <button type="button" class="btn btn-sm btn-analyst" onclick="loadAssignments(1)">
+                        <button type="button" class="btn btn-sm btn-analyst" data-on-click="loadAssignments(1)">
                             <i class="bi bi-funnel me-1"></i>{{ _('Apply Filters') }}
                         </button>
-                        <button type="button" class="btn btn-sm btn-analyst-outline" onclick="resetFilters()">
+                        <button type="button" class="btn btn-sm btn-analyst-outline" data-on-click="resetFilters()">
                             <i class="bi bi-x-circle me-1"></i>{{ _('Reset') }}
                         </button>
                     </div>
@@ -184,7 +184,7 @@
                     <div class="input-group input-group-sm mb-3">
                         <input type="text" class="form-control" id="newCategoryName"
                                placeholder="{{ _('New analyst category name…') }}" maxlength="255">
-                        <button type="button" class="btn btn-analyst" onclick="createAnalystCategory()">
+                        <button type="button" class="btn btn-analyst" data-on-click="createAnalystCategory()">
                             <i class="bi bi-plus-lg"></i>
                         </button>
                     </div>
@@ -200,7 +200,7 @@
                                 </div>
                                 <div class="analyst-category-actions btn-group btn-group-sm">
                                     <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            onclick="filterByCategory({{ cat.id }})"
+                                            data-on-click="filterByCategory({{ cat.id }})"
                                             title="{{ _('Show files in this category') }}">
                                         <i class="bi bi-funnel"></i>
                                     </button>
@@ -210,7 +210,7 @@
                                        string literal inside an HTML attribute. The handler
                                        resolves the name from this element's data attribute. #}
                                     <button type="button" class="btn btn-sm btn-outline-danger"
-                                            onclick="deleteAnalystCategory(this)"
+                                            data-on-click="deleteAnalystCategory(this)"
                                             title="{{ _('Delete category (files return to uncategorized)') }}">
                                         <i class="bi bi-trash"></i>
                                     </button>

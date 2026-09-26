@@ -179,7 +179,7 @@
                 <a href="{{ url_for('sources_list') }}?edit={{ source.id }}" class="btn btn-success">
                     <i class="bi bi-pencil me-2"></i>{{ _('Edit Source') }}
                 </a>
-                <button type="button" class="btn btn-outline-danger" onclick='deleteSource({{ source.id }}, {{ source.name|tojson }})'>
+                <button type="button" class="btn btn-outline-danger" data-on-click='deleteSource({{ source.id }}, {{ source.name|tojson }})'>
                     <i class="bi bi-trash me-2"></i>{{ _('Delete Source') }}
                 </button>
             </div>

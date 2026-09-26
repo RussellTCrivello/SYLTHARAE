@@ -587,7 +587,7 @@ export async function exportResults(format, triggerButton = null) {
     const options = definition.options || {};
     const sort = definition.sort || { by: 'relevance', order: 'desc' };
     const extension = format === 'excel' ? 'xlsx' : format;
-    const requestedFilename = window.prompt(
+    const requestedFilename = await window.prompt(
         searchText('filenameExportPrompt', 'Name this export (leave blank for an automatic name):'),
         `search_results_${new Date().toISOString().slice(0, 10)}`);
     if (requestedFilename === null) return;
@@ -1031,7 +1031,7 @@ export async function showSaveSearchModal() {
         return;
     }
 
-    const name = window.prompt(searchText('Enter a name for this search:', 'Enter a name for this search:'), query);
+    const name = await window.prompt(searchText('Enter a name for this search:', 'Enter a name for this search:'), query);
     if (!name || !name.trim()) return;
     await saveSearch(name.trim(), query);
 }

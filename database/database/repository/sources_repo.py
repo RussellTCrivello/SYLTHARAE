@@ -17,11 +17,14 @@ class SourcesRepository(BaseRepository):
         attachments="",
         ownership="",
         access_status="",
-        entry_date=date.today(),
-        date_creation=date.today(),
+        entry_date=None,
+        date_creation=None,
         category_id=None,
     ):
         """Insert a new source and return its ID"""
+        # AUDIT-DATE-01: default resolved per call, not once at import time.
+        entry_date = entry_date or date.today()
+        date_creation = date_creation or date.today()
         params = (
             name,
             country,
@@ -156,9 +159,11 @@ class SourcesRepository(BaseRepository):
         job,
         importance,
         country,
-        date_creation=date.today()
+        date_creation=None
     ):
         """Get existing source or create new one"""
+        # AUDIT-DATE-01: default resolved per call, not once at import time.
+        date_creation = date_creation or date.today()
         return self.execute(
             SourceQueries.get_or_create_source(),
             (name, job, importance, country, date_creation),

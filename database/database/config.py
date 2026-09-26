@@ -84,8 +84,12 @@ class DatabaseConfig:
                 password=os.getenv('DB_PASSWORD', ''),
                 host=os.getenv('DB_HOST', 'localhost'),
                 port=int(os.getenv('DB_PORT', '5432')),
-                min_connections=int(os.getenv('DB_MIN_CONNECTIONS', '1')),
-                max_connections=int(os.getenv('DB_MAX_CONNECTIONS', '20'))
+                # AUDIT-CONF-01: .env.example and the installer write the
+                # DB_POOL_* names; accept them as well as the older names.
+                min_connections=int(os.getenv('DB_MIN_CONNECTIONS')
+                                    or os.getenv('DB_POOL_MIN_CONNECTIONS') or '1'),
+                max_connections=int(os.getenv('DB_MAX_CONNECTIONS')
+                                    or os.getenv('DB_POOL_MAX_CONNECTIONS') or '20')
             )
     
     @classmethod

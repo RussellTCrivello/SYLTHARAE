@@ -12,6 +12,7 @@ Improvements:
 
 import os
 import io
+import math
 from pathlib import Path
 from typing import Dict, Any, Optional, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -26,10 +27,10 @@ import time
 # These are module-level functions exported from ImageFileReader for cross-module use
 from reader_file.readers.read_img_fast import (
     _get_libraries,
-    _detect_language,
     _get_optimized_tesseract_config,
     _fast_preprocess,
     _is_tesseract_available,
+    installed_ocr_languages,
     DEFAULT_OCR_LANGUAGES
 )
 
@@ -39,14 +40,53 @@ from core.ocr import get_ocr_engine, recognize_best
 
 from .base_reader import BaseReader
 
+logger = logging.getLogger(__name__)
+
+#: Scanned pages are rasterised for OCR at no less than this zoom (144 dpi),
+#: the reader's historical fixed resolution ...
+MIN_OCR_ZOOM = 2.0
+#: ... and no more than 300 dpi, the resolution tesseract's documentation
+#: recommends for OCR.
+MAX_OCR_ZOOM = 300 / 72
+#: Pixels per rendered page (the engine's own enlargement budget).
+MAX_OCR_PAGE_PIXELS = 16_000_000
+
+
+def ocr_render_zoom(page) -> float:
+    """Zoom at which to rasterise ``page`` for OCR.
+
+    A fixed 2x (144 dpi) threw away pixels whenever a page's scan was denser:
+    measured, a 1000px-wide scan placed 400pt wide was rendered 800px wide,
+    and tesseract 5.3.4 then read "PDFROTATED_180_7744" as Hebrew junk while
+    at the scan's own resolution (2.5x) it read it exactly (0.91; 5.5.1 went
+    from 0.76 with a misread to exact at 0.90). So the page is rendered at
+    the pixel density of its densest embedded image, within MIN_OCR_ZOOM,
+    MAX_OCR_ZOOM and MAX_OCR_PAGE_PIXELS. Density is measured by area
+    (pixels over points squared), so a rotated placement counts the same.
+    """
+    zoom = MIN_OCR_ZOOM
+    try:
+        images = page.get_image_info()
+    except Exception as exc:
+        logger.warning("Cannot list the images on PDF page %s (%s: %s); rendering at %d dpi",
+                       getattr(page, "number", -1) + 1, type(exc).__name__, exc, round(72 * zoom))
+        images = []
+    for info in images:
+        x0, y0, x1, y1 = info.get("bbox") or (0, 0, 0, 0)
+        placed = (x1 - x0) * (y1 - y0)
+        pixels = (info.get("width") or 0) * (info.get("height") or 0)
+        if placed > 0 and pixels > 0:
+            zoom = max(zoom, math.sqrt(pixels / placed))
+    area = page.rect.width * page.rect.height
+    budget = math.sqrt(MAX_OCR_PAGE_PIXELS / area) if area > 0 else MIN_OCR_ZOOM
+    return max(MIN_OCR_ZOOM, min(zoom, MAX_OCR_ZOOM, budget))
+
 from Hdg_Err_Ex_Log import (
     handle_error,
     ErrorCategory,
     ErrorSeverity,
     format_validation_error
 )
-
-logger = logging.getLogger(__name__)
 
 
 class PDFFileReader(BaseReader):
@@ -105,7 +145,7 @@ class PDFFileReader(BaseReader):
         # Add fitz (PDF-specific)
         if 'fitz' not in libs:
             try:
-                import fitz
+                import pymupdf as fitz
                 libs['fitz'] = fitz
             except ImportError:
                 libs['fitz'] = None
@@ -173,7 +213,6 @@ class PDFFileReader(BaseReader):
         
         libs = _get_libraries()  # Shared function
         Image = libs.get('Image')
-        pytesseract = libs.get('pytesseract')
         cv2 = libs.get('cv2')
         np = libs.get('np')
         
@@ -202,30 +241,15 @@ class PDFFileReader(BaseReader):
             result["method"] = "skipped_text_based_pdf"
             return result
 
-        # PHASE 2A: tesseract is preferred (it covers this project's declared
-        # heb/eng/ara defaults) but it is no longer the only option. A host
-        # without the binary still gets OCR through the engine layer instead of
-        # silently returning a blank page.
-        use_tesseract = bool(pytesseract and _is_tesseract_available())
-        if use_tesseract and ocr_languages:
-            try:
-                installed_languages = set(pytesseract.get_languages(config=""))
-                missing_languages = [
-                    code for code in ocr_languages if code not in installed_languages
-                ]
-                if missing_languages:
-                    # Route through the strict shared engine so missing script
-                    # data is reported, never silently reduced to English.
-                    logger.error(
-                        "Missing Tesseract language data for %s: %s",
-                        source_label, ", ".join(missing_languages),
-                    )
-                    use_tesseract = False
-            except Exception:
-                use_tesseract = False
-        fallback_engine = None if use_tesseract else get_ocr_engine()
-        if not use_tesseract and fallback_engine is None:
+        # Every engine goes through the engine layer (core.ocr), so a page
+        # carries the same provenance whichever one runs: confidence,
+        # rotation, the input variant. Tesseract is preferred when installed
+        # (it covers this project's heb/eng/ara defaults).
+        engine = get_ocr_engine()
+        if engine is None:
             return _fallback_to_text_layer("ocr_required_engine_unavailable")
+        requested = list(ocr_languages) if ocr_languages else list(DEFAULT_OCR_LANGUAGES)
+        usable_languages = installed_ocr_languages(engine, requested, source_label, result)
 
         try:
             engine_result = None
@@ -243,69 +267,26 @@ class PDFFileReader(BaseReader):
             else:
                 pil_processed = pil_image.convert("L")
 
-            if use_tesseract:
-                # Use shared language detection from read_img_fast
-                detected_lang = _detect_language(rgb_image, pytesseract)
-                result["detected_language"] = detected_lang
+            # Confidence-gated retry on the un-preprocessed page image.
+            engine_result = recognize_best(engine, pil_processed, rgb_image, usable_languages)
+            text = engine_result.text or ""
+            result["ocr_language"] = engine_result.language
+            if engine_result.error:
+                result["engine_error"] = engine_result.error
+            if engine_result.blocks_error:
+                result["ocr_blocks_error"] = engine_result.blocks_error
+            if engine_result.rotation:
+                result["ocr_rotation"] = engine_result.rotation
 
-                # Use shared config function from read_img_fast
-                if detected_lang:
-                    lang_to_use, config_to_use = _get_optimized_tesseract_config(detected_lang, tuple(ocr_languages) if ocr_languages else None)
-                else:
-                    lang_to_use, config_to_use = tesseract_lang, tesseract_config
-
-                result["ocr_language"] = lang_to_use
-
-                text = pytesseract.image_to_string(pil_processed, lang=lang_to_use, config=config_to_use)
-                if not text or len(text.strip()) < 5:
-                    for angle in (270, 180, 90):
-                        try:
-                            rot_target = pil_processed.rotate(angle, expand=True)
-                            rot_text = pytesseract.image_to_string(rot_target, lang=lang_to_use, config=config_to_use)
-                            if rot_text and len(rot_text.strip()) > len(text or ""):
-                                text = rot_text
-                                if len(text.strip()) > 20:
-                                    break
-                        except Exception:
-                            pass
-
-                # Handle None and ensure string type
-                if text is None:
-                    text = ""
-                else:
-                    text = str(text)
-
-                engine_name = "tesseract"
-                try:
-                    engine_version = str(pytesseract.get_tesseract_version())
-                except Exception:
-                    engine_version = "unknown"
-                confidence = None
-                input_variant = ""
-            else:
-                # Alternate engine path. Same contract, plus per-page
-                # confidence and explicit engine provenance.
-                # Confidence-gated retry on the un-preprocessed page image.
-                engine_result = recognize_best(
-                    fallback_engine,
-                    pil_processed,
-                    rgb_image,
-                    list(ocr_languages) if ocr_languages else None,
-                )
-                text = engine_result.text or ""
-                result["ocr_language"] = engine_result.language
-                if engine_result.error:
-                    result["engine_error"] = engine_result.error
-
-                engine_name = engine_result.engine
-                engine_version = engine_result.engine_version
-                confidence = engine_result.mean_confidence
-                input_variant = engine_result.input_variant
+            engine_name = engine_result.engine
+            engine_version = engine_result.engine_version
+            confidence = engine_result.mean_confidence
+            input_variant = engine_result.input_variant
 
             if text and len(text.strip()) > 0:
                 result["text"] = text.strip()
                 result["text_length"] = len(text.strip())
-                result["method"] = "ocr_multilang" if use_tesseract else f"ocr_{engine_name}"
+                result["method"] = f"ocr_{engine_name}"
                 # Provenance: this text was recognised, not authored.
                 result["ocr_engine"] = engine_name
                 result["ocr_engine_version"] = engine_version
@@ -567,6 +548,7 @@ class PDFFileReader(BaseReader):
                 
                 # Prepare page data for parallel processing
                 page_data_list = []
+                render_dpi = {}  # page index -> resolution it was rasterised at for OCR
                 
                 try:
                     for page_num in range(len(doc)):
@@ -611,8 +593,9 @@ class PDFFileReader(BaseReader):
                             else:
                                 # Page needs OCR - ensure we still track the page number
                                 try:
-                                    mat = fitz.Matrix(2.0, 2.0)  # 2x resolution
-                                    pix = page.get_pixmap(matrix=mat, alpha=False)
+                                    zoom = ocr_render_zoom(page)
+                                    render_dpi[page_num] = round(72 * zoom)
+                                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
                                     img_bytes = pix.tobytes("png")
                                     
                                     page_data_list.append((
@@ -673,6 +656,8 @@ class PDFFileReader(BaseReader):
                                 self.yield_periodically(completed_count, interval=3, aggressive=True)
                                 
                                 page_result = future.result()
+                                if page_result.get("ocr_derived") and futures[future] in render_dpi:
+                                    page_result["ocr_render_dpi"] = render_dpi[futures[future]]
                                 result["pages"].append(page_result)
                             except Exception as ocr_error:
                                 # If OCR fails for a page, we should still have the page number

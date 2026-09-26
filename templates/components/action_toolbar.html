@@ -109,7 +109,7 @@
 {%- else -%}
 <button type="{{ 'submit' if submit else 'button' }}" class="{{ class_name }}"
         {% if id %}id="{{ id }}"{% endif %}
-        {% if onclick and not disabled %}onclick="{{ onclick }}"{% endif %}{{ inspector }}
+        {% if onclick and not disabled %}data-on-click="{{ onclick }}"{% endif %}{{ inspector }}
         {% if loading %}aria-busy="true"{% endif %}
         {% if disabled %}disabled aria-disabled="true"{% endif %}
         {% if bulk %}data-bulk-action data-action-label="{{ label }}"{% endif %}

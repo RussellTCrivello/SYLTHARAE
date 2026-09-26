@@ -243,7 +243,8 @@ class OfficeFileReader(BaseReader):
         """
         try:
             from docx import Document
-            from docx.oxml.ns import qn
+            from docx.table import Table as DocxTable
+            from docx.text.paragraph import Paragraph as DocxParagraph
         except ImportError:
             return {
                 "error": "python-docx not installed. Install with: pip install python-docx",
@@ -272,23 +273,15 @@ class OfficeFileReader(BaseReader):
             table_idx = 0
             element_position = 0
             
-            # Get paragraph and table objects with their document positions
-            # We need to track which paragraphs and tables we've already processed
-            processed_paragraphs = set()
-            processed_tables = set()
-            
-            for element in doc.element.body:
-                # Check if element is a paragraph
-                if element.tag == qn('w:p'):
-                    # Find corresponding paragraph object
-                    para = None
-                    for p in doc.paragraphs:
-                        if p._element == element and id(p) not in processed_paragraphs:
-                            para = p
-                            processed_paragraphs.add(id(p))
-                            break
-                    
-                    if para:
+            # One Paragraph or Table per body element, in body order. These
+            # proxies used to be looked up in doc.paragraphs / doc.tables and
+            # remembered by id(); those proxies are rebuilt and freed on every
+            # access, so a reused address made a different paragraph look
+            # "already processed" and it was silently dropped (DOCX-DROP-01).
+            for block in doc.iter_inner_content():
+                if isinstance(block, DocxParagraph):
+                    para = block
+                    if para is not None:
                         para_text = para.text.strip()
                         # Include all paragraphs (even empty ones) to preserve spacing/formatting
                         para_data = {
@@ -310,17 +303,9 @@ class OfficeFileReader(BaseReader):
                         paragraph_idx += 1
                         element_position += 1
                 
-                # Check if element is a table
-                elif element.tag == qn('w:tbl'):
-                    # Find corresponding table object
-                    table = None
-                    for t in doc.tables:
-                        if t._element == element and id(t) not in processed_tables:
-                            table = t
-                            processed_tables.add(id(t))
-                            break
-                    
-                    if table:
+                elif isinstance(block, DocxTable):
+                    table = block
+                    if table is not None:
                         table_data = {
                             "type": "table",
                             "position": element_position,
@@ -550,7 +535,7 @@ class OfficeFileReader(BaseReader):
                         try:
                             with ole.openstream(entry) as handle:
                                 data = handle.read()
-                            record['md5'] = hashlib.md5(data).hexdigest()
+                            record['md5'] = hashlib.md5(data, usedforsecurity=False).hexdigest()
                             record['sha256'] = hashlib.sha256(data).hexdigest()
                         except Exception as exc:
                             record['error'] = str(exc)

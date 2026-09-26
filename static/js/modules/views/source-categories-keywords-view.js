@@ -108,8 +108,8 @@ function renderSourceCategoriesKeywordsView(categories, keywords, section, itemI
                      data-item-name="${categoryName}"
                      data-${sectionIdParam}="${itemId}"
                      style="border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 0.2s; background: var(--bg-section, #ffffff);"
-                     onmouseover="this.style.borderColor='var(--primary-color, #3b82f6)'; this.style.boxShadow='0 2px 8px rgba(59, 130, 246, 0.1)';"
-                     onmouseout="this.style.borderColor='var(--border-color, #e2e8f0)'; this.style.boxShadow='none';">
+                     data-on-mouseover="this.style.borderColor='var(--primary-color, #3b82f6)'; this.style.boxShadow='0 2px 8px rgba(59, 130, 246, 0.1)';"
+                     data-on-mouseout="this.style.borderColor='var(--border-color, #e2e8f0)'; this.style.boxShadow='none';">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
                         <i class="bi bi-folder-fill" style="font-size: 1.5rem; color: var(--primary-color, #3b82f6);"></i>
                         <h4 style="margin: 0; font-size: 1rem; font-weight: 600; flex: 1;">${categoryName}</h4>
@@ -157,8 +157,8 @@ function renderSourceCategoriesKeywordsView(categories, keywords, section, itemI
                      data-item-name="${keywordName}"
                      data-${sectionIdParam}="${itemId}"
                      style="border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 0.2s; background: var(--bg-section, #ffffff);"
-                     onmouseover="this.style.borderColor='var(--primary-color, #3b82f6)'; this.style.boxShadow='0 2px 8px rgba(59, 130, 246, 0.1)';"
-                     onmouseout="this.style.borderColor='var(--border-color, #e2e8f0)'; this.style.boxShadow='none';">
+                     data-on-mouseover="this.style.borderColor='var(--primary-color, #3b82f6)'; this.style.boxShadow='0 2px 8px rgba(59, 130, 246, 0.1)';"
+                     data-on-mouseout="this.style.borderColor='var(--border-color, #e2e8f0)'; this.style.boxShadow='none';">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
                         <i class="bi bi-tag-fill" style="font-size: 1.5rem; color: var(--primary-color, #3b82f6);"></i>
                         <h4 style="margin: 0; font-size: 1rem; font-weight: 600; flex: 1;">${keywordName}</h4>

@@ -288,6 +288,17 @@ def detect_file_type_with_confidence(
                         return '.odp', CONFIDENCE_STRONG
                     if 'epub+zip' in s:
                         return '.epub', CONFIDENCE_STRONG
+                # draw.io / diagrams.net .drawio is a ZIP containing exactly
+                # file.xml (the mxfile document) + metadata.xml. Name it by
+                # payload so the router reaches the diagram reader: the
+                # archive reader would explode the document into orphan
+                # members and lose every trace of its page structure.
+                if (
+                    not is_ooxml
+                    and 'file.xml' in lowered
+                    and 'metadata.xml' in lowered
+                ):
+                    return '.drawio', CONFIDENCE_STRONG
                 return '.zip', CONFIDENCE_STRONG
             elif sig == b'RIFF' and len(data) > 12:
                 t = data[8:12]

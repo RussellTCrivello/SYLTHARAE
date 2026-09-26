@@ -54,6 +54,42 @@ class Notification:
     dismissed: bool = False
 
 
+#: Column order shared by every ``SELECT ... FROM alerts`` in this service.
+ALERT_COLUMNS = (
+    "id, type, priority, title, message, file_id, file_name, "
+    "file_path, event_date, metadata, created_at, read, dismissed"
+)
+
+
+def notification_from_row(row) -> Notification:
+    """Convert an ``alerts`` row (``ALERT_COLUMNS`` order) to a Notification."""
+    metadata: Dict[str, Any] = {}
+    raw_metadata = row[9]
+    if isinstance(raw_metadata, dict):
+        metadata = dict(raw_metadata)
+    elif isinstance(raw_metadata, str):
+        try:
+            metadata = json.loads(raw_metadata)
+        except (json.JSONDecodeError, TypeError):
+            metadata = {}
+
+    return Notification(
+        id=row[0],
+        type=NotificationType(row[1]),
+        priority=NotificationPriority(row[2]),
+        title=row[3],
+        message=row[4],
+        file_id=row[5],
+        file_name=row[6],
+        file_path=row[7],
+        event_date=row[8] if row[8] else None,
+        metadata=metadata,
+        created_at=row[10],
+        read=bool(row[11]),
+        dismissed=bool(row[12]),
+    )
+
+
 class NotificationService:
     """
     Centralized notification service for system-wide alerts.
@@ -72,66 +108,48 @@ class NotificationService:
         self._notifications: List[Notification] = []
         #  OPTIMIZATION: Pending notifications queue for batch writes (no DB queries during processing)
         self._pending_notifications: List[Notification] = []
-        self._pending_lock = threading.Lock()
+        # Guards BOTH the in-memory list and the pending queue.  The list is
+        # only ever swapped as a whole under this lock (never clear()+append),
+        # so concurrent refreshes can no longer interleave into duplicate
+        # entries ("10 loaded" for a table with 5 rows).
+        self._lock = threading.RLock()
         self._next_temp_id = -1  # Temporary IDs for pending notifications (negative to avoid conflicts)
         self._load_notifications()
-    
+
+    def _fetch_notifications(self, limit: int = 1000) -> List[Notification]:
+        """Read notifications from the database into a fresh list."""
+        # Use execute_query from Api.utils (best practice - single source of truth)
+        from Api.utils import execute_query
+
+        rows = execute_query(
+            f"""
+            SELECT {ALERT_COLUMNS}
+            FROM alerts
+            WHERE dismissed = FALSE
+            ORDER BY created_at DESC
+            LIMIT {int(limit)}
+            """,
+            fetch="all"
+        )
+
+        fetched: List[Notification] = []
+        for row in rows or []:
+            try:
+                fetched.append(notification_from_row(row))
+            except Exception as e:
+                self.logger.warning(f"Error loading notification: {e}")
+        return fetched
+
     def _load_notifications(self):
-        """Load notifications from database"""
+        """Load notifications from database (atomic swap, pending preserved)."""
         try:
-            # Use execute_query from Api.utils (best practice - single source of truth)
-            from Api.utils import execute_query
-            
-            # Load notifications from database (table should be created by schema.py)
-            notifications = execute_query(
-                """
-                SELECT id, type, priority, title, message, file_id, file_name, 
-                       file_path, event_date, metadata, created_at, read, dismissed
-                FROM alerts
-                WHERE dismissed = FALSE
-                ORDER BY created_at DESC
-                LIMIT 1000
-                """,
-                fetch="all"
-            )
-            
-            if notifications:
-                for row in notifications:
-                    try:
-                        # Handle metadata - it might already be a dict (from JSONB column) or a JSON string
-                        metadata = {}
-                        if row[9]:
-                            if isinstance(row[9], dict):
-                                metadata = row[9]
-                            elif isinstance(row[9], str):
-                                try:
-                                    metadata = json.loads(row[9])
-                                except (json.JSONDecodeError, TypeError):
-                                    metadata = {}
-                            else:
-                                metadata = {}
-                        
-                        notification = Notification(
-                            id=row[0],
-                            type=NotificationType(row[1]),
-                            priority=NotificationPriority(row[2]),
-                            title=row[3],
-                            message=row[4],
-                            file_id=row[5],
-                            file_name=row[6],
-                            file_path=row[7],
-                            event_date=row[8] if row[8] else None,
-                            metadata=metadata,
-                            created_at=row[10],
-                            read=row[11] or False,
-                            dismissed=row[12] or False
-                        )
-                        self._notifications.append(notification)
-                    except Exception as e:
-                        self.logger.warning(f"Error loading notification: {e}")
+            fetched = self._fetch_notifications()
         except Exception as e:
             self.logger.error(f"Error loading notifications: {e}")
-    
+            fetched = []
+        with self._lock:
+            self._notifications = fetched + list(self._pending_notifications)
+
     def create_similar_files_notification(
         self,
         file_id: int,
@@ -265,7 +283,7 @@ class NotificationService:
         Notifications are batched and written to database later via flush_pending().
         """
         # Assign temporary ID for pending notification
-        with self._pending_lock:
+        with self._lock:
             notification.id = self._next_temp_id
             self._next_temp_id -= 1
             
@@ -279,145 +297,116 @@ class NotificationService:
         
         return notification
     
+    def _flush_batch(self, batch: List[Notification]) -> int:
+        """
+        Write one batch with a SINGLE multi-row INSERT (one round trip, one
+        transaction).  Returns the number written; raises on failure so the
+        caller can re-queue the whole batch (no silent per-row drops).
+        """
+        from Api.utils import execute_query
+
+        # created_at doubles as the RETURNING correlation key - make sure it
+        # is unique inside the batch.
+        for notif in batch:
+            while any(o is not notif and o.created_at == notif.created_at for o in batch):
+                notif.created_at += timedelta(microseconds=1)
+
+        values_sql = ", ".join(
+            ["(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"] * len(batch)
+        )
+        query = (
+            "INSERT INTO alerts (type, priority, title, message, file_id, file_name, "
+            "file_path, event_date, metadata, created_at, read, dismissed) "
+            f"VALUES {values_sql} "
+            "RETURNING id, created_at"
+        )
+        params: list = []
+        for notif in batch:
+            params.extend([
+                notif.type.value,
+                notif.priority.value,
+                notif.title,
+                notif.message,
+                notif.file_id,
+                notif.file_name,
+                notif.file_path,
+                notif.event_date,
+                json.dumps(notif.metadata),
+                notif.created_at,
+                notif.read,
+                notif.dismissed,
+            ])
+
+        result = execute_query(query, tuple(params), fetch="all") or []
+        if len(result) != len(batch):
+            raise RuntimeError(
+                f"Batch insert returned {len(result)} rows for {len(batch)} notifications"
+            )
+
+        by_created_at = {row[1]: row[0] for row in result}
+        if len(by_created_at) != len(batch):
+            raise RuntimeError("Batch insert returned duplicate created_at correlation keys")
+
+        with self._lock:
+            for notif in batch:
+                real_id = by_created_at.get(notif.created_at)
+                if real_id is None:
+                    raise RuntimeError("Batch insert did not return a row for a notification")
+                # The SAME object lives in _notifications, so one assignment
+                # updates every view of it.
+                notif.id = real_id
+        return len(batch)
+
     def flush_pending_notifications(self, batch_size: int = 100) -> int:
         """
         Flush pending notifications to database in batches.
         This should be called periodically or after processing completes.
-        
+
+        Guarantees:
+        * one multi-row INSERT per batch (bounded round trips at scan volume)
+        * a failed batch is re-queued whole and never silently dropped
+        * ids are written back onto the in-memory objects under the lock
+
         Args:
             batch_size: Number of notifications to write per batch
-            
+
         Returns:
             Number of notifications successfully written
         """
-        if not self._pending_notifications:
-            return 0
-        
+        with self._lock:
+            if not self._pending_notifications:
+                return 0
+
         written_count = 0
-        
-        with self._pending_lock:
-            # Process in batches to avoid large transactions
-            while self._pending_notifications:
-                batch = self._pending_notifications[:batch_size]
-                self._pending_notifications = self._pending_notifications[batch_size:]
-                
-                try:
-                    # Use execute_query from Api.utils or database.queries
-                    try:
-                        from Api.utils import execute_query
-                    except ImportError:
-                        from database import DatabaseHub
-                        db_hub = DatabaseHub()
-                        def execute_query(query, params=None, fetch="all"):
-                            # Use context manager for connection
-                            with db_hub._get_connection() as conn:
-                                cursor = conn.cursor()
-                                try:
-                                    if params:
-                                        cursor.execute(query, params)
-                                    else:
-                                        cursor.execute(query)
-                                    if fetch == "all":
-                                        result = cursor.fetchall()
-                                    elif fetch == "one":
-                                        result = cursor.fetchone()
-                                    else:
-                                        conn.commit()
-                                        result = None
-                                    if fetch is not None:
-                                        conn.commit()
-                                    return result if result else ([] if fetch == "all" else None)
-                                finally:
-                                    cursor.close()
-                    
-                    # Bulk insert using COPY or multiple VALUES for better performance
-                    insert_query = """
-                        INSERT INTO alerts (type, priority, title, message, file_id, file_name, 
-                                           file_path, event_date, metadata, created_at, read, dismissed)
-                        VALUES %s
-                        RETURNING id, created_at
-                    """
-                    
-                    # Prepare batch data
-                    values_list = []
-                    for notif in batch:
-                        values_list.append((
-                            notif.type.value,
-                            notif.priority.value,
-                            notif.title,
-                            notif.message,
-                            notif.file_id,
-                            notif.file_name,
-                            notif.file_path,
-                            notif.event_date,
-                            json.dumps(notif.metadata),
-                            notif.created_at,
-                            notif.read,
-                            notif.dismissed
-                        ))
-                    
-                    # Execute batch insert
-                    # Note: psycopg2.extras.execute_values is more efficient, but we'll use simple approach
-                    # For now, insert one by one but in a transaction
-                    for i, notif in enumerate(batch):
-                        try:
-                            result = execute_query(
-                                """
-                                INSERT INTO alerts (type, priority, title, message, file_id, file_name, 
-                                                   file_path, event_date, metadata, created_at, read, dismissed)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                RETURNING id
-                                """,
-                                (
-                                    notif.type.value,
-                                    notif.priority.value,
-                                    notif.title,
-                                    notif.message,
-                                    notif.file_id,
-                                    notif.file_name,
-                                    notif.file_path,
-                                    notif.event_date,
-                                    json.dumps(notif.metadata),
-                                    notif.created_at,
-                                    notif.read,
-                                    notif.dismissed
-                                ),
-                                fetch="one"
-                            )
-                            
-                            if result:
-                                # Update notification with real ID
-                                real_id = result[0]
-                                notif.id = real_id
-                                
-                                # Update in main notifications list (match by temp_id and created_at)
-                                for n in self._notifications:
-                                    if n.id == notif.id and n.created_at == notif.created_at:
-                                        n.id = real_id
-                                        break
-                                
-                                written_count += 1
-                                self.logger.debug(f"Flushed notification: {notif.title} (id: {real_id})")
-                        
-                        except Exception as e:
-                            self.logger.error(f"Error flushing notification {notif.title}: {e}")
-                            # Keep notification in pending queue for retry
-                            continue
-                
-                except Exception as e:
-                    self.logger.error(f"Error flushing notification batch: {e}")
-                    # Put batch back in queue for retry
-                    self._pending_notifications = batch + self._pending_notifications
+        while True:
+            with self._lock:
+                if not self._pending_notifications:
                     break
-        
+                batch = self._pending_notifications[:batch_size]
+                del self._pending_notifications[:batch_size]
+
+            try:
+                written_count += self._flush_batch(batch)
+                for notif in batch:
+                    self.logger.debug(
+                        f"Flushed notification: {notif.title} (id: {notif.id})"
+                    )
+            except Exception as e:
+                # Put the batch back so nothing is lost; stop so a persistent
+                # failure cannot loop forever.
+                self.logger.error(f"Error flushing notification batch ({len(batch)} items): {e}")
+                with self._lock:
+                    self._pending_notifications = batch + self._pending_notifications
+                break
+
         if written_count > 0:
             self.logger.info(f"✅ Flushed {written_count} notification(s) to database")
-        
+
         return written_count
-    
+
     def get_pending_count(self) -> int:
         """Get count of pending notifications waiting to be written to database"""
-        with self._pending_lock:
+        with self._lock:
             return len(self._pending_notifications)
     
     def get_notifications(
@@ -433,7 +422,8 @@ class NotificationService:
         Includes both persisted and pending notifications.
         """
         # Combine persisted and pending notifications (pending may have temp IDs)
-        all_notifications = self._notifications.copy()
+        with self._lock:
+            all_notifications = list(self._notifications)
         
         if notification_type:
             all_notifications = [n for n in all_notifications if n.type == notification_type]
@@ -482,22 +472,25 @@ class NotificationService:
                     finally:
                         cursor.close()
             
-            execute_query(
-                "UPDATE alerts SET read = TRUE WHERE id = %s",
+            updated_row = execute_query(
+                "UPDATE alerts SET read = TRUE WHERE id = %s RETURNING id",
                 (notification_id,),
-                fetch=None
+                fetch="one"
             )
             
-            # Update in memory
-            for notification in self._notifications:
-                if notification.id == notification_id:
-                    notification.read = True
-                    self.logger.debug(f"Marked notification {notification_id} as read")
-                    return True
+            # Update in memory (covers pending objects that are not in the DB yet)
+            with self._lock:
+                for notification in self._notifications:
+                    if notification.id == notification_id:
+                        notification.read = True
+                        self.logger.debug(f"Marked notification {notification_id} as read")
+                        return True
             
-            # If not found in memory, refresh from database
-            self.logger.debug(f"Notification {notification_id} not in memory, refreshing...")
-            self.refresh_notifications()
+            # Not in memory: True iff the database row existed and was updated.
+            # (No full-table refresh - a refresh here raced concurrent readers.)
+            if updated_row:
+                self.logger.debug(f"Marked notification {notification_id} as read (database row)")
+                return True
             
         except Exception as e:
             self.logger.error(f"Error marking notification as read: {e}")
@@ -535,22 +528,25 @@ class NotificationService:
                     finally:
                         cursor.close()
             
-            execute_query(
-                "UPDATE alerts SET dismissed = TRUE WHERE id = %s",
+            updated_row = execute_query(
+                "UPDATE alerts SET dismissed = TRUE WHERE id = %s RETURNING id",
                 (notification_id,),
-                fetch=None
+                fetch="one"
             )
             
-            # Update in memory
-            for notification in self._notifications:
-                if notification.id == notification_id:
-                    notification.dismissed = True
-                    self.logger.debug(f"Dismissed notification {notification_id}")
-                    return True
+            # Update in memory (covers pending objects that are not in the DB yet)
+            with self._lock:
+                for notification in self._notifications:
+                    if notification.id == notification_id:
+                        notification.dismissed = True
+                        self.logger.debug(f"Dismissed notification {notification_id}")
+                        return True
             
-            # If not found in memory, refresh from database
-            self.logger.debug(f"Notification {notification_id} not in memory, refreshing...")
-            self.refresh_notifications()
+            # Not in memory: True iff the database row existed and was updated.
+            # (No full-table refresh - a refresh here raced concurrent readers.)
+            if updated_row:
+                self.logger.debug(f"Dismissed notification {notification_id} (database row)")
+                return True
             
         except Exception as e:
             self.logger.error(f"Error dismissing notification: {e}")
@@ -558,27 +554,180 @@ class NotificationService:
         
         return False
     
-    def refresh_notifications(self):
-        """Reload notifications from database (useful after external changes)"""
-        self._notifications.clear()
-        self._load_notifications()
-        self.logger.info(f"Refreshed notifications: {len(self._notifications)} loaded")
-    
+    def refresh_notifications(self) -> int:
+        """
+        Reload notifications from database (useful after external changes).
+
+        Returns:
+            Number of notifications now held in memory.
+
+        The swap is atomic: the fresh list is built OUTSIDE the lock and
+        swapped in as a whole, with still-pending (not yet flushed)
+        notifications merged back in.  The old clear()+append() sequence let
+        two concurrent refreshes interleave and double every row in memory
+        ("10 loaded" while the table held 5).
+        """
+        try:
+            fetched = self._fetch_notifications()
+        except Exception as e:
+            self.logger.error(f"Error refreshing notifications: {e}")
+            fetched = None
+
+        if fetched is None:
+            return 0
+
+        with self._lock:
+            self._notifications = fetched + list(self._pending_notifications)
+            loaded = len(self._notifications)
+        self.logger.info(f"Refreshed notifications: {loaded} loaded")
+        return loaded
+
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Exact notification statistics.
+
+        COUNT/GROUP BY queries run in SQL, so totals are correct for any
+        table size and memory stays O(1) - unlike the previous implementation
+        which forced a full refresh and counted an in-memory list capped at
+        LIMIT 1000.  Pending (unflushed) notifications are overlaid so brand
+        new alerts are counted immediately.
+        """
+        today = date.today()
+        stats: Dict[str, Any] = {
+            'total': 0,
+            'unread': 0,
+            'by_type': {},
+            'by_priority': {},
+            'upcoming_events': 0,
+        }
+
+        try:
+            from Api.utils import execute_query
+
+            row = execute_query(
+                """
+                SELECT COUNT(*) AS total,
+                       COUNT(*) FILTER (WHERE NOT read) AS unread
+                FROM alerts
+                WHERE dismissed = FALSE
+                """,
+                fetch="one"
+            )
+            if row:
+                stats['total'] = int(row[0])
+                stats['unread'] = int(row[1])
+
+            for type_row in execute_query(
+                """
+                SELECT type, COUNT(*)
+                FROM alerts
+                WHERE dismissed = FALSE
+                GROUP BY type
+                """,
+                fetch="all"
+            ) or []:
+                stats['by_type'][type_row[0]] = int(type_row[1])
+
+            for priority_row in execute_query(
+                """
+                SELECT priority, COUNT(*)
+                FROM alerts
+                WHERE dismissed = FALSE
+                GROUP BY priority
+                """,
+                fetch="all"
+            ) or []:
+                stats['by_priority'][priority_row[0]] = int(priority_row[1])
+
+            upcoming_row = execute_query(
+                """
+                SELECT COUNT(*)
+                FROM alerts
+                WHERE type = %s
+                  AND dismissed = FALSE
+                  AND event_date BETWEEN %s AND %s
+                """,
+                (NotificationType.FUTURE_DATE.value, today, today + timedelta(days=30)),
+                fetch="one"
+            )
+            if upcoming_row:
+                stats['upcoming_events'] = int(upcoming_row[0])
+        except Exception as e:
+            self.logger.warning(
+                f"SQL stats unavailable, falling back to in-memory counts "
+                f"(list capped at {1000}): {e}"
+            )
+            for n in self.get_notifications(limit=1000):
+                stats['total'] += 1
+                if not n.read:
+                    stats['unread'] += 1
+                stats['by_type'][n.type.value] = stats['by_type'].get(n.type.value, 0) + 1
+                stats['by_priority'][n.priority.value] = stats['by_priority'].get(n.priority.value, 0) + 1
+            stats['upcoming_events'] = len(self.get_upcoming_events(days_ahead=30))
+            return stats
+
+        # Overlay notifications that are still queued (not in the DB yet).
+        with self._lock:
+            pending = [n for n in self._pending_notifications if not n.dismissed]
+        for n in pending:
+            stats['total'] += 1
+            if not n.read:
+                stats['unread'] += 1
+            stats['by_type'][n.type.value] = stats['by_type'].get(n.type.value, 0) + 1
+            stats['by_priority'][n.priority.value] = stats['by_priority'].get(n.priority.value, 0) + 1
+            if (
+                n.type == NotificationType.FUTURE_DATE
+                and n.event_date
+                and today <= n.event_date <= today + timedelta(days=30)
+            ):
+                stats['upcoming_events'] += 1
+
+        return stats
+
     def get_upcoming_events(self, days_ahead: int = 30) -> List[Notification]:
-        """Get upcoming events within specified days"""
+        """Get upcoming events within specified days (SQL + pending overlay)."""
         today = date.today()
         end_date = today + timedelta(days=days_ahead)
-        
-        notifications = self.get_notifications(
-            notification_type=NotificationType.FUTURE_DATE,
-            unread_only=False
-        )
-        
-        upcoming = [
-            n for n in notifications
-            if n.event_date and today <= n.event_date <= end_date
-        ]
-        
+
+        try:
+            from Api.utils import execute_query
+            rows = execute_query(
+                f"""
+                SELECT {ALERT_COLUMNS}
+                FROM alerts
+                WHERE type = %s
+                  AND dismissed = FALSE
+                  AND event_date BETWEEN %s AND %s
+                ORDER BY event_date ASC
+                LIMIT 1000
+                """,
+                (NotificationType.FUTURE_DATE.value, today, end_date),
+                fetch="all"
+            )
+            upcoming = [notification_from_row(row) for row in rows or []]
+        except Exception as e:
+            self.logger.warning(f"SQL upcoming query unavailable, using in-memory list: {e}")
+            notifications = self.get_notifications(
+                notification_type=NotificationType.FUTURE_DATE,
+                unread_only=False
+            )
+            upcoming = [
+                n for n in notifications
+                if n.event_date and today <= n.event_date <= end_date
+            ]
+
+        # Merge queued (unflushed) future-date notifications.
+        with self._lock:
+            pending = [
+                n for n in self._pending_notifications
+                if not n.dismissed
+                and n.type == NotificationType.FUTURE_DATE
+                and n.event_date
+                and today <= n.event_date <= end_date
+            ]
+        known_ids = {n.id for n in upcoming}
+        upcoming.extend(n for n in pending if n.id not in known_ids)
+
         return sorted(upcoming, key=lambda x: x.event_date or date.max)
 
 

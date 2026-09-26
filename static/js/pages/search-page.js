@@ -202,18 +202,18 @@ function displaySearchResults(data, query) {
             <nav aria-label="Search results pagination" class="mt-3">
                 <ul class="pagination justify-content-center">
                     <li class="page-item ${!data.pagination.has_prev ? 'disabled' : ''}">
-                        <a class="page-link" href="#" onclick="goToPage(${data.pagination.page - 1}); return false;">Previous</a>
+                        <a class="page-link" href="#" data-on-click="goToPage(${data.pagination.page - 1}); return false;">Previous</a>
                     </li>
                     ${Array.from({length: data.pagination.total_pages}, (_, i) => i + 1)
                         .filter(page => page === 1 || page === data.pagination.total_pages || 
                                 (page >= data.pagination.page - 2 && page <= data.pagination.page + 2))
                         .map(page => `
                             <li class="page-item ${page === data.pagination.page ? 'active' : ''}">
-                                <a class="page-link" href="#" onclick="goToPage(${page}); return false;">${page}</a>
+                                <a class="page-link" href="#" data-on-click="goToPage(${page}); return false;">${page}</a>
                             </li>
                         `).join('')}
                     <li class="page-item ${!data.pagination.has_next ? 'disabled' : ''}">
-                        <a class="page-link" href="#" onclick="goToPage(${data.pagination.page + 1}); return false;">Next</a>
+                        <a class="page-link" href="#" data-on-click="goToPage(${data.pagination.page + 1}); return false;">Next</a>
                     </li>
                 </ul>
             </nav>

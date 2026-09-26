@@ -206,6 +206,35 @@ class TestSharedInstallerWriteEnv:
         assert "APP_ADMIN_USERNAME=admin" in content
         assert "MAX_WORKERS=8" in content
 
+    def test_the_admin_password_is_not_stored_in_env(self, tmp_path):
+        """The wizard used to leave the administrator's password in cleartext."""
+        from core.installer import write_env_file
+        content = write_env_file(self._base_config(), project_root=tmp_path).read_text()
+        assert "adminpw" not in content
+        assert not any(line.startswith("APP_ADMIN_PASSWORD=") for line in content.splitlines())
+
+    def test_serving_settings_survive_a_restart_from_env(self, tmp_path, monkeypatch):
+        """A restart that reads only .env keeps Waitress and the proxy trust."""
+        import core.installer as installer
+        monkeypatch.setenv("TRUSTED_PROXY_COUNT", "1")
+        monkeypatch.delenv("WSGI_SERVER", raising=False)
+        monkeypatch.setattr(installer, "_waitress_installed", lambda: True)
+        lines = installer.write_env_file(self._base_config(), project_root=tmp_path) \
+            .read_text().splitlines()
+        assert "WSGI_SERVER=waitress" in lines
+        assert "TRUSTED_PROXY_COUNT=1" in lines
+
+    def test_serving_defaults_never_guess_proxy_trust(self, tmp_path, monkeypatch):
+        import core.installer as installer
+        for name in ("TRUSTED_PROXY_COUNT", "WSGI_SERVER", "SOURCE_CODE_URL"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setattr(installer, "_waitress_installed", lambda: False)
+        lines = installer.write_env_file(self._base_config(), project_root=tmp_path) \
+            .read_text().splitlines()
+        assert "TRUSTED_PROXY_COUNT=0" in lines
+        assert "WSGI_SERVER=flask" in lines, "Waitress missing: do not select it"
+        assert not any(line.startswith("SOURCE_CODE_URL=") for line in lines)
+
     def test_special_credentials_round_trip_without_interpolation(self, tmp_path, monkeypatch):
         from core.init import _load_dotenv_file
         from core.installer import write_env_file

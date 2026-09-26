@@ -47,7 +47,7 @@
         </a>
         {% else %}
         <button type="button" class="btn btn-primary"
-                {% if action_onclick %}onclick="{{ action_onclick }}"{% endif %}>
+                {% if action_onclick %}data-on-click="{{ action_onclick }}"{% endif %}>
             {% if action_icon %}<i class="bi {{ action_icon }} me-2" aria-hidden="true"></i>{% endif %}{{ action_label }}
         </button>
         {% endif %}

@@ -4,6 +4,7 @@ No dependencies on other project modules (except logging_utils for recording).
 """
 
 import os
+import sys
 import time
 from typing import List, Dict, Any, Callable, Optional
 
@@ -54,17 +55,23 @@ def print_execution_time(description: str, func: Callable, *args, **kwargs) -> A
             time_value = elapsed
             time_unit = "seconds"
         
-        # Neat printing - emitted as one atomic block so a report from another
-        # worker thread cannot be interleaved into the middle of this one.
-        CYAN = "\033[36m"
-        RESET = "\033[0m"
-        
+        # Neat printing: ONE atomic block so neither a report from another
+        # worker thread nor a log record can land between the lines when
+        # stdout and stderr are captured together, and ANSI colour only on
+        # interactive terminals (redirected logs stay clean).
+        try:
+            use_color = sys.stdout.isatty()
+        except Exception:
+            use_color = False
+        cyan = "\033[36m" if use_color else ""
+        reset = "\033[0m" if use_color else ""
+
         from core.console import console
         console.block([
-            f"{'-'*40}",
+            f"{'-' * 40}",
             f"Task: {description}",
-            f"Elapsed time: {CYAN}{time_str}{RESET}",
-            f"{'-'*40}",
+            f"Elapsed time: {cyan}{time_str}{reset}",
+            f"{'-' * 40}",
         ])
         
         # Record execution time to log

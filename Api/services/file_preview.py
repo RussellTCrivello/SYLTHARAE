@@ -19,14 +19,18 @@ except ImportError:
     PIL_AVAILABLE = False
 
 try:
-    import fitz
+    import pymupdf as fitz
     FITZ_AVAILABLE = True
 except ImportError:
     fitz = None
     FITZ_AVAILABLE = False
 
 try:
-    import PyPDF2
+    # AUDIT-DEP-03: pypdf is the maintained successor of PyPDF2 (same API).
+    try:
+        import pypdf as PyPDF2
+    except ImportError:
+        import PyPDF2
     PDF_FALLBACK_AVAILABLE = True
 except ImportError:
     PyPDF2 = None

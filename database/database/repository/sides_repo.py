@@ -5,8 +5,10 @@ from ..queries.side_queries import SideQueries
 class SidesRepository(BaseRepository):
 
 
-    def insert_info_sides(self, name, importance, date_creation=date.today()):
+    def insert_info_sides(self, name, importance, date_creation=None):
         """Insert a new side and return its ID"""
+        # AUDIT-DATE-01: default resolved per call, not once at import time.
+        date_creation = date_creation or date.today()
         return self.execute(
             SideQueries.insert_side(),
             (name, importance, date_creation),
@@ -69,8 +71,10 @@ class SidesRepository(BaseRepository):
         )
         return row[0] if row else 0
 
-    def get_or_create_side(self, name, importance, date_creation=date.today()):
+    def get_or_create_side(self, name, importance, date_creation=None):
         """Get existing side or create new one"""
+        # AUDIT-DATE-01: default resolved per call, not once at import time.
+        date_creation = date_creation or date.today()
         return self.execute(
             SideQueries.get_or_create_side(),
             (name, importance, date_creation),

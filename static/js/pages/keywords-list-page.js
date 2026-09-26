@@ -1250,9 +1250,10 @@ if (typeof window.translations === 'undefined') {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + translations.merging;
         
+        // AUDIT-CSRF-01: the request was rejected (400) without the token.
         fetch('/api/keywords/merge-all-duplicates', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (window.CSRF && window.CSRF.getToken()) || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' }
         })
         .then(response => response.json())
         .then(data => {
@@ -1888,7 +1889,7 @@ if (typeof window.translations === 'undefined') {
             selectedWordsList.innerHTML = selectedWords.map((word, index) => `
                 <span class="badge bg-primary d-flex align-items-center gap-1" style="font-size: 0.875rem; padding: 0.375rem 0.75rem;">
                     ${escapeHtml(word.text)}
-                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" onclick="removeSelectedWord(${index})" aria-label="Remove"></button>
+                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" data-on-click="removeSelectedWord(${index})" aria-label="Remove"></button>
                 </span>
             `).join('');
         }

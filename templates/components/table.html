@@ -89,7 +89,7 @@
 
 {% macro select_all_checkbox(target_id='selectAllCheckbox', onchange='toggleSelectAll()') %}
 {#- The one way this application offers "choose every row on this page". -#}
-<input type="checkbox" id="{{ target_id }}" onchange="{{ onchange }}"
+<input type="checkbox" id="{{ target_id }}" data-on-change="{{ onchange }}"
        aria-label="{{ _('Select all rows on this page') }}">
 {% endmacro %}
 
@@ -100,7 +100,7 @@
     <div class="d-flex align-items-center">
         <span>{{ label }}</span>
         <button class="btn btn-sm btn-link p-0 ms-1"
-                onclick="{{ onclick }}('{{ key }}')"
+                data-on-click="{{ onclick }}('{{ key }}')"
                 title="{{ _('Sort by') }} {{ label }}" id="sortBtn-{{ key }}">
             <i class="bi bi-arrow-down-up" id="sortIcon-{{ key }}"></i>
         </button>

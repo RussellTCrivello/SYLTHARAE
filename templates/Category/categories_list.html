@@ -19,15 +19,15 @@
         </h1>
     </div>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-primary" onclick="openCategoryModal()">
+        <button type="button" class="btn btn-primary" data-on-click="openCategoryModal()">
             <i class="bi bi-plus-circle me-2"></i>
             {{ _('Add Category') }}
         </button>
-        <button type="button" class="btn btn-warning" onclick="findDuplicates()">
+        <button type="button" class="btn btn-warning" data-on-click="findDuplicates()">
             <i class="bi bi-exclamation-triangle me-2"></i>
             {{ _('Find Duplicates') }}
         </button>
-        <button class="btn btn-outline-primary" onclick="location.reload()">
+        <button class="btn btn-outline-primary" data-on-click="location.reload()">
             <i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}
         </button>
     </div>
@@ -136,7 +136,7 @@
                 <i class="bi bi-arrow-down-up"></i>
                 {{ _('Sort By') }}
             </label>
-            <select class="form-select" id="sortBy" onchange="applyFilters()">
+            <select class="form-select" id="sortBy" data-on-change="applyFilters()">
                 <option value="name-asc">{{ _('Name (A-Z)') }}</option>
                 <option value="name-desc">{{ _('Name (Z-A)') }}</option>
                 <option value="id-asc">{{ _('ID (Low-High)') }}</option>
@@ -153,7 +153,7 @@
                 <i class="bi bi-layout-three-columns"></i>
                 {{ _('Display Format') }}
             </label>
-            <select class="form-select" id="displayFormat" onchange="changeDisplayFormat()">
+            <select class="form-select" id="displayFormat" data-on-change="changeDisplayFormat()">
                 <option value="grid">{{ _('Grid') }}</option>
                 <option value="table">{{ _('Table') }}</option>
                 <option value="list">{{ _('List') }}</option>
@@ -166,7 +166,7 @@
                 <i class="bi bi-list-ol"></i>
                 {{ _('Per Page') }}
             </label>
-            <select class="form-select" id="itemsPerPage" onchange="changePageSize()">
+            <select class="form-select" id="itemsPerPage" data-on-change="changePageSize()">
                 <option value="10" selected>10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
@@ -184,10 +184,10 @@
         <small class="text-muted" id="searchResultsInfo" aria-live="polite">{{ _('Loading...') }}</small>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllFilters()">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="clearAllFilters()">
             <i class="bi bi-x-circle me-1"></i>{{ _('Clear Filters') }}
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportCategories()">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportCategories()">
             <i class="bi bi-download me-1"></i>{{ _('Export') }}
         </button>
     </div>
@@ -241,7 +241,7 @@
                         <th>
                             <div class="d-flex align-items-center">
                                 <span>{{ _('Category Name') }}</span>
-                                <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortByColumn('name')" title="{{ _('Sort by name') }}" id="sortBtn-name">
+                                <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortByColumn('name')" title="{{ _('Sort by name') }}" id="sortBtn-name">
                                     <i class="bi bi-arrow-down-up" id="sortIcon-name"></i>
                                 </button>
                             </div>
@@ -249,7 +249,7 @@
                         <th style="width:120px">
                             <div class="d-flex align-items-center">
                                 <span>{{ _('Files') }}</span>
-                                <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortByColumn('files')" title="{{ _('Sort by files') }}" id="sortBtn-files">
+                                <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortByColumn('files')" title="{{ _('Sort by files') }}" id="sortBtn-files">
                                     <i class="bi bi-arrow-down-up" id="sortIcon-files"></i>
                                 </button>
                             </div>
@@ -257,7 +257,7 @@
                         <th style="width:120px">
                             <div class="d-flex align-items-center">
                                 <span>{{ _('Words') }}</span>
-                                <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortByColumn('words')" title="{{ _('Sort by words') }}" id="sortBtn-words">
+                                <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortByColumn('words')" title="{{ _('Sort by words') }}" id="sortBtn-words">
                                     <i class="bi bi-arrow-down-up" id="sortIcon-words"></i>
                                 </button>
                             </div>
@@ -358,7 +358,7 @@
         <div class="empty-state-content">
             <i class="bi bi-inbox"></i>
             <p>{{ _('No categories found') }}</p>
-            <button type="button" class="btn btn-primary" onclick="openCategoryModal()">
+            <button type="button" class="btn btn-primary" data-on-click="openCategoryModal()">
                 <i class="bi bi-plus-circle me-2"></i>
                 {{ _('Add First Category') }}
             </button>
@@ -388,7 +388,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                <button type="button" class="btn btn-primary" onclick="saveCategory()">{{ _('Save') }}</button>
+                <button type="button" class="btn btn-primary" data-on-click="saveCategory()">{{ _('Save') }}</button>
             </div>
         </div>
     </div>
@@ -415,7 +415,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                <button type="button" class="btn btn-primary" onclick="saveWordToCategory()">{{ _('Add Word') }}</button>
+                <button type="button" class="btn btn-primary" data-on-click="saveWordToCategory()">{{ _('Add Word') }}</button>
             </div>
         </div>
     </div>
@@ -450,7 +450,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
-                <button type="button" class="btn btn-danger" id="removeDuplicatesBtn" onclick="removeDuplicates()" style="display: none;">
+                <button type="button" class="btn btn-danger" id="removeDuplicatesBtn" data-on-click="removeDuplicates()" style="display: none;">
                     <i class="bi bi-trash me-2"></i>
                     {{ _('Remove Duplicates') }}
                 </button>
@@ -514,26 +514,7 @@
         "merged": _('merged')
     }
 }|tojson }}</script>
-<script>
-// Ensure jQuery is loaded before Select2
-(function() {
-    function loadSelect2() {
-        if (typeof jQuery !== 'undefined') {
-            const script = document.createElement('script');
-            script.src = "{{ url_for('static', filename='dist/js/select2.min.js') }}";
-            script.onload = function() {
-                console.log('Select2 loaded successfully');
-            };
-            script.onerror = function() {
-                console.error('Failed to load Select2');
-            };
-            document.head.appendChild(script);
-        } else {
-            setTimeout(loadSelect2, 50);
-        }
-    }
-    loadSelect2();
-})();
-</script>
+<script src="{{ url_for('static', filename='js/modules/core/select2-loader.js') }}"
+        data-select2-src="{{ url_for('static', filename='dist/js/select2.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pages/categories-list-page.js') }}"></script>
 {% endblock %}

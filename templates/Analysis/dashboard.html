@@ -281,27 +281,27 @@
 
     <!-- Tab Navigation -->
     <div class="tab-navigation">
-        <button class="tab-button active" onclick="switchTab('overview')">
+        <button class="tab-button active" data-on-click="switchTab('overview')">
             <i class="bi bi-speedometer2"></i> {{ _('Overview') }}
         </button>
-        <button class="tab-button" onclick="switchTab('categories')">
+        <button class="tab-button" data-on-click="switchTab('categories')">
             <i class="bi bi-pie-chart"></i> {{ _('Categories') }}
         </button>
-        <button class="tab-button" onclick="switchTab('keywords')">
+        <button class="tab-button" data-on-click="switchTab('keywords')">
             <i class="bi bi-tag"></i> {{ _('Keywords') }}
         </button>
 
-        <button class="tab-button" onclick="switchTab('paths')">
+        <button class="tab-button" data-on-click="switchTab('paths')">
             <i class="bi bi-folder2-open"></i> {{ _('Paths') }}
         </button>
 
-        <button class="tab-button" onclick="switchTab('files')">
+        <button class="tab-button" data-on-click="switchTab('files')">
             <i class="bi bi-file-earmark-text"></i> {{ _('File Reports') }}
         </button>
-        <button class="tab-button" onclick="switchTab('search')">
+        <button class="tab-button" data-on-click="switchTab('search')">
             <i class="bi bi-search"></i> {{ _('Search & Filter') }}
         </button>
-        <button class="tab-button" onclick="switchTab('storage')">
+        <button class="tab-button" data-on-click="switchTab('storage')">
             <i class="bi bi-hdd"></i> {{ _('Storage & Analytics') }}
         </button>
     </div>
@@ -313,10 +313,10 @@
             <div class="section-header">
                 <h2><i class="bi bi-calendar-event"></i> {{ _('File Timeline') }}</h2>
                 <div class="controls">
-                    <button class="btn-control" onclick="updateTimeline('day')">24H</button>
-                    <button class="btn-control" onclick="updateTimeline('week')">{{ _('Week') }}</button>
-                    <button class="btn-control active" onclick="updateTimeline('month')">{{ _('Month') }}</button>
-                    <button class="btn-control" onclick="updateTimeline('year')">{{ _('Year') }}</button>
+                    <button class="btn-control" data-on-click="updateTimeline('day')">24H</button>
+                    <button class="btn-control" data-on-click="updateTimeline('week')">{{ _('Week') }}</button>
+                    <button class="btn-control active" data-on-click="updateTimeline('month')">{{ _('Month') }}</button>
+                    <button class="btn-control" data-on-click="updateTimeline('year')">{{ _('Year') }}</button>
                 </div>
             </div>
             <div class="chart-container large">
@@ -369,9 +369,9 @@
             <div class="section-header">
                 <h2><i class="bi bi-tag"></i> {{ _('Word Frequency Analysis') }}</h2>
                 <div class="controls">
-                    <button class="btn-control" onclick="updateWordLimit(25)">{{ _('Top 25') }}</button>
-                    <button class="btn-control active" onclick="updateWordLimit(50)">{{ _('Top 50') }}</button>
-                    <button class="btn-control" onclick="updateWordLimit(100)">{{ _('Top 100') }}</button>
+                    <button class="btn-control" data-on-click="updateWordLimit(25)">{{ _('Top 25') }}</button>
+                    <button class="btn-control active" data-on-click="updateWordLimit(50)">{{ _('Top 50') }}</button>
+                    <button class="btn-control" data-on-click="updateWordLimit(100)">{{ _('Top 100') }}</button>
                 </div>
             </div>
             <div class="word-frequency-grid" id="wordFrequencyGrid">
@@ -423,7 +423,7 @@
                 <select class="search-input" id="searchType" style="flex: 0.3;">
                     <option value="">{{ _('All Types') }}</option>
                 </select>
-                <button class="search-btn" onclick="performSearch()">
+                <button class="search-btn" data-on-click="performSearch()">
                     <i class="bi bi-search"></i> {{ _('Search') }}
                 </button>
             </div>
@@ -454,9 +454,9 @@
             <div class="section-header">
                 <h2><i class="bi bi-pie-chart"></i> {{ _('Storage Distribution') }}</h2>
                 <div class="controls">
-                    <button class="btn-control active" onclick="updateStorageView('type', this)">{{ _('By Type') }}</button>
-                    <button class="btn-control" onclick="updateStorageView('status', this)">{{ _('By Status') }}</button>
-                    <button class="btn-control" onclick="updateStorageView('size', this)">{{ _('By Size') }}</button>
+                    <button class="btn-control active" data-on-click="updateStorageView('type', this)">{{ _('By Type') }}</button>
+                    <button class="btn-control" data-on-click="updateStorageView('status', this)">{{ _('By Status') }}</button>
+                    <button class="btn-control" data-on-click="updateStorageView('size', this)">{{ _('By Size') }}</button>
                 </div>
             </div>
             <div class="two-column-grid">

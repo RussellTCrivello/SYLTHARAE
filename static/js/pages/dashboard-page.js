@@ -8,6 +8,9 @@ import {
     stopProcessingProgressPolling as stopSharedProgressPolling,
     getProcessingProgressTracker as getSharedProgressTracker,
 } from '../modules/ui/progress-tracker.js';
+// AUDIT-XSS-01: file names, paths, words and sources come from ingested
+// evidence and are attacker-controllable - escape before using innerHTML.
+import { escapeHtml, escapeAttribute } from '../modules/core/utils.js';
 
 // Load translations from JSON script tag
 let translations = {};
@@ -160,7 +163,7 @@ function updateStorageView(view, clickedButton) {
     } else {
         // Find button with matching onclick
         document.querySelectorAll('.section-card .btn-control').forEach(btn => {
-            if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${view}'`)) {
+            if (btn.getAttribute('data-on-click') && btn.getAttribute('data-on-click').includes(`'${view}'`)) {
                 btn.classList.add('active');
             }
         });
@@ -647,7 +650,7 @@ function renderTopWordsCloud(words) {
         wordItem.className = 'word-item';
         const fontSize = Math.min(0.875 + (word.files / words[0].files) * 0.75, 1.75);
         wordItem.style.fontSize = fontSize + 'rem';
-        wordItem.innerHTML = `${word.word} <span class="count">(${word.files})</span>`;
+        wordItem.innerHTML = `${escapeHtml(word.word)} <span class="count">(${escapeHtml(word.files)})</span>`;
         wordItem.onclick = () => {
             window.location.href = `/search?q=${encodeURIComponent(word.word)}`;
         };
@@ -666,11 +669,11 @@ function renderLargestFiles(files) {
         row.onclick = () => window.location.href = `/file/${file.id}`;
         
         row.innerHTML = `
-            <td><strong>${file.name}</strong></td>
-            <td><span class="badge bg-primary">${file.type || translations.unknown}</span></td>
+            <td><strong>${escapeHtml(file.name)}</strong></td>
+            <td><span class="badge bg-primary">${escapeHtml(file.type || translations.unknown)}</span></td>
             <td><strong>${formatFileSize(file.size)}</strong></td>
-            <td>${file.source}</td>
-            <td style="font-size: 0.875rem; color: var(--text-light);">${file.path}</td>
+            <td>${escapeHtml(file.source)}</td>
+            <td style="font-size: 0.875rem; color: var(--text-light);">${escapeHtml(file.path)}</td>
         `;
         
         tbody.appendChild(row);
@@ -736,7 +739,7 @@ function switchTab(tabName, event) {
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
     // Find and activate the button that matches this tab
     document.querySelectorAll('.tab-button').forEach(btn => {
-        const onclick = btn.getAttribute('onclick');
+        const onclick = btn.getAttribute('data-on-click');
         if (onclick && onclick.includes(`'${tabName}'`)) {
             btn.classList.add('active');
         }
@@ -1350,7 +1353,7 @@ async function loadWordFrequency(limit) {
                 const wordItem = document.createElement('div');
                 wordItem.className = 'word-item';
                 wordItem.innerHTML = `
-                    <div class="word">${word.word}</div>
+                    <div class="word">${escapeHtml(word.word)}</div>
                     <div class="frequency">${word.frequency} ${translations.files}</div>
                 `;
                 wordItem.onclick = () => {
@@ -1409,7 +1412,7 @@ async function loadPathHierarchy() {
                     <div class="path-item">
                         <div class="path-name">
                             <i class="bi ${path.isArchive ? 'bi-file-earmark-zip' : 'bi-folder'}"></i>
-                            <span>${path.name || path.path || 'Root'}</span>
+                            <span>${escapeHtml(path.name || path.path || 'Root')}</span>
                         </div>
                         <div class="path-metrics">
                             <span><i class="bi bi-files"></i> ${path.file_count || path.totalFiles || 0} ${translations.files}</span>
@@ -1451,15 +1454,15 @@ async function loadFileReports() {
                 
                 card.innerHTML = `
                     <div class="file-icon">${fileIcon}</div>
-                    <div class="file-name" title="${file.name}">${file.name}</div>
+                    <div class="file-name" title="${escapeAttribute(file.name)}">${escapeHtml(file.name)}</div>
                     <div class="file-meta">
-                        <span><i class="bi bi-file-earmark"></i> ${file.type || 'Unknown'}</span>
+                        <span><i class="bi bi-file-earmark"></i> ${escapeHtml(file.type || 'Unknown')}</span>
                         <span><i class="bi bi-hdd"></i> ${fileSize}</span>
                         <span><i class="bi bi-calendar"></i> ${file.date ? new Date(file.date).toLocaleDateString() : 'N/A'}</span>
                     </div>
                     <div class="file-summary">
-                        ${translations.source}: ${file.source || translations.unknown}<br>
-                        ${translations.status}: ${file.status || translations.unknown}
+                        ${translations.source}: ${escapeHtml(file.source || translations.unknown)}<br>
+                        ${translations.status}: ${escapeHtml(file.status || translations.unknown)}
                     </div>
                 `;
                 grid.appendChild(card);
@@ -1522,15 +1525,15 @@ async function performSearch() {
                 
                 card.innerHTML = `
                     <div class="file-icon">${fileIcon}</div>
-                    <div class="file-name" title="${file.name}">${file.name}</div>
+                    <div class="file-name" title="${escapeAttribute(file.name)}">${escapeHtml(file.name)}</div>
                     <div class="file-meta">
-                        <span><i class="bi bi-file-earmark"></i> ${file.type || 'Unknown'}</span>
+                        <span><i class="bi bi-file-earmark"></i> ${escapeHtml(file.type || 'Unknown')}</span>
                         <span><i class="bi bi-hdd"></i> ${fileSize}</span>
                         <span><i class="bi bi-calendar"></i> ${file.date ? new Date(file.date).toLocaleDateString() : 'N/A'}</span>
                     </div>
                     <div class="file-summary">
-                        ${translations.source}: ${file.source || translations.unknown}<br>
-                        ${translations.status}: ${file.status || translations.unknown}
+                        ${translations.source}: ${escapeHtml(file.source || translations.unknown)}<br>
+                        ${translations.status}: ${escapeHtml(file.status || translations.unknown)}
                     </div>
                 `;
                 resultsGrid.appendChild(card);

@@ -138,13 +138,13 @@ export function renderListView(items, section, showPagination = false) {
                     <div class="file-row-info" style="flex: 1;">
                         <div class="file-row-icon"><i class="bi bi-${getSectionIcon(section)}" aria-hidden="true"></i></div>
                         <div class="file-row-details" style="flex: 1;">
-                            <div class="file-row-name" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="name" onblur="saveItemField?.(this)" ondblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px; min-height: 1.2em;">
+                            <div class="file-row-name" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="name" data-on-blur="saveItemField?.(this)" data-on-dblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px; min-height: 1.2em;">
                                 ${escapeHtml(displayName)}${groupIndicator}
                             </div>
-                            <div class="file-row-meta" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="details" onblur="saveItemField?.(this)" ondblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px;">${escapeHtml(details)}</div>
+                            <div class="file-row-meta" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="details" data-on-blur="saveItemField?.(this)" data-on-dblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px;">${escapeHtml(details)}</div>
                             ${item.is_group && item.similar_titles ? `
                                 <div class="similar-titles-preview" style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
-                                    <i class="bi bi-arrow-down-circle" style="cursor: pointer;" onclick="toggleSimilarTitles?.(this, ${item.group_id})"></i>
+                                    <i class="bi bi-arrow-down-circle" style="cursor: pointer;" data-on-click="toggleSimilarTitles?.(this, ${item.group_id})"></i>
                                     <span>${item.group_count} ${item.is_identical ? 'identical' : 'similar'} titles</span>
                                     <div class="similar-titles-list" id="similar-titles-${item.group_id}" style="display: none; margin-top: 0.5rem; padding-left: 1rem;">
                                         ${item.similar_titles.map(st => `

@@ -1095,13 +1095,31 @@ def register_keywords_routes(app):
                     keyword_counts = content_processor.extract_keywords_fast(word_ids_list, keywords_dict)
                     
                     if keyword_counts:
-                        # Update keywords_hashs through the identity layer
+                        # Update keywords_hashs using bulk insert.
+                        # ``keyword_counts`` is already ``{keyword_id: count}``;
+                        # the previous call handed it to
+                        # process_keywords_for_content(), which expects the
+                        # document's word-id SEQUENCE and re-matches it - it
+                        # sliced the dict and failed every file with
+                        # "unhashable type: 'slice'".
+                        # The insert runs in its own try so one failing row
+                        # logs the REAL cause (e.g. a DB error) and the loop
+                        # keeps its per-file progress, instead of aborting
+                        # into the generic outer handler with no detail.
                         try:
-                            db_service.process_keywords_for_content(hash_id, keyword_counts)
-                            new_associations += len(keyword_counts)
+                            written = keyword_ops.insert_keyword_path_relationships(hash_id, keyword_counts)
                         except Exception as insert_err:
+                            written = None
                             errors += 1
-                            logger.warning(f"Failed to insert keyword associations for hash_id {hash_id}: {insert_err}")
+                            logger.warning(
+                                f"Failed to insert keyword associations for hash_id {hash_id}: {insert_err}"
+                            )
+
+                        if written:
+                            new_associations += written
+                        elif written is not None:
+                            errors += 1
+                            logger.warning(f"Failed to insert keyword associations for hash_id {hash_id}")
                     
                     files_processed += 1
                     
@@ -1111,7 +1129,7 @@ def register_keywords_routes(app):
                 
                 except Exception as e:
                     errors += 1
-                    logger.error(f"Error processing path_id {path_id}: {e}", exc_info=True)
+                    logger.error(f"Error processing hash_id {hash_id}: {e}", exc_info=True)
                     continue
             
             logger.info(f"✅ Completed keyword association update: {files_processed} files, {new_associations} new associations, {errors} errors")

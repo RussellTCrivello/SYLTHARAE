@@ -432,6 +432,15 @@ def _zip_detection(names: List[str], zf: Optional[zipfile.ZipFile],
             evidence.append("application area not resolvable from the part list")
         return spec, unproven, evidence
 
+    # draw.io / diagrams.net: the ZIP form of a .drawio holds the mxfile
+    # document as file.xml next to metadata.xml. Name it by payload so the
+    # diagram reader - not the archive reader - receives it.
+    if "file.xml" in lowered and "metadata.xml" in lowered:
+        evidence.append("file.xml + metadata.xml parts (draw.io ZIP container)")
+        spec = lookup_format("diagram.drawio")
+        if spec is not None:
+            return spec, None, evidence
+
     # A plain archive. Note whether it is only a wrapper around documents, and
     # whether members are themselves processable: the recursion is the loader's
     # job, but the inventory belongs in the record.
@@ -664,7 +673,10 @@ def _spec_can_hold_text(spec) -> bool:
         return True
     if mime.endswith("+xml") or mime.endswith("+json"):
         return True
-    return mime in ("application/json", "application/xml", "application/x-yaml")
+    # draw.io's registered type has no +xml suffix, yet the plain form of a
+    # .drawio IS an XML text document (the ZIP form is identified separately).
+    return mime in ("application/json", "application/xml", "application/x-yaml",
+                    "application/vnd.jgraph.mxfile")
 
 
 def _apply_declared_extension_disambiguation(extension: str, declared_extension: str,

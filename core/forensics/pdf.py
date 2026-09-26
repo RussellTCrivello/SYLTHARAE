@@ -305,7 +305,7 @@ def _embedded_files(doc, limits: PdfLimits, errors: List[Dict[str, str]]) -> Lis
                 content = doc.embfile_get(name)
                 if content is not None:
                     record["size_bytes"] = len(content)
-                    record["md5"] = hashlib.md5(content).hexdigest()
+                    record["md5"] = hashlib.md5(content, usedforsecurity=False).hexdigest()
                     record["sha256"] = hashlib.sha256(content).hexdigest()
                     record["content"] = content
         except Exception as exc:
@@ -363,7 +363,7 @@ def extract_pdf_features(path: str, doc=None, limits: PdfLimits = DEFAULT_PDF_LI
     close_after = False
     if doc is None:
         try:
-            import fitz  # type: ignore
+            import pymupdf as fitz  # type: ignore
 
             doc = fitz.open(path)
             close_after = True

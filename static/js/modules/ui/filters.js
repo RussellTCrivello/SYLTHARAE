@@ -413,7 +413,7 @@ async function performComprehensiveSearch(query) {
                     }
                     
                     html += `
-                        <div class="file-card" style="border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer;" onclick="window.location.href='${resultLink}'">
+                        <div class="file-card" style="border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer;" data-on-click="window.location.assign('${resultLink}')">
                             <div style="font-weight: 600; margin-bottom: 0.25rem;">
                                 <i class="bi ${typeInfo.icon} me-2"></i>
                                 ${escapeHtml(resultName)}
@@ -436,11 +436,11 @@ async function performComprehensiveSearch(query) {
                         <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem;">
                 `;
                 if (data.pagination.has_prev) {
-                    html += `<button class="btn btn-outline-primary" onclick="performGlobalSearchPage('${escapeHtml(query)}', ${data.pagination.page - 1})">${translations.previous || 'Previous'}</button>`;
+                    html += `<button class="btn btn-outline-primary" data-on-click="performGlobalSearchPage('${escapeHtml(query)}', ${data.pagination.page - 1})">${translations.previous || 'Previous'}</button>`;
                 }
                 html += `<span style="display: flex; align-items: center; padding: 0 1rem;">${translations.currentPage || 'Page'} ${data.pagination.page} ${translations.of || 'of'} ${data.pagination.total_pages}</span>`;
                 if (data.pagination.has_next) {
-                    html += `<button class="btn btn-outline-primary" onclick="performGlobalSearchPage('${escapeHtml(query)}', ${data.pagination.page + 1})">${translations.next || 'Next'}</button>`;
+                    html += `<button class="btn btn-outline-primary" data-on-click="performGlobalSearchPage('${escapeHtml(query)}', ${data.pagination.page + 1})">${translations.next || 'Next'}</button>`;
                 }
                 html += `
                         </div>

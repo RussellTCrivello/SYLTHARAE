@@ -21,6 +21,7 @@ wheels/
 
 # --- Virtual environments ---
 .venv/
+.venv-*/
 venv/
 ENV/
 env/
@@ -95,3 +96,7 @@ sample_data/
 # --- Scratch space for manual verification probes (not shipped) ---
 .probe/
 .test_runtime/
+.docs-appdata/
+
+# written by install.py
+.install_state.json

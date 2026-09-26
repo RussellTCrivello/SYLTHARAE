@@ -892,7 +892,7 @@ def register_search_routes(app):
           result set), 'dataset' (everything the filters allow, query dropped)
         - analyst_scope: the independent analyst-categorization scope
         - page, per_page: required only for scope='page'
-        - format: 'csv', 'excel' or 'json'
+        - format: 'csv' or 'excel' (anything else is rejected with 400)
         - filename: optional stem
 
         The response says what it contains: `X-Export-Scope`, `X-Export-Rows`,

@@ -185,6 +185,9 @@ class TestTheActionsThatNeededThemUseThem:
         assert reprocess.execution is None
 
     def test_an_action_that_ends_visibly_goes_through_the_toast(self):
-        jobs = (TEMPLATES / "Operations/jobs.html").read_text(encoding="utf-8")
+        template = (TEMPLATES / "Operations/jobs.html").read_text(encoding="utf-8")
+        # RES-CSP-01: the page's script is a static file the template loads.
+        assert "filename='js/pages/jobs-page.js'" in template
+        jobs = (TEMPLATES.parent / "static/js/pages/jobs-page.js").read_text(encoding="utf-8")
         assert "Toast.success(" in jobs
         assert "Toast.error(" in jobs

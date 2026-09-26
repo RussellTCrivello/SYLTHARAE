@@ -125,7 +125,7 @@ def get_extraction_name_file(
         source_key = str(path.resolve())
     except Exception:  # pragma: no cover - resolve can fail on unusual mounts
         source_key = str(path)
-    digest = hashlib.sha1(source_key.encode("utf-8", "replace")).hexdigest()[:12]
+    digest = hashlib.sha1(source_key.encode("utf-8", "replace"), usedforsecurity=False).hexdigest()[:12]
 
     extraction_base = get_extraction_base_folder(base_path)
     return str(extraction_base / f"{folder_name}__{digest}")

@@ -8,10 +8,19 @@ from typing import List, Optional
 # Ensure UTF-8 encoding for stdout on Windows (emoji progress output)
 if sys.platform == 'win32':
     try:
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace', line_buffering=True)
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace', line_buffering=True)
     except (AttributeError, ValueError):
         # reconfigure not available
+        pass
+
+# Line-buffer stdout on every platform so print() lines flush atomically;
+# merged stdout/stderr logs then interleave only at line boundaries, never
+# mid-line ("Progress: 2/11INFO:...").
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError, OSError):
         pass
 
 project_root = Path(__file__).parent.parent.parent
@@ -1878,7 +1887,14 @@ def cli_main(argv=None) -> int:
         done = snapshot.get("files_done", 0)
         total = snapshot.get("total_files", 0)
         pct = snapshot.get("percent", 0)
-        print(f"\rProgress: {done}/{total} ({pct}%)", end="", flush=True)
+        if sys.stdout.isatty():
+            # Interactive redraw only when attached to a terminal.
+            print(f"\rProgress: {done}/{total} ({pct}%)", end="", flush=True)
+        else:
+            # Captured output must never carry a partial line: log records
+            # glue themselves onto it ("Progress: 2/11INFO:...").  A full
+            # line through the logger stays ordered with every other record.
+            logger.info(f"Progress: {done}/{total} ({pct}%)")
 
     result = service.run(request, progress_cb=_progress)
 

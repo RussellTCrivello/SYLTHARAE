@@ -119,3 +119,93 @@ def test_the_file_details_modal_call_is_not_throttled_per_file(admin_client, pg_
         status = admin_client.get(f"/api/file/{file_id}/details").status_code
         assert status in (200, 404), status
         assert status != 429
+
+
+@pytest.mark.usefixtures("rate_limited_app")
+def test_the_theme_every_page_loads_is_not_throttled_while_browsing(admin_client):
+    """Each page load reads /api/settings/theme (get_theme_settings); 75 a minute pass.
+
+    Under the default limit the live browser smoke saw 429s here, and behind
+    a proxy every user of one NAT address shares that budget.
+    """
+    codes = {admin_client.get("/api/settings/theme").status_code for _ in range(75)}
+    assert 429 not in codes, codes
+
+
+@pytest.mark.usefixtures("rate_limited_app")
+@pytest.mark.parametrize("path", ["/api/i18n/catalog?locale=en", "/api/notifications/stats"])
+def test_the_reads_every_page_boot_makes_are_not_throttled_while_browsing(admin_client, path):
+    """RATE-01 covered the theme but not the other per-page reads.
+
+    The live browser smoke through nginx got 429 from both after ~600 page
+    views from one address (the hourly default); the notification badge also
+    polls every 30 s per open tab, so five idle tabs alone reach it. 75 calls
+    exceed the 60/minute default, so this fails without the interactive limit.
+    """
+    codes = {admin_client.get(path).status_code for _ in range(75)}
+    assert 429 not in codes, codes
+
+
+@pytest.mark.usefixtures("rate_limited_app")
+def test_a_rate_limited_sign_in_says_so_in_json(client):
+    """The sign-in form parses the answer as JSON. The limiter's default 429 is
+    an HTML page, so the form failed to parse it and told a locked-out user
+    "An internal error occurred" (found by the browser smoke). The 429 is JSON
+    for JSON callers and names the condition."""
+    responses = [client.post("/auth/login", json={"username": "nobody", "password": "wrong"})
+                 for _ in range(12)]
+    limited = [r for r in responses if r.status_code == 429]
+    assert limited, [r.status_code for r in responses]
+    body = limited[-1].get_json()
+    assert body == {"error": "Too many attempts. Wait a minute and try again.",
+                    "code": "rate_limited"}
+
+
+def test_a_rate_limited_page_request_gets_a_plain_answer(app):
+    """A browser navigation is not an API caller: a plain answer, not JSON."""
+    from werkzeug.exceptions import TooManyRequests
+
+    with app.test_request_context("/sources", headers={"Accept": "text/html"}):
+        response = app.make_response(app.handle_user_exception(TooManyRequests()))
+    assert response.status_code == 429
+    assert response.content_type.startswith("text/plain")
+    assert "Too many attempts" in response.get_data(as_text=True)
+
+    with app.test_request_context("/api/search", headers={"Accept": "text/html"}):
+        response = app.make_response(app.handle_user_exception(TooManyRequests()))
+    assert response.get_json()["code"] == "rate_limited", "API paths always answer JSON"
+
+
+def test_the_sign_in_page_explains_a_rate_limit_it_cannot_parse():
+    """Behind a proxy the 429 may still be HTML; the form keeps the status."""
+    from pathlib import Path
+    script = (Path(__file__).resolve().parents[2] / "static/js/pages/login-page.js").read_text(encoding="utf-8")
+    assert "r.json().catch(" in script
+    assert "res.status === 429 ? tr('Too many attempts. Wait a minute and try again.')" in script
+
+
+def test_the_rate_limit_message_is_translated():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[2] / "translations"
+    for language in ("ar", "fa", "he"):
+        catalog = (root / language / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
+        entry = catalog.split('msgid "Too many attempts. Wait a minute and try again."', 1)
+        assert len(entry) == 2, language
+        assert not entry[1].lstrip().startswith('msgstr ""'), f"{language}: untranslated"
+
+
+@pytest.mark.usefixtures("rate_limited_app")
+def test_change_password_guessing_is_rate_limited(app):
+    """RES-AUTH-02: the current-password check must not be a guessing oracle."""
+    import uuid
+    from core.security.service import get_auth_service
+
+    username = f"ratelimit_{uuid.uuid4().hex[:8]}"
+    get_auth_service().create_user(username, "rate-limit-password-123", role="viewer")
+    c = app.test_client()
+    assert c.post("/auth/login", json={"username": username,
+                                       "password": "rate-limit-password-123"}).status_code == 200
+    codes = [c.post("/auth/change-password", json={
+        "current_password": f"guess-{i}", "new_password": "another-password-456"}).status_code
+        for i in range(12)]
+    assert 429 in codes, codes

@@ -63,7 +63,7 @@ export async function copyModalContent() {
     try {
         await navigator.clipboard.writeText(content);
         // Show temporary feedback
-        const btn = document.querySelector('button[onclick*="copyModalContent"]');
+        const btn = document.querySelector('button[data-on-click*="copyModalContent"]');
         if (btn) {
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';

@@ -196,7 +196,7 @@ REGISTRY: Tuple[Interface, ...] = (
         "analyst_categorization", "Analyst Categories",
         "The analyst's own layer: categories and assignments made by hand, "
         "kept separate from automatic classification.",
-        Domain.CLASSIFY, "analyst_categorization_page", "bi bi-person-check",
+        Domain.CLASSIFY, "analyst_categorization_page", "bi-person-check",
         dependencies=("file_library",),
         help_topic="classify/analyst-categories",
     ),

@@ -420,10 +420,10 @@ class ContentDBService:
 
     def hash_exists(self, hash_value: str, source_id: int, side_id: Optional[int] = None) -> bool:
         """Check if the content has any live occurrence for the source (and optionally side)."""
-        if side_id is not None:
-            return self.hashs_repo.hash_exists(hash_value, source_id, side_id)
+        # AUDIT-DB-01: the side-scoped branch called ``self.hashs_repo``, an
+        # attribute this service never had (AttributeError on every call).
         with self._dedup_session() as dedup:
-            return dedup.hash_exists_with_live_path(hash_value, source_id)
+            return dedup.hash_exists_with_live_path(hash_value, source_id, side_id)
 
     def check_duplicate(
         self,
@@ -531,7 +531,7 @@ class ContentDBService:
         if words and len(words) > 100000:
             logger.info(
                 "Processing large word list (%s words) for hash_id %s",
-                f"{len(words):,}", path_id,
+                f"{len(words):,}", hash_id,
             )
 
         # 1. Bulk insert words - the repository batches internally for large lists.

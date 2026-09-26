@@ -57,7 +57,7 @@ call ".venv\Scripts\activate.bat"
 if defined WHEEL_DIR (
     python -m pip install --no-index --find-links="%CD%\%WHEEL_DIR%" -r "%REQ_FILE%"
 ) else (
-    python -m pip install --upgrade pip
+    python -m pip install --upgrade pip setuptools wheel
     if errorlevel 1 (
         echo  [WARNING] Could not upgrade pip - continuing anyway.
     )

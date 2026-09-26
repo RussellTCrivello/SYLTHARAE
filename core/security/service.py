@@ -54,6 +54,11 @@ class InvalidCredentials(AuthError):
         super().__init__("Invalid username or password", "invalid_credentials")
 
 
+class InvalidCurrentPassword(AuthError):
+    def __init__(self):
+        super().__init__("Current password is incorrect", "invalid_current_password")
+
+
 class AccountLocked(AuthError):
     def __init__(self, remaining_minutes: int):
         super().__init__(
@@ -233,14 +238,33 @@ class AuthService:
             )
             conn.commit()
 
-    def change_password(self, user_id: int, current_password: str, new_password: str) -> None:
-        user_row = self._get_user_row(user_id)
-        if not user_row or not verify_password(current_password, user_row["password_hash"]):
-            raise InvalidCredentials()
-        self.set_password(user_id, new_password)
+    def change_own_password(self, user_id: int, current_password: str, new_password: str,
+                            keep_session_id: Optional[str] = None) -> None:
+        """A signed-in user changing their own password (RES-AUTH-02).
 
-    def change_own_password(self, user_id: int, new_password: str) -> None:
-        """User changing their own password (already authenticated)."""
+        A session alone is not enough: the current password must be given, so
+        an unattended browser or a stolen session cannot take the account
+        over. A wrong current password counts towards the same lockout as a
+        failed sign-in; if it locks the account, every session of the account
+        is revoked (the caller must also end the current one). On success the
+        account's other sessions are revoked; ``keep_session_id`` (the hashed
+        id of the session making the change) stays signed in.
+        """
+        user_row = self._get_user_row(user_id)
+        if not user_row:
+            raise InvalidCurrentPassword()
+        now = _utcnow()
+        remaining = self._remaining_lock_minutes(user_row, now)
+        if remaining:
+            raise AccountLocked(remaining)
+        if not verify_password(current_password or "", user_row["password_hash"]):
+            if self._record_failed_attempt(user_row, now):
+                self.revoke_all_sessions(user_id)
+                raise AccountLocked(_get_security_config()["lockout_minutes"])
+            raise InvalidCurrentPassword()
+        if new_password == current_password:
+            raise AuthError("The new password must be different from the current one",
+                            "password_unchanged")
         self._validate_password_strength(new_password)
         pw_hash = hash_password(new_password)
         with self._conn() as conn, conn.cursor() as cur:
@@ -249,6 +273,11 @@ class AuthService:
                 " password_changed_at = NOW(), failed_login_count = 0, locked_until = NULL,"
                 " updated_at = NOW() WHERE id = %s",
                 (pw_hash, user_id),
+            )
+            cur.execute(
+                "UPDATE sessions SET revoked_at = NOW() WHERE user_id = %s"
+                " AND revoked_at IS NULL AND session_id IS DISTINCT FROM %s",
+                (user_id, keep_session_id),
             )
             conn.commit()
 
@@ -349,15 +378,20 @@ class AuthService:
             session = self.create_session(user.id)
             return user, session
 
-        # Failed attempt: increment, lock if threshold reached.
+        if self._record_failed_attempt(user_row, now):
+            raise AccountLocked(_get_security_config()["lockout_minutes"])
+        raise InvalidCredentials()
+
+    def _record_failed_attempt(self, user_row: Dict[str, Any], now: datetime) -> bool:
+        """Count a wrong password (sign-in or change); True when it locks the account."""
         failed = (user_row.get("failed_login_count") or 0) + 1
         locked_until = None
         sec = _get_security_config()
         if failed >= sec["max_failed_logins"]:
             locked_until = now + timedelta(minutes=sec["lockout_minutes"])
             logger.warning(
-                "Account %s locked for %s minutes after %d failed logins",
-                username, sec["lockout_minutes"], failed,
+                "Account %s locked for %s minutes after %d failed password attempts",
+                user_row.get("username"), sec["lockout_minutes"], failed,
             )
         with self._conn() as conn, conn.cursor() as cur:
             cur.execute(
@@ -366,9 +400,19 @@ class AuthService:
                 (failed, locked_until, user_row["id"]),
             )
             conn.commit()
-        if locked_until is not None:
-            raise AccountLocked(_get_security_config()["lockout_minutes"])
-        raise InvalidCredentials()
+        return locked_until is not None
+
+    @staticmethod
+    def _remaining_lock_minutes(user_row: Dict[str, Any], now: datetime) -> int:
+        """Minutes left on a lockout, or 0 when the account is not locked."""
+        locked_until = user_row.get("locked_until")
+        if locked_until is None:
+            return 0
+        if locked_until.tzinfo is None:
+            locked_until = locked_until.replace(tzinfo=timezone.utc)
+        if locked_until <= now:
+            return 0
+        return int((locked_until - now).total_seconds() // 60) + 1
 
     def _get_user_row_by_username(self, username: str) -> Optional[Dict[str, Any]]:
         with self._conn() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:

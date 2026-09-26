@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tr.innerHTML = `
                 <td>
                     <input type="checkbox" class="form-check-input word-checkbox" 
-                           value="${word.id}" onchange="updateSelection()">
+                           value="${word.id}" data-on-change="updateSelection()">
                 </td>
                 <td><span class="badge bg-secondary">${globalIndex}</span></td>
                 <td>
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span class="word-text" data-word-id="${word.id}">
                             <strong>${(word.word || '').replace(/</g,'&lt;')}</strong>
                         </span>
-                        <button class="btn btn-sm btn-link p-0 ms-1" onclick="editWord(${word.id})" title="${translations.editWord}">
+                        <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="editWord(${word.id})" title="${translations.editWord}">
                             <i class="bi bi-pencil"></i>
                         </button>
                     </div>
@@ -176,10 +176,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${word.usage_count > 0 ? `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>${translations.active}</span>` : `<span class="badge bg-secondary"><i class="bi bi-dash-circle me-1"></i>${translations.unused}</span>`}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="viewWord(${word.id})" title="${translations.viewDetails || 'View Details'}">
+                        <button class="btn btn-outline-primary" data-on-click="viewWord(${word.id})" title="${translations.viewDetails || 'View Details'}">
                             <i class="bi bi-eye"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick="deleteWord(${word.id})" title="${translations.deleteWord || 'Delete'}">
+                        <button class="btn btn-outline-danger" data-on-click="deleteWord(${word.id})" title="${translations.deleteWord || 'Delete'}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>

@@ -963,9 +963,14 @@ class StoragePipeline:
                         storage_details.append(f"   Database Record: paths.id = {path_id}")
                         
                         success_message = "\n".join(storage_details)
+                        # Single output path: logger.info only.  The print()
+                        # twin wrote the same block to stdout while the logger
+                        # wrote it to stderr - merged logs showed the whole
+                        # "FILE SUCCESSFULLY STORED" block twice per file, and
+                        # the buffered stdout copy glued mid-line onto the
+                        # next log record ("...paths.id = 18INFO:pipeline...").
                         logger.info(success_message)
-                        print(success_message)
-                        
+
                         return path_id
                     else:
                         error_msg = storage_result.get('error', 'Unknown error')
@@ -998,12 +1003,26 @@ class StoragePipeline:
                     import traceback
                     logger.debug(f"Storage error traceback for '{file_name_display}': {traceback.format_exc()}")
                     
-                    # Check if it's a connection error that can be retried
+                    # RETRY POLICY: only transient failures are retried.
+                    # The previous else-branch retried EVERY exception until
+                    # retry_count >= max_retries, so a deterministic defect
+                    # (e.g. NameError from a code bug) burned all three
+                    # attempts and printed three full tracebacks for the
+                    # identical failure.  Non-retryable errors now fail fast:
+                    # one report, one traceback, files_failed += 1.
                     is_conn_err = is_connection_error(doc_error)
                     if is_conn_err and retry_count < max_retries:
                         retry_count += 1
                         logger.warning(
                             f"Connection error detected, retrying storage for '{file_name_display}' "
+                            f"(attempt {retry_count}/{max_retries})..."
+                        )
+                        time.sleep(1.0 * retry_count)
+                        continue
+                    elif is_retryable_error(doc_error) and retry_count < max_retries:
+                        retry_count += 1
+                        logger.warning(
+                            f"Retryable storage error for '{file_name_display}', retrying "
                             f"(attempt {retry_count}/{max_retries})..."
                         )
                         time.sleep(1.0 * retry_count)
@@ -1022,16 +1041,8 @@ class StoragePipeline:
                             'retry_count': retry_count
                         }
                     )
-                    
-                    # Only fail if all retries exhausted
-                    if retry_count >= max_retries:
-                        self.stats['files_failed'] += 1
-                        return None
-                    else:
-                        # Continue to retry
-                        retry_count += 1
-                        time.sleep(1.0 * retry_count)
-                        continue
+                    self.stats['files_failed'] += 1
+                    return None
                 
                 
             except Exception as e:
@@ -1120,77 +1131,6 @@ class StoragePipeline:
                 return None
                 
                 
-            except Exception as e:
-                # Use improved error detection from error_handling module
-                if is_connection_error(e):
-                    # Connection errors - try to reconnect
-                    handle_error(
-                        e,
-                        category=ErrorCategory.DATABASE_CONNECTION,
-                        severity=ErrorSeverity.MEDIUM if retry_count < max_retries else ErrorSeverity.HIGH,
-                        context={
-                            'operation': '_store_file_sync',
-                            'file_path': file_info.get('path', 'unknown')[:100] if file_info else None,
-                            'retry_count': retry_count,
-                            'max_retries': max_retries
-                        },
-                        suggested_action='Attempting to reconnect and retry' if retry_count < max_retries else 'Check database server status'
-                    )
-                    
-                    if retry_count < max_retries:
-                        retry_count += 1
-                        logger.info(f"Attempting to reconnect (attempt {retry_count}/{max_retries})...")
-                        if self.db_hub._reconnect():
-                            # Wait a bit before retrying
-                            time.sleep(1.0)
-                            continue
-                        else:
-                            logger.error("Failed to reconnect, will retry entire operation")
-                            time.sleep(2.0 * retry_count)  # Exponential backoff
-                            continue
-                    
-                    handle_error(
-                        Exception(f"Failed to reconnect after {retry_count} attempts"),
-                        category=ErrorCategory.DATABASE_CONNECTION,
-                        severity=ErrorSeverity.HIGH,
-                        context={'operation': '_store_file_sync', 'file_path': file_info.get('path', 'unknown')[:100] if file_info else None}
-                    )
-                    self.stats['files_failed'] += 1
-                    return None
-                elif is_retryable_error(e) and retry_count < max_retries:
-                    # Other retryable errors
-                    retry_count += 1
-                    wait_time = 1.0 * (2 ** (retry_count - 1))  # Exponential backoff
-                    handle_error(
-                        e,
-                        category=ErrorCategory.DATABASE,
-                        severity=ErrorSeverity.MEDIUM,
-                        context={
-                            'operation': '_store_file_sync',
-                            'file_path': file_info.get('path', 'unknown')[:100] if file_info else None,
-                            'retry_count': retry_count,
-                            'max_retries': max_retries
-                        },
-                        suggested_action=f'Retrying operation in {wait_time:.1f}s (attempt {retry_count}/{max_retries})'
-                    )
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    # Non-retryable errors or max retries reached
-                    handle_error(
-                        e,
-                        category=ErrorCategory.DATABASE if not is_connection_error(e) else ErrorCategory.DATABASE_CONNECTION,
-                        severity=ErrorSeverity.HIGH,
-                        context={
-                            'operation': '_store_file_sync',
-                            'file_path': file_info.get('path', 'unknown')[:100] if file_info else None,
-                            'retry_count': retry_count,
-                            'max_retries': max_retries
-                        },
-                        suggested_action='Check error details and database state' if retry_count >= max_retries else None
-                    )
-                    self.stats['files_failed'] += 1
-                    return None
         
         # If we get here, all retries failed
         self.stats['files_failed'] += 1
@@ -1568,7 +1508,7 @@ class StoragePipeline:
                 p["ocr_confidence"] for p in ocr_pages
                 if isinstance(p.get("ocr_confidence"), (int, float))
             ]
-            return {
+            provenance = {
                 "engine": engines[0] if len(engines) == 1 else (engines or None),
                 "engines": engines,
                 "engine_version": next(
@@ -1585,10 +1525,22 @@ class StoragePipeline:
                     (p.get("ocr_input_variant") for p in ocr_pages
                      if p.get("ocr_input_variant")), None),
             }
+            rotated = [p.get("page_number") for p in ocr_pages if p.get("ocr_rotation")]
+            if rotated:
+                # Pages read after turning them (their text was sideways or
+                # upside down in the file).
+                provenance["rotated_pages"] = rotated
+            missing = sorted({code for p in ocr_pages
+                              for code in (p.get("missing_ocr_languages") or [])})
+            if missing:
+                # Requested languages whose models were not installed: these
+                # pages were read without them (installed_ocr_languages).
+                provenance["missing_languages"] = missing
+            return provenance
 
         if content.get("ocr_attempted") is None:
             return None
-        return {
+        provenance = {
             "engine": content.get("ocr_engine"),
             "engine_version": content.get("ocr_engine_version"),
             "derived": bool(content.get("ocr_derived")),
@@ -1598,6 +1550,19 @@ class StoragePipeline:
             "language": content.get("ocr_language"),
             "input_variant": content.get("ocr_input_variant"),
         }
+        if content.get("ocr_rotation"):
+            # Degrees (counter-clockwise) the image was turned before reading.
+            provenance["rotation"] = content["ocr_rotation"]
+        info = content.get("extraction_info") or {}
+        if info.get("missing_ocr_languages"):
+            # Requested languages whose models were not installed: the image
+            # was read without them (installed_ocr_languages).
+            provenance["missing_languages"] = list(info["missing_ocr_languages"])
+        blocks_error = info.get("ocr_blocks_error")
+        if blocks_error:
+            # Why ``confidence`` is None although text was recognised.
+            provenance["confidence_error"] = blocks_error
+        return provenance
 
     def _extract_coordinates(self, content: Dict) -> Optional[str]:
         """

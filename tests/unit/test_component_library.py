@@ -291,7 +291,7 @@ class TestPagination:
         component used to emit an onclick handler and a global function."""
         text = (PROJECT_ROOT / "templates/components/cursor_pagination.html").read_text()
         assert "<script" not in text
-        assert "onclick" not in text
+        assert "data-on-" not in text
 
     def test_cursor_pages_get_the_cursor_component(self):
         """sides and sources are cursor-paged; they used to render the
@@ -356,7 +356,7 @@ class TestTheSearchBox:
         assert 'class="form-control search-input"' in html
         assert 'placeholder="Search words..."' in html
         assert 'class="btn-clear-search"' in html
-        assert 'onclick="clearSearch()"' in html           # the page's handler
+        assert 'data-on-click="clearSearch()"' in html           # the page's handler
         assert 'aria-label="Clear search"' in html
 
     def test_it_can_be_labelled_without_a_visible_label(self, render):
@@ -502,8 +502,12 @@ class TestAdoption:
         assert counts()["badges_status"] == 0, (
             "a hand-written status badge is back; every one of them now "
             "renders through the component and the vocabulary")
-        # Current inventory: 70 non-status count/id/method chips remain hand-written.
-        assert counts()["badges_chip"] == 70
+        # Current inventory: 68 non-status count/id/method chips remain
+        # hand-written in templates. (It was 70: RES-CSP-01 moved the Jobs,
+        # Job detail and Operations widget scripts - each with a fallback
+        # badge chip - out of the templates into static/js; the markup moved,
+        # it was not migrated.)
+        assert counts()["badges_chip"] == 68
 
 
 class TestTheComponentsRenderWhatTheyPromised:
@@ -525,7 +529,7 @@ class TestTheComponentsRenderWhatTheyPromised:
         out = render("""{% from 'components/action_toolbar.html' import bulk_action_button %}
 {{ bulk_action_button(_('Delete Selected'), onclick='bulkDelete()', noun=_('records')) }}""")
         assert "disabled" in out
-        assert "onclick" not in out, "a bulk action ran without saying what it covers"
+        assert "data-on-click" not in out, "a bulk action ran without saying what it covers"
         assert "Select records first" in out
         assert 'aria-label="Delete Selected: Select records first"' in out
 
@@ -586,4 +590,4 @@ class TestTheComponentsRenderWhatTheyPromised:
         assert 'class="filter-group filter-group-search"' in out
         assert 'class="search-input-wrapper"' in out
         assert 'class="btn-clear-search"' in out
-        assert 'onclick="clearSearch()"' in out
+        assert 'data-on-click="clearSearch()"' in out

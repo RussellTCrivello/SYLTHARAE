@@ -114,7 +114,7 @@ def _():
 
 @check("environment", "Optional PDF reader dependency (PyMuPDF)", critical=False)
 def _():
-    import fitz  # noqa: F401
+    import pymupdf  # noqa: F401
 
     return "PyMuPDF available"
 
@@ -517,6 +517,26 @@ def _():
     return f"runtime dirs created under {root}"
 
 
+@check("deployment", "Start-up settings are valid (apps/web/deployment.py)")
+def _():
+    from apps.web.deployment import check_deployment
+
+    errors = [f for f in check_deployment() if f.level == "error"]
+    if errors:
+        raise AssertionError("; ".join(f"{f.message} -> {f.action}" for f in errors))
+    return "no setting would make run_web.py refuse to start"
+
+
+@check("deployment", "Production settings follow the deployment guide", critical=False)
+def _():
+    from apps.web.deployment import check_deployment
+
+    warnings = [f for f in check_deployment() if f.level == "warning"]
+    if warnings:
+        raise AssertionError("; ".join(f"{f.message} -> {f.action}" for f in warnings))
+    return "Waitress, trusted local proxy, strong secret key (or not production)"
+
+
 @check("deployment", "Session security flags configured (SEC-09)")
 def _():
     from apps.web.app import app
@@ -615,8 +635,13 @@ def main(argv=None) -> int:
     parser.add_argument("--json", action="store_true", help="emit JSON report")
     args = parser.parse_args(argv)
 
-    for runner in CHECKS:
-        runner()
+    import contextlib
+
+    # In --json mode stdout must hold only the report: anything printed while
+    # the checks run (start-up banners, library notices) goes to stderr.
+    with contextlib.redirect_stdout(sys.stderr if args.json else sys.stdout):
+        for runner in CHECKS:
+            runner()
 
     failed = [r for r in RESULTS if not r.passed]
     failed_critical = [r for r in failed if r.critical]

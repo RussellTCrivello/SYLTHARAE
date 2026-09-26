@@ -288,16 +288,24 @@ def get_db_connection(**kwargs):
     return get_postgres_connection(**kwargs)
 
 def get_db_config():
-    """Get database configuration as dictionary"""
+    """Get database configuration as dictionary.
+
+    AUDIT-HEALTH-01: delegate to ``settings.config.get_db_config`` so the
+    ARCH-02 rule (environment overrides the persisted file *at read time*)
+    applies here too. Reading the cached settings object directly meant that
+    after the setup wizard (or ``POST /api/settings/database``) updated the
+    ``DB_*`` environment, ``/health`` and the other callers kept using the
+    pre-install values until the process was restarted.
+    """
     try:
-        from settings import get_database_config
-        db_config = get_database_config()
+        from settings.config import get_db_config as _settings_db_config
+        d = _settings_db_config()
         return {
-            'database': db_config.database,
-            'user': db_config.user,
-            'password': db_config.password or '',
-            'host': db_config.host,
-            'port': db_config.port,
+            'database': d['database'],
+            'user': d['user'],
+            'password': d.get('password') or '',
+            'host': d['host'],
+            'port': int(d['port']),
         }
     except Exception:
         import os

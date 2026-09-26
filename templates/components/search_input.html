@@ -32,7 +32,7 @@
            autocomplete="{{ autocomplete }}"
            {% if aria_label or not label %}aria-label="{{ aria_label or placeholder or id }}"{% endif %}
            {% if hint %}aria-describedby="{{ id }}-hint"{% endif %}
-           {% if on_input %}oninput="{{ on_input }}"{% endif %}
+           {% if on_input %}data-on-input="{{ on_input }}"{% endif %}
            {% if disabled %}disabled aria-disabled="true"{% endif %}
            {% if loading %}aria-busy="true"{% endif %}>
     {%- if loading %}
@@ -40,7 +40,7 @@
     <span class="visually-hidden">{{ _('Searching') }}</span>
     {%- endif %}
     <button type="button" class="btn-clear-search"
-            {% if on_clear %}onclick="{{ on_clear }}"{% endif %}
+            {% if on_clear %}data-on-click="{{ on_clear }}"{% endif %}
             aria-label="{{ clear_label or _('Clear search') }}"
             title="{{ clear_label or _('Clear search') }}"
             {% if disabled %}disabled{% endif %}>

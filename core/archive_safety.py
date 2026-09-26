@@ -451,6 +451,23 @@ def extract_7z(
             raise ArchiveSafetyError(
                 f"Archive contains {len(file_list)} members (limit {policy.max_files})"
             )
+        # AUDIT-ARCH-01: enforce the size limits from the declared member
+        # sizes BEFORE writing anything, as extract_zip/extract_tar do. The
+        # post-extraction check below remains as a backstop, but on its own
+        # it let a 7z bomb fill the disk before the limit was noticed.
+        declared_total = 0
+        for info in file_list:
+            size = max(0, int(getattr(info, "uncompressed", 0) or 0))
+            if size > policy.max_file_size:
+                raise ArchiveSafetyError(
+                    f"Archive member {info.filename!r} declares {size} bytes "
+                    f"(limit {policy.max_file_size})"
+                )
+            declared_total += size
+        if declared_total > policy.max_bytes:
+            raise ArchiveSafetyError(
+                f"Archive declares {declared_total} uncompressed bytes (limit {policy.max_bytes})"
+            )
         for info in file_list:
             _check_deadline(deadline)
             validate_member_path(info.filename)
@@ -462,7 +479,9 @@ def extract_7z(
                     )
         # py7zr performs its own traversal sanitisation for targets we point it
         # at; we pre-validated every member name above and verify the tree.
-        sz.extractall(path=root)
+        # B202 (unchecked extractall): names validated, declared size bounded
+        # above, and _verify_tree_within() rejects escapes and links below.
+        sz.extractall(path=root)  # nosec B202
     _verify_tree_within(root, root, policy)
     for p in root.rglob("*"):
         if p.is_file():

@@ -46,7 +46,7 @@ numpy>=1.26                           # [WIN-BINARY] numerical arrays used by OC
 # PDF, office, rich text, email attachment, and spreadsheet readers
 # -----------------------------------------------------------------------------
 PyMuPDF>=1.24                         # [WIN-BINARY] PDF rendering and text extraction
-PyPDF2>=3.0                           # [WIN-NATIVE] PDF parsing/manipulation
+pypdf>=6.0                             # [WIN-NATIVE] PDF parsing (maintained successor of PyPDF2)
 python-docx>=1.1                      # [WIN-NATIVE] DOCX extraction
 openpyxl>=3.1                         # [WIN-NATIVE] XLSX extraction
 python-pptx>=0.6.23                   # [WIN-NATIVE] PPTX extraction
@@ -61,7 +61,7 @@ olefile>=0.47                         # [WIN-NATIVE] OLE container inspection
 # -----------------------------------------------------------------------------
 # Images and OCR
 # -----------------------------------------------------------------------------
-Pillow>=10.0                          # [WIN-BINARY] image decoding/conversion
+Pillow>=12.3.0                          # [WIN-BINARY] image decoding; >=12.3 fixes published CVEs
 pytesseract>=0.3.10                  # [WIN-NATIVE] Python wrapper; needs Tesseract below
 rapidocr-onnxruntime>=1.4             # [WIN-BINARY] ONNX OCR fallback with Windows wheels
 opencv-python-headless>=4.9            # [WIN-BINARY] image preprocessing; Windows wheels
@@ -92,7 +92,8 @@ icalendar>=5.0                        # [WIN-NATIVE] calendar/ICS parsing
 # libpff development headers, and platform-specific tooling; wheels are not
 # consistently available for Windows/Python versions. Keep this dependency
 # available only when PST support is required and verify it on the target host.
-libpff-python
+# libpff-python   <- uncomment only on hosts that can build it (see above); a hard
+#                    requirement here made `pip install -r` fail everywhere else.
 
 # -----------------------------------------------------------------------------
 # Observability integrations (imported optionally by the error-monitoring code)

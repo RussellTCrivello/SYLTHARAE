@@ -167,7 +167,11 @@ class VideoFileReader(BaseReader):
         
         # Try moviepy as fallback
         try:
-            from moviepy.editor import VideoFileClip
+            # AUDIT-DEP-02: moviepy 2.x removed ``moviepy.editor``; support both.
+            try:
+                from moviepy import VideoFileClip
+            except ImportError:
+                from moviepy.editor import VideoFileClip
             
             with VideoFileClip(filepath) as clip:
                 result["duration_seconds"] = clip.duration
