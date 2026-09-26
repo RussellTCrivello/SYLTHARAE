@@ -26,10 +26,10 @@ import time
 # These are module-level functions exported from ImageFileReader for cross-module use
 from reader_file.readers.read_img_fast import (
     _get_libraries,
-    _detect_language,
     _get_optimized_tesseract_config,
     _fast_preprocess,
     _is_tesseract_available,
+    installed_ocr_languages,
     DEFAULT_OCR_LANGUAGES
 )
 
@@ -173,7 +173,6 @@ class PDFFileReader(BaseReader):
         
         libs = _get_libraries()  # Shared function
         Image = libs.get('Image')
-        pytesseract = libs.get('pytesseract')
         cv2 = libs.get('cv2')
         np = libs.get('np')
         
@@ -202,30 +201,15 @@ class PDFFileReader(BaseReader):
             result["method"] = "skipped_text_based_pdf"
             return result
 
-        # PHASE 2A: tesseract is preferred (it covers this project's declared
-        # heb/eng/ara defaults) but it is no longer the only option. A host
-        # without the binary still gets OCR through the engine layer instead of
-        # silently returning a blank page.
-        use_tesseract = bool(pytesseract and _is_tesseract_available())
-        if use_tesseract and ocr_languages:
-            try:
-                installed_languages = set(pytesseract.get_languages(config=""))
-                missing_languages = [
-                    code for code in ocr_languages if code not in installed_languages
-                ]
-                if missing_languages:
-                    # Route through the strict shared engine so missing script
-                    # data is reported, never silently reduced to English.
-                    logger.error(
-                        "Missing Tesseract language data for %s: %s",
-                        source_label, ", ".join(missing_languages),
-                    )
-                    use_tesseract = False
-            except Exception:
-                use_tesseract = False
-        fallback_engine = None if use_tesseract else get_ocr_engine()
-        if not use_tesseract and fallback_engine is None:
+        # Every engine goes through the engine layer (core.ocr), so a page
+        # carries the same provenance whichever one runs: confidence,
+        # rotation, the input variant. Tesseract is preferred when installed
+        # (it covers this project's heb/eng/ara defaults).
+        engine = get_ocr_engine()
+        if engine is None:
             return _fallback_to_text_layer("ocr_required_engine_unavailable")
+        requested = list(ocr_languages) if ocr_languages else list(DEFAULT_OCR_LANGUAGES)
+        usable_languages = installed_ocr_languages(engine, requested, source_label, result)
 
         try:
             engine_result = None
@@ -243,69 +227,26 @@ class PDFFileReader(BaseReader):
             else:
                 pil_processed = pil_image.convert("L")
 
-            if use_tesseract:
-                # Use shared language detection from read_img_fast
-                detected_lang = _detect_language(rgb_image, pytesseract)
-                result["detected_language"] = detected_lang
+            # Confidence-gated retry on the un-preprocessed page image.
+            engine_result = recognize_best(engine, pil_processed, rgb_image, usable_languages)
+            text = engine_result.text or ""
+            result["ocr_language"] = engine_result.language
+            if engine_result.error:
+                result["engine_error"] = engine_result.error
+            if engine_result.blocks_error:
+                result["ocr_blocks_error"] = engine_result.blocks_error
+            if engine_result.rotation:
+                result["ocr_rotation"] = engine_result.rotation
 
-                # Use shared config function from read_img_fast
-                if detected_lang:
-                    lang_to_use, config_to_use = _get_optimized_tesseract_config(detected_lang, tuple(ocr_languages) if ocr_languages else None)
-                else:
-                    lang_to_use, config_to_use = tesseract_lang, tesseract_config
-
-                result["ocr_language"] = lang_to_use
-
-                text = pytesseract.image_to_string(pil_processed, lang=lang_to_use, config=config_to_use)
-                if not text or len(text.strip()) < 5:
-                    for angle in (270, 180, 90):
-                        try:
-                            rot_target = pil_processed.rotate(angle, expand=True)
-                            rot_text = pytesseract.image_to_string(rot_target, lang=lang_to_use, config=config_to_use)
-                            if rot_text and len(rot_text.strip()) > len(text or ""):
-                                text = rot_text
-                                if len(text.strip()) > 20:
-                                    break
-                        except Exception:
-                            pass
-
-                # Handle None and ensure string type
-                if text is None:
-                    text = ""
-                else:
-                    text = str(text)
-
-                engine_name = "tesseract"
-                try:
-                    engine_version = str(pytesseract.get_tesseract_version())
-                except Exception:
-                    engine_version = "unknown"
-                confidence = None
-                input_variant = ""
-            else:
-                # Alternate engine path. Same contract, plus per-page
-                # confidence and explicit engine provenance.
-                # Confidence-gated retry on the un-preprocessed page image.
-                engine_result = recognize_best(
-                    fallback_engine,
-                    pil_processed,
-                    rgb_image,
-                    list(ocr_languages) if ocr_languages else None,
-                )
-                text = engine_result.text or ""
-                result["ocr_language"] = engine_result.language
-                if engine_result.error:
-                    result["engine_error"] = engine_result.error
-
-                engine_name = engine_result.engine
-                engine_version = engine_result.engine_version
-                confidence = engine_result.mean_confidence
-                input_variant = engine_result.input_variant
+            engine_name = engine_result.engine
+            engine_version = engine_result.engine_version
+            confidence = engine_result.mean_confidence
+            input_variant = engine_result.input_variant
 
             if text and len(text.strip()) > 0:
                 result["text"] = text.strip()
                 result["text_length"] = len(text.strip())
-                result["method"] = "ocr_multilang" if use_tesseract else f"ocr_{engine_name}"
+                result["method"] = f"ocr_{engine_name}"
                 # Provenance: this text was recognised, not authored.
                 result["ocr_engine"] = engine_name
                 result["ocr_engine_version"] = engine_version

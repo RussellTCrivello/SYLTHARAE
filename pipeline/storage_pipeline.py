@@ -1508,7 +1508,7 @@ class StoragePipeline:
                 p["ocr_confidence"] for p in ocr_pages
                 if isinstance(p.get("ocr_confidence"), (int, float))
             ]
-            return {
+            provenance = {
                 "engine": engines[0] if len(engines) == 1 else (engines or None),
                 "engines": engines,
                 "engine_version": next(
@@ -1525,10 +1525,16 @@ class StoragePipeline:
                     (p.get("ocr_input_variant") for p in ocr_pages
                      if p.get("ocr_input_variant")), None),
             }
+            rotated = [p.get("page_number") for p in ocr_pages if p.get("ocr_rotation")]
+            if rotated:
+                # Pages read after turning them (their text was sideways or
+                # upside down in the file).
+                provenance["rotated_pages"] = rotated
+            return provenance
 
         if content.get("ocr_attempted") is None:
             return None
-        return {
+        provenance = {
             "engine": content.get("ocr_engine"),
             "engine_version": content.get("ocr_engine_version"),
             "derived": bool(content.get("ocr_derived")),
@@ -1538,6 +1544,14 @@ class StoragePipeline:
             "language": content.get("ocr_language"),
             "input_variant": content.get("ocr_input_variant"),
         }
+        if content.get("ocr_rotation"):
+            # Degrees (counter-clockwise) the image was turned before reading.
+            provenance["rotation"] = content["ocr_rotation"]
+        blocks_error = (content.get("extraction_info") or {}).get("ocr_blocks_error")
+        if blocks_error:
+            # Why ``confidence`` is None although text was recognised.
+            provenance["confidence_error"] = blocks_error
+        return provenance
 
     def _extract_coordinates(self, content: Dict) -> Optional[str]:
         """

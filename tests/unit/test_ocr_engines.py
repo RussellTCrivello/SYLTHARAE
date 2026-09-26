@@ -471,3 +471,249 @@ class TestImageReaderOcr:
         assert out["ocr_attempted"] is False
         assert out["ocr_engine"] == "none"
         assert out["extraction_info"]["error"] == "No OCR engine available"
+
+
+# ----------------------------------------------------------------------
+# Tesseract: failures are reported, never turned into an empty result
+# ----------------------------------------------------------------------
+class TestTesseractFailuresAreVisible:
+    """``OCR failed`` and ``OCR found nothing`` are different outcomes.
+
+    Before v2.2.0 an ``image_to_data`` failure was swallowed by a bare
+    ``except Exception: return []``: the text survived but its confidence
+    became ``None`` with nothing saying why, which reads exactly like a page
+    whose words carry no confidence. Every PSM mode raising produced a clean
+    empty result, indistinguishable from a blank page.
+    """
+
+    def test_word_data_failure_keeps_text_and_says_why(self, caplog):
+        class NoWordData(_StubTesseract):
+            def image_to_data(self, image, lang=None, config=None, output_type=None):
+                raise RuntimeError("tsv renderer crashed")
+
+        with caplog.at_level("WARNING", logger="core.ocr.engines"):
+            result = tesseract_with_stub(NoWordData(text_by_psm={11: "SCAN MARKER"})).recognize(object())
+        assert result.text == "SCAN MARKER"
+        assert result.blocks == []
+        assert result.mean_confidence is None
+        assert result.blocks_error == "image_to_data failed: RuntimeError: tsv renderer crashed"
+        assert result.error is None  # the text itself was recognised
+        assert "image_to_data failed" in caplog.text
+
+    def test_word_data_available_leaves_no_blocks_error(self):
+        result = tesseract_with_stub(_StubTesseract(text_by_psm={11: "SCAN MARKER"})).recognize(object())
+        assert result.blocks_error is None
+        assert result.mean_confidence == pytest.approx(0.92)
+
+    def test_every_mode_failing_is_an_error_not_an_empty_page(self):
+        class Broken(_StubTesseract):
+            def image_to_string(self, image, lang=None, config=None):
+                raise OSError("tesseract crashed")
+
+        result = tesseract_with_stub(Broken()).recognize(object())
+        assert result.succeeded is False
+        assert result.error == "tesseract failed: psm 3: OSError: tesseract crashed"
+
+    def test_a_page_with_no_text_is_not_an_error(self):
+        result = tesseract_with_stub(_StubTesseract(text_by_psm={})).recognize(object())
+        assert result.error is None and result.blocks_error is None
+        assert result.succeeded is False
+
+    @pytest.mark.parametrize("raw, expected", [
+        ("96.5", 0.965), (100, 1.0), (0, 0.0), ("-1", None),
+        ("250", None), ("nan", None), ("abc", None), (None, None),
+    ])
+    def test_confidence_values_are_scaled_or_rejected(self, raw, expected):
+        value = TesseractEngine._confidence_at({"conf": [raw]}, 0)
+        assert value == (pytest.approx(expected) if expected is not None else None)
+
+    def test_missing_confidence_column_is_no_measurement(self):
+        assert TesseractEngine._confidence_at({"text": ["x"]}, 0) is None
+
+
+# ----------------------------------------------------------------------
+# Tesseract: orientation, size and script selection (stub-driven)
+# ----------------------------------------------------------------------
+def _block(text, conf, bbox=(0, 0, 10, 30)):
+    return ocr_engines.OcrBlock(text, conf, bbox)
+
+
+class TestReadingScore:
+    def test_fragments_at_high_confidence_are_not_confident(self):
+        """Measured: a turned line read with heb+eng+ara came back as
+        one-glyph fragments averaging 0.80."""
+        fragments = OcrResult(text="5 = 5 a", attempted=True,
+                              blocks=[_block(t, 0.8) for t in ("5", "=", "5", "a")])
+        assert fragments.mean_confidence >= ocr_engines.LOW_CONFIDENCE_RETRY_THRESHOLD
+        assert ocr_engines._is_confident(fragments) is False
+        assert ocr_engines._reading_score(fragments) == 0.0
+
+    def test_a_whole_word_at_low_confidence_beats_fragments(self):
+        word = OcrResult(text="ROTATEDIMAGE_0_9911", attempted=True,
+                         blocks=[_block("ROTATEDIMAGE_0_9911", 0.42)])
+        fragments = OcrResult(text="2 2 8", attempted=True,
+                              blocks=[_block(t, 0.59) for t in ("2", "2", "8")])
+        assert ocr_engines._reading_score(word) > ocr_engines._reading_score(fragments)
+
+    def test_words_in_any_script_count(self):
+        hebrew = OcrResult(text="שלום עולם", attempted=True,
+                           blocks=[_block("שלום", 0.9), _block("עולם", 0.9)])
+        assert ocr_engines._is_confident(hebrew)
+        assert ocr_engines._reading_score(hebrew) == pytest.approx(8 * 0.81)
+
+    def test_failed_or_empty_readings_score_zero(self):
+        assert ocr_engines._reading_score(OcrResult(text="", attempted=True)) == 0.0
+        assert ocr_engines._reading_score(
+            OcrResult(text="WORDS HERE", attempted=True, error="boom")) == 0.0
+
+
+class TestBoxesAreInTheCallersCoordinates:
+    """A box read on a turned or enlarged copy must describe the caller's image."""
+
+    @pytest.mark.parametrize("angle", [90, 180, 270])
+    def test_boxes_from_a_turned_copy_map_back(self, angle):
+        np = pytest.importorskip("numpy")
+        Image = pytest.importorskip("PIL.Image")
+        original = Image.new("L", (300, 120), 255)
+        original.paste(0, (40, 30, 90, 50))  # dark box: x 40-89, y 30-49
+        turned = np.array(original.rotate(angle, expand=True))
+        ys, xs = np.nonzero(turned < 128)
+        seen = ocr_engines.OcrBlock("w", 0.9, (int(xs.min()), int(ys.min()),
+                                               int(xs.max()) + 1, int(ys.max()) + 1))
+        (mapped,) = ocr_engines._unrotate_blocks([seen], angle, original.size)
+        assert mapped.bbox == (40, 30, 90, 50)
+
+    def test_boxes_from_an_enlarged_copy_are_scaled_back(self):
+        (block,) = ocr_engines._scale_blocks([_block("w", 0.9, (20, 40, 60, 100))], 0.5)
+        assert block.bbox == (10, 20, 30, 50)
+
+
+class _ScriptedTesseract(_StubTesseract):
+    """Replays word tables chosen by (language, image size); counts readings."""
+
+    def __init__(self, tables, **kwargs):
+        super().__init__(**kwargs)
+        self.tables = tables  # callable(lang, size) -> list of (word, conf, height)
+        self.sizes = []
+
+    def _table(self, image, lang):
+        self.sizes.append(image.size)
+        return self.tables(lang, image.size)
+
+    def image_to_string(self, image, lang=None, config=None):
+        self.calls.append(("string", lang, config))
+        return " ".join(w for w, _c, _h in self._table(image, lang))
+
+    def image_to_data(self, image, lang=None, config=None, output_type=None):
+        words = self.tables(lang, image.size)
+        return {
+            "text": [w for w, _c, _h in words],
+            "conf": [c for _w, c, _h in words],
+            "left": [10 * i for i in range(len(words))],
+            "top": [0] * len(words),
+            "width": [8] * len(words),
+            "height": [h for _w, _c, h in words],
+        }
+
+
+def _strings(stub):
+    return [c for c in stub.calls if c[0] == "string"]
+
+
+class TestSearchCost:
+    def test_a_blank_image_is_read_once_without_a_search(self):
+        Image = pytest.importorskip("PIL.Image")
+        stub = _ScriptedTesseract(lambda lang, size: [])
+        result = tesseract_with_stub(stub).recognize(Image.new("RGB", (400, 200), "white"), ["eng"])
+        assert result.succeeded is False and result.error is None
+        # One pass of the PSM ladder (11, 6, 3) and nothing else.
+        assert len(_strings(stub)) == len(TesseractEngine.PSM_ORDER)
+
+    def test_noise_is_never_enlarged(self):
+        """Random noise reads as fragments; enlarging it is the slowest thing
+        tesseract can be asked (measured: >150 s at x4 for 1200x800)."""
+        np = pytest.importorskip("numpy")
+        Image = pytest.importorskip("PIL.Image")
+        noise = Image.fromarray(np.random.default_rng(0).integers(0, 255, (160, 240, 3), dtype=np.uint8))
+        stub = _ScriptedTesseract(lambda lang, size: [("5", 80, 9), ("=", 80, 9), ("a", 80, 9)])
+        tesseract_with_stub(stub).recognize(noise, ["eng"])
+        largest = max(w * h for w, h in stub.sizes)
+        assert largest == 240 * 160, "noise was enlarged"
+        # Upright plus the three other orientations; no script pass (fragments).
+        assert len(_strings(stub)) == 4
+
+    def test_a_confident_upright_page_is_read_once_per_model(self):
+        Image = pytest.importorskip("PIL.Image")
+        stub = _ScriptedTesseract(lambda lang, size: [("ORDINARY", 96, 30), ("PRINTED", 95, 30)])
+        tesseract_with_stub(stub).recognize(Image.new("RGB", (400, 200), "white"), ["heb", "eng", "ara"])
+        # Combined model once, then each language once: no orientation search.
+        assert [c[1] for c in _strings(stub)] == ["heb+eng+ara", "heb", "eng", "ara"]
+
+
+class TestScriptSelection:
+    def test_a_single_language_reading_beats_a_combined_one_that_lost_digits(self):
+        """Measured: heb+eng+ara read "ROTATIONTEST 5521" as "ROTATIONTEST 1"."""
+        Image = pytest.importorskip("PIL.Image")
+
+        def tables(lang, size):
+            if lang == "eng":
+                return [("ROTATIONTEST", 94, 30), ("5521", 93, 30)]
+            if lang == "heb+eng+ara":
+                return [("ROTATIONTEST", 93, 30), ("1", 90, 30)]
+            return [("דאסודה", 48, 30)]
+
+        result = tesseract_with_stub(_ScriptedTesseract(tables)).recognize(
+            Image.new("RGB", (400, 200), "white"), ["heb", "eng", "ara"])
+        assert result.text == "ROTATIONTEST 5521"
+        assert result.language == "eng"
+
+    def test_the_turned_orientation_is_recorded_with_boxes_mapped_back(self):
+        Image = pytest.importorskip("PIL.Image")
+        image = Image.new("RGB", (300, 100), "white")
+
+        def tables(lang, size):
+            # Readable only when turned to portrait, i.e. rotate(90 or 270).
+            return [("MARKER", 95, 30), ("4412", 94, 30)] if size == (100, 300) else [("5", 60, 9)]
+
+        result = tesseract_with_stub(_ScriptedTesseract(tables)).recognize(image, ["eng"])
+        assert result.text == "MARKER 4412"
+        assert result.rotation == 90
+        for block in result.blocks:
+            x0, y0, x1, y1 = block.bbox
+            assert 0 <= x0 < x1 <= 300 and 0 <= y0 < y1 <= 100
+
+
+# ----------------------------------------------------------------------
+# Stored provenance says how the text was read and why confidence is missing
+# ----------------------------------------------------------------------
+class TestStoredOcrProvenance:
+    @staticmethod
+    def _provenance(content):
+        from pipeline.storage_pipeline import StoragePipeline
+
+        return StoragePipeline._ocr_provenance(content)
+
+    def test_rotation_and_confidence_error_are_recorded_for_an_image(self):
+        prov = self._provenance({
+            "ocr_attempted": True, "ocr_successful": True, "ocr_engine": "tesseract",
+            "ocr_rotation": 90,
+            "extraction_info": {"ocr_blocks_error": "image_to_data failed: OSError: x"},
+        })
+        assert prov["rotation"] == 90
+        assert prov["confidence"] is None
+        assert prov["confidence_error"] == "image_to_data failed: OSError: x"
+
+    def test_an_upright_image_with_confidence_keeps_the_existing_shape(self):
+        prov = self._provenance({
+            "ocr_attempted": True, "ocr_successful": True, "ocr_engine": "tesseract",
+            "ocr_confidence": 0.93, "extraction_info": {},
+        })
+        assert "rotation" not in prov and "confidence_error" not in prov
+        assert prov["confidence"] == 0.93
+
+    def test_rotated_pdf_pages_are_listed(self):
+        prov = self._provenance({"pages": [
+            {"page_number": 1, "method": "ocr_tesseract", "ocr_confidence": 0.9},
+            {"page_number": 2, "method": "ocr_tesseract", "ocr_confidence": 0.8, "ocr_rotation": 270},
+        ]})
+        assert prov["rotated_pages"] == [2]

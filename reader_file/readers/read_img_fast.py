@@ -66,6 +66,38 @@ def _installed_tesseract_languages(pytesseract):
         with _TESSERACT_LANGUAGE_LOCK:
             _TESSERACT_LANGUAGE_CACHE[binary] = cached
     return cached
+
+
+def installed_ocr_languages(engine, requested, label, record):
+    """The requested OCR languages ``engine`` can read; the rest are recorded.
+
+    A missing language model is not hidden: it is logged and listed in
+    ``record["missing_ocr_languages"]``, and the page is read with the
+    languages that are installed. When none is installed the request is
+    returned unchanged so the engine reports the error itself.
+    """
+    requested = list(requested)
+    if engine is None or getattr(engine, "name", "") != "tesseract":
+        return requested  # other engines have fixed models and ignore this
+    try:
+        installed = _installed_tesseract_languages(_get_libraries().get("pytesseract"))
+    except Exception as exc:
+        logger.warning(
+            "Cannot list the installed Tesseract languages (%s: %s); requesting %s",
+            type(exc).__name__, exc, "+".join(requested),
+        )
+        return requested
+    missing = [code for code in requested if code not in installed]
+    usable = [code for code in requested if code in installed]
+    if missing:
+        logger.error(
+            "Missing Tesseract language data for %s: %s (reading with %s)",
+            label, ", ".join(missing), "+".join(usable) or "none",
+        )
+        record["missing_ocr_languages"] = missing
+    return usable or requested
+
+
 _TESSERACT_LOCK = threading.Lock()
 
 # Default OCR languages - Hebrew prioritized for RTL text
@@ -163,7 +195,6 @@ class ImageFileReader(BaseReader):
         Image = libs.get('Image')
         TAGS = libs.get('TAGS')
         GPSTAGS = libs.get('GPSTAGS')
-        pytesseract = libs.get('pytesseract')
         cv2 = libs.get('cv2')
         np = libs.get('np')
         
@@ -243,26 +274,19 @@ class ImageFileReader(BaseReader):
                 # project's declared heb/eng/ara defaults) and otherwise falls
                 # back to a pure-pip engine, so a host without tesseract still
                 # gets OCR instead of silently producing nothing.
-                use_tesseract = bool(pytesseract and self._is_tesseract_available())
+                # Every engine goes through the engine layer (core.ocr), so the
+                # result carries the same provenance whichever one runs:
+                # confidence, word boxes, rotation, scale, the input variant.
+                # Tesseract is preferred when installed (it covers this
+                # project's heb/eng/ara defaults); otherwise a pure-pip engine.
+                engine = get_ocr_engine()
                 requested_languages = list(languages or DEFAULT_OCR_LANGUAGES)
-                if use_tesseract:
-                    try:
-                        installed_languages = _installed_tesseract_languages(pytesseract)
-                        missing_languages = [
-                            code for code in requested_languages
-                            if code not in installed_languages
-                        ]
-                        if missing_languages:
-                            logger.error(
-                                "Missing Tesseract language data for %s: %s",
-                                os.path.basename(filepath), ", ".join(missing_languages),
-                            )
-                            use_tesseract = False
-                    except Exception:
-                        use_tesseract = False
-                fallback_engine = None if use_tesseract else get_ocr_engine()
+                ocr_languages = installed_ocr_languages(
+                    engine, requested_languages, os.path.basename(filepath),
+                    result["extraction_info"],
+                )
 
-                if use_tesseract or fallback_engine is not None:
+                if engine is not None:
                     result["ocr_attempted"] = True
                     rgb_img = img.convert("RGB")
 
@@ -276,76 +300,37 @@ class ImageFileReader(BaseReader):
                         ocr_target = rgb_img.convert("L")
                         result["extraction_info"]["preprocessing"] = "grayscale"
 
-                    if use_tesseract:
-                        # Detect language
-                        detected_lang = self._detect_language(rgb_img, pytesseract)
-                        lang, config = self._get_optimized_tesseract_config(detected_lang, tuple(languages) if languages else None)
+                    # Confidence-gated retry on the un-preprocessed image: the
+                    # shared binarisation measurably harms small text.
+                    engine_result = recognize_best(engine, ocr_target, rgb_img, ocr_languages)
+                    text = engine_result.text or ""
+                    ocr_coordinates = [
+                        {
+                            "word": block.text,
+                            "confidence": block.confidence,
+                            "bbox": list(block.bbox) if block.bbox else None
+                        }
+                        for block in engine_result.blocks
+                    ]
+                    lang = engine_result.language
+                    result["ocr_language"] = lang
+                    result["extraction_info"]["used_language"] = lang
+                    if engine_result.error:
+                        result["extraction_info"]["engine_error"] = engine_result.error
+                    if engine_result.blocks_error:
+                        # Text without word confidences: say why, so a missing
+                        # confidence is never read as a low one.
+                        result["extraction_info"]["ocr_blocks_error"] = engine_result.blocks_error
+                    if engine_result.rotation:
+                        result["ocr_rotation"] = engine_result.rotation
+                    if engine_result.scale and engine_result.scale != 1:
+                        result["extraction_info"]["ocr_scale"] = engine_result.scale
 
-                        result["ocr_language"] = lang
-                        result["extraction_info"]["detected_language"] = detected_lang
-                        result["extraction_info"]["used_language"] = lang
-
-                        # Extract text and coordinates comprehensively
-                        ocr_result = self._extract_text_comprehensive(ocr_target, lang, pytesseract, config)
-
-                        text = ocr_result.get("text", "")
-                        ocr_coordinates = ocr_result.get("ocr_coordinates", [])
-
-                        # Fallback if comprehensive extraction failed
-                        if not text or not text.strip():
-                            logger.debug(f"[EXTRACTION] Comprehensive OCR failed, trying fallback for: {os.path.basename(filepath)}")
-                            try:
-                                text = pytesseract.image_to_string(ocr_target, lang=lang, config=config)
-                                if text and text.strip() and not ocr_coordinates:
-                                    try:
-                                        ocr_data = pytesseract.image_to_data(
-                                            ocr_target, lang=lang, config=config,
-                                            output_type=pytesseract.Output.DICT
-                                        )
-                                        ocr_coordinates = self._extract_coordinates_from_data(ocr_data)
-                                    except Exception:
-                                        pass
-                            except Exception:
-                                text = ""
-
-                        ocr_engine_name_used = "tesseract"
-                        try:
-                            ocr_engine_version_used = str(pytesseract.get_tesseract_version())
-                        except Exception:
-                            ocr_engine_version_used = "unknown"
-                        ocr_confidence_used = None
-                    else:
-                        # Alternate engine path. Same result contract, plus the
-                        # per-block confidence that engine reports.
-                        # Confidence-gated retry on the un-preprocessed image:
-                        # the shared binarisation is tuned for tesseract and
-                        # measurably harms small text for a neural engine.
-                        engine_result = recognize_best(
-                            fallback_engine,
-                            ocr_target,
-                            rgb_img,
-                            list(languages) if languages else None,
-                        )
-                        text = engine_result.text or ""
-                        ocr_coordinates = [
-                            {
-                                "word": block.text,
-                                "confidence": block.confidence,
-                                "bbox": list(block.bbox) if block.bbox else None
-                            }
-                            for block in engine_result.blocks
-                        ]
-                        lang = engine_result.language
-                        result["ocr_language"] = lang
-                        result["extraction_info"]["used_language"] = lang
-                        if engine_result.error:
-                            result["extraction_info"]["engine_error"] = engine_result.error
-
-                        ocr_engine_name_used = engine_result.engine
-                        ocr_engine_version_used = engine_result.engine_version
-                        ocr_confidence_used = engine_result.mean_confidence
-                        # Which input produced this reading - part of provenance.
-                        result["ocr_input_variant"] = engine_result.input_variant
+                    ocr_engine_name_used = engine_result.engine
+                    ocr_engine_version_used = engine_result.engine_version
+                    ocr_confidence_used = engine_result.mean_confidence
+                    # Which input produced this reading - part of provenance.
+                    result["ocr_input_variant"] = engine_result.input_variant
 
                     # Provenance: state how this text was derived so it is
                     # never mistaken for native document text.
@@ -730,31 +715,6 @@ class ImageFileReader(BaseReader):
             
             return _LIBS_CACHE
     
-    def _detect_language(self, img, pytesseract):
-        """Detect script/language using Tesseract OSD"""
-        try:
-            osd = pytesseract.image_to_osd(img, output_type=pytesseract.Output.DICT)
-            script = osd.get('script', '').lower()
-            
-            script_to_lang = {
-                'hebrew': 'heb',
-                'arabic': 'ara',
-                'latin': 'eng',
-                'cyrillic': 'rus',
-                'han': 'chi_sim',
-                'japanese': 'jpn',
-                'korean': 'kor',
-            }
-            
-            detected = script_to_lang.get(script)
-            if detected:
-                logger.debug(f"[LANGUAGE] Detected script: {script} -> {detected}")
-                return detected
-        except Exception:
-            pass
-        
-        return None
-    
     def _get_optimized_tesseract_config(self, detected_lang=None, languages=None, psm_mode=None):
         """
         Get optimized Tesseract configuration for maximum text extraction
@@ -851,142 +811,6 @@ class ImageFileReader(BaseReader):
 
         return result
     
-    def _tesseract_recognize_once(self, image, lang, pytesseract, config):
-        """Recognise text *and* word boxes from a single tesseract run.
-
-        ``image_to_string`` and ``image_to_data`` each launch tesseract and each
-        perform the full recognition again: obtaining the reading twice per PSM
-        mode was pure duplicated work. Tesseract can emit both renderings from
-        one recognition - the ``txt`` output configuration plus
-        ``-c tessedit_create_tsv=1`` - and the TSV is parsed with the same
-        helper ``image_to_data`` uses, so the text, the boxes and their order
-        are exactly what the previous two calls produced, minus one process
-        launch and one recognition per mode.
-
-        When the installed pytesseract does not expose the primitives, the
-        historical two-call sequence is used unchanged: output never depends on
-        the library version.
-        """
-        run_tesseract = getattr(pytesseract, "run_tesseract", None)
-        file_to_dict = getattr(pytesseract, "file_to_dict", None)
-        save_image = getattr(pytesseract, "save", None)
-
-        if run_tesseract is not None and file_to_dict is not None and save_image is not None:
-            try:
-                combined_config = f"-c tessedit_create_tsv=1 {config.strip()}".strip()
-                with save_image(image) as (base, input_filename):
-                    run_tesseract(
-                        input_filename=input_filename,
-                        output_filename_base=base,
-                        extension="txt",
-                        lang=lang,
-                        config=combined_config,
-                        nice=0,
-                        timeout=0,
-                    )
-                    with open(f"{base}.txt", encoding="utf-8") as handle:
-                        text = handle.read()
-                    with open(f"{base}.tsv", encoding="utf-8") as handle:
-                        tsv = handle.read()
-                return text, self._extract_coordinates_from_data(
-                    file_to_dict(tsv, "\t", -1)
-                )
-            except Exception as exc:
-                logger.debug(
-                    "Single-run txt+tsv OCR pass unavailable for config %r (%s); "
-                    "using separate text and coordinate calls", config, exc,
-                )
-
-        text = ""
-        coordinates = []
-        try:
-            text = str(pytesseract.image_to_string(image, lang=lang, config=config) or "")
-        except Exception:
-            text = ""
-        if text and text.strip():
-            try:
-                ocr_data = pytesseract.image_to_data(
-                    image, lang=lang, config=config,
-                    output_type=pytesseract.Output.DICT
-                )
-                coordinates = self._extract_coordinates_from_data(ocr_data)
-            except Exception:
-                coordinates = []
-        return text, coordinates
-
-    def _extract_text_comprehensive(self, ocr_target, lang, pytesseract, base_config=None):
-        """
-        Extract text and coordinates, trying PSM modes in their historical order.
-
-        The ladder and its precedence are unchanged - sparse text (PSM 11)
-        first, then a uniform block (PSM 6), then fully automatic (PSM 3) or the
-        caller's config - and so is the rule that the first mode producing text
-        is the one that is kept.
-
-        What changed is how much work each rung costs. The old implementation
-        ran *every* mode unconditionally and recognised the image twice per mode
-        (once for the string, once for the boxes): up to eight tesseract
-        launches per image, most of whose results were then thrown away. A mode
-        is now attempted only when the previous one found nothing, and each
-        attempt is a single recognition.
-
-        Args:
-            ocr_target: PIL Image ready for OCR
-            lang: Language string
-            pytesseract: pytesseract module
-            base_config: Base config string (used for the last resort, as before)
-
-        Returns:
-            dict: {"text": str, "ocr_coordinates": list}
-        """
-        configs = [
-            "--oem 3 --psm 11",
-            "--oem 3 --psm 6",
-            base_config if base_config else "--oem 3 --psm 3",
-        ]
-        for config in configs:
-            text, coordinates = self._tesseract_recognize_once(
-                ocr_target, lang, pytesseract, config
-            )
-            if text and text.strip():
-                return {"text": str(text).rstrip(), "ocr_coordinates": coordinates}
-        return {"text": "", "ocr_coordinates": []}
-
-    def _extract_coordinates_from_data(self, ocr_data):
-        """
-        Extract bounding box coordinates from OCR data
-        
-        Args:
-            ocr_data: Dictionary from pytesseract.image_to_data()
-        
-        Returns:
-            list: List of coordinate dictionaries
-        """
-        coordinates = []
-        
-        if not ocr_data or 'text' not in ocr_data:
-            return coordinates
-        
-        try:
-            for i in range(len(ocr_data['text'])):
-                word_text = ocr_data['text'][i].strip()
-                conf = int(ocr_data.get('conf', [0])[i]) if ocr_data.get('conf') else 0
-                
-                if word_text and conf > 0:
-                    coordinates.append({
-                        "text": word_text,
-                        "x": ocr_data.get('left', [0])[i] if ocr_data.get('left') else 0,
-                        "y": ocr_data.get('top', [0])[i] if ocr_data.get('top') else 0,
-                        "width": ocr_data.get('width', [0])[i] if ocr_data.get('width') else 0,
-                        "height": ocr_data.get('height', [0])[i] if ocr_data.get('height') else 0,
-                        "confidence": conf,
-                        "level": ocr_data.get('level', [0])[i] if ocr_data.get('level') else 0
-                    })
-        except Exception as e:
-            logger.debug(f"Error extracting coordinates: {e}")
-        
-        return coordinates
-    
     def _fast_preprocess(self, img_array, libs):
         """
         Enhanced image preprocessing for better OCR results
@@ -1039,10 +863,6 @@ def _get_shared_instance():
 def _get_libraries():
     """Module-level wrapper for _get_libraries"""
     return _get_shared_instance()._get_libraries()
-
-def _detect_language(img, pytesseract):
-    """Module-level wrapper for _detect_language"""
-    return _get_shared_instance()._detect_language(img, pytesseract)
 
 def _get_optimized_tesseract_config(detected_lang=None, languages=None):
     """Module-level wrapper for _get_optimized_tesseract_config"""
