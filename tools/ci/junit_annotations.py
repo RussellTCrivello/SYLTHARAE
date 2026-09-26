@@ -4,8 +4,8 @@
 
 Job logs are not always at hand (they live in blob storage); annotations are
 shown on the pull request and returned by the checks API. One ::notice:: line
-carries the totals, one ::error:: line each failure or error (GitHub keeps 50
-per job). Exit status is always 0: pytest's own status decides the job.
+carries the totals, one ::error:: line lists every failed test (GitHub shows
+only ten error annotations per step), then one per failure with its message. Exit status is always 0: pytest's own status decides the job.
 """
 import sys
 import xml.etree.ElementTree as ET  # nosec B405 - our own CI report, not untrusted input
@@ -27,6 +27,11 @@ def main(path):
     suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
     totals = {k: sum(int(s.get(k, 0)) for s in suites) for k in ("tests", "failures", "errors", "skipped")}
     print("::notice title=pytest totals::" + ", ".join(f"{k}={v}" for k, v in totals.items()))
+    failed = [f"{c.get('classname', '')}::{c.get('name', '')}" for c in root.iter("testcase")
+              if c.find("failure") is not None or c.find("error") is not None]
+    if failed:
+        # GitHub shows only ten error annotations per step: list them all once.
+        print(f"::error title={_escape_property(f'{len(failed)} failed tests')}::" + _escape("\n".join(failed))[:60000])
     shown = 0
     for case in root.iter("testcase"):
         for kind in ("failure", "error"):
