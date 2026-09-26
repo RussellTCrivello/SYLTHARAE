@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "file-analysis"
-version = "2.1.1"
+version = "2.2.0"
 description = "SYLTHARAE and indexing system with PostgreSQL-backed full-text search, readers for common formats, and a Flask web UI"
 readme = "README.md"
 requires-python = ">=3.10"

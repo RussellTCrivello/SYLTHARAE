@@ -50,7 +50,7 @@ sudo apt-get install -y python3 python3-venv python3-dev build-essential \
 ```bash
 git clone https://github.com/RussellTCrivello/SYLTHARAE.git
 cd SYLTHARAE
-git checkout v2.1.1        # or the latest release tag
+git checkout v2.2.0        # or the latest release tag
 ```
 
 ## Step 3 - Create a virtual environment
