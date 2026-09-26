@@ -80,9 +80,13 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 # false. Trust X-Forwarded-For/-Proto/-Host only when the operator declares
 # how many proxies sit in front of the app (default 0 = trust nothing, since
 # a directly exposed server must not believe client-supplied headers).
+from apps.web.deployment import parse_trusted_proxy_count
+
 try:
-    _trusted_proxies = max(0, int(os.environ.get('TRUSTED_PROXY_COUNT', '0') or 0))
-except ValueError:
+    _trusted_proxies = parse_trusted_proxy_count(os.environ.get('TRUSTED_PROXY_COUNT'))
+except ValueError as _proxy_error:
+    # run_web.py refuses to start on this; other entry points trust no proxy.
+    logger.error("%s - trusting no proxy", _proxy_error)
     _trusted_proxies = 0
 if _trusted_proxies:
     from werkzeug.middleware.proxy_fix import ProxyFix

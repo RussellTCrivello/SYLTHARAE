@@ -105,7 +105,7 @@ class PDFFileReader(BaseReader):
         # Add fitz (PDF-specific)
         if 'fitz' not in libs:
             try:
-                import fitz
+                import pymupdf as fitz
                 libs['fitz'] = fitz
             except ImportError:
                 libs['fitz'] = None

@@ -363,7 +363,7 @@ def extract_pdf_features(path: str, doc=None, limits: PdfLimits = DEFAULT_PDF_LI
     close_after = False
     if doc is None:
         try:
-            import fitz  # type: ignore
+            import pymupdf as fitz  # type: ignore
 
             doc = fitz.open(path)
             close_after = True

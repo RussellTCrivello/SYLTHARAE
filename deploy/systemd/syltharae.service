@@ -1,0 +1,66 @@
+# SYLTHARAE as a systemd service (Linux).
+#
+# Install (docs/OPERATIONS.md "Linux: systemd"):
+#   sudo useradd --system --home /var/lib/syltharae --shell /usr/sbin/nologin syltharae
+#   sudo install -d -o syltharae -g syltharae -m 0750 /var/lib/syltharae
+#   sudo chown -R syltharae:syltharae /opt/syltharae
+#   sudo cp deploy/systemd/syltharae.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now syltharae
+#
+# Settings come from /opt/syltharae/.env, which the application reads itself
+# (core/init.py), so there is one parser and no EnvironmentFile= here.
+# Checked by tests/unit/test_deploy_configs.py and `systemd-analyze verify`.
+
+[Unit]
+Description=SYLTHARAE file analysis (web server and background jobs)
+Documentation=https://github.com/RussellTCrivello/SYLTHARAE/blob/main/docs/OPERATIONS.md
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=syltharae
+Group=syltharae
+WorkingDirectory=/opt/syltharae
+Environment=APP_DATA_DIR=/var/lib/syltharae
+# Never pip-install at start-up on a server; upgrades are deliberate.
+Environment=AUTO_INSTALL=0
+Environment=PYTHONUNBUFFERED=1
+# One process per database: background jobs are threads in this process.
+ExecStart=/opt/syltharae/.venv/bin/python run_web.py
+Restart=on-failure
+RestartSec=5
+# Refused start-up settings (apps/web/deployment.py) are not retried in a loop.
+RestartPreventExitStatus=2
+TimeoutStopSec=60
+UMask=0027
+LimitNOFILE=65536
+
+# --- Sandboxing -------------------------------------------------------------
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+# The data directory, plus the install directory for the files the app keeps
+# there: .env (setup wizard), .flask_secret_key and .system_initialized.
+ReadWritePaths=/var/lib/syltharae /opt/syltharae
+ProtectHome=true
+PrivateTmp=true
+# Remove PrivateDevices= when COMPUTE_MODE uses a GPU (it hides /dev/nvidia*).
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallArchitectures=native
+# AF_NETLINK: psutil reads network interfaces for the system check.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+
+[Install]
+WantedBy=multi-user.target

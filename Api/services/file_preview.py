@@ -19,7 +19,7 @@ except ImportError:
     PIL_AVAILABLE = False
 
 try:
-    import fitz
+    import pymupdf as fitz
     FITZ_AVAILABLE = True
 except ImportError:
     fitz = None
