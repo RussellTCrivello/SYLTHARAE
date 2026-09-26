@@ -49,7 +49,9 @@ def main(path):
             if shown > LIMIT:
                 continue
             name = f"{case.get('classname', '')}::{case.get('name', '')}"
-            detail = (node.get("message") or node.text or "")[:900]
+            # Job logs are not always reachable, so a failure's own diagnosis
+            # (e.g. tests/unit/test_ocr_matrix.py::_diagnosis) must fit here.
+            detail = (node.get("message") or node.text or "")[:4000]
             print(f"::error title={_escape_property(kind + ' ' + name)[:250]}::{_escape(detail)}")
     if shown > LIMIT:
         print(f"::error title=more failures::{shown - LIMIT} more not shown")
