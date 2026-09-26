@@ -128,3 +128,15 @@ def test_the_host_engine_reads_every_sample(fresh_selection):
         assert sample["status"] == "success", (name, sample)
         assert 0.0 <= sample["confidence"] <= 1.0
     assert samples["upright"]["engine"] == report["stages"]["engines"]["selected"]
+
+
+def test_remediations_name_only_real_settings():
+    """A remediation that names a setting the code does not read sends the
+    operator nowhere (one named ``OCR_ENGINE``, which never existed)."""
+    import re
+    from pathlib import Path
+
+    configuration = (Path(__file__).resolve().parents[2] / "docs" / "CONFIGURATION.md").read_text()
+    for status, text in ocr_selfcheck.REMEDIATION.items():
+        for name in re.findall(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b", text):
+            assert f"`{name}`" in configuration, f"{status}: {name} is not a documented setting"

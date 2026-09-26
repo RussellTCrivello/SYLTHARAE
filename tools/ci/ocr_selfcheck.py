@@ -82,8 +82,9 @@ REMEDIATION = {
         "apt-get install tesseract-ocr-heb tesseract-ocr-ara."
     ),
     "not_selected": (
-        "Another engine is selected ahead of the required one: check "
-        "OCR_ENGINE / the compute gateway settings and the required engine's availability."
+        "Another engine is selected ahead of the required one: ingestion uses the "
+        "first available engine in a fixed order (tesseract, then rapidocr), so "
+        "rapidocr is used only where no tesseract binary is found (PATH, TESSERACT_CMD)."
     ),
 }
 
