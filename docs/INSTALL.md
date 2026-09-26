@@ -315,6 +315,14 @@ address. Serve over HTTPS (Step 10) or use `FLASK_ENV=staging` on a trusted LAN.
 **E6 - `The CSRF token is missing` / `400 Bad Request` on a form.** The page
 was open across a server restart with a new `FLASK_SECRET_KEY`, or a proxy
 strips cookies. Reload the page; set a fixed `FLASK_SECRET_KEY`.
+*Every* POST failing with `CSRF token is missing or invalid` right after you
+put the app behind HTTPS usually means the host check failed. Over HTTPS
+Flask-WTF also requires the browser's `Referer` to match the host the
+application sees, so the proxy must pass the public host
+(`proxy_set_header Host $host;` and `X-Forwarded-Host`, as in the Step 10
+example), `TRUSTED_PROXY_COUNT` must be set, and no proxy or browser
+extension may strip `Referer`. (Verified: a proxy that drops the forwarded
+host causes exactly this error, and a cross-site `Referer` is rejected.)
 
 **E7 - `429 Too Many Requests`.** The per-client rate limit. Behind a proxy
 without `TRUSTED_PROXY_COUNT` every user shares one address and one limit -

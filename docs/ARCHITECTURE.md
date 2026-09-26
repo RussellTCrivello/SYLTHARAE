@@ -14,20 +14,29 @@ security design in [SECURITY.md](SECURITY.md).
 
 ## 1. System context
 
-```
-            browser (HTML + ES modules)                 operator shell
-                     │  HTTPS (reverse proxy)                │
-                     ▼                                       ▼
- ┌──────────────── Flask application (apps/web/app.py) ─────────────────┐
- │ security hooks → blueprints/routes (Api/) → services → repositories  │
- │        │                    │                                        │
- │        │            job manager (services/jobs) ── worker threads    │
- │        │                    │                                        │
- │        │      ingestion engine (pipeline/ + reader_file/ + core/)    │
- └────────┼────────────────────┼────────────────────────────────────────┘
-          ▼                    ▼
-   PostgreSQL (26 tables)   APP_DATA_DIR (logs, checkpoints, extracted,
-                            uploads, cache, runtime, config)
+```mermaid
+flowchart TB
+    browser["Browser<br/>(HTML + ES modules)"]
+    shell["Operator shell<br/>(install.py, verify_readiness.py, scripts/)"]
+    proxy["Reverse proxy<br/>(TLS; nginx / IIS / Caddy)"]
+    subgraph proc["SYLTHARAE process (Waitress in production)"]
+        hooks["Security hooks<br/>ProxyFix, setup gate, auth, roles, CSRF, rate limit"]
+        routes["Routes<br/>Api/routes, Api/blueprints"]
+        services["Services<br/>Api/services, services/"]
+        jobs["Job manager<br/>services/jobs + worker threads"]
+        engine["Ingestion engine<br/>pipeline/, reader_file/, core/"]
+    end
+    pg[("PostgreSQL<br/>26 tables, migrations m0001-m0014")]
+    data[("APP_DATA_DIR<br/>logs, checkpoints, extracted, uploads, cache")]
+    settings[("data/settings.json<br/>runtime settings")]
+
+    browser -->|HTTPS| proxy -->|HTTP + X-Forwarded-*| hooks --> routes --> services
+    services --> jobs --> engine
+    services --> pg
+    engine --> pg
+    engine --> data
+    services --> settings
+    shell --> pg
 ```
 
 There is one process type. Background work runs on threads inside the web
@@ -106,6 +115,31 @@ For every request, in order:
 
 The same engine serves the **Input** page, the jobs API and the CLI adapter.
 
+```mermaid
+sequenceDiagram
+    participant UI as Browser
+    participant API as /api/input/jobs
+    participant JM as JobManager
+    participant R as IntegratedFileReader
+    participant S as StoragePipeline
+    participant DB as PostgreSQL
+    UI->>API: POST {path, source, side, recursive} + X-CSRFToken
+    API->>API: role check, INGESTION_ROOTS allowlist
+    API->>JM: create_job (row in jobs, status QUEUED)
+    API-->>UI: 202 {job}
+    JM->>R: run on a worker thread (RUNNING)
+    loop each discovered file (archives extracted recursively)
+        R->>R: detect format by content, pick reader, extract text
+        R->>S: store_file_complete(file)
+        S->>DB: SHA-256 to hashs (unique), hash_contexts, paths (occurrence)
+        S->>DB: contents, words_hashs, keywords_hashs (once per content)
+    end
+    JM->>DB: result_summary, COMPLETED or COMPLETED_WITH_WARNINGS
+    UI->>JM: GET /api/jobs/:id or SSE /api/jobs/stream
+```
+
+The same flow as a component tree:
+
 ```
 IngestionService (services/ingesting)      validate request, path-safety (INGESTION_ROOTS)
    └─ JobManager (services/jobs)           persistent job row, worker thread, pause/cancel
@@ -160,6 +194,34 @@ long work:
 * `repository.py` - the `jobs` and `job_events` tables (migration 0006);
 * events stream to the Operations → Jobs page by Server-Sent Events, with
   polling as the fallback.
+
+The state machine, exactly as `TRANSITIONS` in `services/jobs/job_state.py`
+defines it (`tests/unit/test_architecture_diagrams.py` keeps the two in step).
+A retry never reopens a job: it creates a new `QUEUED` job with the same options.
+
+```mermaid
+stateDiagram-v2
+    [*] --> QUEUED
+    QUEUED --> CANCELLED
+    QUEUED --> CANCELLING
+    QUEUED --> FAILED
+    QUEUED --> RUNNING
+    RUNNING --> CANCELLED
+    RUNNING --> CANCELLING
+    RUNNING --> COMPLETED
+    RUNNING --> COMPLETED_WITH_WARNINGS
+    RUNNING --> FAILED
+    RUNNING --> PAUSED
+    PAUSED --> CANCELLED
+    PAUSED --> CANCELLING
+    PAUSED --> RUNNING
+    CANCELLING --> CANCELLED
+    CANCELLING --> FAILED
+    CANCELLED --> [*]
+    COMPLETED --> [*]
+    COMPLETED_WITH_WARNINGS --> [*]
+    FAILED --> [*]
+```
 
 ## 7. Front end
 
