@@ -262,6 +262,15 @@ def _in_caller_coordinates(result: OcrResult, angle: int, turned_from: Tuple[int
 #: text in the test matrix (a 7px font) 7.5 and PIL's default font 8.0.
 MIN_GLYPH_SIZE = 6
 
+#: Images up to this many pixels get the size search even when their marks
+#: measure below MIN_GLYPH_SIZE: there, tesseract decides what is legible.
+#: The glyph gate exists for cost, and its measurement depends on the
+#: renderer: the 7px line measured 7.5 on Debian's DejaVu 2.37-6 but 5.0 on
+#: Ubuntu 24.04's (CI), where letters do not merge, so a fixed floor refused
+#: real text. Measured worst case (random noise, tesseract 5.3.4, search to
+#: x4): 38k px 6.2 s, 120k px 15.8 s, 240k px 33 s, 480k px 107 s.
+SMALL_IMAGE_PIXELS = 40_000
+
 
 def _glyph_size(image: Any) -> Optional[float]:
     """Median size of the dark marks in ``image``, whatever its orientation.
@@ -515,7 +524,8 @@ class TesseractEngine(BaseOcrEngine):
         Small text reads as fragments in every orientation with all three
         language models loaded, so it cannot be told from noise by what was
         read. The glyphs themselves are measured instead (:func:`_glyph_size`)
-        and, when they are small, enlarged copies compete with the original
+        and, when they are small (or the image is too small for the
+        measurement to matter, SMALL_IMAGE_PIXELS), enlarged copies compete with the original
         size: an enlargement is kept only when it reads better (on an already
         blurred scan it can read worse). Readings: three more orientations;
         for small glyphs, four at x2 and the best orientation at each larger
@@ -523,8 +533,10 @@ class TesseractEngine(BaseOcrEngine):
         against its upside-down counterpart (:meth:`_against_inverted`).
         """
         glyph = _glyph_size(image)
+        small_image = image.size[0] * image.size[1] <= SMALL_IMAGE_PIXELS
         factors = (self._upscale_factors(image, glyph)
-                   if glyph is not None and MIN_GLYPH_SIZE <= glyph < self.MIN_TEXT_HEIGHT
+                   if glyph is not None and glyph < self.MIN_TEXT_HEIGHT
+                   and (glyph >= MIN_GLYPH_SIZE or small_image)
                    else [])
         if not upright.succeeded and not factors:
             # Nothing read and no small glyphs: blank, a photo, a gradient.

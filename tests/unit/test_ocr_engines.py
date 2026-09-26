@@ -629,18 +629,40 @@ class TestSearchCost:
         # One pass of the PSM ladder (11, 6, 3) and nothing else.
         assert len(_strings(stub)) == len(TesseractEngine.PSM_ORDER)
 
-    def test_noise_is_never_enlarged(self):
+    def test_large_noise_is_never_enlarged(self):
         """Random noise reads as fragments; enlarging it is the slowest thing
-        tesseract can be asked (measured: >150 s at x4 for 1200x800)."""
+        tesseract can be asked (measured, tesseract 5.3.4: 480k px 107 s)."""
         np = pytest.importorskip("numpy")
         Image = pytest.importorskip("PIL.Image")
-        noise = Image.fromarray(np.random.default_rng(0).integers(0, 255, (160, 240, 3), dtype=np.uint8))
+        noise = Image.fromarray(np.random.default_rng(0).integers(0, 255, (300, 400, 3), dtype=np.uint8))
+        assert 400 * 300 > ocr_engines.SMALL_IMAGE_PIXELS
         stub = _ScriptedTesseract(lambda lang, size: [("5", 80, 9), ("=", 80, 9), ("a", 80, 9)])
         tesseract_with_stub(stub).recognize(noise, ["eng"])
         largest = max(w * h for w, h in stub.sizes)
-        assert largest == 240 * 160, "noise was enlarged"
+        assert largest == 400 * 300, "noise was enlarged"
         # Upright plus the three other orientations; no script pass (fragments).
         assert len(_strings(stub)) == 4
+
+    def test_a_small_image_is_enlarged_even_when_its_marks_measure_tiny(self, monkeypatch):
+        """CI (Ubuntu's DejaVu): a 7px line measured 5.0, below MIN_GLYPH_SIZE,
+        and was never enlarged; tesseract reads it exactly at x2."""
+        Image = pytest.importorskip("PIL.Image")
+        monkeypatch.setattr(ocr_engines, "_glyph_size", lambda image: 5.0)
+
+        def tables(lang, size):
+            return [("LOWRESTEST", 92, 12), ("7712", 92, 12)] if size == (400, 100) else []
+
+        stub = _ScriptedTesseract(tables)
+        result = tesseract_with_stub(stub).recognize(Image.new("RGB", (200, 50), "white"), ["eng"])
+        assert result.text == "LOWRESTEST 7712"
+        assert result.scale == 2.0
+
+    def test_a_large_image_with_tiny_marks_is_not_enlarged(self, monkeypatch):
+        Image = pytest.importorskip("PIL.Image")
+        monkeypatch.setattr(ocr_engines, "_glyph_size", lambda image: 5.0)
+        stub = _ScriptedTesseract(lambda lang, size: [])
+        tesseract_with_stub(stub).recognize(Image.new("RGB", (400, 300), "white"), ["eng"])
+        assert set(stub.sizes) == {(400, 300)}
 
     def test_a_confident_upright_page_is_read_once_per_model(self):
         Image = pytest.importorskip("PIL.Image")
