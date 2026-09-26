@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from core.frontend import component_audit
 from core.interfaces import REGISTRY
