@@ -18,9 +18,10 @@ Configuration (environment):
                        transport (redirect, HTTP/2, TLS floor) is checked.
     SMOKE_HTTP_URL     plain-HTTP side of that proxy  (http://<host>)
     SMOKE_PUBLIC_HOST  host the "proxy" presents      (syl.example.test)
-    SMOKE_EVIDENCE     directory for generated files
-    must be inside the
+    SMOKE_EVIDENCE     directory for generated files; must be inside the
                        server's INGESTION_ROOTS       (./smoke-evidence)
+    SMOKE_OCR_FONT     TrueType font for the scanned-page fixture
+                       (/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf)
     SMOKE_ADMIN_PASSWORD  admin password to install / sign in with (required)
     SMOKE_DB_HOST, SMOKE_DB_PORT, SMOKE_DB_USER, SMOKE_DB_PASSWORD, SMOKE_DB
                        database the wizard installs into; in run1/run2 also
@@ -48,6 +49,7 @@ PUBLIC = os.environ.get("SMOKE_PUBLIC_HOST") or (urlsplit(BASE).netloc if REAL_P
 HTTP_URL = os.environ.get("SMOKE_HTTP_URL", f"http://{urlsplit(BASE).hostname}").rstrip("/")
 FORGED_IP = "203.0.113.66"  # TEST-NET-3: must never reach the audit log
 EV = Path(os.environ.get("SMOKE_EVIDENCE", "smoke-evidence")).resolve()
+OCR_FONT = os.environ.get("SMOKE_OCR_FONT", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
 ADMIN = (os.environ.get("SMOKE_ADMIN_USER", "admin"), os.environ.get("SMOKE_ADMIN_PASSWORD", ""))
 RESULTS = []
 
@@ -99,6 +101,13 @@ def make_evidence():
     with zipfile.ZipFile(EV / "bundle.zip", "w") as z:
         z.writestr("copy_of_memo.txt", (EV / "memo.txt").read_text())  # duplicate content
         z.writestr("inner/notes.txt", "Nested notes mentioning zephyrine and a budget.\n")
+    # A scanned page: the keyword exists only as pixels, so finding it proves
+    # OCR ran inside the deployed stack (same rendering as the integration tests).
+    from PIL import Image, ImageDraw, ImageFont
+    img = Image.new("RGB", (1200, 300), "white")
+    ImageDraw.Draw(img).text((50, 120), "Scanned exhibit zephyrine 2026",
+                             font=ImageFont.truetype(OCR_FONT, 44), fill="black")
+    img.save(EV / "scan.png")
 
 
 def login(s, user, pw):
@@ -120,7 +129,9 @@ def install():
           "database": os.environ.get("SMOKE_DB", "syl_smoke")}
     r = s.post("/api/setup/test-database", json=db)
     check("wizard: test-database", r.status_code == 200, r.text)
-    body = {"db_host": db["host"], "db_port": 5432, "db_user": "postgres", "db_password": db["password"],
+    # The same server the test-database step checked (SMOKE_DB_PORT/USER were
+    # previously ignored here, installing into port 5432 as postgres).
+    body = {"db_host": db["host"], "db_port": db["port"], "db_user": db["user"], "db_password": db["password"],
             "db_name": db["database"], "admin_username": ADMIN[0], "admin_password": ADMIN[1],
             "environment": "production", "flask_host": os.environ.get("SMOKE_FLASK_HOST", "127.0.0.1"), "log_level": "INFO",
             "ingestion_roots": str(EV)}
@@ -187,8 +198,9 @@ def main(phase):
     r = s.get("/api/search", params={"query": "zephyrine"})
     txt = r.text
     check(f"[{phase}] search finds keyword", r.status_code == 200 and "zephyrine" in txt.lower(), txt[:200])
-    for fn in ("memo.txt", "ledger.csv", "minutes.docx", "notes.txt"):
+    for fn in ("memo.txt", "ledger.csv", "minutes.docx", "notes.txt", "scan.png"):
         check(f"[{phase}] search result includes {fn}", fn in txt)
+    ocr_check(s, phase, r)
     upload_checks(s, phase, src, side)
     stream_check(s, phase)
     r = s.get("/api/notifications")
@@ -305,6 +317,23 @@ def upload_checks(s, phase, src, side):
     d = s.get(f"/api/file/{fid}/original/content")
     check(f"[{phase}] original file downloads intact", d.status_code == 200 and d.content == body,
           f"{d.status_code} {len(d.content)} bytes")
+
+
+def ocr_check(s, phase, search_response):
+    """The scan's text came from OCR, and its provenance is stored and served."""
+    ids = [h.get("file_id") or h.get("id") for h in _hits(search_response)
+           if h.get("file_name") == "scan.png"]
+    if not check(f"[{phase}] OCR: scan.png located in results", bool(ids), str(ids)):
+        return
+    r = s.get(f"/api/file/{ids[0]}/details")
+    ocr = {}
+    if r.status_code == 200:
+        ocr = ((r.json().get("details") or {}).get("extraction_provenance") or {}).get("ocr") or {}
+    conf = ocr.get("confidence")
+    check(f"[{phase}] OCR provenance: derived, engine, confidence in (0, 1]",
+          ocr.get("derived") is True and ocr.get("engine") in ("tesseract", "rapidocr")
+          and isinstance(conf, (int, float)) and 0.0 < conf <= 1.0,
+          f"{r.status_code} {json.dumps(ocr)[:160]}")
 
 
 def _hits(r):

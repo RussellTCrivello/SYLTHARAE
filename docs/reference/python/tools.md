@@ -108,6 +108,7 @@ Live end-to-end smoke test against a running SYLTHARAE server.
 - `duplicates_reported(job)` - Everything was seen before: all duplicates, nothing stored again.
 - `page_checks(s, phase)` - Security headers on a real page, and a static asset it references.
 - `upload_checks(s, phase, src, side)` - Browser upload -> ingestion -> search -> analysis -> original download.
+- `ocr_check(s, phase, search_response)` - The scan's text came from OCR, and its provenance is stored and served.
 - `stream_check(s, phase)` - Server-sent events must reach the client unbuffered through the proxy.
 - `audit_ip_check(phase, user)` - The audit log holds the client's real address, never a forged one.
 - `transport_checks(phase)` - What deploy/nginx promises: HTTP/2, a TLS floor of 1.2, verified chain.

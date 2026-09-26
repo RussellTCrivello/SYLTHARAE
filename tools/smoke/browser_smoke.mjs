@@ -9,6 +9,7 @@
  *   * a CSP violation (securitypolicyviolation event or "Refused to ..." console
  *     message) - something still needs inline script, eval or a javascript: URL;
  *   * an uncaught page error;
+ *   * a same-origin response >= 400 or a request that never completed;
  *   * data-on-* handlers on a page that did not load the declarative runtime;
  *   * a data-on-* handler whose function is not reachable from window once the
  *     page's scripts (modules included) have run - it would do nothing on click.
@@ -74,6 +75,22 @@ page.on('console', (message) => {
     }
 });
 page.on('pageerror', (error) => problems.push(`page error: ${error.message}`));
+// A same-origin request the server refused, or that never completed, breaks the
+// page even when nothing is thrown: a missing module script silently leaves
+// its handlers undefined. Navigating away aborts in-flight requests (the Jobs
+// page's event stream), so net::ERR_ABORTED is expected and ignored.
+const sameOrigin = (url) => url.startsWith(`${BASE}/`);
+page.on('response', (response) => {
+    if (sameOrigin(response.url()) && response.status() >= 400) {
+        problems.push(`HTTP ${response.status()} ${response.url().replace(BASE, '')}`);
+    }
+});
+page.on('requestfailed', (request) => {
+    const reason = request.failure() && request.failure().errorText;
+    if (sameOrigin(request.url()) && reason !== 'net::ERR_ABORTED') {
+        problems.push(`request failed: ${request.url().replace(BASE, '')} ${reason}`);
+    }
+});
 await page.evaluateOnNewDocument(() => {
     document.addEventListener('securitypolicyviolation', (event) => {
         (window.__cspViolations = window.__cspViolations || []).push(
