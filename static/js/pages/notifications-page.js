@@ -446,7 +446,7 @@ notificationsPage.renderNotifications = function(notifications, tab, section, ex
             const unreadClass = n.read ? '' : 'unread';
             
             return `
-                <div class="message-card ${unreadClass}" onclick="openMessageDetail(${n.id})" data-id="${n.id}" data-type="${n.type}">
+                <div class="message-card ${unreadClass}" data-on-click="openMessageDetail(${n.id})" data-id="${n.id}" data-type="${n.type}">
                     <div class="message-header">
                         <div class="message-avatar priority-${n.priority}">
                             ${typeIcon}
@@ -471,10 +471,10 @@ notificationsPage.renderNotifications = function(notifications, tab, section, ex
                             ${n.event_date ? `<span><i class="bi bi-calendar me-1"></i>${new Date(n.event_date).toLocaleDateString()}</span>` : ''}
                         </div>
                         <div class="message-actions">
-                            <button class="message-action-btn" onclick="event.stopPropagation(); markAsRead(${n.id})" title="${markReadTitle}">
+                            <button class="message-action-btn" data-on-click="event.stopPropagation(); markAsRead(${n.id})" title="${markReadTitle}">
                                 <i class="bi bi-check"></i>
                             </button>
-                            <button class="message-action-btn danger" onclick="event.stopPropagation(); dismissNotification(${n.id})" title="${dismissTitle}">
+                            <button class="message-action-btn danger" data-on-click="event.stopPropagation(); dismissNotification(${n.id})" title="${dismissTitle}">
                                 <i class="bi bi-x"></i>
                             </button>
                         </div>

@@ -154,38 +154,7 @@
     </div>
 </div>
 
-<script>
-// Handle jump to page for template-based pagination
-(function() {
-    const jumpInput = document.getElementById('jumpToPageInput-{{ endpoint }}');
-    const jumpBtn = document.querySelector('.unified-pagination-jump-btn[data-endpoint="{{ endpoint }}"]');
-    
-    if (jumpInput && jumpBtn) {
-        const handleJump = function() {
-            let targetPage = parseInt(jumpInput.value);
-            const totalPages = parseInt(jumpInput.getAttribute('data-total-pages')) || 1;
-            
-            if (isNaN(targetPage) || targetPage < 1) {
-                targetPage = 1;
-            } else if (targetPage > totalPages) {
-                targetPage = totalPages;
-            }
-            
-            // Update current URL with new page number
-            const url = new URL(window.location.href);
-            url.searchParams.set('page', targetPage);
-            window.location.href = url.toString();
-        };
-        
-        jumpBtn.addEventListener('click', handleJump);
-        jumpInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                handleJump();
-            }
-        });
-    }
-})();
-</script>
+<script src="{{ url_for('static', filename='js/modules/core/unified-pagination.js') }}"></script>
 {% endif %}
 {%- endmacro -%}
 

@@ -576,7 +576,7 @@ class TestTheRecordPageRendersThem:
         html = admin_client.get(f"/file/{record['file_id']}").get_data(as_text=True)
         assert "shareFile()" not in html
         assert "exportFile()" not in html
-        assert 'onclick="toggleFullscreen()"' in html, (
+        assert 'data-on-click="toggleFullscreen()"' in html, (
             "full screen is a control, and it stays: it changes how the page "
             "is shown, not what the record is")
 

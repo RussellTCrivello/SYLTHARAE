@@ -216,7 +216,7 @@
                 detailsEl.className = 'message-details';
                 const showDetailsText = this.translateMessage('Show Details') || 'Show Details';
                 detailsEl.innerHTML = `
-                    <button class="message-details-toggle" onclick="this.nextElementSibling.classList.toggle('expanded')">
+                    <button class="message-details-toggle" data-on-click="this.nextElementSibling.classList.toggle('expanded')">
                         <i class="bi bi-chevron-down"></i> ${this.escapeHtml(showDetailsText)}
                     </button>
                     <div class="message-details-content">

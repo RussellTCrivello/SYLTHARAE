@@ -60,13 +60,21 @@ def test_dashboard_has_a_control_for_the_rendered_paths_panel():
     assert "case 'paths':" in script
 
 
+def page(template: str, script: str) -> str:
+    """A page's template and the script it loads (RES-CSP-01 moved inline
+    script to static files); the template must still load that script."""
+    markup = read(template)
+    assert f"filename='{script}'" in markup, f"{template} no longer loads {script}"
+    return markup + "\n" + read(f"static/{script}")
+
+
 def test_password_visibility_buttons_are_keyboard_reachable_and_stateful():
-    for relative in (
-        "templates/auth/login.html",
-        "templates/auth/first_admin.html",
-        "templates/Setup/install_wizard.html",
+    for template, script in (
+        ("templates/auth/login.html", "js/pages/login-page.js"),
+        ("templates/auth/first_admin.html", "js/pages/first-admin-page.js"),
+        ("templates/Setup/install_wizard.html", "js/pages/install-wizard-page.js"),
     ):
-        source = read(relative)
+        source = page(template, script)
         assert 'aria-pressed="false"' in source
         assert 'tabindex="-1"' not in source
         assert "setAttribute('aria-pressed'" in source
@@ -89,7 +97,7 @@ def test_password_minimum_guidance_uses_the_enforced_configuration():
 
 
 def test_the_setup_stepper_is_a_progress_list_not_a_nonfunctional_tablist():
-    setup = read("templates/Setup/install_wizard.html")
+    setup = page("templates/Setup/install_wizard.html", "js/pages/install-wizard-page.js")
 
     assert 'role="list" aria-label="{{ _(\'Installation steps\') }}"' in setup
     assert 'role="tablist" aria-label="Installation steps"' not in setup
@@ -101,6 +109,7 @@ def test_user_row_actions_keep_untrusted_usernames_out_of_inline_javascript():
 
     assert 'onclick=' not in users
     assert 'onchange=' not in users
+    assert 'data-on-' not in users
     assert 'data-username="${safeUsername}"' in users
     assert "document.getElementById('deleteUserModalName').textContent = username" in users
     assert "showDeleteUserModal(userId, button.dataset.username || '', button)" in users
@@ -108,11 +117,12 @@ def test_user_row_actions_keep_untrusted_usernames_out_of_inline_javascript():
     assert '"deleteUser": _(\'Delete User\')' in users_template
     assert 'onclick=' not in users_template
     assert 'onchange=' not in users_template
+    assert 'data-on-' not in users_template
     assert "admin: 'bg-dark'" in users
 
 
 def test_setup_completion_renders_user_values_as_text_not_markup():
-    setup = read("templates/Setup/install_wizard.html")
+    setup = page("templates/Setup/install_wizard.html", "js/pages/install-wizard-page.js")
 
     assert "valueNode.textContent = String(value" in setup
     assert "body.admin_username + '</span>" not in setup

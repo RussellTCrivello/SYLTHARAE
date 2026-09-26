@@ -1,0 +1,133 @@
+/**
+ * Jobs list: live table, cancel/pause/resume, event stream.
+ *
+ * Moved out of an inline <script> so the Content-Security-Policy can forbid
+ * inline script (RES-CSP-01). Behaviour is unchanged.
+ */
+// Server-rendered values from #jobs-page-data.
+var JOBS_PAGE_DATA = JSON.parse(document.getElementById('jobs-page-data').textContent || '{}');
+
+(function () {
+  const fmtDur = (s) => {
+    if (s == null) return '—';
+    const m = Math.floor(s / 60), sec = Math.round(s % 60);
+    return m ? `${m}m ${sec}s` : `${sec}s`;
+  };
+  // The status words and their colours come from the shared vocabulary
+  // (core/frontend/status_vocabulary.py, injected as JSON by base.html):
+  // the job pages used to disagree with each other about a status such as
+  // COMPLETED_WITH_WARNINGS.
+  const statusBadge = (s) => (window.InforaxisStatus ? window.InforaxisStatus.badge(s) : '<span class="badge bg-secondary">' + String(s == null ? '' : s) + '</span>');
+
+  async function loadJobs() {
+    const p = new URLSearchParams();
+    const t = document.getElementById('fType').value;
+    const st = document.getElementById('fStatus').value;
+    const u = document.getElementById('fUser').value.trim();
+    if (t) p.set('type', t === 'import' ? '' : t);
+    if (st) p.set('status', st);
+    if (u) p.set('user', u);
+    p.set('limit', '100');
+    const r = await fetch('/api/jobs?' + p.toString());
+    const d = await r.json();
+    const body = document.getElementById('jobsBody');
+    if (!d.success || !(d.jobs || []).length) {
+      body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">' + JOBS_PAGE_DATA.noJobsYetStartAnIngestion + '</td></tr>';
+      return;
+    }
+    body.innerHTML = d.jobs.map(j => {
+      const start = j.started_at ? new Date(j.started_at).toLocaleTimeString() : '—';
+      let dur = '—';
+      if (j.started_at) {
+        const end = j.completed_at ? new Date(j.completed_at) : new Date();
+        dur = fmtDur((end - new Date(j.started_at)) / 1000);
+      }
+      const active = ['QUEUED','RUNNING','PAUSED','CANCELLING'].includes(j.status);
+      const actions = [
+        `<a href="/operations/jobs/${j.job_id}" class="btn btn-sm btn-outline-primary">View</a>`
+      ];
+      if (active && !['PAUSED'].includes(j.status))
+        actions.push(`<button class="btn btn-sm btn-outline-danger" data-on-click="cancelJob('${j.job_id}')">Cancel</button>`);
+      if (j.status === 'PAUSED')
+        actions.push(`<button class="btn btn-sm btn-outline-success" data-on-click="resumeJob('${j.job_id}')">Resume</button>`);
+      if (['FAILED','CANCELLED','COMPLETED_WITH_WARNINGS'].includes(j.status))
+        actions.push(`<button class="btn btn-sm btn-outline-secondary" data-on-click="retryJob('${j.job_id}')">Retry</button>`);
+      return `<tr>
+        <td><a href="/operations/jobs/${j.job_id}"><code>${j.job_id}</code></a></td>
+        <td>${(j.job_type||'').replace(/_/g,' ')}</td>
+        <td>${statusBadge(j.status)}</td>
+        <td>
+          <div class="progress" style="height:8px;">
+            <!-- Width transitions so a poll shows movement, not a snap. -->
+            <div class="progress-bar${active ? ' progress-bar-striped progress-bar-animated' : ''}"
+                 role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                 aria-valuenow="${j.progress||0}"
+                 style="width:${j.progress||0}%; transition: width .3s ease;"></div>
+          </div>
+          <small class="text-muted">
+            ${j.progress||0}%
+            ${(j.statistics && j.statistics.files_discovered != null)
+              ? ` · ${(j.statistics.files_processed ?? 0)}/${j.statistics.files_discovered}`
+              : ''}
+            ${(j.statistics && j.statistics.files_nested)
+              ? ` · <span title="Objects found inside archives, attachments and embedded documents">+${j.statistics.files_nested} nested</span>`
+              : ''}
+          </small>
+        </td>
+        <td>${start}</td><td>${dur}</td><td>${j.created_by||'—'}</td>
+        <td class="d-flex gap-1 flex-wrap">${actions.join('')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // The page owns the operation; the component owns the question. The action
+  // id is the one the Action Registry knows ('jobs.cancel'), so the dialog,
+  // the inspector and the catalog are talking about the same thing.
+  window.cancelJob = async function (id) {
+    const confirmed = await ConfirmDialog.request({
+      action: 'jobs.cancel',
+      scope: id,
+      confirmLabel: JOBS_PAGE_DATA.cancelJob,
+      cancelLabel: JOBS_PAGE_DATA.keepRunning,
+      dangerous: true,
+    });
+    if (!confirmed) return;
+    try {
+      const response = await fetch(`/api/jobs/${id}/cancel`, {method:'POST',
+        headers: {'X-CSRFToken': JOBS_PAGE_DATA.csrfToken}});
+      if (!response.ok) throw new Error(String(response.status));
+      Toast.success(JOBS_PAGE_DATA.jobCancelled, {detail: id});
+    } catch (error) {
+      Toast.error(JOBS_PAGE_DATA.theJobCouldNotBeCancelled, {detail: id});
+    }
+    loadJobs();
+  };
+  window.resumeJob = async function (id) {
+    await fetch(`/api/jobs/${id}/resume`, {method:'POST',
+      headers: {'X-CSRFToken': JOBS_PAGE_DATA.csrfToken}});
+    loadJobs();
+  };
+  window.retryJob = async function (id) {
+    await fetch(`/api/jobs/${id}/retry`, {method:'POST',
+      headers: {'X-CSRFToken': JOBS_PAGE_DATA.csrfToken}});
+    loadJobs();
+  };
+
+  document.getElementById('btnRefresh').addEventListener('click', loadJobs);
+  ['fType','fStatus'].forEach(id =>
+    document.getElementById(id).addEventListener('change', loadJobs));
+
+  // Live updates: SSE when available (single-process), polling fallback.
+  let pollTimer = setInterval(loadJobs, 2000);
+  if (window.EventSource) {
+    try {
+      const es = new EventSource('/api/jobs/stream');
+      const refresh = () => { loadJobs(); };
+      ['JOB_CREATED','JOB_STARTED','PROGRESS','JOB_COMPLETED','JOB_CANCELLED','JOB_PAUSED','FAILED','CANCELLING'].forEach(ev =>
+        es.addEventListener(ev, refresh));
+      es.addEventListener('PROGRESS', refresh);
+      document.getElementById('liveIndicator').textContent = JOBS_PAGE_DATA.liveUpdatesEventStreamConnected;
+    } catch (e) { /* keep polling */ }
+  }
+  loadJobs();
+})();

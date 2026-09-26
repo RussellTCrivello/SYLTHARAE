@@ -35,13 +35,13 @@ export function loadClassificationCharts(fileId) {
         <div class="classification-charts-container">
             <div class="classification-charts-controls">
                 <div class="data-type-tabs">
-                    <button class="data-type-tab active" data-type="categories" onclick="switchDataType('categories')">
+                    <button class="data-type-tab active" data-type="categories" data-on-click="switchDataType('categories')">
                         <i class="bi bi-tags"></i> ${translations.categories || 'Categories'}
                     </button>
-                    <button class="data-type-tab" data-type="words" onclick="switchDataType('words')">
+                    <button class="data-type-tab" data-type="words" data-on-click="switchDataType('words')">
                         <i class="bi bi-file-text"></i> ${translations.words || 'Words'}
                     </button>
-                    <button class="data-type-tab" data-type="keywords" onclick="switchDataType('keywords')">
+                    <button class="data-type-tab" data-type="keywords" data-on-click="switchDataType('keywords')">
                         <i class="bi bi-key"></i> ${translations.keywords || 'Keywords'}
                     </button>
                 </div>
@@ -49,7 +49,7 @@ export function loadClassificationCharts(fileId) {
             <div class="chart-filter-container" style="margin-top: 0.75rem;">
                 <input type="text" id="chartFilterInput" 
                        placeholder="${translations.filterData || 'Filter...'}" 
-                       oninput="filterChartData(this.value)"
+                       data-on-input="filterChartData(this.value)"
                        style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.875rem;">
             </div>
             <div class="chart-and-table-container" style="display: flex; gap: 1rem; margin-top: 1rem;">

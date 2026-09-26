@@ -349,7 +349,7 @@ function renderTableView(categories, startIndex) {
                         title="${translations.addWord || 'Add Word'}">
                     <i class="bi bi-plus"></i> ${translations.addWord || 'Add Word'}
                 </button>
-                <button class="btn btn-outline-danger" onclick="deleteCategory(${category.id})" title="${translations.deleteCategory || 'Delete'}">
+                <button class="btn btn-outline-danger" data-on-click="deleteCategory(${category.id})" title="${translations.deleteCategory || 'Delete'}">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
@@ -446,7 +446,7 @@ function renderGridView(categories) {
                         data-category-name='${JSON.stringify(category.name)}'>
                     <i class="bi bi-plus"></i> ${translations.addWord || 'Add Word'}
                 </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${category.id})" title="Delete">
+                <button class="btn btn-sm btn-outline-danger" data-on-click="deleteCategory(${category.id})" title="Delete">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
@@ -563,7 +563,7 @@ function renderOldPagination() {
     let html = '<div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">';
     html += `<div class="small text-muted pagination-info">${translations.showing || 'Showing'} ${startItem}-${endItem} ${translations.of || 'of'} ${totalItems}</div>`;
     html += '<div class="pagination-page-numbers d-flex align-items-center gap-1">';
-    html += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})"><i class="bi bi-chevron-left"></i></button>`;
+    html += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} data-on-click="changePage(${currentPage - 1})"><i class="bi bi-chevron-left"></i></button>`;
     
     const maxVisible = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
@@ -573,20 +573,20 @@ function renderOldPagination() {
     }
     
     if (startPage > 1) {
-        html += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
+        html += `<button class="pagination-btn" data-on-click="changePage(1)">1</button>`;
         if (startPage > 2) html += `<span class="pagination-ellipsis">...</span>`;
     }
     
     for (let i = startPage; i <= endPage; i++) {
-        html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-on-click="changePage(${i})">${i}</button>`;
     }
     
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) html += `<span class="pagination-ellipsis">...</span>`;
-        html += `<button class="pagination-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+        html += `<button class="pagination-btn" data-on-click="changePage(${totalPages})">${totalPages}</button>`;
     }
     
-    html += `<button class="pagination-btn" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="changePage(${currentPage + 1})"><i class="bi bi-chevron-right"></i></button>`;
+    html += `<button class="pagination-btn" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} data-on-click="changePage(${currentPage + 1})"><i class="bi bi-chevron-right"></i></button>`;
     html += '</div></div>';
     paginationContainer.innerHTML = html;
 }

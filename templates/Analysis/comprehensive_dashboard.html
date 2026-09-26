@@ -183,10 +183,10 @@
                     </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-filter btn-filter-primary" onclick="applyFilters('files', 'combined')" aria-label="{{ _('Apply filters') }}">
+                    <button class="btn-filter btn-filter-primary" data-on-click="applyFilters('files', 'combined')" aria-label="{{ _('Apply filters') }}">
                         <i class="bi bi-search" aria-hidden="true"></i> {{ _('Apply Filters') }}
                     </button>
-                    <button class="btn-filter btn-filter-secondary" onclick="resetFilters('files', 'combined')" aria-label="{{ _('Reset filters') }}">
+                    <button class="btn-filter btn-filter-secondary" data-on-click="resetFilters('files', 'combined')" aria-label="{{ _('Reset filters') }}">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ _('Reset') }}
                     </button>
                 </div>
@@ -234,10 +234,10 @@
                     </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-filter btn-filter-primary" onclick="applyFilters('categories', 'combined')" aria-label="{{ _('Apply filters') }}">
+                    <button class="btn-filter btn-filter-primary" data-on-click="applyFilters('categories', 'combined')" aria-label="{{ _('Apply filters') }}">
                         <i class="bi bi-search" aria-hidden="true"></i> {{ _('Apply Filters') }}
                     </button>
-                    <button class="btn-filter btn-filter-secondary" onclick="resetFilters('categories', 'combined')" aria-label="{{ _('Reset filters') }}">
+                    <button class="btn-filter btn-filter-secondary" data-on-click="resetFilters('categories', 'combined')" aria-label="{{ _('Reset filters') }}">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ _('Reset') }}
                     </button>
                 </div>
@@ -291,10 +291,10 @@
                     </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-filter btn-filter-primary" onclick="applyFilters('keywords', 'combined')" aria-label="{{ _('Apply filters') }}">
+                    <button class="btn-filter btn-filter-primary" data-on-click="applyFilters('keywords', 'combined')" aria-label="{{ _('Apply filters') }}">
                         <i class="bi bi-search" aria-hidden="true"></i> {{ _('Apply Filters') }}
                     </button>
-                    <button class="btn-filter btn-filter-secondary" onclick="resetFilters('keywords', 'combined')" aria-label="{{ _('Reset filters') }}">
+                    <button class="btn-filter btn-filter-secondary" data-on-click="resetFilters('keywords', 'combined')" aria-label="{{ _('Reset filters') }}">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ _('Reset') }}
                     </button>
                 </div>
@@ -348,10 +348,10 @@
                     </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-filter btn-filter-primary" onclick="applyFilters('sources', 'combined')" aria-label="{{ _('Apply filters') }}">
+                    <button class="btn-filter btn-filter-primary" data-on-click="applyFilters('sources', 'combined')" aria-label="{{ _('Apply filters') }}">
                         <i class="bi bi-search" aria-hidden="true"></i> {{ _('Apply Filters') }}
                     </button>
-                    <button class="btn-filter btn-filter-secondary" onclick="resetFilters('sources', 'combined')" aria-label="{{ _('Reset filters') }}">
+                    <button class="btn-filter btn-filter-secondary" data-on-click="resetFilters('sources', 'combined')" aria-label="{{ _('Reset filters') }}">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ _('Reset') }}
                     </button>
                 </div>
@@ -425,10 +425,10 @@
                     </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-filter btn-filter-primary" onclick="applyFilters('sides', 'combined')" aria-label="{{ _('Apply filters') }}">
+                    <button class="btn-filter btn-filter-primary" data-on-click="applyFilters('sides', 'combined')" aria-label="{{ _('Apply filters') }}">
                         <i class="bi bi-search" aria-hidden="true"></i> {{ _('Apply Filters') }}
                     </button>
-                    <button class="btn-filter btn-filter-secondary" onclick="resetFilters('sides', 'combined')" aria-label="{{ _('Reset filters') }}">
+                    <button class="btn-filter btn-filter-secondary" data-on-click="resetFilters('sides', 'combined')" aria-label="{{ _('Reset filters') }}">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ _('Reset') }}
                     </button>
                 </div>
@@ -470,10 +470,10 @@
                     </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-filter btn-filter-primary" onclick="applyFilters('words', 'grid')" aria-label="{{ _('Load words') }}">
+                    <button class="btn-filter btn-filter-primary" data-on-click="applyFilters('words', 'grid')" aria-label="{{ _('Load words') }}">
                         <i class="bi bi-search" aria-hidden="true"></i> {{ _('Load Words') }}
                     </button>
-                    <button class="btn-filter btn-filter-secondary" onclick="resetFilters('words', 'grid')" aria-label="{{ _('Reset filters') }}">
+                    <button class="btn-filter btn-filter-secondary" data-on-click="resetFilters('words', 'grid')" aria-label="{{ _('Reset filters') }}">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ _('Reset') }}
                     </button>
                 </div>
@@ -481,7 +481,7 @@
             <div class="results-section">
                 <div class="results-header">
                     <h3>{{ _('Words by Category') }}</h3>
-                    <button class="btn-filter btn-filter-secondary" onclick="toggleWordsView()" id="toggle-words-view" aria-label="{{ _('Toggle view mode') }}">
+                    <button class="btn-filter btn-filter-secondary" data-on-click="toggleWordsView()" id="toggle-words-view" aria-label="{{ _('Toggle view mode') }}">
                         <i class="bi bi-graph-up" aria-hidden="true"></i> <span id="view-toggle-text">{{ _('Chart View') }}</span>
                     </button>
                 </div>
@@ -529,10 +529,10 @@
                     </div>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-filter btn-filter-primary" onclick="applyFilters('similar', 'combined')" aria-label="{{ _('Apply filters') }}">
+                    <button class="btn-filter btn-filter-primary" data-on-click="applyFilters('similar', 'combined')" aria-label="{{ _('Apply filters') }}">
                         <i class="bi bi-search" aria-hidden="true"></i> {{ _('Load Similar Files') }}
                     </button>
-                    <button class="btn-filter btn-filter-secondary" onclick="resetFilters('similar', 'combined')" aria-label="{{ _('Reset filters') }}">
+                    <button class="btn-filter btn-filter-secondary" data-on-click="resetFilters('similar', 'combined')" aria-label="{{ _('Reset filters') }}">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ _('Reset') }}
                     </button>
                 </div>

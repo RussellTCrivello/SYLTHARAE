@@ -1128,7 +1128,7 @@ function renderExcelSheets(sheets, direction, lang) {
         const label = sheet.name || ('#' + (i + 1));
         tabs += `<button type="button" class="sheet-tab${i === 0 ? ' active' : ''}" role="tab"`
             + ` aria-selected="${i === 0}" data-sheet-index="${i}"`
-            + ` onclick="contentViewerNav.showSheet(this)">${escapeHtml(label)}</button>`;
+            + ` data-on-click="contentViewerNav.showSheet(this)">${escapeHtml(label)}</button>`;
         sections += renderSheetSection(sheet, i, true);
     });
     tabs += '</div>';
@@ -1636,12 +1636,12 @@ function renderSlideDeckNav(slides) {
         chips += `<button type="button" class="slide-chip${i === 0 ? ' slide-chip-active' : ''}"`
             + ` data-slide-index="${i}"`
             + (title ? ` title="${escapeAttrText(title)}"` : '')
-            + ` onclick="contentViewerNav.goToSlide(this, ${i})">${i + 1}</button>`;
+            + ` data-on-click="contentViewerNav.goToSlide(this, ${i})">${i + 1}</button>`;
     });
     return `<div class="slide-nav" role="navigation" aria-label="${escapeAttrText(formatterI18n.slidesNavLabel)}">`
-        + `<button type="button" class="slide-nav-btn" onclick="contentViewerNav.goToSlide(this, -1)" aria-label="${escapeAttrText(formatterI18n.previousSlideLabel)}">&#8249;</button>`
+        + `<button type="button" class="slide-nav-btn" data-on-click="contentViewerNav.goToSlide(this, -1)" aria-label="${escapeAttrText(formatterI18n.previousSlideLabel)}">&#8249;</button>`
         + `<span class="slide-nav-counter" data-slide-counter>1 / ${total}</span>`
-        + `<button type="button" class="slide-nav-btn" onclick="contentViewerNav.goToSlide(this, 1)" aria-label="${escapeAttrText(formatterI18n.nextSlideLabel)}">&#8250;</button>`
+        + `<button type="button" class="slide-nav-btn" data-on-click="contentViewerNav.goToSlide(this, 1)" aria-label="${escapeAttrText(formatterI18n.nextSlideLabel)}">&#8250;</button>`
         + `<div class="slide-chips">${chips}</div>`
         + `</div>`;
 }

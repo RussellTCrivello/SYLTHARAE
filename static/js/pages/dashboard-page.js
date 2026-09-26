@@ -163,7 +163,7 @@ function updateStorageView(view, clickedButton) {
     } else {
         // Find button with matching onclick
         document.querySelectorAll('.section-card .btn-control').forEach(btn => {
-            if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${view}'`)) {
+            if (btn.getAttribute('data-on-click') && btn.getAttribute('data-on-click').includes(`'${view}'`)) {
                 btn.classList.add('active');
             }
         });
@@ -739,7 +739,7 @@ function switchTab(tabName, event) {
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
     // Find and activate the button that matches this tab
     document.querySelectorAll('.tab-button').forEach(btn => {
-        const onclick = btn.getAttribute('onclick');
+        const onclick = btn.getAttribute('data-on-click');
         if (onclick && onclick.includes(`'${tabName}'`)) {
             btn.classList.add('active');
         }

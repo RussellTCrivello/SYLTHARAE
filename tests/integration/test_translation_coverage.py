@@ -360,7 +360,7 @@ def test_enhanced_search_page_renders_localized_dynamic_search_labels(admin_clie
     catalog = _catalog(lang)
     for key in ("No search history", "No saved searches", "Matching content:"):
         assert page_data[key] == catalog.get(key).string
-    assert 'onclick="window.fms.search.global' not in html
+    assert 'data-on-click="window.fms.search.global' not in html
 
 
 @pytest.mark.parametrize("lang", ("ar", "he", "fa"))
@@ -382,8 +382,8 @@ def test_email_words_page_renders_escaped_actions_and_localized_client_labels(ad
     catalog = _catalog(lang)
     assert page_data["translations"]["copied"] == catalog.get("Content copied to clipboard!").string
     assert page_data["translations"]["loadingFiles"] == catalog.get("Loading files...").string
-    assert "onclick=\"copyEmail(" not in html
-    assert "onclick=\"searchInFiles(" not in html
+    assert "data-on-click=\"copyEmail(" not in html
+    assert "data-on-click=\"searchInFiles(" not in html
 
 
 @pytest.mark.parametrize("lang", ("ar", "he", "fa"))

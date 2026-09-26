@@ -39,7 +39,7 @@
             <i class="bi bi-search"></i>
         </span>
         <input type="text" class="form-control" id="searchSaved"
-               placeholder="{{ _('Search saved searches...') }}" onkeyup="filterSavedSearches()"
+               placeholder="{{ _('Search saved searches...') }}" data-on-keyup="filterSavedSearches()"
                aria-label="{{ _('Filter saved searches by name') }}">
     </div>
 </div>
@@ -81,10 +81,10 @@
                 <a class="btn btn-primary" href="{{ search.run_url or ('/search/advanced?q=' ~ (search.query|urlencode)) }}" title="{{ _('Run this search on the Advanced Search page with all filters restored') }}">
                     <i class="bi bi-play-fill"></i> {{ _('Run') }}
                 </a>
-                <button class="btn btn-outline-secondary" onclick='renameSavedSearch({{ search.id }}, {{ search.name|tojson }})' title="{{ _('Rename') }}">
+                <button class="btn btn-outline-secondary" data-on-click='renameSavedSearch({{ search.id }}, {{ search.name|tojson }})' title="{{ _('Rename') }}">
                     <i class="bi bi-pencil"></i> {{ _('Rename') }}
                 </button>
-                <button class="btn btn-outline-danger" onclick="deleteSavedSearch({{ search.id }})" title="{{ _('Delete') }}">
+                <button class="btn btn-outline-danger" data-on-click="deleteSavedSearch({{ search.id }})" title="{{ _('Delete') }}">
                     <i class="bi bi-trash"></i> {{ _('Delete') }}
                 </button>
             </div>

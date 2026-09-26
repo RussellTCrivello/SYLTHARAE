@@ -80,7 +80,7 @@
                 <i class="bi bi-x-circle" aria-hidden="true"></i>
             </button>
             <span class="search-box-divider" aria-hidden="true"></span>
-            <button type="button" class="btn btn-primary btn-search-main" onclick="executeAdvancedSearch()">
+            <button type="button" class="btn btn-primary btn-search-main" data-on-click="executeAdvancedSearch()">
                 <i class="bi bi-search me-1" aria-hidden="true"></i>{{ _('Search') }}
             </button>
         </div>
@@ -141,7 +141,7 @@
             <!-- Saved searches: re-run any stored search with one click -->
             <div class="saved-search-container">
                 <button type="button" class="btn btn-saved-searches" id="savedSearchBtn"
-                        onclick="toggleSavedSearchMenu()"
+                        data-on-click="toggleSavedSearchMenu()"
                         title="{{ _('Saved searches') }}"
                         aria-haspopup="true" aria-expanded="false">
                     <i class="bi bi-bookmarks me-1" aria-hidden="true"></i>{{ _('Saved') }}
@@ -154,7 +154,7 @@
                     <div class="ssm-list" id="savedSearchMenuList"><!-- populated by JS --></div>
                 </div>
             </div>
-            <button type="button" class="btn btn-lucky" onclick="feelingLucky()" title="{{ _('I\'m Feeling Lucky') }}">
+            <button type="button" class="btn btn-lucky" data-on-click="feelingLucky()" title="{{ _('I\'m Feeling Lucky') }}">
                 <i class="bi bi-stars me-1" aria-hidden="true"></i>{{ _('Lucky') }}
             </button>
         </div>
@@ -187,7 +187,7 @@
     <div class="filters-chips-header">
         <i class="bi bi-funnel me-2" aria-hidden="true"></i>
         <span>{{ _('Active Filters') }}:</span>
-        <button type="button" class="btn-clear-all-filters" onclick="clearAllFilters()">
+        <button type="button" class="btn-clear-all-filters" data-on-click="clearAllFilters()">
             <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{{ _('Clear All') }}
         </button>
     </div>
@@ -200,9 +200,9 @@
 <!-- duplicated the Sources/Sides filters below.                   -->
 <!-- ============================================================ -->
 <div class="advanced-filters-panel">
-    <div class="filters-panel-header" onclick="toggleFiltersPanel()" role="button" tabindex="0"
+    <div class="filters-panel-header" data-on-click="toggleFiltersPanel()" role="button" tabindex="0"
          aria-expanded="false" aria-controls="filtersPanelContent"
-         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFiltersPanel();}">
+         data-on-keydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFiltersPanel();}">
         <div class="d-flex align-items-center">
             <i class="bi bi-sliders me-2" aria-hidden="true"></i>
             <span>{{ _('Advanced Filters') }}</span>
@@ -349,10 +349,10 @@
 
         <!-- Filter Actions -->
         <div class="filter-actions-bar">
-            <button type="button" class="btn btn-outline-primary" onclick="resetAllFilters()">
+            <button type="button" class="btn btn-outline-primary" data-on-click="resetAllFilters()">
                 <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>{{ _('Reset') }}
             </button>
-            <button type="button" class="btn btn-primary" onclick="executeAdvancedSearch()">
+            <button type="button" class="btn btn-primary" data-on-click="executeAdvancedSearch()">
                 <i class="bi bi-search me-1" aria-hidden="true"></i>{{ _('Apply Filters') }}
             </button>
         </div>
@@ -366,7 +366,7 @@
             <!-- Select-all control (FR-1.2): selects every result on the page -->
             <div class="form-check select-all-check">
                 <input class="form-check-input" type="checkbox" id="selectAllResults"
-                       onchange="toggleSelectAllResults(this.checked)" title="{{ _('Select all results on this page') }}">
+                       data-on-change="toggleSelectAllResults(this.checked)" title="{{ _('Select all results on this page') }}">
                 <label class="form-check-label" for="selectAllResults"><span class="visually-hidden">{{ _('Select all results on this page') }}</span></label>
             </div>
             <span id="resultsCount" class="results-count">0</span>
@@ -374,17 +374,17 @@
             <span class="results-time" id="searchTime"></span>
             <label class="form-check form-switch duplicate-filter" for="hideDuplicates">
                 <input class="form-check-input" type="checkbox" id="hideDuplicates"
-                       onchange="toggleDuplicateFilter(this.checked)">
+                       data-on-change="toggleDuplicateFilter(this.checked)">
                 <span class="form-check-label">{{ _('Hide exact duplicates') }}</span>
             </label>
         </div>
         <div class="results-actions">
             <button type="button" class="btn btn-sm btn-outline-primary" id="saveSearchBtn"
-                    onclick="saveCurrentSearch()"
+                    data-on-click="saveCurrentSearch()"
                     title="{{ _('Save this search so you can re-run it any time') }}">
                 <i class="bi bi-bookmark-plus me-1" aria-hidden="true"></i>{{ _('Save') }}
             </button>
-            <select class="form-select form-select-sm results-sort" id="sortBy" onchange="sortResults()" aria-label="{{ _('Sort') }}">
+            <select class="form-select form-select-sm results-sort" id="sortBy" data-on-change="sortResults()" aria-label="{{ _('Sort') }}">
 
                 <option value="relevance">{{ _('Sort: Relevance') }}</option>
                 <option value="date">{{ _('Date (Newest)') }}</option>
@@ -406,10 +406,10 @@
                 </select>
             </div>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="groupSimilarBtn"
-                    onclick="toggleSimilarityGrouping()" title="{{ _('Group similar files on this results page') }}">
+                    data-on-click="toggleSimilarityGrouping()" title="{{ _('Group similar files on this results page') }}">
                 <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{{ _('Group similar') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openSearchInNewWindow()"
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="openSearchInNewWindow()"
                     title="{{ _('Open this search workspace in a separate window') }}">
                 <i class="bi bi-window-plus me-1" aria-hidden="true"></i>{{ _('New window') }}
             </button>
@@ -419,35 +419,35 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><h6 class="dropdown-header">{{ _('Current results page') }}</h6></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportResults('csv', 'page'); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="exportResults('csv', 'page'); return false;">
                         <i class="bi bi-file-earmark-spreadsheet me-2" aria-hidden="true"></i>{{ _('CSV') }}
                     </a></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportResults('excel', 'page'); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="exportResults('excel', 'page'); return false;">
                         <i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i>{{ _('Excel (XLSX)') }}
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><h6 class="dropdown-header">{{ _('All matching results') }}</h6></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportResults('csv', 'filtered'); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="exportResults('csv', 'filtered'); return false;">
                         <i class="bi bi-file-earmark-spreadsheet me-2" aria-hidden="true"></i>{{ _('CSV') }}
                     </a></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportResults('excel', 'filtered'); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="exportResults('excel', 'filtered'); return false;">
                         <i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i>{{ _('Excel (XLSX)') }}
                     </a></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportResults('json', 'filtered'); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="exportResults('json', 'filtered'); return false;">
                         <i class="bi bi-file-earmark-code me-2" aria-hidden="true"></i>{{ _('JSON') }}
                     </a></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportMatchingFilenames('csv'); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="exportMatchingFilenames('csv'); return false;">
                         <i class="bi bi-filetype-csv me-2" aria-hidden="true"></i>{{ _('Matching filenames (CSV)') }}
                     </a></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportMatchingFilenames('excel'); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="exportMatchingFilenames('excel'); return false;">
                         <i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i>{{ _('Matching filenames (Excel)') }}
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportResults('csv', 'dataset'); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="exportResults('csv', 'dataset'); return false;">
                         <i class="bi bi-collection me-2" aria-hidden="true"></i>{{ _('Filtered corpus (CSV; ignores search terms)') }}
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#" onclick="printResults(); return false;">
+                    <li><a class="dropdown-item" href="#" data-on-click="printResults(); return false;">
                         <i class="bi bi-printer me-2" aria-hidden="true"></i>{{ _('Print Results') }}
                     </a></li>
                 </ul>
@@ -465,7 +465,7 @@
         <div class="acb-selection-info">
             <i class="bi bi-person-check-fill" aria-hidden="true"></i>
             <span><strong id="analystSelectedCount">0</strong> {{ _('selected') }}</span>
-            <button type="button" class="btn btn-link btn-sm p-0 ms-2" onclick="clearResultSelection()">
+            <button type="button" class="btn btn-link btn-sm p-0 ms-2" data-on-click="clearResultSelection()">
                 {{ _('Clear') }}
             </button>
         </div>
@@ -478,10 +478,10 @@
                 <input type="text" class="form-control" id="newAnalystCategoryInput"
                        placeholder="{{ _('…or new category name') }}" maxlength="255">
             </div>
-            <button type="button" class="btn btn-sm btn-analyst-assign" onclick="assignAnalystCategory()">
+            <button type="button" class="btn btn-sm btn-analyst-assign" data-on-click="assignAnalystCategory()">
                 <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>{{ _('Categorize') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="removeAnalystCategoriesFromSelection()"
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="removeAnalystCategoriesFromSelection()"
                     title="{{ _('Remove analyst categories from selected files (returns them to uncategorized scope)') }}">
                 <i class="bi bi-tag me-1" aria-hidden="true"></i>{{ _('Remove') }}
             </button>
@@ -495,43 +495,43 @@
         <div class="selected-document-count">
             <i class="bi bi-check2-square" aria-hidden="true"></i>
             <strong id="selectedDocumentCount">0</strong> {{ _('selected across this search') }}
-            <button type="button" class="btn btn-link btn-sm p-0 ms-2" onclick="clearResultSelection()">{{ _('Clear') }}</button>
+            <button type="button" class="btn btn-link btn-sm p-0 ms-2" data-on-click="clearResultSelection()">{{ _('Clear') }}</button>
         </div>
         <div class="selected-document-buttons">
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportSelectedFiles('text')"
+            <button type="button" class="btn btn-sm btn-outline-primary" data-on-click="exportSelectedFiles('text')"
                     title="{{ _('Download extracted text for selected documents as a ZIP') }}">
                 <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>{{ _('Text ZIP') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportSelectedFiles('originals')"
+            <button type="button" class="btn btn-sm btn-outline-primary" data-on-click="exportSelectedFiles('originals')"
                     title="{{ _('Download available original files for selected documents as a ZIP') }}">
                 <i class="bi bi-file-earmark-arrow-down me-1" aria-hidden="true"></i>{{ _('Originals ZIP') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSelectedNames('csv')">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportSelectedNames('csv')">
                 <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i>{{ _('Names CSV') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSelectedNames('excel')">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportSelectedNames('excel')">
                 <i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>{{ _('Names Excel') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportSelectedToFolder('text')"
+            <button type="button" class="btn btn-sm btn-outline-primary" data-on-click="exportSelectedToFolder('text')"
                     title="{{ _('Choose an existing folder or create a subfolder for extracted text') }}">
                 <i class="bi bi-folder-plus me-1" aria-hidden="true"></i>{{ _('Text to folder') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportSelectedToFolder('originals')"
+            <button type="button" class="btn btn-sm btn-outline-primary" data-on-click="exportSelectedToFolder('originals')"
                     title="{{ _('Choose an existing folder or create a subfolder for original files') }}">
                 <i class="bi bi-folder-symlink me-1" aria-hidden="true"></i>{{ _('Originals to folder') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSelectedFirstPages('txt')"
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportSelectedFirstPages('txt')"
                     title="{{ _('Read and combine the first-page text of selected documents into one TXT file') }}">
                 <i class="bi bi-filetype-txt me-1" aria-hidden="true"></i>{{ _('Read & export first pages (TXT)') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSelectedFirstPages('docx')"
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportSelectedFirstPages('docx')"
                     title="{{ _('Read and combine the first-page text of selected documents into one Word file') }}">
                 <i class="bi bi-filetype-docx me-1" aria-hidden="true"></i>{{ _('First pages (DOCX)') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSelectedContacts('csv')">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportSelectedContacts('csv')">
                 <i class="bi bi-envelope-at me-1" aria-hidden="true"></i>{{ _('Emails & links CSV') }}
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSelectedContacts('xlsx')">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportSelectedContacts('xlsx')">
                 <i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>{{ _('Emails & links XLSX') }}
             </button>
         </div>
@@ -551,7 +551,7 @@
                     <span class="review-pane-eyebrow">{{ _('Search & review') }}</span>
                     <h2 id="reviewPaneTitle">{{ _('Select a result to review') }}</h2>
                 </div>
-                <button type="button" class="review-pane-close" onclick="closeReviewPane()"
+                <button type="button" class="review-pane-close" data-on-click="closeReviewPane()"
                         aria-label="{{ _('Close document review') }}" title="{{ _('Close') }}">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
@@ -561,16 +561,16 @@
                     <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>{{ _('Open full record') }}
                 </a>
                 <a id="reviewDownloadOriginal" class="btn btn-sm btn-outline-secondary" href="#" download
-                   onclick="downloadReviewOriginal(event)" title="{{ _('Download the original document and choose its filename') }}">
+                   data-on-click="downloadReviewOriginal(event)" title="{{ _('Download the original document and choose its filename') }}">
                     <i class="bi bi-download me-1" aria-hidden="true"></i>{{ _('Download original') }}
                 </a>
                 <button type="button" id="reviewOpenNative" class="btn btn-sm btn-outline-secondary"
-                        onclick="openReviewInNativeApplication()" disabled
+                        data-on-click="openReviewInNativeApplication()" disabled
                         title="{{ _('Native application access requires the local SYLTHARAE companion') }}">
                     <i class="bi bi-app-indicator me-1" aria-hidden="true"></i>{{ _('Open in native app') }}
                 </button>
                 <button type="button" id="reviewOpenContainingFolder" class="btn btn-sm btn-outline-secondary"
-                        onclick="openReviewContainingFolder()" disabled
+                        data-on-click="openReviewContainingFolder()" disabled
                         title="{{ _('Opening a local folder requires the local SYLTHARAE companion') }}">
                     <i class="bi bi-folder-symlink me-1" aria-hidden="true"></i>{{ _('Open containing folder') }}
                 </button>
@@ -581,22 +581,22 @@
             </p>
             <div class="review-pane-tabs" role="tablist" aria-label="{{ _('Document view') }}">
                 <button type="button" id="reviewExtractedTab" class="review-pane-tab is-active"
-                        role="tab" aria-selected="true" onclick="showReviewExtracted()">
+                        role="tab" aria-selected="true" data-on-click="showReviewExtracted()">
                     {{ _('Extracted text') }}
                 </button>
                 <button type="button" id="reviewOriginalTab" class="review-pane-tab"
-                        role="tab" aria-selected="false" onclick="showReviewOriginal()">
+                        role="tab" aria-selected="false" data-on-click="showReviewOriginal()">
                     {{ _('Original preview') }}
                 </button>
             </div>
             <div id="reviewMatchNavigation" class="review-match-navigation" hidden>
                 <span id="reviewMatchCount" aria-live="polite"></span>
                 <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('Navigate keyword matches') }}">
-                    <button type="button" class="btn btn-outline-secondary" onclick="navigateReviewMatch(-1)"
+                    <button type="button" class="btn btn-outline-secondary" data-on-click="navigateReviewMatch(-1)"
                             aria-label="{{ _('Previous match') }}" title="{{ _('Previous match') }}">
                         <i class="bi bi-chevron-up" aria-hidden="true"></i>
                     </button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="navigateReviewMatch(1)"
+                    <button type="button" class="btn btn-outline-secondary" data-on-click="navigateReviewMatch(1)"
                             aria-label="{{ _('Next match') }}" title="{{ _('Next match') }}">
                         <i class="bi bi-chevron-down" aria-hidden="true"></i>
                     </button>
@@ -607,7 +607,7 @@
             </div>
             <footer class="review-pane-footer">
                 <span id="reviewPaneStatus" class="review-pane-status"></span>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyReviewSelection()">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="copyReviewSelection()">
                     <i class="bi bi-clipboard me-1" aria-hidden="true"></i>{{ _('Copy selected passage') }}
                 </button>
             </footer>

@@ -128,7 +128,7 @@ class TestTheComponentRendersTheContract:
         export = re.search(r"<button[^>]*id=\"bulkExportBtn\"[^>]*>", out, re.S).group(0)
         assert " disabled" in export
         assert 'aria-disabled="true"' in export
-        assert "onclick" not in export, "a bulk action ran before a scope was known"
+        assert "data-on-click" not in export, "a bulk action ran before a scope was known"
         assert 'aria-label="Export Selected: Select sources first"' in export
 
     def test_the_scope_is_a_live_region_carrying_the_words_the_runtime_needs(self, render):
@@ -202,7 +202,7 @@ class TestTheRuntimeStaysSmallAndInert:
         code = re.sub(r"/\*.*?\*/", "", source, flags=re.S)
         code = re.sub(r"^\s*//.*$", "", code, flags=re.M)
         for forbidden in ("fetch(", "XMLHttpRequest", "addEventListener",
-                          "localStorage", "sessionStorage", "/api/", "onclick="):
+                          "localStorage", "sessionStorage", "/api/", "onclick=", "data-on-"):
             assert forbidden not in code, (
                 f"the toolbar runtime reached for {forbidden!r}: the boundary "
                 "between presentation and business behaviour has moved")
@@ -305,7 +305,7 @@ class TestTheMigratedPagesRenderTheContract:
             assert " disabled" in markup, (
                 f"{url}: {button_id} was startable with nothing selected")
             assert "aria-disabled=\"true\"" in markup
-            assert "onclick" not in markup, f"{url}: {button_id} ran without a scope"
+            assert "data-on-click" not in markup, f"{url}: {button_id} ran without a scope"
             assert f"Select {noun} first" in markup, (
                 f"{url}: {button_id} does not say why it cannot be used")
 
@@ -321,7 +321,7 @@ class TestTheMigratedPagesRenderTheContract:
         if rows == "server":
             _seed(admin_client)
             html = admin_client.get(url).get_data(as_text=True)
-            changes = html.count('onchange="updateBulkButtons()"')
+            changes = html.count('data-on-change="updateBulkButtons()"')
             rendered = len(re.findall(rf'class="[^"]*{re.escape(checkbox)}', html))
             assert rendered > 0, f"{url} renders no rows to select"
             assert changes == rendered, (
@@ -344,13 +344,13 @@ class TestTheMigratedPagesRenderTheContract:
             else:
                 # A different dynamic list may use one handler in its row
                 # template; in that shape, assert the single binding is local.
-                handlers = source.count('onchange="updateBulkButtons()"')
+                handlers = source.count('data-on-change="updateBulkButtons()"')
                 assert handlers == 1, (
                     f"{module} renders {handlers} change bindings; a row template "
                     "needs exactly one")
                 lines = source.splitlines()
                 at = next(i for i, line in enumerate(lines)
-                          if 'onchange="updateBulkButtons()"' in line)
+                          if 'data-on-change="updateBulkButtons()"' in line)
                 window = "\n".join(lines[max(0, at - 8):at + 1])
                 assert checkbox in window, (
                     f"{module}: the handler is not on the row's checkbox - a change "
@@ -377,7 +377,7 @@ class TestTheMigratedPagesRenderTheContract:
                 ("copyEmailWordsButton", "copyToClipboard(event.currentTarget)")):
             button = re.search(rf'<button[^>]*id="{button_id}"[^>]*>', html, re.S)
             assert button, f"email_words lost its {button_id} control"
-            assert "onclick" not in button.group(0), (
+            assert "data-on-click" not in button.group(0), (
                 "page actions are bound by the module, not inline handlers")
             assert f"getElementById('{button_id}')?.addEventListener('click'" in module
             assert handler in module

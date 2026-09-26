@@ -143,13 +143,13 @@ export function renderGridView(items, section, showPagination = false) {
                          aria-label="${sectionLabel}: ${safeDisplayName}">
                         <div class="explorer-item-icon"><i class="bi bi-${getSectionIcon(section)}" aria-hidden="true"></i></div>
                         ${copyButtonHtml}
-                        <div class="explorer-item-name" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="name" onblur="saveItemField?.(this)" ondblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px; min-height: 1.2em;">
+                        <div class="explorer-item-name" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="name" data-on-blur="saveItemField?.(this)" data-on-dblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px; min-height: 1.2em;">
                             ${safeDisplayName}${groupIndicator}
                         </div>
-                        <div class="explorer-item-details" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="details" onblur="saveItemField?.(this)" ondblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px;">${escapeHtml(details)}</div>
+                        <div class="explorer-item-details" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="details" data-on-blur="saveItemField?.(this)" data-on-dblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px;">${escapeHtml(details)}</div>
                         ${item.is_group && item.similar_titles ? `
                             <div class="similar-titles-preview" style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
-                                <i class="bi bi-arrow-down-circle" style="cursor: pointer;" onclick="toggleSimilarTitles?.(this, ${item.group_id})"></i>
+                                <i class="bi bi-arrow-down-circle" style="cursor: pointer;" data-on-click="toggleSimilarTitles?.(this, ${item.group_id})"></i>
                                 <span>${item.group_count} ${item.is_identical ? 'identical' : 'similar'} titles</span>
                                 <div class="similar-titles-list" id="similar-titles-${item.group_id}" style="display: none; margin-top: 0.5rem; padding-left: 1rem;">
                                     ${item.similar_titles.map(st => `
@@ -233,13 +233,13 @@ export function renderListView(items, section, showPagination = false) {
                     <div class="file-row-info" style="flex: 1;">
                         <div class="file-row-icon"><i class="bi bi-${getSectionIcon(section)}" aria-hidden="true"></i></div>
                         <div class="file-row-details" style="flex: 1;">
-                            <div class="file-row-name" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="name" onblur="saveItemField?.(this)" ondblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px; min-height: 1.2em;">
+                            <div class="file-row-name" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="name" data-on-blur="saveItemField?.(this)" data-on-dblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px; min-height: 1.2em;">
                                 ${escapeHtml(displayName)}${groupIndicator}
                             </div>
-                            <div class="file-row-meta" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="details" onblur="saveItemField?.(this)" ondblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px;">${escapeHtml(details)}</div>
+                            <div class="file-row-meta" contenteditable="false" data-editable="true" data-item-id="${itemId}" data-section="${section}" data-field="details" data-on-blur="saveItemField?.(this)" data-on-dblclick="enableItemEdit?.(this)" style="padding: 2px 4px; border-radius: 2px;">${escapeHtml(details)}</div>
                             ${item.is_group && item.similar_titles ? `
                                 <div class="similar-titles-preview" style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
-                                    <i class="bi bi-arrow-down-circle" style="cursor: pointer;" onclick="toggleSimilarTitles?.(this, ${item.group_id})"></i>
+                                    <i class="bi bi-arrow-down-circle" style="cursor: pointer;" data-on-click="toggleSimilarTitles?.(this, ${item.group_id})"></i>
                                     <span>${item.group_count} ${item.is_identical ? 'identical' : 'similar'} titles</span>
                                     <div class="similar-titles-list" id="similar-titles-${item.group_id}" style="display: none; margin-top: 0.5rem; padding-left: 1rem;">
                                         ${item.similar_titles.map(st => `
@@ -370,18 +370,18 @@ function getAddButtonHtml(section) {
 
     if (section === 'keywords') {
         return `<div style="display: flex; gap: 0.5rem;">
-                <button class="add-item-btn" onclick="openAddItemModal?.('addKeywordModal', 'keywords')" title="${translations.addKeyword || 'Add Keyword'}" aria-label="${translations.addKeyword || 'Add Keyword'}">
+                <button class="add-item-btn" data-on-click="openAddItemModal?.('addKeywordModal', 'keywords')" title="${translations.addKeyword || 'Add Keyword'}" aria-label="${translations.addKeyword || 'Add Keyword'}">
                     <i class="bi bi-key"></i>
                     <span>${translations.addKeyword || 'Add Keyword'}</span>
                 </button>
-                <button class="add-item-btn" onclick="updateKeywordAssociations?.()" id="updateKeywordsBtn" title="${translations.updateKeywordAssociations || 'Update keyword associations for all files'}" aria-label="${translations.updateKeywordAssociations || 'Update keyword associations for all files'}" style="background-color: #10b981;">
+                <button class="add-item-btn" data-on-click="updateKeywordAssociations?.()" id="updateKeywordsBtn" title="${translations.updateKeywordAssociations || 'Update keyword associations for all files'}" aria-label="${translations.updateKeywordAssociations || 'Update keyword associations for all files'}" style="background-color: #10b981;">
                     <i class="bi bi-arrow-repeat"></i>
                     <span>${translations.updateKeywords || 'Update Keywords'}</span>
                 </button>
             </div>`;
     }
 
-    return `<button class="add-item-btn" onclick="openAddItemModal?.('${modalId}', '${section}')" title="${buttonLabels[section] || 'Add'}" aria-label="${buttonLabels[section] || 'Add'}">
+    return `<button class="add-item-btn" data-on-click="openAddItemModal?.('${modalId}', '${section}')" title="${buttonLabels[section] || 'Add'}" aria-label="${buttonLabels[section] || 'Add'}">
             <i class="bi ${icons[section] || 'bi-plus-circle'}"></i>
             <span>${buttonLabels[section] || 'Add'}</span>
         </button>`;

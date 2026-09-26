@@ -365,7 +365,10 @@ def add_security_headers(response):
     response.headers.setdefault(
         'Content-Security-Policy',
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "  # legacy inline scripts; see docs/SECURITY.md
+        # RES-CSP-01: no inline script. Handlers are data-on-<event> attributes run
+        # by static/js/modules/core/declarative-events.js; page data travels in
+        # <script type="application/json"> blocks, which are not executed.
+        "script-src 'self'; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: blob:; "
         "font-src 'self'; "

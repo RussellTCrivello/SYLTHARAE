@@ -18,16 +18,16 @@
             <p class="text-muted mb-0">{{ _('System alerts and notifications') }}</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-primary" onclick="scanForNotifications()" id="scanBtn">
+            <button class="btn btn-primary" data-on-click="scanForNotifications()" id="scanBtn">
                 <i class="bi bi-search me-2"></i>
                 <span id="scanBtnText">{{ _('Scan for Duplicates & Future Dates') }}</span>
                 <span class="spinner-border spinner-border-sm ms-2 d-none" id="scanSpinner" role="status"></span>
             </button>
-            <button class="btn btn-outline-primary" onclick="markAllAsRead()">
+            <button class="btn btn-outline-primary" data-on-click="markAllAsRead()">
                 <i class="bi bi-check-all me-2"></i>
                 {{ _('Mark All Read') }}
             </button>
-            <button class="btn btn-outline-secondary" onclick="refreshAll()">
+            <button class="btn btn-outline-secondary" data-on-click="refreshAll()">
                 <i class="bi bi-arrow-clockwise me-2"></i>
                 {{ _('Refresh') }}
             </button>
@@ -78,15 +78,15 @@
 
     <!-- Tab Navigation -->
     <div class="notifications-tabs">
-        <button class="tab-btn active" data-tab="all" onclick="switchTab('all')">
+        <button class="tab-btn active" data-tab="all" data-on-click="switchTab('all')">
             <i class="bi bi-bell-fill"></i>
             <span>{{ _('All Notifications') }}</span>
         </button>
-        <button class="tab-btn" data-tab="duplicates" onclick="switchTab('duplicates')">
+        <button class="tab-btn" data-tab="duplicates" data-on-click="switchTab('duplicates')">
             <i class="bi bi-files"></i>
             <span>{{ _('Duplicate Files') }}</span>
         </button>
-        <button class="tab-btn" data-tab="future" onclick="switchTab('future')">
+        <button class="tab-btn" data-tab="future" data-on-click="switchTab('future')">
             <i class="bi bi-calendar-event"></i>
             <span>{{ _('Future Files') }}</span>
         </button>
@@ -112,11 +112,11 @@
             <div class="search-input-wrapper">
                 <i class="bi bi-search"></i>
                 <input type="text" id="searchAll" class="search-input" placeholder="{{ _('Search notifications...') }}" 
-                       onkeyup="handleSearch(event, 'all')">
+                       data-on-keyup="handleSearch(event, 'all')">
             </div>
             <div class="filter-group">
                 <label for="sortByAll" class="filter-label">{{ _('Sort by') }}:</label>
-                <select id="sortByAll" class="form-select" onchange="setSort('all', this.value)">
+                <select id="sortByAll" class="form-select" data-on-change="setSort('all', this.value)">
                     <option value="created_at_desc">{{ _('Newest First') }}</option>
                     <option value="created_at_asc">{{ _('Oldest First') }}</option>
                     <option value="priority_desc">{{ _('Priority: High to Low') }}</option>
@@ -127,7 +127,7 @@
             </div>
             <div class="filter-group">
                 <label for="sourceFilterAll" class="filter-label">{{ _('Source') }}:</label>
-                <select id="sourceFilterAll" class="form-select" onchange="setFilter('all', 'source', this.value)">
+                <select id="sourceFilterAll" class="form-select" data-on-change="setFilter('all', 'source', this.value)">
                     <option value="">{{ _('All') }}</option>
                     {% for sid, sname in sources.items() %}
                     <option value="{{ sid }}">{{ sname }}</option>
@@ -136,7 +136,7 @@
             </div>
             <div class="filter-group">
                 <label for="sideFilterAll" class="filter-label">{{ _('Destination') }}:</label>
-                <select id="sideFilterAll" class="form-select" onchange="setFilter('all', 'side', this.value)">
+                <select id="sideFilterAll" class="form-select" data-on-change="setFilter('all', 'side', this.value)">
                     <option value="">{{ _('All') }}</option>
                     {% for sid, sname in sides.items() %}
                     <option value="{{ sid }}">{{ sname }}</option>
@@ -147,17 +147,17 @@
 
         <!-- Sub-tabs -->
         <div class="sub-tabs">
-            <button class="sub-tab-btn active" data-sub-tab="all" onclick="switchSubTab('all', 'all')">
+            <button class="sub-tab-btn active" data-sub-tab="all" data-on-click="switchSubTab('all', 'all')">
                 <i class="bi bi-inbox-fill"></i>
                 <span>{{ _('All Notifications') }}</span>
                 <span class="sub-tab-count" id="allCountAll">0</span>
             </button>
-            <button class="sub-tab-btn" data-sub-tab="unread" onclick="switchSubTab('all', 'unread')">
+            <button class="sub-tab-btn" data-sub-tab="unread" data-on-click="switchSubTab('all', 'unread')">
                 <i class="bi bi-envelope-fill"></i>
                 <span>{{ _('Unread') }}</span>
                 <span class="sub-tab-count" id="unreadCountAll">0</span>
             </button>
-            <button class="sub-tab-btn" data-sub-tab="read" onclick="switchSubTab('all', 'read')">
+            <button class="sub-tab-btn" data-sub-tab="read" data-on-click="switchSubTab('all', 'read')">
                 <i class="bi bi-envelope-open-fill"></i>
                 <span>{{ _('Read') }}</span>
                 <span class="sub-tab-count" id="readCountAll">0</span>
@@ -196,11 +196,11 @@
             <div class="search-input-wrapper">
                 <i class="bi bi-search"></i>
                 <input type="text" id="searchDuplicates" class="search-input" placeholder="{{ _('Search duplicate files...') }}" 
-                       onkeyup="handleSearch(event, 'duplicates')">
+                       data-on-keyup="handleSearch(event, 'duplicates')">
             </div>
             <div class="filter-group">
                 <label for="sortByDuplicates" class="filter-label">{{ _('Sort by') }}:</label>
-                <select id="sortByDuplicates" class="form-select" onchange="setSort('duplicates', this.value)">
+                <select id="sortByDuplicates" class="form-select" data-on-change="setSort('duplicates', this.value)">
                     <option value="created_at_desc">{{ _('Newest First') }}</option>
                     <option value="created_at_asc">{{ _('Oldest First') }}</option>
                     <option value="priority_desc">{{ _('Priority: High to Low') }}</option>
@@ -211,7 +211,7 @@
             </div>
             <div class="filter-group">
                 <label for="sourceFilterDuplicates" class="filter-label">{{ _('Source') }}:</label>
-                <select id="sourceFilterDuplicates" class="form-select" onchange="setFilter('duplicates', 'source', this.value)">
+                <select id="sourceFilterDuplicates" class="form-select" data-on-change="setFilter('duplicates', 'source', this.value)">
                     <option value="">{{ _('All') }}</option>
                     {% for sid, sname in sources.items() %}
                     <option value="{{ sid }}">{{ sname }}</option>
@@ -220,7 +220,7 @@
             </div>
             <div class="filter-group">
                 <label for="sideFilterDuplicates" class="filter-label">{{ _('Destination') }}:</label>
-                <select id="sideFilterDuplicates" class="form-select" onchange="setFilter('duplicates', 'side', this.value)">
+                <select id="sideFilterDuplicates" class="form-select" data-on-change="setFilter('duplicates', 'side', this.value)">
                     <option value="">{{ _('All') }}</option>
                     {% for sid, sname in sides.items() %}
                     <option value="{{ sid }}">{{ sname }}</option>
@@ -231,17 +231,17 @@
 
         <!-- Sub-tabs -->
         <div class="sub-tabs">
-            <button class="sub-tab-btn active" data-sub-tab="all" onclick="switchSubTab('duplicates', 'all')">
+            <button class="sub-tab-btn active" data-sub-tab="all" data-on-click="switchSubTab('duplicates', 'all')">
                 <i class="bi bi-inbox-fill"></i>
                 <span>{{ _('All Notifications') }}</span>
                 <span class="sub-tab-count" id="allCountDuplicates">0</span>
             </button>
-            <button class="sub-tab-btn" data-sub-tab="unread" onclick="switchSubTab('duplicates', 'unread')">
+            <button class="sub-tab-btn" data-sub-tab="unread" data-on-click="switchSubTab('duplicates', 'unread')">
                 <i class="bi bi-envelope-fill"></i>
                 <span>{{ _('Unread') }}</span>
                 <span class="sub-tab-count" id="unreadCountDuplicates">0</span>
             </button>
-            <button class="sub-tab-btn" data-sub-tab="read" onclick="switchSubTab('duplicates', 'read')">
+            <button class="sub-tab-btn" data-sub-tab="read" data-on-click="switchSubTab('duplicates', 'read')">
                 <i class="bi bi-envelope-open-fill"></i>
                 <span>{{ _('Read') }}</span>
                 <span class="sub-tab-count" id="readCountDuplicates">0</span>
@@ -280,11 +280,11 @@
             <div class="search-input-wrapper">
                 <i class="bi bi-search"></i>
                 <input type="text" id="searchFuture" class="search-input" placeholder="{{ _('Search future files...') }}" 
-                       onkeyup="handleSearch(event, 'future')">
+                       data-on-keyup="handleSearch(event, 'future')">
             </div>
             <div class="filter-group">
                 <label for="sortByFuture" class="filter-label">{{ _('Sort by') }}:</label>
-                <select id="sortByFuture" class="form-select" onchange="setSort('future', this.value)">
+                <select id="sortByFuture" class="form-select" data-on-change="setSort('future', this.value)">
                     <option value="created_at_desc">{{ _('Newest First') }}</option>
                     <option value="created_at_asc">{{ _('Oldest First') }}</option>
                     <option value="priority_desc">{{ _('Priority: High to Low') }}</option>
@@ -295,7 +295,7 @@
             </div>
             <div class="filter-group">
                 <label for="sourceFilterFuture" class="filter-label">{{ _('Source') }}:</label>
-                <select id="sourceFilterFuture" class="form-select" onchange="setFilter('future', 'source', this.value)">
+                <select id="sourceFilterFuture" class="form-select" data-on-change="setFilter('future', 'source', this.value)">
                     <option value="">{{ _('All') }}</option>
                     {% for sid, sname in sources.items() %}
                     <option value="{{ sid }}">{{ sname }}</option>
@@ -304,7 +304,7 @@
             </div>
             <div class="filter-group">
                 <label for="sideFilterFuture" class="filter-label">{{ _('Destination') }}:</label>
-                <select id="sideFilterFuture" class="form-select" onchange="setFilter('future', 'side', this.value)">
+                <select id="sideFilterFuture" class="form-select" data-on-change="setFilter('future', 'side', this.value)">
                     <option value="">{{ _('All') }}</option>
                     {% for sid, sname in sides.items() %}
                     <option value="{{ sid }}">{{ sname }}</option>
@@ -315,17 +315,17 @@
 
         <!-- Sub-tabs -->
         <div class="sub-tabs">
-            <button class="sub-tab-btn active" data-sub-tab="all" onclick="switchSubTab('future', 'all')">
+            <button class="sub-tab-btn active" data-sub-tab="all" data-on-click="switchSubTab('future', 'all')">
                 <i class="bi bi-inbox-fill"></i>
                 <span>{{ _('All Notifications') }}</span>
                 <span class="sub-tab-count" id="allCountFuture">0</span>
             </button>
-            <button class="sub-tab-btn" data-sub-tab="unread" onclick="switchSubTab('future', 'unread')">
+            <button class="sub-tab-btn" data-sub-tab="unread" data-on-click="switchSubTab('future', 'unread')">
                 <i class="bi bi-envelope-fill"></i>
                 <span>{{ _('Unread') }}</span>
                 <span class="sub-tab-count" id="unreadCountFuture">0</span>
             </button>
-            <button class="sub-tab-btn" data-sub-tab="read" onclick="switchSubTab('future', 'read')">
+            <button class="sub-tab-btn" data-sub-tab="read" data-on-click="switchSubTab('future', 'read')">
                 <i class="bi bi-envelope-open-fill"></i>
                 <span>{{ _('Read') }}</span>
                 <span class="sub-tab-count" id="readCountFuture">0</span>
@@ -346,11 +346,11 @@
 </div>
 
 <!-- Message Detail Modal -->
-<div class="message-detail-modal" id="messageDetailModal" onclick="closeMessageDetail(event)">
-    <div class="message-detail-content" onclick="event.stopPropagation()">
+<div class="message-detail-modal" id="messageDetailModal" data-on-click="closeMessageDetail(event)">
+    <div class="message-detail-content" data-on-click="event.stopPropagation()">
         <div class="message-detail-header">
             <h3 id="detailTitle">{{ _('Notification Details') }}</h3>
-            <button class="message-detail-close" onclick="closeMessageDetail()">
+            <button class="message-detail-close" data-on-click="closeMessageDetail()">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
@@ -358,7 +358,7 @@
             <!-- Content will be loaded here -->
         </div>
         <div class="message-detail-actions">
-            <button class="btn btn-outline-primary" id="detailMarkReadBtn" onclick="markAsReadFromDetail()">
+            <button class="btn btn-outline-primary" id="detailMarkReadBtn" data-on-click="markAsReadFromDetail()">
                 <i class="bi bi-check me-2"></i>
                 <span id="markReadText">{{ _('Mark as Read') }}</span>
             </button>

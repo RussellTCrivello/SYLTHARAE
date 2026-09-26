@@ -53,7 +53,7 @@ This is a measurement of the product as it is, not a target.
 | Templates with a filter submit inside a bar | 1 |
 | Templates with document viewer controls | 1 |
 | Files still calling the browser confirm() | 18 |
-| Files deciding button state by hand | 10 |
+| Files deciding button state by hand | 12 |
 | Gaps: actions the model cannot describe | 12 |
 
 ### Registered actions
@@ -116,7 +116,7 @@ A control a reader can press without the operation existing is exactly the defec
 | declared, not built; a page still prepares it | 1 |
 | presented by declaration; no control names it | 28 |
 
-The scan found 8 bindings in 4 files: 0 in markup attributes, 3 named as values (a macro argument or a page script), and 5 in the files the screens declare as their binding sources. The attribute count is the one that falls as this layer lands: an action drawn from prepared data needs no id typed into a template.
+The scan found 10 bindings in 5 files: 0 in markup attributes, 5 named as values (a macro argument or a page script), and 5 in the files the screens declare as their binding sources. The attribute count is the one that falls as this layer lands: an action drawn from prepared data needs no id typed into a template.
 
 Every one of those bindings is then resolved against the application's own URL map (`core.experience.bindings.check`), so a control pointing at a route nobody serves is a test failure rather than a 404 a reader finds. That check is what retired the Reprocess link.
 
@@ -132,7 +132,7 @@ Each row is a scan from `SURFACES`, so the count and the files come from one sta
 | Filter form submitted from a bar | 1 | `templates/email_words/email_words.html` |
 | Document viewer controls | 1 | `templates/file/full_content.html` |
 | Browser confirm() dialog | 18 | `static/js/pages/analysis-batch-page.js`, `static/js/pages/analyst-categorization-page.js`, `static/js/pages/categories-list-page.js`, `static/js/pages/category-words-page.js`, `static/js/pages/keyword-detail-page.js`, `static/js/pages/keywords-list-page.js`, `static/js/pages/notifications-page.js`, `static/js/pages/saved-searches-page.js`, `static/js/pages/search-advanced-page.js`, `static/js/pages/search-enhanced-page.js`, `static/js/pages/side-detail-page.js`, `static/js/pages/sides-list-page.js`, `static/js/pages/source-detail-page.js`, `static/js/pages/sources-list-page.js`, `static/js/pages/translation-management-page.js`, `static/js/pages/users-page.js`, `static/js/pages/word-detail-page.js`, `static/js/pages/words-list-page.js` |
-| Button state decided by the page | 10 | `static/js/pages/analysis-batch-page.js`, `static/js/pages/categories-list-page.js`, `static/js/pages/email-words-page.js`, `static/js/pages/file-types-page.js`, `static/js/pages/ingestion-studio-page.js`, `static/js/pages/keywords-list-page.js`, `static/js/pages/notifications-page.js`, `static/js/pages/search-advanced-page.js`, `static/js/pages/search-enhanced-page.js`, `static/js/pages/users-page.js` |
+| Button state decided by the page | 12 | `static/js/pages/analysis-batch-page.js`, `static/js/pages/categories-list-page.js`, `static/js/pages/email-words-page.js`, `static/js/pages/file-types-page.js`, `static/js/pages/ingestion-studio-page.js`, `static/js/pages/install-wizard-page.js`, `static/js/pages/keywords-list-page.js`, `static/js/pages/login-page.js`, `static/js/pages/notifications-page.js`, `static/js/pages/search-advanced-page.js`, `static/js/pages/search-enhanced-page.js`, `static/js/pages/users-page.js` |
 
 The component library counts 5 standardised and 2 hand-written action bars. Those are the same bars seen from two directions: the 5 templates rendering the shared toolbar are listed above, and the hand-written ones split into the file list's action bar and the full-content viewer's bar - which this audit counts as a viewer control, because that is what it is, not as an action bar to migrate.
 

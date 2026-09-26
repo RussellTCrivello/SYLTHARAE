@@ -189,13 +189,13 @@
             {{ _('Pending Analysis') }}: {{ unanalyzed|length }} {{ _('files') }}
         </h5>
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm" onclick="selectAll()">
+            <button class="btn btn-outline-primary btn-sm" data-on-click="selectAll()">
                 <i class="bi bi-check-all"></i> {{ _('Select All') }}
             </button>
-            <button class="btn btn-outline-secondary btn-sm" onclick="deselectAll()">
+            <button class="btn btn-outline-secondary btn-sm" data-on-click="deselectAll()">
                 <i class="bi bi-x"></i> {{ _('Deselect All') }}
             </button>
-            <button class="btn btn-outline-success btn-sm" onclick="selectHighPriority()">
+            <button class="btn btn-outline-success btn-sm" data-on-click="selectHighPriority()">
                 <i class="bi bi-star"></i> {{ _('High Priority') }}
             </button>
         </div>
@@ -284,7 +284,7 @@
         <table class="table table-hover table-sm mb-0">
             <thead class="sticky-top bg-white">
                 <tr>
-                    <th width="40"><input type="checkbox" id="selectAllCheckbox" onchange="toggleAll(this)"></th>
+                    <th width="40"><input type="checkbox" id="selectAllCheckbox" data-on-change="toggleAll(this)"></th>
                     <th width="50">#</th>
                     <th>{{ _('File Name') }}</th>
                     <th>{{ _('Type') }}</th>
@@ -323,7 +323,7 @@
                 <span id="selectedCount">0</span> {{ _('files selected') }}
             </small>
         </div>
-        <button class="btn btn-primary" onclick="startAnalysis()" id="analyzeBtn">
+        <button class="btn btn-primary" data-on-click="startAnalysis()" id="analyzeBtn">
             <i class="bi bi-play-circle me-2"></i>
             {{ _('Start Analysis') }}
         </button>
@@ -387,11 +387,11 @@
     </div>
     
     <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-warning" onclick="pauseAnalysis()" id="pauseBtn">
+        <button class="btn btn-sm btn-warning" data-on-click="pauseAnalysis()" id="pauseBtn">
             <i class="bi bi-pause-fill me-1"></i>
             {{ _('Pause') }}
         </button>
-        <button class="btn btn-sm btn-danger" onclick="stopAnalysis()" id="stopBtn">
+        <button class="btn btn-sm btn-danger" data-on-click="stopAnalysis()" id="stopBtn">
             <i class="bi bi-stop-fill me-1"></i>
             {{ _('Stop') }}
         </button>
@@ -412,7 +412,7 @@
                         <div class="template-card">
                             <h6 class="mb-2">{{ _('Quick Analysis') }}</h6>
                             <small class="text-muted d-block mb-2">{{ _('Fast processing, standard settings') }}</small>
-                            <button class="btn btn-sm btn-primary w-100" onclick="applyTemplate('quick')">
+                            <button class="btn btn-sm btn-primary w-100" data-on-click="applyTemplate('quick')">
                                 <i class="bi bi-play me-1"></i>
                                 {{ _('Apply') }}
                             </button>
@@ -422,7 +422,7 @@
                         <div class="template-card">
                             <h6 class="mb-2">{{ _('Deep Analysis') }}</h6>
                             <small class="text-muted d-block mb-2">{{ _('Thorough processing, all features') }}</small>
-                            <button class="btn btn-sm btn-primary w-100" onclick="applyTemplate('deep')">
+                            <button class="btn btn-sm btn-primary w-100" data-on-click="applyTemplate('deep')">
                                 <i class="bi bi-play me-1"></i>
                                 {{ _('Apply') }}
                             </button>
@@ -432,7 +432,7 @@
                         <div class="template-card">
                             <h6 class="mb-2">{{ _('Off-Hours') }}</h6>
                             <small class="text-muted d-block mb-2">{{ _('Scheduled for 11 PM') }}</small>
-                            <button class="btn btn-sm btn-primary w-100" onclick="applyTemplate('offhours')">
+                            <button class="btn btn-sm btn-primary w-100" data-on-click="applyTemplate('offhours')">
                                 <i class="bi bi-play me-1"></i>
                                 {{ _('Apply') }}
                             </button>
@@ -556,7 +556,7 @@
                     <td>
                         <button class="btn btn-sm btn-primary retry-file-btn" 
                                 data-file-id="{{ file[0] }}"
-                                onclick="retryFile({{ file[0] }}, this)">
+                                data-on-click="retryFile({{ file[0] }}, this)">
                             <i class="bi bi-arrow-clockwise me-1"></i>
                             {{ _('Retry') }}
                         </button>

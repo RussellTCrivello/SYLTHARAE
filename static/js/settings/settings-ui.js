@@ -719,7 +719,7 @@ class SettingsUI {
                 // it reports success nothing has been saved, so the UI must
                 // show the testing state first and must never claim success
                 // early.
-                const submitBtn = document.querySelector('[onclick*="saveDatabaseSettings"]');
+                const submitBtn = document.querySelector('[data-on-click*="saveDatabaseSettings"]');
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.dataset.originalLabel = submitBtn.innerHTML;

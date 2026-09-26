@@ -59,11 +59,11 @@ document with what it writes.
 | Actions no described screen presents | 1 |
 | Declared components | 20 |
 | Components an element cannot resolve to | 0 |
-| Classes rendered in the product | 282 |
+| Classes rendered in the product | 278 |
 | Classes the project owns | 81 |
-| Classes that are third-party | 201 |
+| Classes that are third-party | 197 |
 | Classes belonging to nobody | 0 |
-| Bindings the scan found | 8 |
+| Bindings the scan found | 10 |
 
 ### How far each action's binding reaches
 

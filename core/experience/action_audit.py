@@ -71,7 +71,7 @@ SURFACES: Tuple[Tuple[str, str, str, Tuple[Path, ...]], ...] = (
     ("hand_written_bar", "Hand-written action bar",
      r'class="[^"]*action-bar', (TEMPLATES,)),
     ("record_row_actions", "Record actions drawn by hand",
-     r'btn-action-icon|onclick="editWord\(|onclick="deleteWord\(',
+     r'btn-action-icon|data-on-click="editWord\(|data-on-click="deleteWord\(',
      (TEMPLATES,)),
     ("filter_submit", "Filter form submitted from a bar",
      r"submit=True", (TEMPLATES,)),
