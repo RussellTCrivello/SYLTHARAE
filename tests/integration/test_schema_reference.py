@@ -22,9 +22,40 @@ from tools.docs.generate_schema import TARGET, generate  # noqa: E402
 pytestmark = pytest.mark.integration
 
 
-def test_schema_reference_matches_the_migrated_database(pg_db):
-    connection = psycopg2.connect(host=pg_db["host"], port=pg_db["port"], user=pg_db["user"],
-                                  password=pg_db["password"], dbname=pg_db["database"])
+@pytest.fixture
+def fresh_schema_db(pg_db):
+    """A database migrated from scratch, used only by this test.
+
+    The shared session database is not suitable: other tests legitimately
+    reshape it (``test_migration_0007`` downgrades and re-upgrades m0007, which
+    moves the re-added columns to the end of ``paths``). The reference must
+    describe what a *new* installation gets, independent of test order.
+    """
+    from database.bootstrap import bootstrap_database
+
+    cfg = dict(pg_db, database=f"{pg_db['database']}_schema_ref")
+    admin = dict(host=cfg["host"], port=cfg["port"], user=cfg["user"],
+                 password=cfg["password"], dbname="postgres")
+
+    def _drop():
+        conn = psycopg2.connect(**admin)
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute(f'DROP DATABASE IF EXISTS "{cfg["database"]}"')
+        conn.close()
+
+    _drop()
+    bootstrap_database(cfg)
+    try:
+        yield cfg
+    finally:
+        _drop()
+
+
+def test_schema_reference_matches_the_migrated_database(fresh_schema_db):
+    db = fresh_schema_db
+    connection = psycopg2.connect(host=db["host"], port=db["port"], user=db["user"],
+                                  password=db["password"], dbname=db["database"])
     try:
         generated = generate(connection)
     finally:
