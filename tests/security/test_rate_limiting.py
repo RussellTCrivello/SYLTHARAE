@@ -119,3 +119,51 @@ def test_the_file_details_modal_call_is_not_throttled_per_file(admin_client, pg_
         status = admin_client.get(f"/api/file/{file_id}/details").status_code
         assert status in (200, 404), status
         assert status != 429
+
+
+@pytest.mark.usefixtures("rate_limited_app")
+def test_a_rate_limited_sign_in_says_so_in_json(client):
+    """The sign-in form parses the answer as JSON. The limiter's default 429 is
+    an HTML page, so the form failed to parse it and told a locked-out user
+    "An internal error occurred" (found by the browser smoke). The 429 is JSON
+    for JSON callers and names the condition."""
+    responses = [client.post("/auth/login", json={"username": "nobody", "password": "wrong"})
+                 for _ in range(12)]
+    limited = [r for r in responses if r.status_code == 429]
+    assert limited, [r.status_code for r in responses]
+    body = limited[-1].get_json()
+    assert body == {"error": "Too many attempts. Wait a minute and try again.",
+                    "code": "rate_limited"}
+
+
+def test_a_rate_limited_page_request_gets_a_plain_answer(app):
+    """A browser navigation is not an API caller: a plain answer, not JSON."""
+    from werkzeug.exceptions import TooManyRequests
+
+    with app.test_request_context("/sources", headers={"Accept": "text/html"}):
+        response = app.make_response(app.handle_user_exception(TooManyRequests()))
+    assert response.status_code == 429
+    assert response.content_type.startswith("text/plain")
+    assert "Too many attempts" in response.get_data(as_text=True)
+
+    with app.test_request_context("/api/search", headers={"Accept": "text/html"}):
+        response = app.make_response(app.handle_user_exception(TooManyRequests()))
+    assert response.get_json()["code"] == "rate_limited", "API paths always answer JSON"
+
+
+def test_the_sign_in_page_explains_a_rate_limit_it_cannot_parse():
+    """Behind a proxy the 429 may still be HTML; the form keeps the status."""
+    from pathlib import Path
+    script = (Path(__file__).resolve().parents[2] / "static/js/pages/login-page.js").read_text(encoding="utf-8")
+    assert "r.json().catch(" in script
+    assert "res.status === 429 ? tr('Too many attempts. Wait a minute and try again.')" in script
+
+
+def test_the_rate_limit_message_is_translated():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[2] / "translations"
+    for language in ("ar", "fa", "he"):
+        catalog = (root / language / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
+        entry = catalog.split('msgid "Too many attempts. Wait a minute and try again."', 1)
+        assert len(entry) == 2, language
+        assert not entry[1].lstrip().startswith('msgstr ""'), f"{language}: untranslated"

@@ -12643,3 +12643,7 @@ msgstr ""
 #: core/interfaces/registry.py
 msgid "Review and manage localized strings across every screen."
 msgstr ""
+
+#: apps/web/app.py static/js/pages/login-page.js
+msgid "Too many attempts. Wait a minute and try again."
+msgstr ""

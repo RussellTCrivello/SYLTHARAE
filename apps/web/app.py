@@ -510,6 +510,27 @@ def handle_csrf_error(e):
     # For non-JSON requests, Flask-WTF will handle it automatically
     return render_template('500.html', error=str(e)), 400
 
+RATE_LIMITED_MESSAGE = 'Too many attempts. Wait a minute and try again.'
+
+
+@app.errorhandler(429)
+def handle_rate_limited(error):
+    """A rate limit was exceeded (flask-limiter).
+
+    JSON for JSON and API callers: the default response is an HTML page, and
+    the sign-in form - like every fetch() in the app - parsed it as JSON,
+    failed, and told a locked-out user "An internal error occurred". Other
+    callers get a plain page. Limiter headers, if enabled, are added later by
+    flask-limiter's own after-request hook.
+    """
+    from flask_babel import gettext
+    message = gettext(RATE_LIMITED_MESSAGE)
+    if (request.is_json or request.path.startswith('/api/')
+            or request.accept_mimetypes.best == 'application/json'):
+        return jsonify({'error': message, 'code': 'rate_limited'}), 429
+    return message, 429, {'Content-Type': 'text/plain; charset=utf-8'}
+
+
 @app.route('/api/csrf-token', methods=['GET'])
 def get_csrf_token():
     """Get CSRF token for AJAX requests"""

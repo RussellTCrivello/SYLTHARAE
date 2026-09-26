@@ -74,7 +74,11 @@
                 username: document.getElementById('username').value,
                 password: document.getElementById('password').value
             })
-        }).then(function (r) { return r.json().then(function (j) { return {ok: r.ok, status: r.status, body: j}; }); });
+        }).then(function (r) {
+            // A proxy or limiter page is not JSON; keep the status either way.
+            return r.json().catch(function () { return {}; })
+                .then(function (j) { return {ok: r.ok, status: r.status, body: j || {}}; });
+        });
     }
 
     form.addEventListener('submit', async function (e) {
@@ -91,7 +95,8 @@
                 res = await postLogin();
             }
             if (res.ok) { window.location.href = res.body.redirect || '/'; return; }
-            showError(tr(res.body.error) || tr('Sign-in failed'));
+            showError(tr(res.body.error)
+                || (res.status === 429 ? tr('Too many attempts. Wait a minute and try again.') : tr('Sign-in failed')));
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> ' + tr('Sign in');
         } catch (err) {

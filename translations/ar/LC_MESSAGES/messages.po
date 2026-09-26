@@ -10300,3 +10300,6 @@ msgstr "مطابقة الكلمات الكاملة فقط"
 #: core/interfaces/registry.py
 msgid "Review and manage localized strings across every screen."
 msgstr "مراجعة وإدارة النصوص الموطّنة في جميع الشاشات."
+
+msgid "Too many attempts. Wait a minute and try again."
+msgstr "محاولات كثيرة جدًا. انتظر دقيقة ثم حاول مرة أخرى."

@@ -10434,3 +10434,6 @@ msgstr "تنها تطبیق واژه‌های کامل"
 #: core/interfaces/registry.py
 msgid "Review and manage localized strings across every screen."
 msgstr "بازبینی و مدیریت متن‌های بومی‌سازی‌شده در همهٔ صفحه‌ها."
+
+msgid "Too many attempts. Wait a minute and try again."
+msgstr "تلاش‌های بیش از حد. یک دقیقه صبر کنید و دوباره تلاش کنید."
