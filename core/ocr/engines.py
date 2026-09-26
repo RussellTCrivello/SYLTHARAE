@@ -313,6 +313,9 @@ class BaseOcrEngine(ABC):
     #: through its text-direction classifier.
     handles_orientation: bool = False
 
+    #: Why ``available()`` returned False, for diagnostics; None otherwise.
+    unavailable_reason: Optional[str] = None
+
     @abstractmethod
     def available(self) -> bool:
         """Return True if this engine can actually run on this host."""
@@ -421,12 +424,14 @@ class TesseractEngine(BaseOcrEngine):
             self._checked = True
             mod = self._module()
             if mod is None:
+                self.unavailable_reason = "the pytesseract package is not installed"
                 return False
             try:
                 self._version = str(mod.get_tesseract_version())
                 self._available = True
-            except Exception:
+            except Exception as exc:
                 self._available = False
+                self.unavailable_reason = f"tesseract binary not usable: {type(exc).__name__}: {exc}"
                 logger.debug("tesseract binary not usable", exc_info=True)
             return self._available
 
@@ -472,11 +477,14 @@ class TesseractEngine(BaseOcrEngine):
             return self._read(mod, image, lang)
 
         # 1. The upright reading, with every requested language loaded. Most
-        # pages end here: confident, so no orientation or size search.
+        # pages end here: confident, so no orientation or size search, only
+        # the check against the page read upside down.
         best = self._read_at_legible_size(mod, image, lang)
         if best.error:
             return best
-        if not _is_confident(best):
+        if _is_confident(best):
+            best = self._against_inverted(mod, image, lang, best, {(1, 0)})
+        else:
             best = self._search(mod, image, lang, best)
 
         # 2. Script. With several languages loaded at once tesseract lets each
@@ -511,7 +519,8 @@ class TesseractEngine(BaseOcrEngine):
         size: an enlargement is kept only when it reads better (on an already
         blurred scan it can read worse). Readings: three more orientations;
         for small glyphs, four at x2 and the best orientation at each larger
-        factor, stopping at the first confident reading.
+        factor, stopping at the first confident reading, which is then checked
+        against its upside-down counterpart (:meth:`_against_inverted`).
         """
         glyph = _glyph_size(image)
         factors = (self._upscale_factors(image, glyph)
@@ -524,18 +533,40 @@ class TesseractEngine(BaseOcrEngine):
             return upright
 
         best = upright
+        seen = {(1, 0)}
         plan = [(1, angle) for angle in self.ORIENTATIONS]
         if factors:
             plan += [(factors[0], angle) for angle in (0,) + self.ORIENTATIONS]
         for factor, angle in plan:
+            if (factor, angle) in seen:
+                continue
+            seen.add((factor, angle))
             best = self._consider(mod, image, lang, best, factor, angle)
             if _is_confident(best):
-                return best
+                return self._against_inverted(mod, image, lang, best, seen)
         for factor in factors[1:]:
+            seen.add((factor, best.rotation))
             best = self._consider(mod, image, lang, best, factor, best.rotation)
             if _is_confident(best):
-                return best
+                return self._against_inverted(mod, image, lang, best, seen)
         return best
+
+    def _against_inverted(self, mod, image, lang, best, seen):
+        """Compare a confident reading with the same page turned 180 degrees.
+
+        Confidence cannot tell a line from itself upside down: measured on a
+        sans-serif "OCR SELF CHECK 2026", the inverted page read
+        "9606 MOSHO 3135 YOO" at 0.82-0.85 (O, S, H, X, Z, 0 are symmetric;
+        6 and 9 swap) against 0.96 upright, while PIL's default font reads
+        correctly at only 0.86. No threshold separates the two, so the
+        counterpart is read (unless already read) and the higher score kept.
+        """
+        factor = max(1, int(round(best.scale or 1.0)))
+        angle = (best.rotation + 180) % 360
+        if (factor, angle) in seen:
+            return best
+        seen.add((factor, angle))
+        return self._consider(mod, image, lang, best, factor, angle)
 
     def _consider(self, mod, image, lang, best, factor, angle):
         """Read ``image`` enlarged ``factor`` times and turned ``angle``; return
@@ -778,8 +809,9 @@ class RapidOcrEngine(BaseOcrEngine):
                 from rapidocr_onnxruntime import RapidOCR
 
                 self._engine = RapidOCR()
-            except Exception:
+            except Exception as exc:
                 self._engine = None
+                self.unavailable_reason = f"rapidocr_onnxruntime not usable: {type(exc).__name__}: {exc}"
                 logger.debug("rapidocr not importable", exc_info=True)
         return self._engine
 

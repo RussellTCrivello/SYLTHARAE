@@ -116,6 +116,7 @@ Fast Image Reader - Comprehensive OCR Text Extraction
   - `read_file(self, file_info: Dict[str, Any]) -> Optional[Dict[str, Any]]` - Read image file and extract OCR text content
   - `read_image_file_fast(self, filepath, languages = None)` - Extract OCR text content from image file.
   - `read_svg_file(self, filepath)` - Read an SVG (XML vector) file.
+- `installed_ocr_languages(engine, requested, label, record)` - The requested OCR languages ``engine`` can read; the rest are recorded.
 
 ### `reader_file/readers/read_office.py`
 

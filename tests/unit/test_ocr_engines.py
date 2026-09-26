@@ -646,8 +646,59 @@ class TestSearchCost:
         Image = pytest.importorskip("PIL.Image")
         stub = _ScriptedTesseract(lambda lang, size: [("ORDINARY", 96, 30), ("PRINTED", 95, 30)])
         tesseract_with_stub(stub).recognize(Image.new("RGB", (400, 200), "white"), ["heb", "eng", "ara"])
-        # Combined model once, then each language once: no orientation search.
-        assert [c[1] for c in _strings(stub)] == ["heb+eng+ara", "heb", "eng", "ara"]
+        # Combined model upright and upside down, then each language once:
+        # no orientation or size search.
+        assert [c[1] for c in _strings(stub)] == ["heb+eng+ara", "heb+eng+ara", "heb", "eng", "ara"]
+
+
+class _UpsideDownAware(_ScriptedTesseract):
+    """Reads the page by where its dark marker pixel is: top-left means
+    upright, bottom-right means upside down (as after rotate(180))."""
+
+    def __init__(self, upright, inverted):
+        super().__init__(tables=None)
+        self.upright, self.inverted = upright, inverted
+
+    def _words(self, image):
+        w, h = image.size
+        return self.upright if image.convert("L").getpixel((1, 1)) < 128 else (
+            self.inverted if image.convert("L").getpixel((w - 2, h - 2)) < 128 else [("5", 60, 9)])
+
+    def image_to_string(self, image, lang=None, config=None):
+        self.calls.append(("string", lang, config))
+        return " ".join(word for word, _c, _h in self._words(image))
+
+    def image_to_data(self, image, lang=None, config=None, output_type=None):
+        self.tables = lambda _lang, _size, words=self._words(image): words
+        return super().image_to_data(image, lang, config, output_type)
+
+
+class TestUpsideDown:
+    """Measured with tesseract 5.5: "OCR SELF CHECK 2026" upside down read as
+    "9606 MOSHO 3135 YOO" at 0.82-0.85, above the 0.75 confidence bar, and
+    was accepted before v2.2.0 (the self-check found it)."""
+
+    CORRECT = [("OCR", 96, 30), ("SELF", 96, 30), ("CHECK", 96, 30), ("2026", 95, 30)]
+    INVERTED = [("9606", 85, 30), ("MOSHO", 84, 30), ("3135", 83, 30), ("YOO", 82, 30)]
+
+    @staticmethod
+    def _page(upside_down):
+        Image = pytest.importorskip("PIL.Image")
+        page = Image.new("RGB", (400, 200), "white")
+        page.putpixel((1, 1), (0, 0, 0))
+        return page.rotate(180) if upside_down else page
+
+    def test_an_upside_down_page_is_read_the_right_way_up(self):
+        stub = _UpsideDownAware(upright=self.CORRECT, inverted=self.INVERTED)
+        result = tesseract_with_stub(stub).recognize(self._page(upside_down=True), ["eng"])
+        assert result.text == "OCR SELF CHECK 2026"
+        assert result.rotation == 180
+
+    def test_an_upright_page_stays_upright(self):
+        stub = _UpsideDownAware(upright=self.CORRECT, inverted=self.INVERTED)
+        result = tesseract_with_stub(stub).recognize(self._page(upside_down=False), ["eng"])
+        assert result.text == "OCR SELF CHECK 2026"
+        assert result.rotation == 0
 
 
 class TestScriptSelection:

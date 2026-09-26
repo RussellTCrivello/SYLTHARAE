@@ -858,7 +858,7 @@ Pluggable OCR engine layer (PHASE 2A).
 - **class `OcrBlock`** - One recognised text region.
 - **class `OcrResult`** - Engine-agnostic OCR outcome with provenance.
   - `succeeded(self) -> bool` *(property)*
-  - `mean_confidence(self) -> Optional[float]` *(property)* - Mean confidence over blocks that reported one, else ``None``.
+  - `mean_confidence(self) -> Optional[float]` *(property)* - Mean confidence (0.0-1.0) over blocks that reported one.
   - `block_count(self) -> int` *(property)*
   - `to_content_fields(self) -> dict` - Flatten into the keys the storage layer consumes.
 - **class `BaseOcrEngine`**(ABC) - Interface every OCR backend must satisfy.
@@ -880,7 +880,7 @@ Pluggable OCR engine layer (PHASE 2A).
 - `ocr_engine_name() -> str` - Name of the selected engine, or ``'none'``.
 - `reset_engine_cache() -> None` - Clear the cached selection. Intended for tests.
 - `recognize_best(engine: BaseOcrEngine, preprocessed: Any, original: Optional[Any] = None, languages: Optional[Sequence[str]] = None, threshold: float = LOW_CO...` - Recognise, retrying on the un-preprocessed image when confidence is low.
-- `recognize_image(image: Any, languages: Optional[Iterable[str]] = None) -> OcrResult` - Recognise text in a PIL image using the selected engine, auto-trying rotations (0, 90, 180, 270) if needed.
+- `recognize_image(image: Any, languages: Optional[Iterable[str]] = None) -> OcrResult` - Recognise text in a PIL image with the selected engine, in any orientation.
 
 ### `core/path_safety.py`
 
