@@ -53,7 +53,15 @@ auth_bp = Blueprint("auth", __name__)
 
 
 def _client_ip() -> str:
-    return (request.headers.get("X-Forwarded-For", request.remote_addr or "") or "").split(",")[0].strip()
+    """The client address for the audit log.
+
+    ``request.remote_addr`` is the only trustworthy source: ProxyFix rewrites
+    it from X-Forwarded-For when (and only when) TRUSTED_PROXY_COUNT declares
+    a proxy. Reading the header here instead let any client write an address
+    of its choosing into the audit log (found by
+    tests/security/test_proxy_deployment.py).
+    """
+    return request.remote_addr or ""
 
 
 @auth_bp.route("/auth/login", methods=["GET"])
