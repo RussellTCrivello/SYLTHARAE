@@ -484,11 +484,13 @@ def verify_installation(
 # ────────────────────────────────────────────────────────────────────
 # Full installation orchestrator (used by both web and CLI)
 # ────────────────────────────────────────────────────────────────────
-def run_installation(config: Dict[str, str]) -> Dict[str, Any]:
+def run_installation(config: Dict[str, str], client_ip: str = "") -> Dict[str, Any]:
     """Execute the complete installation sequence.
 
     *config* is a flat dict of environment-style keys (DB_HOST, DB_PASSWORD,
-    APP_ADMIN_USERNAME, etc.).
+    APP_ADMIN_USERNAME, etc.). *client_ip* is the address the setup wizard
+    was used from, recorded with the administrator's creation; the command-line
+    installer has none.
 
     Returns ``{"ok": bool, "steps": [...], "error": str | None}``.
 
@@ -503,7 +505,6 @@ def run_installation(config: Dict[str, str]) -> Dict[str, Any]:
     database configuration persistence.
     """
     steps: List[Dict[str, Any]] = []
-    client_ip = ""
 
     # A: Write .env
     try:

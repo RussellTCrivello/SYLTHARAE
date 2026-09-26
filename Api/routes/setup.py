@@ -303,7 +303,8 @@ def run_installation():
             "FILE_PROCESSING_TIMEOUT": str(file_processing_timeout),
         }
 
-        result = _run(config)
+        # remote_addr is already proxy-corrected (TRUSTED_PROXY_COUNT).
+        result = _run(config, client_ip=request.remote_addr or "")
         result["redirect"] = url_for("index")
         status = 200 if result.get("ok") else 500
         return jsonify(result), status
