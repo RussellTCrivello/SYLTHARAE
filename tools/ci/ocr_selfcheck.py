@@ -62,7 +62,7 @@ REMEDIATION = {
         "or the rapidocr_onnxruntime Python package."
     ),
     "invocation_failed": (
-        "The engine is installed but failed when run: check the error below, "
+        "The engine is installed but failed when run: check the error on the sample line, "
         "the tesseract binary on PATH (or TESSERACT_CMD), and its tessdata directory."
     ),
     "no_text": (
