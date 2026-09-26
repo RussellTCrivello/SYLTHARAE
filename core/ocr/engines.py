@@ -282,7 +282,13 @@ class TesseractEngine(BaseOcrEngine):
             data = mod.image_to_data(
                 image, lang=lang, config=config, output_type=mod.Output.DICT
             )
-        except Exception:
+        except Exception as exc:
+            # The text is still returned, but without blocks there is no
+            # confidence to record, so say why rather than store None silently.
+            logger.warning(
+                "tesseract image_to_data failed; no word confidences: %s: %s",
+                type(exc).__name__, exc,
+            )
             return []
 
         blocks: List[OcrBlock] = []

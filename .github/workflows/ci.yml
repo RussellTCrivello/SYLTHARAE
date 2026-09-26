@@ -64,6 +64,9 @@ jobs:
           nginx -v
           python -c "import pgserver, cv2, pymupdf, waitress; print('ok')"
 
+      - name: OCR engine self-check (records the tesseract the tests run against)
+        run: python tools/ci/ocr_selfcheck.py
+
       - name: Test suites (unit, integration, security, e2e, front end, docs)
         run: python -m pytest tests -p no:cacheprovider -q -rfEs --junitxml=pytest-report.xml
 
