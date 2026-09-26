@@ -7,7 +7,8 @@ Endpoints:
     GET  /auth/me            current identity (anonymous-safe)
     GET  /auth/first-admin   first-run admin creation (only when no users exist)
     POST /auth/first-admin   create the initial administrator
-    POST /auth/change-password  change own password (authenticated)
+    POST /auth/change-password  change own password (authenticated; needs the
+                                current password - RES-AUTH-02)
 
 Admin account management:
     GET    /api/auth/users            list users (admin)
@@ -24,6 +25,7 @@ import logging
 
 from flask import (
     Blueprint,
+    g,
     jsonify,
     redirect,
     render_template,
@@ -39,7 +41,9 @@ from core.security import (
     current_user,
     is_authenticated,
 )
-from core.security.service import AccountDisabled, AccountLocked, AuthError, InvalidCredentials
+from core.security.service import (
+    AccountDisabled, AccountLocked, AuthError, InvalidCredentials, InvalidCurrentPassword,
+)
 from core.errors import client_error
 from core.security.rate_limit import limiter
 
@@ -118,21 +122,43 @@ def me():
 
 
 @auth_bp.route("/auth/change-password", methods=["POST"])
+@limiter.limit("10 per minute")
 def change_password():
+    """Change the signed-in user's password; the current password is required.
+
+    A wrong current password counts towards the sign-in lockout; when it
+    locks the account, every session - including this one - is ended. On
+    success the account's other sessions are revoked and this one continues.
+    """
     if not is_authenticated():
         return jsonify({"error": "Authentication required"}), 401
     data = request.get_json(silent=True) or request.form or {}
+    current_password = data.get("current_password") or ""
     new_password = data.get("new_password") or ""
+    user = current_user()
+    if not current_password:
+        return jsonify({"error": "Enter your current password",
+                        "code": "current_password_required"}), 400
+    auth = get_auth_service()
+    record = g.get("session_record")
     try:
-        get_auth_service().change_own_password(current_user().id, new_password)
+        auth.change_own_password(user.id, current_password, new_password,
+                                 keep_session_id=getattr(record, "session_id", None))
+    except AccountLocked as exc:
+        auth.audit("password.change_locked", user_id=user.id, username=user.username,
+                   ip_address=_client_ip())
+        destroy_session()
+        return jsonify({"error": str(exc), "code": exc.code}), 429
+    except InvalidCurrentPassword as exc:
+        auth.audit("password.change_failed", user_id=user.id, username=user.username,
+                   ip_address=_client_ip())
+        return jsonify({"error": str(exc), "code": exc.code}), 400
     except AuthError as exc:
         return jsonify({"error": str(exc), "code": exc.code}), 400
     except Exception as exc:
         return client_error(exc, subsystem="auth")
-    get_auth_service().audit(
-        "password.change", user_id=current_user().id, username=current_user().username,
-        ip_address=_client_ip(),
-    )
+    auth.audit("password.change", user_id=user.id, username=user.username,
+               ip_address=_client_ip())
     return jsonify({"success": True})
 
 

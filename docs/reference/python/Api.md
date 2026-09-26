@@ -206,7 +206,7 @@ Authentication routes (SEC-01).
 - `login()` <sub>auth_bp.route('/auth/login', methods=['POST'])</sub>
 - `logout()` <sub>auth_bp.route('/auth/logout', methods=['POST'])</sub>
 - `me()` <sub>auth_bp.route('/auth/me', methods=['GET'])</sub>
-- `change_password()` <sub>auth_bp.route('/auth/change-password', methods=['POST'])</sub>
+- `change_password()` <sub>auth_bp.route('/auth/change-password', methods=['POST'])</sub> - Change the signed-in user's password; the current password is required.
 - `first_admin_page()` <sub>auth_bp.route('/auth/first-admin', methods=['GET'])</sub>
 - `first_admin_create()` <sub>auth_bp.route('/auth/first-admin', methods=['POST'])</sub> - Create the initial administrator. Only functional while zero users exist.
 - `api_list_users()` <sub>auth_bp.route('/api/auth/users', methods=['GET'])</sub>

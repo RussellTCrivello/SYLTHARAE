@@ -10309,3 +10309,12 @@ msgstr "الشيفرة المصدرية"
 
 msgid "SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code."
 msgstr "SYLTHARAE برنامج حر مرخّص بموجب GNU AGPL-3.0 أو أحدث. احصل على شيفرته المصدرية."
+
+msgid "Current Password"
+msgstr "كلمة المرور الحالية"
+
+msgid "Enter your current password."
+msgstr "أدخل كلمة المرور الحالية."
+
+msgid "The new password must be different from the current one."
+msgstr "يجب أن تختلف كلمة المرور الجديدة عن الحالية."

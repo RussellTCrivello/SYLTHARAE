@@ -10,6 +10,7 @@
 
 ### Security
 - **No inline script: the CSP is `script-src 'self'`** (RES-CSP-01). `'unsafe-inline'` is gone, so injected markup can no longer run script. The 599 inline handler attributes are now `data-on-<event>` attributes with the same expressions, run by `static/js/modules/core/declarative-events.js`, a restricted interpreter that never uses `eval`. The 17 inline `<script>` blocks are now static files that read server values from `application/json` blocks. The 403/404/500 pages no longer use `javascript:` links. See [docs/SECURITY.md](docs/SECURITY.md).
+- **Changing your password requires the current password** (RES-AUTH-02). A signed-in session was enough before, so anyone at an unattended browser or holding a stolen session could take the account over. Wrong guesses count towards the sign-in lockout, and a lockout ends every session of the account. The endpoint is rate limited like sign-in, and a successful change signs out the account's other sessions. API clients must now send `current_password` along with `new_password`.
 - A rate-limited sign-in now says "Too many attempts. Wait a minute and try again." instead of "An internal error occurred". The limiter's 429 page is replaced by JSON for JSON and API callers.
 
 ### Fixes

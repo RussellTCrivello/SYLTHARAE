@@ -10147,3 +10147,12 @@ msgstr "קוד מקור"
 
 msgid "SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code."
 msgstr "SYLTHARAE היא תוכנה חופשית ברישיון GNU AGPL-3.0 ואילך. קבלו את קוד המקור שלה."
+
+msgid "Current Password"
+msgstr "סיסמה נוכחית"
+
+msgid "Enter your current password."
+msgstr "הזינו את הסיסמה הנוכחית."
+
+msgid "The new password must be different from the current one."
+msgstr "הסיסמה החדשה חייבת להיות שונה מהנוכחית."

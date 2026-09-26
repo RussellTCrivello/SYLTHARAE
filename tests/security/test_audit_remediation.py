@@ -175,7 +175,9 @@ class TestTemporaryPasswordIsForcedToChange:
 
     def test_changing_the_password_opens_the_account(self, app):
         client = self._client(app, "opened")
-        resp = client.post("/auth/change-password", json={"new_password": "a-brand-new-password-456"})
+        resp = client.post("/auth/change-password", json={
+            "current_password": "temporary-password-123",
+            "new_password": "a-brand-new-password-456"})
         assert resp.status_code == 200, resp.get_data(as_text=True)
         assert client.get("/api/dashboard/stats").status_code != 403
         assert client.get("/search").status_code == 200

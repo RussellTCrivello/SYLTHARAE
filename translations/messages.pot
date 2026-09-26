@@ -12653,3 +12653,12 @@ msgstr ""
 
 msgid "SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code."
 msgstr ""
+
+msgid "Current Password"
+msgstr ""
+
+msgid "Enter your current password."
+msgstr ""
+
+msgid "The new password must be different from the current one."
+msgstr ""

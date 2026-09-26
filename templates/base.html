@@ -434,6 +434,12 @@
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
+                            <label class="form-label" for="currentPasswordInput">{{ _('Current Password') }}</label>
+                            <input type="password" class="form-control" id="currentPasswordInput" required autocomplete="current-password"
+                                   data-required-message="{{ _('Enter your current password.') }}"
+                                   data-unchanged-message="{{ _('The new password must be different from the current one.') }}">
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label" for="newPasswordInput">{{ _('New Password') }}</label>
                             <input type="password" class="form-control" id="newPasswordInput" required minlength="{{ password_min_length|default(12) }}" autocomplete="new-password"
                                    data-minimum-message="{{ _('New password must be at least %(min)s characters.', min=password_min_length|default(12)) }}">

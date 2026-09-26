@@ -34,9 +34,23 @@ and a compromised administrator account.
 * **Cookies** are `HttpOnly`, `SameSite=Lax`, and `Secure` when
   `FLASK_ENV=production` - which means production must be served over HTTPS
   ([INSTALL.md Step 10](INSTALL.md#step-10---production-hardening)).
-* **Lockout**: `SECURITY_MAX_FAILED_LOGINS` (5) failures lock the account for
-  `SECURITY_LOCKOUT_MINUTES` (15). The login endpoint is limited to 10
-  requests per minute per client.
+* **Lockout**: `SECURITY_MAX_FAILED_LOGINS` (5) wrong passwords lock the
+  account for `SECURITY_LOCKOUT_MINUTES` (15). Both sign-in and password
+  changes count. The sign-in and change-password endpoints are each limited
+  to 10 requests per minute per client, and answer `429` JSON
+  (`code: rate_limited`) when the limit is hit.
+* **Changing your own password** (`POST /auth/change-password`) requires the
+  current password, so an unattended browser or a stolen session cannot take
+  the account over (RES-AUTH-02, fixed in 2.2.0):
+  * A wrong current password counts towards the lockout. If it locks the
+    account, every session of that account ends, including the one that
+    tried.
+  * A successful change signs out the account's other sessions and keeps the
+    current one.
+  * The new password must differ from the current one and meet
+    `PASSWORD_MIN_LENGTH`.
+  * `password.change`, `password.change_failed` and `password.change_locked`
+    are written to the audit log.
 * **Temporary passwords** (the generated first-run password, accounts created
   or reset by an administrator, recovery passwords) set
   `must_change_password`. Until it is changed the account can reach only the

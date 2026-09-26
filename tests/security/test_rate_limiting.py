@@ -167,3 +167,20 @@ def test_the_rate_limit_message_is_translated():
         entry = catalog.split('msgid "Too many attempts. Wait a minute and try again."', 1)
         assert len(entry) == 2, language
         assert not entry[1].lstrip().startswith('msgstr ""'), f"{language}: untranslated"
+
+
+@pytest.mark.usefixtures("rate_limited_app")
+def test_change_password_guessing_is_rate_limited(app):
+    """RES-AUTH-02: the current-password check must not be a guessing oracle."""
+    import uuid
+    from core.security.service import get_auth_service
+
+    username = f"ratelimit_{uuid.uuid4().hex[:8]}"
+    get_auth_service().create_user(username, "rate-limit-password-123", role="viewer")
+    c = app.test_client()
+    assert c.post("/auth/login", json={"username": username,
+                                       "password": "rate-limit-password-123"}).status_code == 200
+    codes = [c.post("/auth/change-password", json={
+        "current_password": f"guess-{i}", "new_password": "another-password-456"}).status_code
+        for i in range(12)]
+    assert 429 in codes, codes

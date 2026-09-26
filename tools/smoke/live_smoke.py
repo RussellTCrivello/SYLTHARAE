@@ -174,6 +174,10 @@ def main(phase):
     r = a.get("/api/search", params={"query": "zephyrine"})
     check(f"[{phase}] analyst gated until password change", r.status_code == 403, r.status_code)
     r = a.post("/auth/change-password", json={"new_password": "Analyst-Real-Pass2!"})
+    check(f"[{phase}] password change without the current password refused",
+          r.status_code == 400, f"{r.status_code} {r.text[:120]}")
+    r = a.post("/auth/change-password", json={"current_password": "Analyst-Temp-Pass1!",
+                                              "new_password": "Analyst-Real-Pass2!"})
     check(f"[{phase}] analyst changes password", r.status_code == 200, r.text[:150])
     a.refresh_csrf()
     r = a.get("/api/search", params={"query": "zephyrine"})

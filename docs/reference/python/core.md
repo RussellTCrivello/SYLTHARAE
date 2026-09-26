@@ -986,6 +986,8 @@ User/account service backed by PostgreSQL (SEC-01, SEC-02).
   - `__init__(self, message: str, code: str = 'auth_error')`
 - **class `InvalidCredentials`**(AuthError) - _undocumented_
   - `__init__(self)`
+- **class `InvalidCurrentPassword`**(AuthError) - _undocumented_
+  - `__init__(self)`
 - **class `AccountLocked`**(AuthError) - _undocumented_
   - `__init__(self, remaining_minutes: int)`
 - **class `AccountDisabled`**(AuthError) - _undocumented_
@@ -1002,8 +1004,7 @@ User/account service backed by PostgreSQL (SEC-01, SEC-02).
   - `get_user_by_id(self, user_id: int) -> Optional[User]`
   - `create_user(self, username: str, password: str, role: str = ROLE_ANALYST, must_change_password: bool = False) -> User` - Create a user account. Password is hashed before storage.
   - `set_password(self, user_id: int, new_password: str, require_change: bool = False) -> None` - Admin/initiated password reset. Revokes all sessions for the user.
-  - `change_password(self, user_id: int, current_password: str, new_password: str) -> None`
-  - `change_own_password(self, user_id: int, new_password: str) -> None` - User changing their own password (already authenticated).
+  - `change_own_password(self, user_id: int, current_password: str, new_password: str, keep_session_id: Optional[str] = None) -> None` - A signed-in user changing their own password (RES-AUTH-02).
   - `set_role(self, user_id: int, role: str) -> None`
   - `set_active(self, user_id: int, is_active: bool) -> None`
   - `delete_user(self, user_id: int) -> None` - Permanently remove a user account.
