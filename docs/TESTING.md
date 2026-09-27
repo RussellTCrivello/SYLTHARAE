@@ -150,15 +150,29 @@ token is missing or invalid" - cannot be produced through a correct nginx, so
 it is covered by `tests/security/test_proxy_deployment.py` and by step 2 of
 the deployment verification in [OPERATIONS.md](OPERATIONS.md).
 
-Result on this release (commit f55b6ab; nginx 1.28.0 with OpenSSL 3.5.8,
-Waitress 3.0.2, Python 3.11, PostgreSQL 16.2 with scram-sha-256, Tesseract
-5.3.4): the app ran from `git archive` in a fresh virtual environment
-installed per [INSTALL.md](INSTALL.md). install 4/4, run1 55/55; restarted
-with `FLASK_ENV`, `WSGI_SERVER` and `TRUSTED_PROXY_COUNT` removed from the
-environment so they had to come from the wizard's `.env`: 0 ERROR log lines,
-run2 55/55. The browser smoke then passed 81/81 twice in a row. nginx logged
-no 5xx; every 4xx was one of the checks' deliberate negative requests, and
-the 499s were the crawler navigating away mid-load.
+Result on this release (final merged code `d2778c4`; nginx 1.28.0 built with
+OpenSSL 3.5.8 and PCRE2 10.46, Waitress 3.0.2, Python 3.11.2, PostgreSQL 16.2
+with scram-sha-256, Tesseract 5.5.0, Chromium 153 headless driven by
+puppeteer-core, Node 22): the app ran from `git archive` of the release
+commit in a fresh virtual environment installed per
+[INSTALL.md](INSTALL.md), behind the shipped nginx site over real TLS with
+HTTP/2. install 4/4, run1 55/55; a 200-paragraph DOCX ingested through that
+stack stored 200 of 200 paragraphs (DOCX-DROP-01); `verify_readiness.py`
+31/31; restarted with `FLASK_ENV`, `WSGI_SERVER` and `TRUSTED_PROXY_COUNT`
+removed from the environment so they had to come from the wizard's `.env`:
+0 ERROR log lines, run2 55/55. The browser smoke then passed 84/84 twice in a
+row. 60 requests over one HTTP/2 session (1 connect, 59 reused, no GOAWAY);
+static assets `no-cache` + ETag (304 on revalidation); authenticated pages
+and APIs `no-store`; a burst of failed sign-ins answered 429 with the
+"Too many attempts" message while interactive reads stayed under their
+bound. nginx logged no 5xx from the application; every 4xx was one of the
+checks' deliberate negative requests, and the 499s were the crawler
+navigating away mid-load. PostgreSQL logged no ERROR, FATAL or PANIC.
+
+An earlier candidate of this release was validated the same way on a
+pre-merge commit (`f55b6ab`; install 4/4, run1 55/55, restart, run2 55/55,
+browser smoke 81/81 twice). Those raw logs did not survive a sandbox reset;
+the figures above, from the final merged code, are the release evidence.
 
 Defects this procedure found have been fixed with regression tests:
 `/health` reported `degraded` after install until a restart

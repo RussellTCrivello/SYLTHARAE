@@ -181,14 +181,31 @@ def _():
     return f"all migrations applied (current: {status['current_version']})"
 
 
+# The schema the current migrations produce (m0011 content_identity renamed
+# words_paths/keywords_paths to words_hashs/keywords_hashs and re-keyed the
+# identity columns from path_id to hash_id/context_id). These constants are
+# pinned to a freshly migrated database by
+# tests/integration/test_readiness_schema.py: a migration that renames a table
+# or index must update them here in the same commit.
+REQUIRED_TABLES = {
+    "words", "punctuation", "categorys", "words_categorys", "sides",
+    "sources", "hashs", "paths", "contents", "titles_content", "keywords",
+    "words_hashs", "keywords_hashs", "alerts", "users", "sessions", "audit_log",
+    "jobs", "job_events",
+}
+
+REQUIRED_INDEXES = {
+    "idx_words_hashs_word_id", "idx_words_hashs_hash_id",
+    "idx_keywords_hashs_keyword_id", "idx_paths_context_id",
+    "idx_paths_file_name", "idx_paths_file_path",
+    "idx_titles_content_hash_id", "idx_hashs_hash",
+    "uq_hash_contexts_hash_source_side",
+}
+
+
 @check("database", "Required tables exist")
 def _():
-    required = {
-        "words", "punctuation", "categorys", "words_categorys", "sides",
-        "sources", "hashs", "paths", "contents", "titles_content", "keywords",
-        "words_paths", "keywords_paths", "alerts", "users", "sessions", "audit_log",
-        "jobs", "job_events",
-    }
+    required = REQUIRED_TABLES
     conn = _db_connect()
     try:
         with conn.cursor() as cur:
@@ -207,11 +224,7 @@ def _():
 
 @check("database", "Required performance indexes exist (DB-06)")
 def _():
-    required = {
-        "idx_words_paths_path_id", "idx_words_paths_word_id",
-        "idx_paths_hash_id", "idx_paths_file_name", "idx_paths_file_path",
-        "idx_titles_content_path_id", "idx_hashs_hash_source_side",
-    }
+    required = REQUIRED_INDEXES
     conn = _db_connect()
     try:
         with conn.cursor() as cur:

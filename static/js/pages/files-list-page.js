@@ -69,6 +69,12 @@ window.toggleSelectAll = function(checkbox) {
     }
 };
 
+window.toggleAllFilesSelection = function() {
+    if (FileManagement && typeof FileManagement.toggleAllFilesSelection === 'function') {
+        FileManagement.toggleAllFilesSelection();
+    }
+};
+
 window.updateBulkToolbar = function() {
     if (FileManagement && typeof FileManagement.updateBulkToolbar === 'function') {
         FileManagement.updateBulkToolbar();

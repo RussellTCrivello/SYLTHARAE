@@ -182,6 +182,39 @@ Verification column says otherwise.
 | DOCX-DROP-01 | **High** (data loss) | The DOCX reader remembered the paragraphs it had used by `id()` of python-docx proxies, which are rebuilt and freed on every access. A reused address made a different paragraph look used, so it was skipped: no log line, job `COMPLETED`, text absent from storage, search and display. 12-18 % of the paragraphs of a 40-section document, a different set each read; in the code since v2.1.0. Found through an intermittent failure of `test_docx_raw_text_preserves_styles_and_tables` (four-paragraph fixture) in the full local matrix; it passed in isolation and in CI. | `Document.iter_inner_content()`: one `Paragraph` or `Table` per body element, in body order. Upgrade step for stored text: DOCX-DROP-02. | `test_docx_reader_completeness.py`: 4 of 6 fail before (67, 70 and 45 of 440 body elements dropped), 6 of 6 pass after. Live, through nginx and Waitress: the deployed candidate stored 164 of 200 paragraphs; after upgrading, a new upload stored 200 of 200. | `3d403ed` |
 | CI-SKIP-02 | Low (test coverage) | CI's new skip listing showed `test_encrypted_zip_is_reported_as_encrypted` skipped in every run: `pyzipper`, which only builds its AES-encrypted fixture, was never declared, so encrypted-ZIP detection was never exercised in CI. | `pyzipper` in the `dev` extra; the test imports it directly, so a missing test dependency fails instead of skipping. | The test runs and passes; CI skip listing. | `8dbbdee` |
 | ARCHIVE-PATH-01 | Low (distribution) | The release-archive audit found `tools/scalability/setup_env.sh` (a measurement script from the original upload) defaulting to a virtualenv in one machine's home directory (`/home/user`). No other shipped file carried a machine path; example paths in UI placeholders are not read from. | Defaults to `<repo>/.venv-scalability`, which `.gitignore` now covers. | `test_no_machine_paths.py` scans the shipped files for the checkout's own path, home-directory virtualenvs and sandbox hosts; before the fix it reported that one line. | `00906c4` |
+| READY-SCHEMA-01 | Medium (diagnostics) | `verify_readiness.py` still required table and index names from before the m0011 `content_identity` migration (`words_paths`, `keywords_paths`, `idx_words_paths_path_id`, `idx_paths_hash_id`, `idx_titles_content_path_id`, `idx_hashs_hash_source_side`), so on a correctly migrated database the readiness report failed two critical checks for objects that had been renamed. Found by running the readiness check against the deployed production stack during the release re-validation; no test covered the required names against a real migration, which is why CI stayed green. | The required sets are module constants with the current schema's names, pinned by `tests/integration/test_readiness_schema.py` to a database migrated from scratch: a future rename fails CI unless the constants move in the same commit. | The new test fails on the old constants; `verify_readiness.py --json` 31/31 against the deployed PostgreSQL 16.2 database (migration 0014). | `d2778c4` |
+
+### Release validation on the final merged code
+
+The v2.2.0 release gate was re-run on the final merged code (`d2778c4`,
+whose tree is identical to the tested branch head `18b1f7b` apart from this
+audit's own fixes) after a sandbox reset destroyed the earlier run's raw
+logs, and because the DOCX fix invalidated the earlier production evidence:
+
+* **Test matrix** (fresh venv, `REQUIRE_POSTGRES=1`, nothing allowed to pass
+  by skipping): 2768 tests - 2765 passed, 0 failed, 0 errors, 3 skipped
+  (unit 2001 with 3 documented engine-specific skips; integration 620;
+  security 125; e2e 22).
+* **Static**: ruff (E9/F63/F7/F82) clean; bandit against the baseline clean;
+  pip-audit "no known vulnerabilities"; licence gate 116 compatible,
+  0 incompatible; wheel builds as `file_analysis-2.2.0` with
+  `License-Expression: AGPL-3.0-or-later`.
+* **OCR**: self-check with `--require tesseract` (5.5.0, heb/eng/ara, upright
+  and turned samples read at 0.95-0.96); the OCR matrix files 129 passed,
+  2 by-design skips; the RapidOCR fallback exercised directly (upright 0.96,
+  turned 0.96, 12 px 0.94; Hebrew limited to 0.60 confidence, as documented).
+* **Production stack** (browser → nginx 1.28.0/OpenSSL 3.5.8, HTTPS + HTTP/2
+  → Waitress 3.0.2 → Python 3.11.2 → PostgreSQL 16.2 with scram-sha-256):
+  install 4/4, run1 55/55, a 200-paragraph DOCX stored 200 of 200 paragraphs,
+  `verify_readiness.py` 31/31, restart on the wizard's `.env` alone, run2
+  55/55, browser smoke 84/84 twice, 0 ERROR log lines after install,
+  no unexpected 4xx/5xx in nginx, no PostgreSQL errors.
+
+The figures quoted in the v2.1.1 table above and the earlier candidate's
+live-smoke figures (install 4/4, run1 55/55, browser smoke 81/81 on a
+pre-merge commit) are historical: their raw logs were lost in the sandbox
+reset. The release claim rests on the final-code re-run summarized here and
+in [TESTING.md](docs/TESTING.md#live-smoke-test).
 
 ### OCR root-cause record (OCR-TESS-01)
 

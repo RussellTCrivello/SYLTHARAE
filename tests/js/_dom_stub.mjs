@@ -206,6 +206,12 @@ function matchesOne(node, selector) {
     if (negated) {
         return matchesOne(node, negated[1]) && !matchesOne(node, negated[2]);
     }
+    // Compound with the checkedness pseudo-class, as in ".file-checkbox:checked":
+    // the box matches when it matches the rest and is actually checked.
+    const checked = selector.match(/^(.*):checked$/);
+    if (checked) {
+        return (!checked[1] || matchesOne(node, checked[1])) && node.checked === true;
+    }
     const attribute = selector.match(/^\[([\w-]+)(?:="([^"]*)")?\]$/);
     if (attribute) {
         const value = node.getAttribute(attribute[1]);
