@@ -424,7 +424,7 @@ class SearchService:
                     EXISTS (
                         SELECT 1 FROM words_hashs wp2
                         JOIN words_categorys wc ON wp2.word_id = wc.word_id
-                        WHERE wp2.path_id = p.id AND wc.category_id = %s
+                        WHERE wp2.hash_id = hc.hash_id AND wc.category_id = %s
                     )
                 """)
                 params.append(category_id)
@@ -1354,7 +1354,7 @@ class SearchService:
                             EXISTS (
                                 SELECT 1 FROM words_hashs wp2
                                 JOIN words_categorys wc ON wp2.word_id = wc.word_id
-                                WHERE wp2.path_id = p.id AND wc.category_id = %s
+                                WHERE wp2.hash_id = hc.hash_id AND wc.category_id = %s
                             )
                         """)
                         params.append(category_ids[0])
@@ -1364,7 +1364,7 @@ class SearchService:
                             EXISTS (
                                 SELECT 1 FROM words_hashs wp2
                                 JOIN words_categorys wc ON wp2.word_id = wc.word_id
-                                WHERE wp2.path_id = p.id AND wc.category_id IN ({placeholders})
+                                WHERE wp2.hash_id = hc.hash_id AND wc.category_id IN ({placeholders})
                             )
                         """)
                         params.extend(category_ids)
@@ -1373,7 +1373,7 @@ class SearchService:
                         EXISTS (
                             SELECT 1 FROM words_hashs wp2
                             JOIN words_categorys wc ON wp2.word_id = wc.word_id
-                            WHERE wp2.path_id = p.id AND wc.category_id = %s
+                            WHERE wp2.hash_id = hc.hash_id AND wc.category_id = %s
                         )
                     """)
                     params.append(category_id)
