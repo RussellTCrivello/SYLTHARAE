@@ -482,6 +482,10 @@ register_all_routes(app, babel)
 from Api.routes.archives_api import archives_api_bp
 app.register_blueprint(archives_api_bp)
 
+from Api.routes.file_analysis import file_analysis_bp
+app.register_blueprint(file_analysis_bp)
+logger.info("✅ File Analysis API registered")
+
 from Api.routes.cursor_api import cursor_api_bp
 app.register_blueprint(cursor_api_bp)
 logger.info("✅ Cursor-based pagination API registered")
