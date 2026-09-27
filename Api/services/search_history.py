@@ -48,9 +48,17 @@ class SearchHistoryService:
             with _history_lock:
                 history = SearchHistoryService._load_history()
                 
-                # Add new search entry
+                # Add new search entry. `len(history) + 1` looks like a
+                # sequential id but is not one: once history is trimmed to
+                # the last 100 entries below, len(history) sticks at 100
+                # forever, so every entry after the 100th silently got the
+                # same id (101) -- a duplicate React key downstream and, more
+                # importantly, an id that can't uniquely identify a history
+                # row. Mirrors the correct pattern already used by
+                # SavedSearchesService.save_search below.
+                next_id = max([h.get('id', 0) for h in history] + [0]) + 1
                 entry = {
-                    'id': len(history) + 1,
+                    'id': next_id,
                     'query': query,
                     'filters': filters or {},
                     'result_count': result_count,
