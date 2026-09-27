@@ -3,7 +3,7 @@ Files Blueprint - File Management Routes and Helpers
 Handles file upload, browsing, viewing, and processing
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, current_app, make_response
 from werkzeug.utils import secure_filename
 import os
 import sys
@@ -2147,7 +2147,7 @@ def file_full_content(file_id):
         # second view of the file, not a different browsing session.
         nav = navigation_for(file_id, request.args, endpoint='files.file_full_content')
 
-        return render_template('file/full_content.html', 
+        response = make_response(render_template('file/full_content.html',
                              nav=nav,
                              file=file_info, 
                              content=content,
@@ -2161,7 +2161,19 @@ def file_full_content(file_id):
                              search_query=search_query,
                              case_sensitive=case_sensitive,
                              whole_word=whole_word,
-                             analyst_categories=analyst_categories)
+                             analyst_categories=analyst_categories))
+        # `?embed=1`: this render is meant to sit inside the React app's
+        # FullDocumentViewer iframe (same origin via the Vite dev proxy /
+        # reverse proxy in production). The app-wide default is
+        # X-Frame-Options: DENY / frame-ancestors 'none' (see
+        # apps/web/app.py add_security_headers) so framing must be
+        # deliberately opted into here, same-origin only - exactly the
+        # precedent Api/services/original_file.py already sets for the
+        # original-file viewer.
+        if request.args.get('embed') == '1':
+            response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+            response.headers['Content-Security-Policy'] = "frame-ancestors 'self'"
+        return response
     except Exception as e:
         logger.error(f"Error loading full content: {e}", exc_info=True)
         flash(f"Error loading content: {str(e)}", "error")

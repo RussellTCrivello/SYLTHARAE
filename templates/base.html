@@ -219,8 +219,23 @@
     {% endif %}
 </head>
 
+{#- `?embed=1`: this page is being rendered inside another surface's iframe
+    (the React app's FullDocumentViewer -- see Api/blueprints/files.py
+    `file_full_content` for the matching frame-header relaxation, scoped to
+    that one route). Nothing here changes for a normal top-level visit;
+    embed mode only ever hides chrome that would otherwise duplicate the
+    embedding app's own navigation. -#}
+{% set embed_mode = request.args.get('embed') == '1' %}
+{% if embed_mode %}
+<style>
+  .sidebar, .sidebar-backdrop, .page-navigation-bar { display: none !important; }
+  .main-content { margin-left: 0 !important; padding-top: 0 !important; }
+  body { background: transparent !important; }
+</style>
+{% endif %}
 <body data-page-type="{% block page_type %}default{% endblock %}"
-      data-current-endpoint="{{ request.endpoint|default('', true) }}">
+      data-current-endpoint="{{ request.endpoint|default('', true) }}"
+      class="{{ 'embed-mode' if embed_mode else '' }}">
 
     <!-- Accessibility: skip link -->
     <a class="skip-to-content" href="#mainContent">{{ _('Skip to main content') }}</a>
