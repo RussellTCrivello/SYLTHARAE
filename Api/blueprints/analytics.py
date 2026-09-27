@@ -1624,55 +1624,39 @@ def api_dashboard_summary():
             logger.error(f"Error calling get_processing_statistics(): {e}", exc_info=True)
             processing_stats = {}
         
-        unique_types_result = db_execute_query("""
-            SELECT COUNT(DISTINCT file_type) FROM paths
-        """, fetch="one")
-        unique_types = unique_types_result if isinstance(unique_types_result, int) else (unique_types_result[0] if unique_types_result and isinstance(unique_types_result, tuple) else 0)
-        
-        # Get total size
-        total_size_result = db_execute_query("""
-            SELECT COALESCE(SUM(file_size), 0) FROM paths
-        """, fetch="one")
-        total_size = total_size_result if isinstance(total_size_result, (int, float)) else (total_size_result[0] if total_size_result and isinstance(total_size_result, tuple) else 0)
-        
-        # Get recent files count (last 7 days)
+        # PERF (req #17): this endpoint used to re-query the database for
+        # unique_types/total_size/processed_files/total_keywords/
+        # total_categories/database_size as six *separate* ad-hoc statements
+        # (each its own round trip) even though get_statistics() and
+        # get_processing_statistics() -- called just above -- had already
+        # computed every one of those exact numbers ('unique_file_types',
+        # 'total_storage_bytes', 'processed_count', 'total_keywords',
+        # 'total_categories', 'database_size_bytes'). That duplicated work
+        # under different variable names is why this endpoint measured
+        # ~1.4-1.8s: roughly 16 sequential SQL round trips for one response
+        # when at most a handful are actually needed. Reusing the values
+        # already in `stats`/`processing_stats` removes six of them outright;
+        # `recent_files` is the only number here that neither call computes.
+        unique_types = stats.get('unique_file_types', 0)
+        total_size = stats.get('total_storage_bytes', 0)
+        processed_files = processing_stats.get('processed_count', 0)
+        total_keywords = stats.get('total_keywords', 0)
+        total_categories = stats.get('total_categories', 0)
+        database_size = stats.get('database_size_bytes', 0)
+
+        # Get recent files count (last 7 days) -- the one figure genuinely
+        # not already produced by get_statistics()/get_processing_statistics().
         recent_files_result = db_execute_query("""
             SELECT COUNT(*) FROM paths
             WHERE date_creation >= CURRENT_DATE - INTERVAL '7 days'
         """, fetch="one")
         recent_files = recent_files_result if isinstance(recent_files_result, int) else (recent_files_result[0] if recent_files_result and isinstance(recent_files_result, tuple) else 0)
-        
-        # Calculate processing rate
-        processed_result = db_execute_query("""
-            SELECT COUNT(*) FROM paths WHERE file_status = 'Read'
-        """, fetch="one")
-        processed_files = processed_result if isinstance(processed_result, int) else (processed_result[0] if processed_result and isinstance(processed_result, tuple) else 0)
+
         total_files = stats.get('total_files', 0)
         processing_rate = (processed_files / total_files * 100) if total_files > 0 else 0
-        
-        # Get total keywords count
-        total_keywords_result = db_execute_query("""
-            SELECT COUNT(*) FROM keywords
-        """, fetch="one")
-        total_keywords = total_keywords_result if isinstance(total_keywords_result, int) else (total_keywords_result[0] if total_keywords_result and isinstance(total_keywords_result, tuple) else 0)
-        
-        # Get total categories count (direct query)
-        total_categories_result = db_execute_query("""
-            SELECT COUNT(*) FROM categorys
-        """, fetch="one")
-        total_categories = total_categories_result if isinstance(total_categories_result, int) else (total_categories_result[0] if total_categories_result and isinstance(total_categories_result, tuple) else 0)
-        
-        # Get database size (PostgreSQL)
-        try:
-            db_size_result = db_execute_query("""
-                SELECT pg_database_size(current_database())
-            """, fetch="one")
-            database_size = db_size_result if isinstance(db_size_result, (int, float)) else (db_size_result[0] if db_size_result and isinstance(db_size_result, tuple) else 0)
-        except Exception as e:
-            # Fallback if database size query fails
-            database_size = 0
-        
+
         return jsonify({
+
             'success': True,
             'totalFiles': stats.get('total_files', 0),
             'processedFiles': processed_files,
