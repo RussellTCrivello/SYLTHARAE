@@ -1,0 +1,147 @@
+"""A small, static world-places gazetteer used for content-based geotagging.
+
+This is intentionally a plain lookup table, not a network geocoder: File
+Analysis' Geolocation section only ever plots a place if that exact place
+name was literally found (word-bounded, case-sensitive) in a file's own
+extracted text (see ``geo_extraction_service.py``). Nothing here invents a
+location for a file that doesn't mention one.
+
+Entries are (display_name, country, latitude, longitude). Matching prefers
+the longest / most specific name first (e.g. "New York City" before "New
+York", "Hong Kong" before any single-word substring) so multi-word places
+are not shadowed by a shorter partial match.
+"""
+
+GAZETTEER = [
+    # --- Africa ---------------------------------------------------------
+    ("Nairobi", "Kenya", -1.286389, 36.817223),
+    ("Mombasa", "Kenya", -4.043477, 39.658871),
+    ("Lagos", "Nigeria", 6.524379, 3.379206),
+    ("Abuja", "Nigeria", 9.076479, 7.398574),
+    ("Cairo", "Egypt", 30.044420, 31.235712),
+    ("Johannesburg", "South Africa", -26.204103, 28.047305),
+    ("Cape Town", "South Africa", -33.924870, 18.424055),
+    ("Durban", "South Africa", -29.858680, 31.021840),
+    ("Dar es Salaam", "Tanzania", -6.792354, 39.208328),
+    ("Addis Ababa", "Ethiopia", 9.024680, 38.747017),
+    ("Casablanca", "Morocco", 33.573110, -7.589843),
+    ("Accra", "Ghana", 5.603717, -0.186964),
+    ("Tunis", "Tunisia", 36.806389, 10.181667),
+    ("Algiers", "Algeria", 36.752887, 3.042048),
+    ("Kampala", "Uganda", 0.347596, 32.582520),
+    ("Kigali", "Rwanda", -1.970579, 30.104429),
+    # --- Middle East ------------------------------------------------------
+    ("Dubai", "United Arab Emirates", 25.204849, 55.270782),
+    ("Abu Dhabi", "United Arab Emirates", 24.453884, 54.377343),
+    ("Doha", "Qatar", 25.285447, 51.531040),
+    ("Riyadh", "Saudi Arabia", 24.713552, 46.675297),
+    ("Jeddah", "Saudi Arabia", 21.485811, 39.192505),
+    ("Tel Aviv", "Israel", 32.085300, 34.781769),
+    ("Istanbul", "Turkey", 41.008238, 28.978359),
+    ("Beirut", "Lebanon", 33.888630, 35.495480),
+    # --- Asia -------------------------------------------------------------
+    ("Tokyo", "Japan", 35.689487, 139.691711),
+    ("Osaka", "Japan", 34.693738, 135.502165),
+    ("Yokohama", "Japan", 35.443708, 139.638026),
+    ("Shanghai", "China", 31.230416, 121.473701),
+    ("Beijing", "China", 39.904202, 116.407394),
+    ("Shenzhen", "China", 22.543096, 114.057865),
+    ("Guangzhou", "China", 23.129110, 113.264385),
+    ("Hong Kong", "China", 22.319303, 114.169361),
+    ("Singapore", "Singapore", 1.352083, 103.819836),
+    ("Seoul", "South Korea", 37.566536, 126.977966),
+    ("Busan", "South Korea", 35.179554, 129.075642),
+    ("Mumbai", "India", 19.075984, 72.877656),
+    ("New Delhi", "India", 28.613939, 77.209023),
+    ("Bengaluru", "India", 12.971599, 77.594566),
+    ("Chennai", "India", 13.082680, 80.270718),
+    ("Kolkata", "India", 22.572646, 88.363895),
+    ("Bangkok", "Thailand", 13.756331, 100.501765),
+    ("Jakarta", "Indonesia", -6.208763, 106.845599),
+    ("Kuala Lumpur", "Malaysia", 3.139003, 101.686855),
+    ("Manila", "Philippines", 14.599512, 120.984222),
+    ("Ho Chi Minh City", "Vietnam", 10.762622, 106.660172),
+    ("Hanoi", "Vietnam", 21.028511, 105.804817),
+    ("Karachi", "Pakistan", 24.860735, 67.001137),
+    ("Colombo", "Sri Lanka", 6.927079, 79.861244),
+    ("Dhaka", "Bangladesh", 23.810332, 90.412518),
+    ("Taipei", "Taiwan", 25.032969, 121.565418),
+    # --- Europe -------------------------------------------------------
+    ("London", "United Kingdom", 51.507351, -0.127758),
+    ("Manchester", "United Kingdom", 53.483959, -2.244644),
+    ("Paris", "France", 48.856613, 2.352222),
+    ("Marseille", "France", 43.296482, 5.369780),
+    ("Berlin", "Germany", 52.520008, 13.404954),
+    ("Hamburg", "Germany", 53.551086, 9.993682),
+    ("Frankfurt", "Germany", 50.110924, 8.682127),
+    ("Munich", "Germany", 48.135125, 11.581981),
+    ("Rotterdam", "Netherlands", 51.924420, 4.477733),
+    ("Amsterdam", "Netherlands", 52.367573, 4.904139),
+    ("Antwerp", "Belgium", 51.219448, 4.402464),
+    ("Brussels", "Belgium", 50.850346, 4.351721),
+    ("Madrid", "Spain", 40.416775, -3.703790),
+    ("Barcelona", "Spain", 41.385064, 2.173404),
+    ("Valencia", "Spain", 39.469907, -0.376288),
+    ("Lisbon", "Portugal", 38.722252, -9.139337),
+    ("Rome", "Italy", 41.902782, 12.496366),
+    ("Milan", "Italy", 45.464664, 9.188540),
+    ("Genoa", "Italy", 44.407063, 8.933862),
+    ("Athens", "Greece", 37.983810, 23.727539),
+    ("Piraeus", "Greece", 37.943569, 23.646917),
+    ("Zurich", "Switzerland", 47.376887, 8.541694),
+    ("Geneva", "Switzerland", 46.204391, 6.143158),
+    ("Vienna", "Austria", 48.208174, 16.373819),
+    ("Warsaw", "Poland", 52.229676, 21.012229),
+    ("Gdansk", "Poland", 54.352025, 18.646638),
+    ("Prague", "Czech Republic", 50.075538, 14.437800),
+    ("Copenhagen", "Denmark", 55.676098, 12.568337),
+    ("Stockholm", "Sweden", 59.329323, 18.068581),
+    ("Gothenburg", "Sweden", 57.708870, 11.974560),
+    ("Oslo", "Norway", 59.913868, 10.752245),
+    ("Helsinki", "Finland", 60.169856, 24.938379),
+    ("Dublin", "Ireland", 53.349805, -6.260310),
+    ("Moscow", "Russia", 55.755826, 37.617300),
+    ("Saint Petersburg", "Russia", 59.934280, 30.335099),
+    # --- North America ------------------------------------------------
+    ("New York", "United States", 40.712776, -74.005974),
+    ("Los Angeles", "United States", 34.052235, -118.243683),
+    ("Chicago", "United States", 41.878113, -87.629799),
+    ("Houston", "United States", 29.760427, -95.369804),
+    ("Miami", "United States", 25.761681, -80.191788),
+    ("Boston", "United States", 42.360081, -71.058884),
+    ("Seattle", "United States", 47.606209, -122.332069),
+    ("San Francisco", "United States", 37.774929, -122.419418),
+    ("Oakland", "United States", 37.804363, -122.271111),
+    ("Long Beach", "United States", 33.770050, -118.193741),
+    ("Savannah", "United States", 32.080895, -81.091203),
+    ("Charleston", "United States", 32.776474, -79.931053),
+    ("Norfolk", "United States", 36.850769, -76.285873),
+    ("Newark", "United States", 40.735657, -74.172363),
+    ("Atlanta", "United States", 33.748997, -84.387985),
+    ("Dallas", "United States", 32.776665, -96.796989),
+    ("Denver", "United States", 39.739235, -104.990250),
+    ("Toronto", "Canada", 43.653225, -79.383186),
+    ("Vancouver", "Canada", 49.282730, -123.120735),
+    ("Montreal", "Canada", 45.501690, -73.567253),
+    ("Mexico City", "Mexico", 19.432608, -99.133209),
+    ("Panama City", "Panama", 8.982379, -79.519691),
+    # --- South America --------------------------------------------------
+    ("Sao Paulo", "Brazil", -23.550520, -46.633308),
+    ("Rio de Janeiro", "Brazil", -22.906847, -43.172897),
+    ("Santos", "Brazil", -23.960833, -46.333889),
+    ("Buenos Aires", "Argentina", -34.603683, -58.381557),
+    ("Santiago", "Chile", -33.448891, -70.669266),
+    ("Bogota", "Colombia", 4.710989, -74.072092),
+    ("Lima", "Peru", -12.046374, -77.042793),
+    # --- Oceania -----------------------------------------------------
+    ("Sydney", "Australia", -33.868820, 151.209290),
+    ("Melbourne", "Australia", -37.813629, 144.963058),
+    ("Brisbane", "Australia", -27.469770, 153.025131),
+    ("Perth", "Australia", -31.950527, 115.860458),
+    ("Auckland", "New Zealand", -36.848461, 174.763336),
+]
+
+# Sort longest-name-first so a scan matches "Hong Kong" before it could ever
+# be shadowed by a shorter unrelated token, and to make multi-word places
+# take priority over any accidental single-word overlap.
+GAZETTEER_SORTED = sorted(GAZETTEER, key=lambda entry: -len(entry[0]))

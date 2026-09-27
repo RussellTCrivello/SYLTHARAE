@@ -1738,6 +1738,40 @@ def register_api_routes(app):
                 if row["status_updated_at"] else None
             )
 
+            # Real place-name mentions found by scanning this file's own
+            # extracted text (File Analysis: Geolocation /
+            # Api/services/geo_extraction_service.py), keyed off the file's
+            # canonical hash so every path sharing that content sees the
+            # same mentions. This is the rich, multi-place data behind the
+            # single-point `coordinates` backward-compat field above -- the
+            # File Details view should show what was actually found, not
+            # just a single lat/lon pair.
+            geo_mentions = []
+            try:
+                if row["hash_id"] is not None:
+                    mention_rows = execute_query(
+                        """
+                        SELECT place_name, country, latitude, longitude, mention_count
+                        FROM path_geo_mentions
+                        WHERE hash_id = %s
+                        ORDER BY mention_count DESC, place_name ASC
+                        """,
+                        (row["hash_id"],),
+                        fetch="all",
+                    )
+                    geo_mentions = [
+                        {
+                            'place_name': m[0],
+                            'country': m[1],
+                            'latitude': float(m[2]) if m[2] is not None else None,
+                            'longitude': float(m[3]) if m[3] is not None else None,
+                            'mention_count': m[4],
+                        }
+                        for m in (mention_rows or [])
+                    ]
+            except Exception as e:
+                logger.warning(f"Error loading geo mentions for file_id={file_id}: {e}")
+
             details = {
                 'id': file_info[0],
                 'name': file_info[1] or 'Unnamed File',
@@ -1769,7 +1803,8 @@ def register_api_routes(app):
                 },
                 'coordinates': row['coordinates'],
                 'error_message': row['error_message'],
-                'lineage': lineage
+                'lineage': lineage,
+                'geo_mentions': geo_mentions,
             }
 
             # Analyst classification (separate namespace from smart
