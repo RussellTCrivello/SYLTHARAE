@@ -45,7 +45,14 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 logger = logging.getLogger(__name__)
 
 #: What the operator is exporting. Never inferred.
-EXPORT_SCOPES: Tuple[str, ...] = ("page", "filtered", "dataset")
+#: ``selected`` is not a query at all - it is an explicit, caller-supplied
+#: list of path ids (e.g. "export the metadata of the document I am looking
+#: at"). It bypasses the search engine entirely and reads the rows directly,
+#: the same way the other explicit-selection endpoints in this codebase do
+#: (see Api/blueprints/files.py's id-list export routes) rather than forcing
+#: a single-record lookup through query re-execution machinery built for
+#: multi-row result sets.
+EXPORT_SCOPES: Tuple[str, ...] = ("page", "filtered", "dataset", "selected")
 
 #: What the file will be.
 EXPORT_FORMATS: Tuple[str, ...] = ("csv", "excel", "json")
@@ -72,6 +79,45 @@ COLUMNS: Tuple[str, ...] = (
     "id", "file_name", "file_type", "file_size", "file_date",
     "file_status", "source_name", "source_id", "side_name", "side_id",
     "relevance_score", "smart_categories", "analyst_categories", "snippet",
+    "path", "hash", "processing_status",
+)
+
+#: Human labels for the public columns, in the same order. This is the one
+#: place the labels live; the column picker in the UI reads them from here
+#: (via the columns metadata route) instead of hard-coding its own copy that
+#: could drift from what the server actually publishes.
+COLUMN_LABELS: Dict[str, str] = {
+    "id": "File ID",
+    "file_name": "File Name",
+    "file_type": "File Type",
+    "file_size": "File Size",
+    "file_date": "File Date",
+    "file_status": "Status",
+    "source_name": "Source",
+    "source_id": "Source ID",
+    "side_name": "Side",
+    "side_id": "Side ID",
+    "relevance_score": "Relevance Score",
+    "smart_categories": "Smart Categories",
+    "analyst_categories": "Analyst Categories",
+    "snippet": "Match Snippet",
+    "path": "Stored Path",
+    "hash": "Content Hash",
+    "processing_status": "Processing Status",
+}
+
+#: Path, hash and processing status are only populated by the ``selected``
+#: scope (an explicit id lookup - see ``_lookup_by_ids``); the query-based
+#: scopes (page/filtered/dataset) do not carry them today. They remain
+#: selectable everywhere for one column picker, and are honestly blank - not
+#: fabricated - where the underlying rows do not have them.
+_SELECTED_ONLY_COLUMNS: Tuple[str, ...] = ("path", "hash", "processing_status")
+
+#: Columns selected by default when the caller does not choose. Kept smaller
+#: than the full set so a first-time export is readable, not just complete.
+DEFAULT_COLUMNS: Tuple[str, ...] = (
+    "file_name", "file_type", "file_size", "file_date", "file_status",
+    "source_name", "side_name", "smart_categories", "analyst_categories",
 )
 
 #: Query-definition fields this service accepts. Anything else in the payload
@@ -83,8 +129,14 @@ _ACCEPTED = frozenset({
     "category_id", "category_ids", "analyst_category_id",
     "analyst_category_ids", "status", "date_from", "date_to", "sort_by", "sort_order",
     "use_advanced", "use_fulltext", "use_bm25", "use_expansion", "use_fuzzy",
-    "case_sensitive", "whole_word", "hide_duplicates",
+    "case_sensitive", "whole_word", "hide_duplicates", "columns",
+    "path_ids", "file_ids",
 })
+
+#: Ceiling for an explicit ``selected`` scope id list. Generous enough for a
+#: batch of open documents, small enough that a request cannot be used to
+#: smuggle an unbounded dump through what is meant to be a bounded selection.
+MAX_SELECTED_IDS = 500
 
 #: Keys that mean "here are the rows, please write them out". Named explicitly
 #: so the refusal can say what is wrong instead of "unexpected field".
@@ -126,7 +178,21 @@ class SearchExportRequest:
     case_sensitive: bool = False
     whole_word: bool = False
     hide_duplicates: bool = False
+    columns: Tuple[str, ...] = ()
+    path_ids: Tuple[int, ...] = ()
     definition: Dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def resolved_columns(self) -> Tuple[str, ...]:
+        """The columns to publish, in the order asked for.
+
+        An empty selection means "everything" - the full published schema,
+        in its stable order - rather than an empty file. A selection is
+        never reordered or filtered against anything other than the public
+        ``COLUMNS`` tuple, so the file can never contain a column the
+        dataset does not have.
+        """
+        return self.columns or COLUMNS
 
     @property
     def limit_offset(self) -> Tuple[int, int]:
@@ -302,6 +368,22 @@ def parse(payload: Optional[Dict[str, Any]]) -> SearchExportRequest:
     if sort_order not in ("asc", "desc"):
         raise ExportRequestError("sort_order must be 'asc' or 'desc'.")
 
+    path_ids: Tuple[int, ...] = ()
+    if scope == "selected":
+        raw_ids = payload.get("path_ids")
+        if raw_ids is None:
+            raw_ids = payload.get("file_ids")
+        if not isinstance(raw_ids, (list, tuple)) or not raw_ids:
+            raise ExportRequestError(
+                "export_scope 'selected' requires a non-empty path_ids list - "
+                "the explicit id(s) of the document(s) to export.")
+        path_ids = _as_ids(raw_ids, "path_ids")
+        if len(path_ids) > MAX_SELECTED_IDS:
+            raise ExportRequestError(
+                f"selected scope accepts at most {MAX_SELECTED_IDS} ids "
+                f"({len(path_ids)} given). Use the filtered/dataset scopes for "
+                "larger exports.")
+
     query = str(payload.get("query") or "").strip()
     analyst_scope = payload.get("analyst_scope")
     if analyst_scope is not None:
@@ -309,6 +391,24 @@ def parse(payload: Optional[Dict[str, Any]]) -> SearchExportRequest:
         if analyst_scope not in {"uncategorized", "categorized", "all"}:
             raise ExportRequestError("analyst_scope must be uncategorized, categorized, or all.")
     file_statuses = _as_statuses(payload)
+
+    raw_columns = payload.get("columns")
+    columns: Tuple[str, ...] = ()
+    if raw_columns is not None:
+        if not isinstance(raw_columns, (list, tuple)):
+            raise ExportRequestError("columns must be a list of column names.")
+        seen: List[str] = []
+        for name in raw_columns:
+            name = str(name).strip()
+            if name not in COLUMNS:
+                raise ExportRequestError(
+                    f"Unknown column {name!r}. Available columns: "
+                    + ", ".join(COLUMNS) + ".")
+            if name not in seen:
+                seen.append(name)
+        if not seen:
+            raise ExportRequestError("columns cannot be an empty list; omit it for all columns.")
+        columns = tuple(seen)
 
     request = SearchExportRequest(
         query=query,
@@ -349,6 +449,8 @@ def parse(payload: Optional[Dict[str, Any]]) -> SearchExportRequest:
         case_sensitive=_as_bool(payload.get("case_sensitive"), False),
         whole_word=_as_bool(payload.get("whole_word"), False),
         hide_duplicates=_as_bool(payload.get("hide_duplicates"), False),
+        columns=columns,
+        path_ids=path_ids,
     )
     # The definition is kept beside the request: it is what the audit line and
     # any future export record need, and it is the whole of what was asked for.
@@ -375,6 +477,8 @@ def parse(payload: Optional[Dict[str, Any]]) -> SearchExportRequest:
         "case_sensitive": request.case_sensitive,
         "whole_word": request.whole_word,
         "hide_duplicates": request.hide_duplicates,
+        "columns": list(request.resolved_columns),
+        "path_ids": list(request.path_ids),
     })
     return request
 
@@ -438,6 +542,83 @@ def _search_once(request: SearchExportRequest, limit: int, offset: int,
         query=query, limit=limit, offset=offset, analyst_scope=analyst_scope)
 
 
+def _lookup_by_ids(path_ids: Sequence[int]) -> List[Dict[str, Any]]:
+    """Read the exact rows for an explicit id list - no query, no ranking.
+
+    This is a direct record lookup, the same shape of operation as the
+    other explicit-selection routes in this codebase (Api/blueprints/files.py's
+    id-list export endpoints): it reads authoritative columns straight from
+    ``paths`` and its joins, plus smart and analyst categories from the same
+    services the file-detail view already uses, so a single-document export
+    can never disagree with what the Content Viewer shows for that document.
+    """
+    if not path_ids:
+        return []
+
+    from Api.utils import execute_query
+    from Api.utils.utils import get_categories_by_file
+    from Api.services.analyst_categories import AnalystCategoryService
+
+    placeholders = ",".join(["%s"] * len(path_ids))
+    rows = execute_query(
+        f"""
+        SELECT p.id, p.file_name, p.file_type, p.file_size, p.file_date,
+               p.file_status, COALESCE(s.name, 'Unknown') AS source_name,
+               hc.source_id, COALESCE(si.name, 'Unknown') AS side_name,
+               hc.side_id, p.file_path, COALESCE(h.hash, '') AS hash,
+               p.processing_status
+        FROM paths p
+        LEFT JOIN hash_contexts hc ON p.context_id = hc.id
+        LEFT JOIN hashs h ON hc.hash_id = h.id
+        LEFT JOIN sources s ON hc.source_id = s.id
+        LEFT JOIN sides si ON hc.side_id = si.id
+        WHERE p.id IN ({placeholders})
+        """,
+        tuple(path_ids), fetch="all",
+    ) or []
+
+    by_id = {int(row[0]): row for row in rows}
+    analyst_map = AnalystCategoryService.categories_for_files(list(path_ids))
+
+    out: List[Dict[str, Any]] = []
+    for path_id in path_ids:
+        row = by_id.get(path_id)
+        if row is None:
+            continue
+        try:
+            smart_categories = [
+                cat.get("name") for cat in (get_categories_by_file(path_id) or [])
+                if cat.get("name")
+            ]
+        except Exception:
+            logger.warning("search export: could not load smart categories for %s",
+                            path_id, exc_info=True)
+            smart_categories = []
+        analyst_categories = [
+            cat.get("name") for cat in analyst_map.get(path_id, []) if cat.get("name")
+        ]
+        out.append({
+            "id": row[0],
+            "file_name": row[1],
+            "file_type": row[2],
+            "file_size": row[3],
+            "file_date": row[4],
+            "file_status": row[5],
+            "source_name": row[6],
+            "source_id": row[7],
+            "side_name": row[8],
+            "side_id": row[9],
+            "relevance_score": None,
+            "smart_categories": smart_categories or None,
+            "analyst_categories": analyst_categories or None,
+            "snippet": None,
+            "path": row[10] or "",
+            "hash": row[11] or "",
+            "processing_status": row[12] or "",
+        })
+    return out
+
+
 def normalise(rows: Sequence[Any]) -> List[Dict[str, Any]]:
     """Every row in one shape, whatever the search path returned.
 
@@ -482,6 +663,18 @@ def resolve(request: SearchExportRequest, analyst_scope: str) -> SearchExportRes
     """Re-run the query the request describes and collect the rows to export."""
     result = SearchExportResult(request=request,
                                 started_at=datetime.now().isoformat(timespec="seconds"))
+
+    if request.scope == "selected":
+        # An explicit id list, not a query: read the rows directly and stop -
+        # there is no "rest of the result set" to page through.
+        collected = normalise(_lookup_by_ids(request.path_ids))
+        result.total = len(collected)
+        result.rows = collected
+        result.completed_at = datetime.now().isoformat(timespec="seconds")
+        logger.info("search export: scope=selected ids=%s rows=%d",
+                    list(request.path_ids), result.exported)
+        return result
+
     limit, offset = request.limit_offset
     rows, total = _search_once(request, limit, offset, analyst_scope)
     collected = normalise(rows)
@@ -521,6 +714,11 @@ def suggested_filename(request: SearchExportRequest) -> str:
         # A name supplied by the operator is the name of the export, not a
         # prefix to which the server silently appends a timestamp.
         return _safe(request.filename, 80) or "export"
+    if request.scope == "selected":
+        ids = "_".join(str(pid) for pid in request.path_ids[:3])
+        suffix = "" if len(request.path_ids) <= 3 else f"_plus{len(request.path_ids) - 3}"
+        base = f"document_{ids}{suffix}_metadata"
+        return f"{base}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     stem = _safe(request.query or "all", 40)
     base = f"search_{stem or 'all'}_{request.scope}"
     return f"{base}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -531,16 +729,17 @@ def export_bytes(result: SearchExportResult):
     from Api.services.document_intelligence import spreadsheet_safe_text
 
     rows = result.rows
+    columns = result.request.resolved_columns
     if result.request.format == "csv":
         import csv
         from io import BytesIO, StringIO
 
         output = StringIO(newline="")
-        writer = csv.DictWriter(output, fieldnames=COLUMNS, extrasaction="ignore")
+        writer = csv.DictWriter(output, fieldnames=columns, extrasaction="ignore")
         writer.writeheader()
         for row in rows:
             writer.writerow({column: spreadsheet_safe_text(row.get(column, ""))
-                             for column in COLUMNS})
+                             for column in columns})
         return BytesIO(output.getvalue().encode("utf-8-sig")), "text/csv", "csv"
 
     if result.request.format == "excel":
@@ -554,12 +753,15 @@ def export_bytes(result: SearchExportResult):
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Search Results"
-        sheet.append(list(COLUMNS))
+        sheet.append(list(columns))
         for row in rows:
             sheet.append([spreadsheet_safe_text(row.get(column, ""))
-                          for column in COLUMNS])
+                          for column in columns])
         sheet.freeze_panes = "A2"
         sheet.auto_filter.ref = sheet.dimensions
+        for index, column in enumerate(columns, start=1):
+            width = max(12, min(60, len(column) + 4))
+            sheet.column_dimensions[sheet.cell(row=1, column=index).column_letter].width = width
         output = BytesIO()
         workbook.save(output)
         workbook.close()
@@ -570,13 +772,16 @@ def export_bytes(result: SearchExportResult):
 
     from Api.services.export_service import ExportService
 
-    return (ExportService.export_search_results_json(rows),
+    projected = [{column: row.get(column, "") for column in columns} for row in rows]
+    return (ExportService.export_search_results_json(projected),
             "application/json", "json")
 
 
 __all__ = [
     "CHUNK",
     "COLUMNS",
+    "COLUMN_LABELS",
+    "DEFAULT_COLUMNS",
     "EXPORT_FORMATS",
     "EXPORT_SCOPES",
     "ExportRequestError",

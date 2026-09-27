@@ -5,6 +5,7 @@ Handles file upload, browsing, viewing, and processing
 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, current_app
 from werkzeug.utils import secure_filename
+import os
 import sys
 from pathlib import Path
 import re
@@ -1060,14 +1061,27 @@ def bulk_export_files():
         mode_value = request.values.get('mode') or body.get('mode')
         mode = 'originals' if mode_value == 'originals' else 'text'
         requested_name = request.values.get('filename') or body.get('filename')
+        naming_template = (request.values.get('naming_template')
+                           or body.get('naming_template') or '').strip()
 
         placeholders = ','.join(['%s'] * len(file_ids))
         rows = execute_query(
-            f"SELECT id, file_name FROM paths WHERE id IN ({placeholders})",
+            f"""
+            SELECT p.id, p.file_name, p.file_date,
+                   COALESCE(s.name, 'Unknown') AS source_name
+            FROM paths p
+            LEFT JOIN hash_contexts hc ON p.context_id = hc.id
+            LEFT JOIN sources s ON hc.source_id = s.id
+            WHERE p.id IN ({placeholders})
+            """,
             tuple(file_ids),
             fetch="all",
         )
-        names = {int(row[0]): row[1] for row in rows or []}
+        records_meta = {
+            int(row[0]): {'file_name': row[1], 'file_date': row[2], 'source_name': row[3]}
+            for row in rows or []
+        }
+        names = {fid: meta['file_name'] for fid, meta in records_meta.items()}
         missing_ids = sorted(set(file_ids) - set(names))
         if missing_ids:
             return jsonify({
@@ -1079,6 +1093,33 @@ def bulk_export_files():
         zip_buffer = io.BytesIO()
         included = 0
         skipped = []
+        seq_width = max(len(str(len(file_ids))), 3)
+
+        def _named(fid, fname, *, sequence, force_extension=None):
+            """The archive basename for one file: the naming template if the
+            operator gave one, the original file name otherwise. The
+            template can never invent a file that isn't there or change
+            which bytes are written - it only chooses what the entry inside
+            the zip is called."""
+            meta = records_meta.get(fid) or {}
+            real_ext = (os.path.splitext(fname or '')[1] or '').lstrip('.')
+            ext = (force_extension or real_ext or 'bin')
+            if not naming_template:
+                return fname or f'file_{fid}.{ext}'
+            stem = os.path.splitext(fname or '')[0] or f'file_{fid}'
+            date_value = meta.get('file_date')
+            date_str = date_value.strftime('%Y-%m-%d') if hasattr(date_value, 'strftime') \
+                else (str(date_value)[:10] if date_value else 'unknown-date')
+            result = (naming_template
+                      .replace('{name}', stem)
+                      .replace('{extension}', ext)
+                      .replace('{source}', str(meta.get('source_name') or 'Unknown'))
+                      .replace('{date}', date_str)
+                      .replace('{id}', str(fid))
+                      .replace('{sequence}', str(sequence).zfill(seq_width)))
+            if not result.lower().endswith(f'.{ext.lower()}'):
+                result = f'{result}.{ext}'
+            return result
 
         with _zipfile.ZipFile(zip_buffer, 'w', _zipfile.ZIP_DEFLATED) as zf:
             used_names = set()
@@ -1093,7 +1134,7 @@ def bulk_export_files():
                 used_names.add(candidate)
                 return candidate
 
-            for fid in file_ids:
+            for sequence, fid in enumerate(file_ids, start=1):
                 fname = names.get(fid)
                 if fname is None:
                     skipped.append((fid, '', 'no such file record'))
@@ -1103,7 +1144,8 @@ def bulk_export_files():
                     info = OriginalFileService.describe(fid, include_path=True)
                     source_path = info.get('path') or ''
                     if info.get('available') and source_path and Path(source_path).is_file():
-                        zf.write(source_path, arcname=_arc_for(fname, f'file_{fid}'))
+                        arc = _named(fid, fname, sequence=sequence)
+                        zf.write(source_path, arcname=_arc_for(arc, f'file_{fid}'))
                         included += 1
                     else:
                         skipped.append((fid, fname, info.get('reason') or 'original unavailable'))
@@ -1112,8 +1154,7 @@ def bulk_export_files():
                     if text:
                         if isinstance(text, bytes):
                             text = text.decode('utf-8', errors='replace')
-                        arc = fname if str(fname or '').lower().endswith('.txt') \
-                            else f"{fname or f'file_{fid}'}.txt"
+                        arc = _named(fid, fname, sequence=sequence, force_extension='txt')
                         zf.writestr(_arc_for(arc, f'file_{fid}.txt'), text)
                         included += 1
                     else:
@@ -1139,12 +1180,18 @@ def bulk_export_files():
                          else f"selected_extracted_text_{stamp}")
         zip_name = _export_basename(requested_name, fallback_name, 'zip')
         zip_buffer.seek(0)
-        return send_file(
+        response = send_file(
             zip_buffer,
             mimetype='application/zip',
             as_attachment=True,
             download_name=zip_name,
         )
+        response.headers['X-Export-Mode'] = mode
+        response.headers['X-Export-Requested'] = str(len(file_ids))
+        response.headers['X-Export-Included'] = str(included)
+        response.headers['X-Export-Skipped'] = str(len(skipped))
+        response.headers['X-Export-Named-Template'] = 'true' if naming_template else 'false'
+        return response
 
     except ValueError as validation_error:
         return jsonify({'success': False, 'error': str(validation_error)}), 400
@@ -1403,6 +1450,130 @@ def export_selected_first_pages():
 
 
 @limiter.limit(INTERACTIVE_READ_LIMIT)
+@files_bp.route('/api/files/excerpt/export', methods=['POST'])
+def export_excerpt():
+    """Export a small provenance record for one piece of text the Content
+    Viewer already has on screen - either a manual text selection, or the
+    context a search already matched on.
+
+    Document identity (name, source, side) is never taken from the client -
+    it is looked up here from the same ``paths``/``hash_contexts`` row every
+    other file view reads from, so an export can never claim to be "from"
+    a document it did not actually come from. The excerpt text itself *is*
+    accepted from the client because it is a substring the client is
+    already displaying (server-provided content the operator selected, or a
+    match line the server's own search already returned) - this endpoint
+    does not run a second search or re-extract anything.
+
+    No page or section number is invented: this application does not track
+    page/section boundaries for extracted text, so none is included.
+    """
+    from datetime import datetime
+    from io import BytesIO
+    from flask import Response, send_file
+
+    try:
+        payload = request.get_json(silent=True) or {}
+
+        try:
+            file_id = int(payload.get('file_id'))
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'error': 'file_id is required and must be numeric'}), 400
+
+        kind = str(payload.get('kind') or 'selection').strip().lower()
+        if kind not in {'selection', 'search_match'}:
+            return jsonify({'success': False, 'error': "kind must be 'selection' or 'search_match'"}), 400
+
+        export_format = str(payload.get('format') or 'txt').lower()
+        if export_format not in {'txt', 'docx'}:
+            return jsonify({'success': False, 'error': 'format must be txt or docx'}), 400
+
+        text = str(payload.get('text') or '').strip()
+        if not text:
+            return jsonify({'success': False, 'error': 'text is required and cannot be empty'}), 400
+        if len(text) > 20000:
+            return jsonify({'success': False, 'error': 'text exceeds the 20,000 character limit for one excerpt export'}), 400
+
+        query = str(payload.get('query') or '').strip()
+        if kind == 'search_match' and not query:
+            return jsonify({'success': False, 'error': "query is required when kind is 'search_match'"}), 400
+
+        row = execute_query(
+            """
+            SELECT p.id, p.file_name, COALESCE(s.name, 'Unknown') AS source_name,
+                   COALESCE(si.name, 'Unknown') AS side_name
+            FROM paths p
+            LEFT JOIN hash_contexts hc ON p.context_id = hc.id
+            LEFT JOIN sources s ON hc.source_id = s.id
+            LEFT JOIN sides si ON hc.side_id = si.id
+            WHERE p.id = %s
+            """,
+            (file_id,), fetch='one')
+        if not row:
+            return jsonify({'success': False, 'error': 'No stored document with that id.'}), 404
+        _, file_name, source_name, side_name = row
+        file_name = file_name or f'file_{file_id}'
+
+        exported_at = datetime.now().isoformat(timespec='seconds')
+        stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        label = 'Search Match' if kind == 'search_match' else 'Selected Text'
+        fallback = f"{'search_match' if kind == 'search_match' else 'selected_text'}_{file_id}_{stamp}"
+        requested_name = payload.get('filename')
+
+        fields = [
+            ('Source Document', file_name),
+            ('File ID', str(file_id)),
+            ('Source', source_name or 'Unknown'),
+            ('Side', side_name or 'Unknown'),
+            ('Exported', exported_at),
+        ]
+        if kind == 'search_match':
+            fields.append(('Search Query', query))
+        # Page/section are deliberately never added: this application does
+        # not record page or section boundaries for extracted text.
+
+        if export_format == 'txt':
+            lines = [f'{label} Export', '=' * (len(label) + 7), '']
+            lines += [f'{k}: {v}' for k, v in fields]
+            lines += ['', f"{'Matched Text' if kind == 'search_match' else 'Selected Text'}:", '-' * 40, text]
+            body = '\n'.join(lines)
+            filename = _export_basename(requested_name, fallback, 'txt')
+            response = Response(body.encode('utf-8'), mimetype='text/plain; charset=utf-8')
+            response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response.headers['X-Export-Kind'] = kind
+            return response
+
+        try:
+            from docx import Document
+        except ImportError:
+            return jsonify({'success': False, 'error': 'DOCX export is unavailable on this server'}), 503
+        document = Document()
+        document.add_heading(f'{label} Export', level=1)
+        for k, v in fields:
+            paragraph = document.add_paragraph()
+            run = paragraph.add_run(f'{k}: ')
+            run.bold = True
+            paragraph.add_run(str(v))
+        document.add_heading('Matched Text' if kind == 'search_match' else 'Selected Text', level=2)
+        document.add_paragraph(text)
+        buffer = BytesIO()
+        document.save(buffer)
+        buffer.seek(0)
+        filename = _export_basename(requested_name, fallback, 'docx')
+        response = send_file(
+            buffer,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=True,
+            download_name=filename,
+        )
+        response.headers['X-Export-Kind'] = kind
+        return response
+    except Exception as e:
+        logger.error('Excerpt export failed: %s', e, exc_info=True)
+        return client_error(e, subsystem='Api.blueprints.files', success_key='success', status=500)
+
+
+@limiter.limit(INTERACTIVE_READ_LIMIT)
 @files_bp.route('/api/files/extract-contacts/export', methods=['POST'])
 def export_selected_contacts():
     """Extract unique email addresses and URLs from selected indexed files."""
@@ -1420,11 +1591,14 @@ def export_selected_contacts():
             payload = request.get_json(silent=True) or {}
             export_format = str(payload.get('format') or 'csv').lower()
             requested_name = payload.get('filename')
+            dedupe_raw = payload.get('dedupe')
         else:
             export_format = str(request.form.get('format') or 'csv').lower()
             requested_name = request.form.get('filename')
+            dedupe_raw = request.form.get('dedupe')
         if export_format not in {'csv', 'xlsx'}:
             return jsonify({'success': False, 'error': 'format must be csv or xlsx'}), 400
+        dedupe = str(dedupe_raw).strip().lower() in {'1', 'true', 'yes', 'on'} if dedupe_raw is not None else False
 
         placeholders = ','.join(['%s'] * len(file_ids))
         rows = execute_query(
@@ -1463,17 +1637,58 @@ def export_selected_contacts():
                 'unavailable_file_ids': unavailable_ids,
             }), 422
 
-        columns = ('file_id', 'file_name', 'kind', 'value', 'occurrences', 'location', 'first_line', 'context')
-        safe_occurrences = [
-            {
-                column: spreadsheet_safe_text(item.get(column, ''))
-                if isinstance(item.get(column, ''), str) else item.get(column, '')
-                for column in columns
-            }
-            for item in occurrences
-        ]
+        if dedupe:
+            # Collapse to one row per unique (kind, value) across every
+            # selected file, instead of one row per file the value appears
+            # in. Nothing here re-derives the extraction itself - it only
+            # groups the same rows the non-deduped export would produce, so
+            # the numbers still trace back to the same per-file occurrences.
+            columns = ('kind', 'value', 'total_occurrences', 'file_count', 'file_names', 'context')
+            grouped = {}
+            order = []
+            for item in occurrences:
+                key = (item['kind'], item['value'].casefold())
+                entry = grouped.get(key)
+                if entry is None:
+                    entry = {
+                        'kind': item['kind'], 'value': item['value'],
+                        'total_occurrences': 0, 'file_names': [], 'context': item.get('context', ''),
+                    }
+                    grouped[key] = entry
+                    order.append(key)
+                entry['total_occurrences'] += item.get('occurrences', 0) or 0
+                if item['file_name'] not in entry['file_names']:
+                    entry['file_names'].append(item['file_name'])
+            merged = []
+            for key in order:
+                entry = grouped[key]
+                merged.append({
+                    'kind': entry['kind'], 'value': entry['value'],
+                    'total_occurrences': entry['total_occurrences'],
+                    'file_count': len(entry['file_names']),
+                    'file_names': '; '.join(entry['file_names']),
+                    'context': entry['context'],
+                })
+            safe_occurrences = [
+                {
+                    column: spreadsheet_safe_text(item.get(column, ''))
+                    if isinstance(item.get(column, ''), str) else item.get(column, '')
+                    for column in columns
+                }
+                for item in merged
+            ]
+        else:
+            columns = ('file_id', 'file_name', 'kind', 'value', 'occurrences', 'location', 'first_line', 'context')
+            safe_occurrences = [
+                {
+                    column: spreadsheet_safe_text(item.get(column, ''))
+                    if isinstance(item.get(column, ''), str) else item.get(column, '')
+                    for column in columns
+                }
+                for item in occurrences
+            ]
         stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        fallback = f'extracted_emails_and_links_{stamp}'
+        fallback = ('unique_emails_and_links_' if dedupe else 'extracted_emails_and_links_') + stamp
         if export_format == 'csv':
             output = StringIO(newline='')
             writer = csv.DictWriter(output, fieldnames=columns, extrasaction='ignore')
@@ -1482,9 +1697,10 @@ def export_selected_contacts():
             filename = _export_basename(requested_name, fallback, 'csv')
             response = Response(output.getvalue().encode('utf-8-sig'), mimetype='text/csv; charset=utf-8')
             response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-            response.headers['X-Export-Entities'] = str(len(occurrences))
+            response.headers['X-Export-Entities'] = str(len(safe_occurrences))
             response.headers['X-Export-Documents'] = str(len(file_ids))
             response.headers['X-Export-Empty'] = 'true' if not occurrences else 'false'
+            response.headers['X-Export-Dedupe'] = 'true' if dedupe else 'false'
             return response
 
         try:
@@ -1506,9 +1722,10 @@ def export_selected_contacts():
             as_attachment=True,
             download_name=filename,
         )
-        response.headers['X-Export-Entities'] = str(len(occurrences))
+        response.headers['X-Export-Entities'] = str(len(safe_occurrences))
         response.headers['X-Export-Documents'] = str(len(file_ids))
         response.headers['X-Export-Empty'] = 'true' if not occurrences else 'false'
+        response.headers['X-Export-Dedupe'] = 'true' if dedupe else 'false'
         return response
     except ValueError as validation_error:
         return jsonify({'success': False, 'error': str(validation_error)}), 400

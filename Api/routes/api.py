@@ -17,6 +17,7 @@ import logging
 
 from Api.utils import get_processing_statistics, get_statistics
 from Api.services import lineage_service
+from Api.services.analyst_categories import AnalystCategoryService
 from core.errors import client_error
 from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
 from database import (
@@ -1746,7 +1747,30 @@ def register_api_routes(app):
                 'error_message': row['error_message'],
                 'lineage': lineage
             }
-            
+
+            # Analyst classification (separate namespace from smart
+            # `categories` above - Api/services/analyst_categories.py). Reuses
+            # the existing service exactly as the search-result decoration
+            # path does (AnalystCategoryService.attach_categories_to_results),
+            # so the file-detail view and search results never disagree.
+            try:
+                details['analyst_categories'] = (
+                    AnalystCategoryService.categories_for_files([file_id]).get(file_id, [])
+                )
+            except Exception as e:
+                logger.warning(f"Error loading analyst categories for file_id={file_id}: {e}")
+                details['analyst_categories'] = []
+
+            # Per-assignment detail (who/when/originating query) for the
+            # Analyst Classification section (FR-1.5 traceability) - the
+            # category list above only carries id/name/color.
+            try:
+                assignments, _ = AnalystCategoryService.list_assignments(file_id=file_id, limit=50)
+                details['analyst_assignments'] = assignments
+            except Exception as e:
+                logger.warning(f"Error loading analyst assignments for file_id={file_id}: {e}")
+                details['analyst_assignments'] = []
+
             return jsonify({'success': True, 'details': details})
         except Exception as e:
             logger.error(f"Error fetching file details: {e}")

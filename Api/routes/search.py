@@ -873,7 +873,29 @@ def register_search_routes(app):
             return client_error(e, subsystem='Api.routes.search', status=500)
     
     # ==================== EXPORT SEARCH RESULTS ====================
-    
+
+    @app.route('/api/search/export/columns', methods=['GET'])
+    def api_export_search_columns():
+        """The columns a search/database export can publish, in order.
+
+        One source of truth for the column picker: the UI builds its list
+        from this instead of keeping its own copy that could drift from what
+        the server actually writes into the file.
+        """
+        from Api.services import search_export
+
+        return jsonify({
+            'success': True,
+            'columns': [
+                {
+                    'key': column,
+                    'label': search_export.COLUMN_LABELS.get(column, column),
+                    'default': column in search_export.DEFAULT_COLUMNS,
+                }
+                for column in search_export.COLUMNS
+            ],
+        })
+
     @app.route('/api/search/export', methods=['POST'])
     @limiter.limit("6 per minute")
     def api_export_search_results():
