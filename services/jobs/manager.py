@@ -201,26 +201,32 @@ class JobManager:
                 self._active.pop(job_id, None)
 
     def _wait_for_slot(self, job_id: str) -> None:
+        """Block this worker thread until a concurrency slot is free.
+
+        Bug fix: this used to also track ``self._active`` (populated at
+        *thread creation* time, before the thread has done anything) and
+        treat "my own thread is alive" as "a slot is occupied". Since every
+        job's thread is inserted into ``self._active`` immediately in
+        ``create_job`` -- before ``_wait_for_slot`` even runs -- submitting
+        more than ``max_concurrent_jobs`` jobs within a short window made
+        every thread past the limit see all of its *equally-still-waiting*
+        siblings as "running" and sleep forever waiting for a slot that can
+        never free (none of them ever reach ``_execute`` to finish and
+        release it). The only correct source of truth for "how many jobs
+        are actually running" is the persisted job status in the database,
+        set by ``_execute`` -- so gate purely on that.
+        """
         max_jobs = JobsConfig.max_concurrent_jobs()
         while True:
+            current = self.repo.get(job_id)
+            if current is None:
+                return
+            if current["status"] == job_state.CANCELLED:
+                return
             active = self.repo.count_by_status().get(job_state.RUNNING, 0)
-            running_ids = {
-                jid for jid, info in list(self._active.items())
-                if info["thread"].is_alive()
-            }
-            mine_is_running = job_id in running_ids
-            if mine_is_running and len(running_ids) > max_jobs:
-                # Another job grabbed the last slot; yield until a slot frees.
-                time.sleep(0.5)
-                continue
-            if active >= max_jobs and not mine_is_running:
-                time.sleep(0.5)
-                if self.repo.get(job_id) is None:
-                    return
-                if self.repo.get(job_id)["status"] == job_state.CANCELLED:
-                    return
-                continue
-            return
+            if active < max_jobs:
+                return
+            time.sleep(0.5)
 
     def _execute(self, record: Dict[str, Any], starter) -> None:
         job_id = record["job_id"]
