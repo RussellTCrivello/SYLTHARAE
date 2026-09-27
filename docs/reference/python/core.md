@@ -619,6 +619,7 @@ System Initialization Module
 
 Shared installation services — single source of truth for all setup operations.
 
+- `pg_probe_target() -> Dict[str, Any]` - The PostgreSQL endpoint the prerequisite probe should try.
 - `check_system() -> Dict[str, Any]` - Return a dict of system prerequisite results.
 - `test_database_connection(host: str = 'localhost', port: int = 5432, user: str = 'postgres', password: str = '', database: str = 'analysis') -> Dict[str, Any]` - Test PostgreSQL connectivity and return structured result.
 - `write_env_file(config: Dict[str, str], project_root: Optional[Path] = None) -> Path` - Write a .env file from a flat config dict. Returns the path written.
