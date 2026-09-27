@@ -327,7 +327,11 @@ class Acceptance:
             except EOFError:
                 time.sleep(30)
         if restart_command:
-            subprocess.run(restart_command, shell=True, check=False)
+            # The operator's own --restart-command string; a full command
+            # line is the documented interface (see
+            # docs/windows/OFFLINE_VALIDATION.md) and the operator already
+            # controls this machine, so no privilege is gained here.
+            subprocess.run(restart_command, shell=True, check=False)  # nosec B602 - operator-provided command
             time.sleep(5)
 
         self.check(10, "restart (application answers /health again)",

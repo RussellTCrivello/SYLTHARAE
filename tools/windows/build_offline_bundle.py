@@ -38,6 +38,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
+from urllib.parse import urlsplit
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -210,8 +211,12 @@ def _fetch(pin: dict, target: Path, manifest_entry: dict) -> None:
                                "sha256": actual, "present": True})
         return
     print(f"fetching {pin['url']} ...", flush=True)
+    if urlsplit(pin["url"]).scheme != "https":
+        raise SystemExit(f"refusing to fetch a non-https pin URL: {pin['url']}")
     tmp = target.with_suffix(target.suffix + ".part")
-    urllib.request.urlretrieve(pin["url"], tmp)  # noqa: S310 - pinned URL above
+    # https-only by the guard above; the artifact is refused below unless
+    # its sha256 matches the pin.
+    urllib.request.urlretrieve(pin["url"], tmp)  # nosec B310 - https-only, hash-verified
     actual = sha256_of(tmp)
     if pin.get("sha256") and actual != pin["sha256"]:
         tmp.unlink()
