@@ -496,7 +496,20 @@ def get_categories_for_dropdown():
         return []
 
 def get_statistics_query():
-    """Get general statistics including file counts, word counts, and status breakdown"""
+    """Get general statistics including file counts, word counts, and status breakdown
+
+    PERF (req #17): this used to be 7 sequential `cur.execute()` round trips
+    on one connection (paths count, words count, status GROUP BY, distinct
+    file_type count, storage sum, categorys count, keywords count) plus an
+    8th for pg_database_size. Each round trip pays full network/protocol
+    latency even reusing the same connection, and this function is called
+    on every /api/dashboard/stats and /api/analytics/dashboard-summary
+    request. The first six numbers are independent scalar aggregates over
+    two small tables (`paths`, plus one-row COUNTs on `words`/`categorys`/
+    `keywords`) and are now fetched in a single round trip via scalar
+    subqueries; only the status breakdown (a GROUP BY, not a scalar) and
+    the Postgres-specific pg_database_size() call remain separate.
+    """
     try:
         import logging
         logger = logging.getLogger(__name__)
@@ -506,16 +519,19 @@ def get_statistics_query():
         
         with db_hub.get_connection() as conn:
             cur = conn.cursor()
-            
-            # Get total files count
-            cur.execute("SELECT COUNT(*) FROM paths")
-            total_files = cur.fetchone()[0] or 0
-            
-            # Get total words count
-            cur.execute("SELECT COUNT(DISTINCT id) FROM words")
-            total_words = cur.fetchone()[0] or 0
-            
-            # Get file status breakdown
+
+            cur.execute("""
+                SELECT
+                    (SELECT COUNT(*) FROM paths) AS total_files,
+                    (SELECT COUNT(DISTINCT id) FROM words) AS total_words,
+                    (SELECT COUNT(DISTINCT file_type) FROM paths WHERE file_type IS NOT NULL) AS unique_file_types,
+                    (SELECT COALESCE(SUM(file_size), 0) FROM paths) AS total_storage_bytes,
+                    (SELECT COUNT(*) FROM categorys) AS total_categories,
+                    (SELECT COUNT(*) FROM keywords) AS total_keywords
+            """)
+            total_files, total_words, unique_file_types, total_storage_bytes, total_categories, total_keywords = cur.fetchone()
+
+            # Get file status breakdown (a GROUP BY, not a scalar -- kept separate)
             cur.execute("""
                 SELECT file_status, COUNT(*) 
                 FROM paths 
@@ -523,25 +539,6 @@ def get_statistics_query():
             """)
             status_results = cur.fetchall()
             status_dict = {row[0]: row[1] for row in status_results} if status_results else {}
-            
-            # Get unique file types count
-            cur.execute("SELECT COUNT(DISTINCT file_type) FROM paths WHERE file_type IS NOT NULL")
-            unique_file_types = cur.fetchone()[0] or 0
-            
-            # Get total storage bytes
-            cur.execute("SELECT COALESCE(SUM(file_size), 0) FROM paths")
-            total_storage_bytes = cur.fetchone()[0] or 0
-            
-            # Get total categories count
-            # DB-AUDIT: the dashboard template and /api/dashboard/stats both read
-            # 'total_categories'/'total_keywords', but this dict never provided
-            # them, so those KPI cards were hard-wired to 0.
-            cur.execute("SELECT COUNT(*) FROM categorys")
-            total_categories = cur.fetchone()[0] or 0
-
-            # Get total keywords count
-            cur.execute("SELECT COUNT(*) FROM keywords")
-            total_keywords = cur.fetchone()[0] or 0
 
             # Get database size (PostgreSQL)
             try:
@@ -576,6 +573,7 @@ def get_statistics_query():
             'database_size_bytes': 0,
             'status': {}
         }
+
 
 def get_processing_statistics_query():
     """Get processing statistics by file type"""
