@@ -46,6 +46,34 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # ────────────────────────────────────────────────────────────────────
 # System prerequisite checks
 # ────────────────────────────────────────────────────────────────────
+def pg_probe_target() -> Dict[str, Any]:
+    """The PostgreSQL endpoint the prerequisite probe should try.
+
+    The conventional default is ``localhost:5432``. When the application is
+    already configured — environment or ``.env``, as written by the setup
+    wizard, ``install.py`` or the offline Windows installer — the configured
+    endpoint wins: the bundled private cluster may live on a socket directory
+    (``DB_HOST=/data/pgdata``) or on a port other than 5432, and a healthy
+    bundled database must not be reported as missing.
+    """
+    values: Dict[str, str] = {}
+    try:  # python-dotenv is a runtime dependency, but the check must not fail over it
+        from dotenv import dotenv_values
+
+        env_file = Path(__file__).resolve().parent.parent / ".env"
+        if env_file.exists():
+            values = {k: v for k, v in dotenv_values(env_file).items() if v}
+    except Exception:  # pragma: no cover - dotenv missing or unreadable
+        values = {}
+    host = os.environ.get("DB_HOST") or values.get("DB_HOST") or "localhost"
+    port_raw = os.environ.get("DB_PORT") or values.get("DB_PORT") or "5432"
+    try:
+        port = int(port_raw)
+    except (TypeError, ValueError):
+        port = 5432
+    return {"host": host, "port": port}
+
+
 def check_system() -> Dict[str, Any]:
     """Return a dict of system prerequisite results.
 
@@ -97,13 +125,14 @@ def check_system() -> Dict[str, Any]:
         "message": "" if not missing else f"Missing: {', '.join(missing)}",
     }
 
-    # PostgreSQL probe (just check if port responds)
+    # PostgreSQL probe (just check if the configured endpoint responds)
     pg_ok = False
     pg_msg = ""
     try:
         import psycopg2
+        target = pg_probe_target()
         probe = psycopg2.connect(
-            host="localhost", port=5432, user="postgres",
+            host=target["host"], port=target["port"], user="postgres",
             password="", dbname="postgres", connect_timeout=3,
         )
         probe.close()

@@ -191,13 +191,11 @@
         <div class="action-bar">
             <div class="action-group">
                 <span class="action-label">{{ _('Selection:') }}</span>
-                <button class="btn-action" data-on-click="selectAllFiles()">
-                    <i class="bi bi-check-square"></i>
-                    {{ _('Select All') }}
-                </button>
-                <button class="btn-action" data-on-click="deselectAllFiles()">
-                    <i class="bi bi-square"></i>
-                    {{ _('Select None') }}
+                <button class="btn-action btn-select-toggle" id="selectToggleBtn" type="button"
+                        data-on-click="toggleAllFilesSelection()" aria-pressed="false">
+                    <i class="bi bi-check-square-fill select-toggle-icon" aria-hidden="true"></i>
+                    <span class="select-toggle-label">{{ _('Select All') }}</span>
+                    <span class="select-toggle-count" id="selectToggleCount" hidden>0</span>
                 </button>
             </div>
             <div class="action-group">
@@ -450,6 +448,8 @@
 {% block extra_js %}
 <script type="application/json" id="files-list-page-data">{{ {
     "translations": {
+        "selectAll": _('Select All'),
+        "deselectAll": _('Select None'),
         "pleaseSelectFilesToAnalyze": _('Please select files to analyze'),
         "analysisStartedFor": _('Analysis started for'),
         "files": _('files'),

@@ -11,6 +11,7 @@ Start with the task you have.
 | [CONFIGURATION.md](CONFIGURATION.md) | Every environment variable the code reads, with defaults; runtime settings; reserved variables |
 | [SECURITY.md](SECURITY.md) | Threat model, authentication and roles, request protections, file and archive safety, deployment checklist, reporting |
 | [LICENSING.md](LICENSING.md) | The AGPL-3.0-or-later licence, the section 13 source link (`SOURCE_CODE_URL`), third-party notices, the dependency licence check |
+| [windows/README.md](windows/README.md) | Native Windows fully offline deployment: requirements, install, operations, database, OCR, backups/upgrades, offline validation and release gate, dependency inventory |
 
 ## Understand the system
 

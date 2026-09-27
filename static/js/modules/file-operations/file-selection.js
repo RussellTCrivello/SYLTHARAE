@@ -6,11 +6,27 @@
 import { exportSelectedFiles as exportFiles } from './file-export.js';
 
 /**
+ * The checkboxes whose checked state means "this file is selected".
+ * One definition for select-all, deselect-all, the count and the toggle
+ * button, so they can never disagree about what is selected.
+ */
+const FILE_CHECKBOX_SELECTOR =
+    '.file-checkbox, .file-select-checkbox, .file-row-item input[type="checkbox"]';
+
+/**
+ * The same checkboxes, qualified with :checked per part. A selector list
+ * cannot be suffixed as a whole ("a, b:checked" leaves "a" unchecked-filtered),
+ * so the checked form is spelled out.
+ */
+const FILE_CHECKBOX_CHECKED_SELECTOR =
+    '.file-checkbox:checked, .file-select-checkbox:checked, .file-row-item input[type="checkbox"]:checked';
+
+/**
  * Select all files
  */
 export function selectAllFiles() {
     // Support both .file-checkbox and .file-select-checkbox for compatibility
-    const checkboxes = document.querySelectorAll('.file-checkbox, .file-select-checkbox, .file-row-item input[type="checkbox"]');
+    const checkboxes = document.querySelectorAll(FILE_CHECKBOX_SELECTOR);
     checkboxes.forEach(checkbox => {
         checkbox.checked = true;
     });
@@ -22,11 +38,61 @@ export function selectAllFiles() {
  */
 export function deselectAllFiles() {
     // Support both .file-checkbox and .file-select-checkbox for compatibility
-    const checkboxes = document.querySelectorAll('.file-checkbox, .file-select-checkbox, .file-row-item input[type="checkbox"]');
+    const checkboxes = document.querySelectorAll(FILE_CHECKBOX_SELECTOR);
     checkboxes.forEach(checkbox => {
         checkbox.checked = false;
     });
     updateSelectedCount();
+}
+
+/**
+ * The one select/deselect control: selects every file when nothing is
+ * selected, clears the selection otherwise (it replaces the former
+ * Select All / Select None button pair). The visual state - label, icon,
+ * pressed flag, count - follows the selection through updateSelectToggle().
+ */
+export function toggleAllFilesSelection() {
+    const anySelected =
+        document.querySelectorAll(FILE_CHECKBOX_CHECKED_SELECTOR).length > 0;
+    if (anySelected) {
+        deselectAllFiles();
+    } else {
+        selectAllFiles();
+    }
+}
+
+/**
+ * Sync the single select/deselect toggle button with the current selection:
+ * its label and icon come from the page translations (with the same English
+ * fallbacks the rest of the module uses), aria-pressed says whether a
+ * selection is active, and the count badge shows how many files are selected.
+ */
+export function updateSelectToggle() {
+    const button = document.getElementById('selectToggleBtn');
+    if (!button) {
+        return;
+    }
+    const selected =
+        document.querySelectorAll(FILE_CHECKBOX_CHECKED_SELECTOR).length;
+    const active = selected > 0;
+    const words = (typeof window !== 'undefined' && window.translations) || {};
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    button.classList.toggle('is-selected', active);
+    const label = button.querySelector('.select-toggle-label');
+    if (label) {
+        label.textContent = active
+            ? (words.deselectAll || 'Select None')
+            : (words.selectAll || 'Select All');
+    }
+    const icon = button.querySelector('.select-toggle-icon');
+    if (icon) {
+        icon.className = `bi ${active ? 'bi-dash-square-fill' : 'bi-check-square-fill'} select-toggle-icon`;
+    }
+    const count = document.getElementById('selectToggleCount');
+    if (count) {
+        count.textContent = String(selected);
+        count.hidden = !active;
+    }
 }
 
 /**
@@ -157,6 +223,9 @@ function updateSelectedCount() {
     countElements.forEach(el => {
         el.textContent = `${selectedCount} / ${totalCount}`;
     });
+
+    // The select/deselect toggle always shows the current selection.
+    updateSelectToggle();
 }
 
 /**
@@ -165,7 +234,8 @@ function updateSelectedCount() {
 export function initializeFileSelection() {
     // Add change handlers to checkboxes
     document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('file-checkbox')) {
+        if (e.target.classList.contains('file-checkbox')
+                || e.target.classList.contains('file-select-checkbox')) {
             updateSelectedCount();
         }
     });
