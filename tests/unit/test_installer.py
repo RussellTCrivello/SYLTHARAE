@@ -259,3 +259,43 @@ class TestSharedInstallerWriteEnv:
 
         _load_dotenv_file(tmp_path)
         assert os.environ["DB_PASSWORD"] == "from-environment"
+
+
+class TestPgProbeTarget:
+    """The prerequisite probe must try the configured endpoint, not a
+    hardcoded localhost:5432 — the bundled private cluster lives on a
+    socket directory or a dynamic port (READY-SCHEMA-02, Windows kit)."""
+
+    def test_defaults_to_localhost_5432(self, monkeypatch, tmp_path):
+        monkeypatch.delenv("DB_HOST", raising=False)
+        monkeypatch.delenv("DB_PORT", raising=False)
+        from core.installer import pg_probe_target
+        with mock.patch("core.installer.Path") as path_mock:
+            path_mock.return_value.resolve.return_value.parent.parent = tmp_path
+            # no .env in tmp_path
+            assert pg_probe_target() == {"host": "localhost", "port": 5432}
+
+    def test_environment_overrides(self, monkeypatch):
+        monkeypatch.setenv("DB_HOST", "127.0.0.1")
+        monkeypatch.setenv("DB_PORT", "5433")
+        from core.installer import pg_probe_target
+        with mock.patch.object(Path, "exists", return_value=False):
+            assert pg_probe_target() == {"host": "127.0.0.1", "port": 5433}
+
+    def test_dotenv_fallback_with_socket_host(self, monkeypatch, tmp_path):
+        monkeypatch.delenv("DB_HOST", raising=False)
+        monkeypatch.delenv("DB_PORT", raising=False)
+        (tmp_path / ".env").write_text(
+            "DB_HOST=/srv/syltharae/pgdata\nDB_PORT=5432\n", encoding="utf-8")
+        import core.installer as installer
+        with mock.patch.object(installer.Path, "resolve") as resolve_mock:
+            resolve_mock.return_value.parent.parent = tmp_path
+            assert installer.pg_probe_target() == {
+                "host": "/srv/syltharae/pgdata", "port": 5432}
+
+    def test_a_broken_port_falls_back_to_5432(self, monkeypatch):
+        monkeypatch.setenv("DB_HOST", "db.internal")
+        monkeypatch.setenv("DB_PORT", "not-a-port")
+        from core.installer import pg_probe_target
+        with mock.patch.object(Path, "exists", return_value=False):
+            assert pg_probe_target() == {"host": "db.internal", "port": 5432}
