@@ -15,7 +15,7 @@ from Api.utils import (
 from datetime import date, datetime, timedelta
 import logging
 
-from Api.utils import get_processing_statistics, get_statistics
+from Api.utils import get_processing_statistics, get_statistics, get_format_overview
 from Api.services import lineage_service
 from Api.services.analyst_categories import AnalystCategoryService
 from core.errors import client_error
@@ -55,6 +55,30 @@ def register_api_routes(app):
             logger.error(f"Dashboard stats API error: {e}")
             return client_error(e, subsystem='Api.routes.api', success_key='success', status=500)
     
+    @app.route('/api/formats/overview')
+    def api_formats_overview():
+        """Format Browser: per-extension aggregate statistics.
+
+        Reuses the same paths/hash_contexts/hashs tables and duplicate/
+        categorization definitions already authoritative elsewhere in the
+        app (see database.get_format_overview_query docstring) -- this is
+        the one new read-only aggregate the Format Browser needed that
+        neither /api/dashboard/stats nor /api/analytics/file-type-distribution
+        already exposed (source/side counts, categorized counts, duplicate
+        counts, size range, date range, per format).
+        """
+        try:
+            data = get_format_overview()
+            response = make_response(jsonify({
+                'success': True,
+                'timestamp': datetime.now().isoformat(),
+                **data,
+            }))
+            return response
+        except Exception as e:
+            logger.error(f"Format overview API error: {e}")
+            return client_error(e, subsystem='Api.routes.api', success_key='success', status=500)
+
     @app.route('/api/sources', methods=['GET', 'POST'])
     def api_sources():
         """API: Get all sources or create a new source"""

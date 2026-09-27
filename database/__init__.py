@@ -666,6 +666,131 @@ def get_processing_statistics_query():
             'unprocessed_count': 0
         }
 
+def get_format_overview_query():
+    """Get per-format (file extension) aggregate statistics for the Format
+    Browser (Layer 8 follow-on feature).
+
+    This is a genuine extension of the existing statistics layer, not a
+    parallel one: it groups the same `paths`/`hash_contexts`/`hashs` tables
+    already used by `get_processing_statistics_query()`, `get_statistics_query()`
+    and the search/duplicate-hiding logic in `Api/services/search_service.py`,
+    adding only the aggregates those two callers don't already expose
+    (source/side counts, analyst-categorization counts, duplicate counts,
+    size range, date range). No new tables, no new identity relationships,
+    no client-side aggregation of raw rows.
+
+    Processing-state buckets reuse the exact `paths.processing_status`
+    check-constraint vocabulary (see migration `m0011_content_identity.py` /
+    `m0013_relationship_deduplication.py` — CHECK ... ANY (ARRAY['discovered',
+    'queued','processing','processed','partially_processed','failed',
+    'unsupported','skipped','retrying'])) rather than inventing new labels:
+      processed   -> 'processed'
+      pending     -> 'discovered','queued','processing','retrying'
+      failed      -> 'failed'
+      unsupported -> 'unsupported','skipped','partially_processed'
+
+    Duplicate policy matches the one real definition already used to power
+    `hide_duplicates` in `Api/services/search_service.py`: exact content
+    identity is the indexed `hashs.hash` value. `duplicate_count` for a
+    format is "how many of this format's paths are extra copies beyond one
+    representative per unique hash" (COUNT(*) - COUNT(DISTINCT hash)).
+    """
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+
+        db_hub = DatabaseHub()
+
+        query = """
+            WITH categorized_paths AS (
+                SELECT DISTINCT path_id FROM analyst_file_categories
+            ),
+            path_base AS (
+                SELECT
+                    p.id,
+                    p.file_type,
+                    p.file_size,
+                    p.file_date,
+                    p.processing_status,
+                    hc.source_id,
+                    hc.side_id,
+                    h.hash,
+                    (cp.path_id IS NOT NULL) AS is_categorized
+                FROM paths p
+                JOIN hash_contexts hc ON p.context_id = hc.id
+                LEFT JOIN hashs h ON hc.hash_id = h.id
+                LEFT JOIN categorized_paths cp ON cp.path_id = p.id
+            )
+            SELECT
+                COALESCE(file_type, 'Unknown') AS extension,
+                COUNT(*) AS count,
+                COALESCE(SUM(file_size), 0) AS total_size,
+                COALESCE(AVG(file_size), 0) AS avg_size,
+                COALESCE(MIN(file_size), 0) AS min_size,
+                COALESCE(MAX(file_size), 0) AS max_size,
+                MIN(file_date) AS earliest_date,
+                MAX(file_date) AS latest_date,
+                COUNT(*) FILTER (WHERE processing_status = 'processed') AS processed,
+                COUNT(*) FILTER (WHERE processing_status IN ('discovered', 'queued', 'processing', 'retrying')) AS pending,
+                COUNT(*) FILTER (WHERE processing_status = 'failed') AS failed,
+                COUNT(*) FILTER (WHERE processing_status IN ('unsupported', 'skipped', 'partially_processed')) AS unsupported,
+                COUNT(DISTINCT source_id) AS source_count,
+                COUNT(DISTINCT side_id) AS side_count,
+                COUNT(*) FILTER (WHERE is_categorized) AS categorized_count,
+                COUNT(*) FILTER (WHERE NOT is_categorized) AS uncategorized_count,
+                GREATEST(COUNT(*) - COUNT(DISTINCT hash), 0) AS duplicate_count
+            FROM path_base
+            GROUP BY file_type
+            ORDER BY count DESC
+        """
+
+        with db_hub.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(query)
+            results = cur.fetchall()
+            cur.close()
+
+        formats = []
+        total_count = 0
+        total_size = 0
+        if results:
+            for row in results:
+                entry = {
+                    'extension': row[0] or 'Unknown',
+                    'count': row[1] or 0,
+                    'total_size': row[2] or 0,
+                    'avg_size': float(row[3] or 0),
+                    'min_size': row[4] or 0,
+                    'max_size': row[5] or 0,
+                    'earliest_date': str(row[6]) if row[6] else None,
+                    'latest_date': str(row[7]) if row[7] else None,
+                    'processed': row[8] or 0,
+                    'pending': row[9] or 0,
+                    'failed': row[10] or 0,
+                    'unsupported': row[11] or 0,
+                    'source_count': row[12] or 0,
+                    'side_count': row[13] or 0,
+                    'categorized_count': row[14] or 0,
+                    'uncategorized_count': row[15] or 0,
+                    'duplicate_count': row[16] or 0,
+                }
+                formats.append(entry)
+                total_count += entry['count']
+                total_size += entry['total_size']
+
+        return {
+            'formats': formats,
+            'totals': {
+                'count': total_count,
+                'total_size': total_size,
+            },
+        }
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting format overview statistics: {e}", exc_info=True)
+        return {'formats': [], 'totals': {'count': 0, 'total_size': 0}}
+
 def get_category_statistics_detailed_query():
     """Get detailed category statistics with file counts"""
     try:
@@ -1148,6 +1273,7 @@ __all__ = [
     'get_categories_for_dropdown',
     'get_statistics_query',
     'get_processing_statistics_query',
+    'get_format_overview_query',
     'get_category_statistics_detailed_query',
     'get_period_comparison_query',
     'get_email_words',

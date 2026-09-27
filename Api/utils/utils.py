@@ -14,6 +14,7 @@ from database import (
     get_side, get_side_by_name, list_sides, search_sides, create_side, update_side,
     get_statistics_query,
     get_processing_statistics_query,
+    get_format_overview_query,
     get_category_statistics_detailed_query,
     get_period_comparison_query,
     get_email_words_db,  # Import the actual function that accepts parameters
@@ -776,6 +777,11 @@ def get_category_statistics():
 def get_processing_statistics():
     """Get detailed processing statistics using direct query imports"""
     return get_processing_statistics_query()
+
+
+def get_format_overview():
+    """Get per-format (extension) aggregate statistics for the Format Browser."""
+    return get_format_overview_query()
 
 
 def get_category_statistics_detailed():
