@@ -50,7 +50,7 @@ sudo apt-get install -y python3 python3-venv python3-dev build-essential \
 ```bash
 git clone https://github.com/RussellTCrivello/SYLTHARAE.git
 cd SYLTHARAE
-git checkout v2.1.1        # or the latest release tag
+git checkout v2.2.0        # or the latest release tag
 ```
 
 ## Step 3 - Create a virtual environment
@@ -58,7 +58,7 @@ git checkout v2.1.1        # or the latest release tag
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
-python -m pip install --upgrade pip wheel
+python -m pip install --upgrade pip setuptools wheel
 ```
 
 On Windows `setup.bat` does Steps 3-4 for you: it finds Python (`py -3` or
@@ -98,6 +98,49 @@ Notes:
 * **Headless servers:** if `import rapidocr_onnxruntime` fails with
   `libGL.so.1`, either install `libgl1` or replace the desktop wheel:
   `pip uninstall -y opencv-python && pip install --force-reinstall --no-deps opencv-python-headless`.
+  `pip check` then reports that `rapidocr-onnxruntime requires opencv-python`:
+  expected, since the headless wheel provides the same `cv2` module.
+
+## OCR engines and language packs
+
+Images, scanned PDF pages and images embedded in Office documents are read
+with OCR ([ARCHITECTURE.md §5.1](ARCHITECTURE.md#51-ocr-engine-layer)).
+Ingestion uses the first engine that is available:
+
+| Engine | Installed as | Reads | Notes |
+|---|---|---|---|
+| Tesseract 5.x (preferred) | system package + `pytesseract` (in `requirements.txt`) | the languages whose models are installed; SYLTHARAE requests Hebrew, English and Arabic (`heb`, `eng`, `ara`) | Tested with 5.3.4 (CI: Ubuntu 24.04 packages) and 5.5.1. |
+| RapidOCR (fallback) | `rapidocr-onnxruntime` (in `requirements.txt`, the `ocr` extra) | Latin script and Chinese: **no Hebrew or Arabic** | Used only where no Tesseract binary is found. Needs OpenCV (see the headless note under Step 4). |
+
+With neither, OCR is reported as unavailable (E9), and images are recorded
+with that reason rather than stored as empty.
+
+**Installing Tesseract with the three language packs:**
+
+* Debian/Ubuntu: `sudo apt-get install tesseract-ocr tesseract-ocr-eng tesseract-ocr-heb tesseract-ocr-ara`
+  (the Step 1 command already includes them).
+* Windows: the UB Mannheim installer. Select *Hebrew* and *Arabic* under
+  additional language data. Set `TESSERACT_CMD` to `tesseract.exe` if it is
+  not on `PATH`.
+* Other systems: the distribution's Tesseract 5 package plus its `heb` and
+  `ara` language data (`.traineddata` files in Tesseract's `tessdata`
+  directory).
+
+`tesseract --list-langs` must list `ara`, `eng` and `heb`. A missing
+language is not replaced by English: pages are read with the installed
+ones, an error is logged, and the file records `missing_languages` (E13).
+
+**Check the host.** After installing or upgrading Tesseract or its language
+data, run the OCR self-check:
+
+```bash
+python tools/ci/ocr_selfcheck.py --require tesseract
+```
+
+A good host shows every engine line, `missing: none` and `success` for all
+five samples, and exits 0. [OPERATIONS.md](OPERATIONS.md#ocr-self-check)
+explains each classification and what to do about it. On a host that
+deliberately runs without Tesseract, use `--require rapidocr`.
 
 ## Step 5 - Configure
 
@@ -236,31 +279,23 @@ anonymous browser to the login page, and ingesting a small folder from the
   exposed server - clients could then forge their address.
 * For a closed LAN without TLS, use `FLASK_ENV=staging` and accept that
   session cookies travel in clear text.
-* With more than one server process, point `RATELIMIT_STORAGE_URI` at Redis
-  or Memcached so limits are shared (the default is per-process memory).
+* Run one server process per database (background jobs run inside it), so
+  the default in-memory rate-limit counters are shared by every request.
+  `RATELIMIT_STORAGE_URI` (Redis or Memcached) exists for other layouts.
 * Give the database role only the privileges on its own database, and back
   up both PostgreSQL (`pg_dump`) and `APP_DATA_DIR`. See
   [OPERATIONS.md](OPERATIONS.md).
 
-Example nginx site:
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name syltharae.example.org;
-    ssl_certificate     /etc/ssl/certs/syltharae.pem;
-    ssl_certificate_key /etc/ssl/private/syltharae.key;
-    client_max_body_size 2g;              # match OPERATIONS_MAX_UPLOAD_MB
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_read_timeout 600s;
-    }
-}
-```
+**Reverse proxy and service files ship with the release**:
+[`deploy/nginx/syltharae.conf`](../deploy/nginx/syltharae.conf) (HTTPS with
+HTTP/2, HTTP→HTTPS redirect, the proxy headers the application trusts, 2 GB
+uploads) and [`deploy/systemd/syltharae.service`](../deploy/systemd/syltharae.service).
+Install them as described in
+[OPERATIONS.md](OPERATIONS.md#reverse-proxy-and-tls), then run the
+[deployment verification](OPERATIONS.md#deployment-verification). If you
+write your own proxy configuration, it must *set* `X-Forwarded-For` to
+`$remote_addr`: appending with `$proxy_add_x_forwarded_for` passes on
+whatever address the client claims.
 
 ## Offline installation (air-gapped hosts)
 
@@ -281,7 +316,7 @@ The suite starts its own throw-away PostgreSQL server through `pgserver`, so
 it needs no database configuration:
 
 ```bash
-pip install -e ".[dev]"          # pytest, pgserver, ruff, bandit
+pip install -e ".[dev]"          # pytest, pgserver, pyzipper, ruff, bandit
 python -m pytest tests/unit                  # fast, mostly without a database
 python -m pytest tests/integration tests/security
 ```
@@ -334,7 +369,8 @@ set it (Step 10). Otherwise raise `RATE_LIMIT_PER_MINUTE`/`_PER_HOUR`.
 
 **E9 - OCR unavailable / `libGL.so.1: cannot open shared object file`.**
 Install Tesseract (and set `TESSERACT_CMD`), or fix RapidOCR's OpenCV
-dependency as described under Step 4.
+dependency as described under Step 4. The self-check then reports the engine
+as available ([OCR engines and language packs](#ocr-engines-and-language-packs)).
 
 **E10 - PDF previews or video metadata missing.** Install `pypdf` and
 PyMuPDF (`.[pdf]`) and FFmpeg; `python verify_readiness.py` lists the
@@ -361,3 +397,24 @@ changes nothing - start the server and follow Step 7.
 `libpff-python` is optional (Step 4). For the others use a Python version
 with published wheels (3.10-3.12 are safest on Windows) or install the build
 dependencies (`build-essential`, `libpq-dev`).
+
+**E13 - `Missing Tesseract language data for ...` in the log, or
+`missing_languages` in a file's OCR provenance.** A language pack is not
+installed, so those files were read without it: Hebrew or Arabic text on
+them may be missing or wrong. Install the pack (see
+[OCR engines and language packs](#ocr-engines-and-language-packs)) and run the self-check. Files
+already ingested keep their text: re-submitting an identical file stores
+nothing new, because files are identified by content (REPROCESS-01 in
+[AUDIT_REPORT.md](../AUDIT_REPORT.md)).
+
+**E14 - The self-check reports `invocation_failed`, `no_text` or
+`wrong_text`.** Tesseract is installed, but it fails when run or misreads a
+clean sample. The usual causes are:
+
+* `TESSERACT_CMD` points at another installation;
+* the binary and its `tessdata` directory come from different versions;
+* Tesseract's own `TESSDATA_PREFIX` environment variable points at the
+  wrong directory.
+
+`tesseract --version` and `tesseract --list-langs` show what is found. Then
+see [OPERATIONS.md](OPERATIONS.md#ocr-self-check).

@@ -17,11 +17,11 @@
 
     </div>
     <div class="d-flex gap-2">
-        <button class="btn btn-primary" onclick="openAddKeywordModal()"><i class="bi bi-plus-circle me-2"></i> {{ _('Add') }}</button>
-        <button class="btn btn-success" onclick="updateKeywordAssociations()" id="updateKeywordsBtn" title="{{ _('Update keyword associations for all files') }}">
+        <button class="btn btn-primary" data-on-click="openAddKeywordModal()"><i class="bi bi-plus-circle me-2"></i> {{ _('Add') }}</button>
+        <button class="btn btn-success" data-on-click="updateKeywordAssociations()" id="updateKeywordsBtn" title="{{ _('Update keyword associations for all files') }}">
             <i class="bi bi-arrow-repeat me-2"></i> {{ _('Update Keywords') }}
         </button>
-        <button class="btn btn-outline-primary" onclick="location.reload()"><i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}</button>
+        <button class="btn btn-outline-primary" data-on-click="location.reload()"><i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}</button>
     </div>
 </div>
 
@@ -118,7 +118,7 @@
                         _('Search keywords...'), onclear='clearSearch()') }}
 
         {% call filter_group('statusFilter', _('Status'), 'bi-check-circle') %}
-            <select class="form-select" id="statusFilter" onchange="applyFilters()">
+            <select class="form-select" id="statusFilter" data-on-change="applyFilters()">
                 <option value="">{{ _('All Status') }}</option>
                 <option value="active">{{ _('Active') }}</option>
                 <option value="unused">{{ _('Unused') }}</option>
@@ -126,13 +126,13 @@
         {% endcall %}
 
         {% call filter_group('categoryFilter', _('Category'), 'bi-tags') %}
-            <select class="form-select" id="categoryFilter" onchange="applyFilters()">
+            <select class="form-select" id="categoryFilter" data-on-change="applyFilters()">
                 <option value="">{{ _('All Categories') }}</option>
             </select>
         {% endcall %}
 
         {% call filter_group('sortBy', _('Sort By'), 'bi-sort-alpha-down') %}
-            <select class="form-select" id="sortBy" onchange="applySorting()">
+            <select class="form-select" id="sortBy" data-on-change="applySorting()">
                 <option value="usage_count">{{ _('Usage Count') }}</option>
                 <option value="text">{{ _('Text') }}</option>
                 <option value="id">{{ _('ID') }}</option>
@@ -141,7 +141,7 @@
         {% endcall %}
 
         {% call filter_group('sortOrder', _('Order'), 'bi-arrow-down-up') %}
-            <select class="form-select" id="sortOrder" onchange="applySorting()">
+            <select class="form-select" id="sortOrder" data-on-change="applySorting()">
                 <option value="desc">{{ _('Descending') }}</option>
                 <option value="asc">{{ _('Ascending') }}</option>
             </select>
@@ -187,7 +187,7 @@
     </div>
     <div class="d-flex align-items-center">
         <label for="perPage" class="form-label me-2 mb-0">{{ _('Per Page:') }}</label>
-        <select class="form-select form-select-sm" id="perPage" style="width: auto;" onchange="changePageSize()">
+        <select class="form-select form-select-sm" id="perPage" style="width: auto;" data-on-change="changePageSize()">
             <option value="10" selected>{{ _('10') }}</option>
             <option value="25">{{ _('25') }}</option>
             <option value="50">{{ _('50') }}</option>
@@ -202,13 +202,13 @@
             <thead>
                 <tr>
                     <th style="width:50px">
-                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                        <input type="checkbox" id="selectAllCheckbox" data-on-change="toggleSelectAll()">
                     </th>
                     <th style="width:70px">#</th>
                     <th>
                         <div class="d-flex align-items-center">
                             <span>{{ _('Keyword') }}</span>
-                            <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortBy('text')" title="{{ _('Sort by text') }}" id="sortBtn-text">
+                            <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortBy('text')" title="{{ _('Sort by text') }}" id="sortBtn-text">
                                 <i class="bi bi-arrow-down-up" id="sortIcon-text"></i>
                             </button>
                         </div>
@@ -216,7 +216,7 @@
                     <th style="width:120px">
                         <div class="d-flex align-items-center">
                             <span>{{ _('Usage') }}</span>
-                            <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortBy('usage_count')" title="{{ _('Sort by usage') }}" id="sortBtn-usage_count">
+                            <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortBy('usage_count')" title="{{ _('Sort by usage') }}" id="sortBtn-usage_count">
                                 <i class="bi bi-arrow-down-up" id="sortIcon-usage_count"></i>
                             </button>
                         </div>
@@ -224,7 +224,7 @@
                     <th style="width:120px">
                         <div class="d-flex align-items-center">
                             <span>{{ _('Status') }}</span>
-                            <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortBy('status')" title="{{ _('Sort by status') }}" id="sortBtn-status">
+                            <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortBy('status')" title="{{ _('Sort by status') }}" id="sortBtn-status">
                                 <i class="bi bi-arrow-down-up" id="sortIcon-status"></i>
                             </button>
                         </div>
@@ -244,7 +244,7 @@
                             <input type="checkbox" 
                                    class="keyword-checkbox" 
                                    value="{{ keyword.id }}" 
-                                   onchange="updateBulkButtons()">
+                                   data-on-change="updateBulkButtons()">
                         </td>
                         <td>{{ row_number }}</td>
                         <td>
@@ -270,12 +270,12 @@
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <button class="btn btn-outline-warning" 
-                                        onclick="editKeyword({{ keyword.id }})" 
+                                        data-on-click="editKeyword({{ keyword.id }})" 
                                         title="{{ _('Edit') }}">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="btn btn-outline-danger" 
-                                        onclick="deleteKeyword({{ keyword.id }})" 
+                                        data-on-click="deleteKeyword({{ keyword.id }})" 
                                         title="{{ _('Delete') }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -349,7 +349,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                    <button type="button" class="btn btn-primary" onclick="saveKeyword()">{{ _('Add Keyword') }}</button>
+                    <button type="button" class="btn btn-primary" data-on-click="saveKeyword()">{{ _('Add Keyword') }}</button>
                 </div>
             </div>
         </div>

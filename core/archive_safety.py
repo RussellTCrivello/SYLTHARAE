@@ -479,7 +479,9 @@ def extract_7z(
                     )
         # py7zr performs its own traversal sanitisation for targets we point it
         # at; we pre-validated every member name above and verify the tree.
-        sz.extractall(path=root)
+        # B202 (unchecked extractall): names validated, declared size bounded
+        # above, and _verify_tree_within() rejects escapes and links below.
+        sz.extractall(path=root)  # nosec B202
     _verify_tree_within(root, root, policy)
     for p in root.rglob("*"):
         if p.is_file():

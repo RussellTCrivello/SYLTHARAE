@@ -50,9 +50,14 @@ to its code, tests and docs. The rules that matter most:
   ([TESTING.md](TESTING.md#generated-documents-are-tested)).
 * **Errors** returned to clients are generic. Details go to the log via
   `Hdg_Err_Ex_Log`.
-* **Front end**: one ES module per screen in `static/js/pages/`, shared code
-  in `static/js/modules/`. No new inline `<script>` or `on*=` handlers,
-  because they block tightening the CSP ([SECURITY.md](SECURITY.md)).
+* **Front end**: one script per screen in `static/js/pages/`, shared code
+  in `static/js/modules/`. The CSP runs no inline script
+  ([SECURITY.md](SECURITY.md)): wire controls with `data-on-click="fn(…)"`
+  (any `data-on-<event>`), never `onclick=`; pass server values in a
+  `<script type="application/json" id="…-page-data">` block, never an inline
+  `<script>`. A function called from `data-on-*` must be reachable from
+  `window` (a module must assign `window.fn = fn`).
+  `tests/unit/test_csp_no_inline_script.py` enforces all of this.
 * **Strings** shown to users go through Babel (`_()` / `gettext`). Keep RTL
   layouts working (`ar`, `fa`, `he`).
 

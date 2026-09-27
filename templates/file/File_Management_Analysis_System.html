@@ -247,7 +247,7 @@
         <div class="section filters-panel" id="filtersPanel" style="display: none;">
             <div class="section-header">
                 <div class="section-label">{{ _('Advanced Filters') }}</div>
-                <button class="close-filters-btn" onclick="hideFilters()" title="{{ _('Close Filters') }}" aria-label="{{ _('Close Filters') }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                <button class="close-filters-btn" data-on-click="hideFilters()" title="{{ _('Close Filters') }}" aria-label="{{ _('Close Filters') }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
             <div class="filters-grid">
                 <div class="filter-group">
@@ -284,8 +284,8 @@
                 </div>
             </div>
             <div class="filter-actions">
-                <button class="btn-apply" onclick="applyFilters()" title="{{ _('Apply Filters') }}" aria-label="{{ _('Apply Filters') }}">{{ _('Apply Filters') }}</button>
-                <button class="btn-reset" onclick="resetFilters()" title="{{ _('Reset Filters') }}" aria-label="{{ _('Reset Filters') }}">{{ _('Reset') }}</button>
+                <button class="btn-apply" data-on-click="applyFilters()" title="{{ _('Apply Filters') }}" aria-label="{{ _('Apply Filters') }}">{{ _('Apply Filters') }}</button>
+                <button class="btn-reset" data-on-click="resetFilters()" title="{{ _('Reset Filters') }}" aria-label="{{ _('Reset Filters') }}">{{ _('Reset') }}</button>
             </div>
         </div>
 
@@ -294,25 +294,25 @@
         <!-- Navigation Bar -->
         <div class="navigation-bar">
             <div class="nav-buttons">
-                <button class="nav-btn" id="archiveNavBackBtn" onclick="navigateBack()" title="{{ _('Back') }}" aria-label="{{ _('Back in archive history') }}" disabled>
+                <button class="nav-btn" id="archiveNavBackBtn" data-on-click="navigateBack()" title="{{ _('Back') }}" aria-label="{{ _('Back in archive history') }}" disabled>
                     <i class="bi bi-arrow-left"></i>
                 </button>
-                <button class="nav-btn" id="archiveNavForwardBtn" onclick="navigateForward()" title="{{ _('Forward') }}" aria-label="{{ _('Forward in archive history') }}" disabled>
+                <button class="nav-btn" id="archiveNavForwardBtn" data-on-click="navigateForward()" title="{{ _('Forward') }}" aria-label="{{ _('Forward in archive history') }}" disabled>
                     <i class="bi bi-arrow-right"></i>
                 </button>
-                <button class="nav-btn" onclick="navigateToRoot()" title="{{ _('Home') }}">
+                <button class="nav-btn" data-on-click="navigateToRoot()" title="{{ _('Home') }}">
                     <i class="bi bi-house"></i>
                 </button>
             </div>
             <div class="breadcrumb-nav" id="breadcrumbNav">
                 <div class="breadcrumb-item">
-                    <span class="breadcrumb-link" onclick="navigateToRoot()">{{ _('Home') }}</span>
+                    <span class="breadcrumb-link" data-on-click="navigateToRoot()">{{ _('Home') }}</span>
                 </div>
             </div>
             <div class="search-bar" style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
                 <div style="position: relative; flex: 1;">
                     <label for="globalSearch" class="sr-only">{{ _('Search') }}</label>
-                    <input type="text" id="globalSearch" placeholder="{{ _('Search all data: files, categories, keywords, sources, sides, words, titles...') }}" oninput="handleGlobalSearch(this.value)" title="{{ _('Search all data in database') }}" aria-label="{{ _('Search all data in database') }}" style="width: 100%;">
+                    <input type="text" id="globalSearch" placeholder="{{ _('Search all data: files, categories, keywords, sources, sides, words, titles...') }}" data-on-input="handleGlobalSearch(this.value)" title="{{ _('Search all data in database') }}" aria-label="{{ _('Search all data in database') }}" style="width: 100%;">
                     <i class="bi bi-search" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;" aria-hidden="true"></i>
                 </div>
             </div>
@@ -321,7 +321,7 @@
             </div>
             <div class="sort-control" style="display: flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem;">
                 <label for="sortBy" class="sr-only">{{ _('Sort By') }}</label>
-                <select id="sortBy" class="form-select form-select-sm" style="min-width: 150px; font-size: 0.875rem;" onchange="handleSortChange()" title="{{ _('Sort By') }}" aria-label="{{ _('Sort By') }}">
+                <select id="sortBy" class="form-select form-select-sm" style="min-width: 150px; font-size: 0.875rem;" data-on-change="handleSortChange()" title="{{ _('Sort By') }}" aria-label="{{ _('Sort By') }}">
                     <option value="id_asc">{{ _('ID (Ascending)') }}</option>
                     <option value="id_desc">{{ _('ID (Descending)') }}</option>
                     <option value="name_asc">{{ _('Name (A-Z)') }}</option>
@@ -333,7 +333,7 @@
             <div class="per-page-control" style="display: flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem;">
                 <label for="perPageSection" class="sr-only">{{ _('Per Page') }}</label>
                 <label for="perPageSection" style="font-size: 0.875rem; color: var(--text-light); white-space: nowrap; margin-right: 0.25rem;">{{ _('Per Page:') }}</label>
-                <select id="perPageSection" class="form-select form-select-sm" style="min-width: 80px; font-size: 0.875rem;" onchange="handlePerPageChange()" title="{{ _('Items Per Page') }}" aria-label="{{ _('Items Per Page') }}">
+                <select id="perPageSection" class="form-select form-select-sm" style="min-width: 80px; font-size: 0.875rem;" data-on-change="handlePerPageChange()" title="{{ _('Items Per Page') }}" aria-label="{{ _('Items Per Page') }}">
                     <option value="10">10</option>
                     <option value="25">25</option>
                     <option value="50" selected>50</option>
@@ -342,10 +342,10 @@
                 </select>
             </div>
             <div class="view-toggle">
-                <button class="view-toggle-btn active" data-view="grid" onclick="setViewMode('grid')" title="{{ _('Grid View') }}" aria-label="{{ _('Switch to Grid View') }}">
+                <button class="view-toggle-btn active" data-view="grid" data-on-click="setViewMode('grid')" title="{{ _('Grid View') }}" aria-label="{{ _('Switch to Grid View') }}">
                     <i class="bi bi-grid-3x3" aria-hidden="true"></i>
                 </button>
-                <button class="view-toggle-btn" data-view="list" onclick="setViewMode('list')" title="{{ _('List View') }}" aria-label="{{ _('Switch to List View') }}">
+                <button class="view-toggle-btn" data-view="list" data-on-click="setViewMode('list')" title="{{ _('List View') }}" aria-label="{{ _('Switch to List View') }}">
                     <i class="bi bi-list-ul" aria-hidden="true"></i>
                 </button>
             </div>
@@ -357,7 +357,7 @@
             <div class="file-manager-sidebar" id="fileManagerSidebar">
 
                 <div class="sidebar-items">
-                    <div class="sidebar-item" data-section="category" onclick="navigateToSection('category')" role="button" tabindex="0" title="{{ _('Category') }}">
+                    <div class="sidebar-item" data-section="category" data-on-click="navigateToSection('category')" role="button" tabindex="0" title="{{ _('Category') }}">
                         <div class="sidebar-item-icon">
                             <i class="bi bi-folder-fill"></i>
                         </div>
@@ -366,7 +366,7 @@
                             <div class="sidebar-item-count" id="sidebarCategoryCount">{{ stats.total_categories|default(0) }} {{ _('items') }}</div>
                         </div>
                     </div>
-                    <div class="sidebar-item" data-section="keywords" onclick="navigateToSection('keywords')" role="button" tabindex="0" title="{{ _('Keywords') }}">
+                    <div class="sidebar-item" data-section="keywords" data-on-click="navigateToSection('keywords')" role="button" tabindex="0" title="{{ _('Keywords') }}">
                         <div class="sidebar-item-icon">
                             <i class="bi bi-tag-fill"></i>
                         </div>
@@ -375,7 +375,7 @@
                             <div class="sidebar-item-count" id="sidebarKeywordsCount">{{ stats.total_keywords|default(0) }} {{ _('items') }}</div>
                         </div>
                     </div>
-                    <div class="sidebar-item" data-section="titles" onclick="navigateToSection('titles')" role="button" tabindex="0" title="{{ _('Titles') }}">
+                    <div class="sidebar-item" data-section="titles" data-on-click="navigateToSection('titles')" role="button" tabindex="0" title="{{ _('Titles') }}">
                         <div class="sidebar-item-icon">
                             <i class="bi bi-file-earmark-text-fill"></i>
                         </div>
@@ -384,7 +384,7 @@
                             <div class="sidebar-item-count" id="sidebarTitlesCount">{{ stats.total_titles|default(0) }} {{ _('items') }}</div>
                         </div>
                     </div>
-                    <div class="sidebar-item" data-section="sources" onclick="navigateToSection('sources')" role="button" tabindex="0" title="{{ _('Sources') }}">
+                    <div class="sidebar-item" data-section="sources" data-on-click="navigateToSection('sources')" role="button" tabindex="0" title="{{ _('Sources') }}">
                         <div class="sidebar-item-icon">
                             <i class="bi bi-people-fill"></i>
                         </div>
@@ -393,7 +393,7 @@
                             <div class="sidebar-item-count" id="sidebarSourcesCount">{{ stats.total_sources|default(0) }} {{ _('items') }}</div>
                         </div>
                     </div>
-                    <div class="sidebar-item" data-section="sides" onclick="navigateToSection('sides')" role="button" tabindex="0" title="{{ _('Sides') }}">
+                    <div class="sidebar-item" data-section="sides" data-on-click="navigateToSection('sides')" role="button" tabindex="0" title="{{ _('Sides') }}">
                         <div class="sidebar-item-icon">
                             <i class="bi bi-diagram-3-fill"></i>
                         </div>
@@ -402,7 +402,7 @@
                             <div class="sidebar-item-count" id="sidebarSidesCount">{{ stats.total_sides|default(0) }} {{ _('items') }}</div>
                         </div>
                     </div>
-                    <div class="sidebar-item" data-section="hash" onclick="navigateToSection('hash')" role="button" tabindex="0" title="{{ _('Relations') }}">
+                    <div class="sidebar-item" data-section="hash" data-on-click="navigateToSection('hash')" role="button" tabindex="0" title="{{ _('Relations') }}">
                         <div class="sidebar-item-icon">
                             <i class="bi bi-hash"></i>
                         </div>
@@ -411,7 +411,7 @@
                             <div class="sidebar-item-count" id="sidebarHashCount">{{ stats.total_hashes|default(0) }} {{ _('items') }}</div>
                         </div>
                     </div>
-                    <div class="sidebar-item" data-section="geolocation" onclick="navigateToSection('geolocation')" role="button" tabindex="0" title="{{ _('Geolocation') }}">
+                    <div class="sidebar-item" data-section="geolocation" data-on-click="navigateToSection('geolocation')" role="button" tabindex="0" title="{{ _('Geolocation') }}">
                         <div class="sidebar-item-icon">
                             <i class="bi bi-geo-alt-fill"></i>
                         </div>
@@ -560,7 +560,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                <button type="button" class="btn btn-primary" onclick="submitAddItem('source')" id="sourceSubmitBtn">
+                <button type="button" class="btn btn-primary" data-on-click="submitAddItem('source')" id="sourceSubmitBtn">
                     <i class="bi bi-check-circle me-2"></i>
                     <span id="submitButtonText">{{ _('Create Source') }}</span>
                 </button>
@@ -596,7 +596,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                    <button type="button" class="btn btn-primary" onclick="submitAddItem('side')" id="sideSubmitBtn">{{ _('Add Side') }}</button>
+                    <button type="button" class="btn btn-primary" data-on-click="submitAddItem('side')" id="sideSubmitBtn">{{ _('Add Side') }}</button>
                 </div>
             </div>
         </div>
@@ -646,7 +646,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                    <button type="button" class="btn btn-primary" onclick="saveKeywordFromArchives()">{{ _('Add Keyword') }}</button>
+                    <button type="button" class="btn btn-primary" data-on-click="saveKeywordFromArchives()">{{ _('Add Keyword') }}</button>
                 </div>
             </div>
         </div>
@@ -681,7 +681,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                    <button type="button" class="btn btn-primary" onclick="saveCategory()">{{ _('Add Category') }}</button>
+                    <button type="button" class="btn btn-primary" data-on-click="saveCategory()">{{ _('Add Category') }}</button>
                 </div>
             </div>
         </div>
@@ -731,7 +731,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                    <button type="button" class="btn btn-primary" onclick="saveWordsCategorys()">{{ _('Add Relationship') }}</button>
+                    <button type="button" class="btn btn-primary" data-on-click="saveWordsCategorys()">{{ _('Add Relationship') }}</button>
                 </div>
             </div>
         </div>
@@ -742,11 +742,11 @@
         <div class="archives-modal-content file-details-modal">
             <div class="archives-modal-header">
                 <div class="file-modal-nav-controls">
-                    <button class="file-nav-btn" id="prevFileBtn" onclick="navigateFileInModal(-1)" title="{{ _('Previous File') }}" aria-label="{{ _('Previous File') }}" disabled>
+                    <button class="file-nav-btn" id="prevFileBtn" data-on-click="navigateFileInModal(-1)" title="{{ _('Previous File') }}" aria-label="{{ _('Previous File') }}" disabled>
                         <i class="bi bi-chevron-left" aria-hidden="true"></i>
                         <span class="sr-only">{{ _('Previous File') }}</span>
                     </button>
-                    <button class="file-nav-btn" id="nextFileBtn" onclick="navigateFileInModal(1)" title="{{ _('Next File') }}" aria-label="{{ _('Next File') }}" disabled>
+                    <button class="file-nav-btn" id="nextFileBtn" data-on-click="navigateFileInModal(1)" title="{{ _('Next File') }}" aria-label="{{ _('Next File') }}" disabled>
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                         <span class="sr-only">{{ _('Next File') }}</span>
                     </button>
@@ -754,7 +754,7 @@
                 <h2 class="archives-modal-title" id="modalTitle">{{ _('File Details') }}</h2>
                 <div class="file-modal-header-right">
                     <span class="file-nav-counter" id="fileNavCounter" style="display: none;">1 / 1</span>
-                    <button class="archives-close-btn" onclick="closeFileModal()" title="{{ _('Close') }}" aria-label="{{ _('Close File Details') }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                    <button class="archives-close-btn" data-on-click="closeFileModal()" title="{{ _('Close') }}" aria-label="{{ _('Close File Details') }}"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                 </div>
             </div>
             <div class="file-details-modal-body" id="modalBody">
@@ -769,23 +769,23 @@
                             <div class="file-content-tabs" role="tablist" aria-label="{{ _('File Content') }}">
                                 <button type="button" class="file-content-tab active" id="extractedContentTab"
                                         role="tab" aria-selected="true" data-content-tab="extracted"
-                                        onclick="switchModalContentTab('extracted')">
+                                        data-on-click="switchModalContentTab('extracted')">
                                     <i class="bi bi-file-text" aria-hidden="true"></i> {{ _('Extracted Text') }}
                                 </button>
                                 <button type="button" class="file-content-tab" id="originalFileTab"
                                         role="tab" aria-selected="false" data-content-tab="original"
-                                        onclick="switchModalContentTab('original')">
+                                        data-on-click="switchModalContentTab('original')">
                                     <i class="bi bi-file-earmark-image" aria-hidden="true"></i> {{ _('Original File') }}
                                 </button>
                             </div>
                             <div class="file-content-actions" style="display: flex; gap: 0.5rem; align-items: center;">
-                                <button class="btn btn-sm btn-outline-primary" onclick="copyModalContent()" title="{{ _('Copy Content') }}">
+                                <button class="btn btn-sm btn-outline-primary" data-on-click="copyModalContent()" title="{{ _('Copy Content') }}">
                                     <i class="bi bi-clipboard me-1"></i>{{ _('Copy') }}
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="downloadModalContent()" title="{{ _('Download Content') }}">
+                                <button class="btn btn-sm btn-outline-secondary" data-on-click="downloadModalContent()" title="{{ _('Download Content') }}">
                                     <i class="bi bi-download me-1"></i>{{ _('Download') }}
                                 </button>
-                                <button class="btn btn-sm btn-outline-success" onclick="exportModalFile()" title="{{ _('Export File') }}">
+                                <button class="btn btn-sm btn-outline-success" data-on-click="exportModalFile()" title="{{ _('Export File') }}">
                                     <i class="bi bi-file-earmark-arrow-down me-1"></i>{{ _('Export') }}
                                 </button>
                             </div>
@@ -798,11 +798,11 @@
                                     <div style="display: flex; gap: 0.25rem;">
                                         <input type="text" id="modalSearchInput" class="form-control form-control-sm" 
                                                placeholder="{{ _('Search in document...') }}" 
-                                               onkeypress="if(event.key==='Enter') performModalSearch()">
-                                        <button class="btn btn-sm btn-primary" onclick="performModalSearch()">
+                                               data-on-keypress="if(event.key==='Enter') performModalSearch()">
+                                        <button class="btn btn-sm btn-primary" data-on-click="performModalSearch()">
                                             <i class="bi bi-search"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="clearModalSearch()">
+                                        <button class="btn btn-sm btn-outline-secondary" data-on-click="clearModalSearch()">
                                             <i class="bi bi-x-circle"></i>
                                         </button>
                                     </div>
@@ -831,10 +831,10 @@
                                         <span class="badge bg-info ms-2" id="modalCurrentMatch">{{ _('Match 0 of 0') }}</span>
                                     </div>
                                     <div>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="findModalPrevious()">
+                                        <button class="btn btn-sm btn-outline-secondary" data-on-click="findModalPrevious()">
                                             <i class="bi bi-arrow-up"></i> {{ _('Previous') }}
                                         </button>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="findModalNext()">
+                                        <button class="btn btn-sm btn-outline-secondary" data-on-click="findModalNext()">
                                             <i class="bi bi-arrow-down"></i> {{ _('Next') }}
                                         </button>
                                     </div>
@@ -1064,20 +1064,7 @@
 }|tojson }}</script>
 
 <!-- Set window.appData for backward compatibility with existing modules -->
-<script>
-    // Load page data and set window.appData for backward compatibility
-    (function() {
-        const pageDataEl = document.getElementById('page-data');
-        if (pageDataEl) {
-            try {
-                window.appData = JSON.parse(pageDataEl.textContent);
-            } catch (e) {
-                console.error('Error parsing page data:', e);
-                window.appData = {};
-            }
-        }
-    })();
-</script>
+<script src="{{ url_for('static', filename='js/pages/file-management-app-data.js') }}"></script>
 
 {% from 'components/analyst_classify_page_data.html' import analyst_classify_page_data %}
 {{ analyst_classify_page_data(current_user.is_authenticated and current_user.has_role('admin', 'analyst')) }}

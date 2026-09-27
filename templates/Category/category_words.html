@@ -19,11 +19,11 @@
         </h1>
     </div>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-primary" onclick="openAddWordModal()">
+        <button type="button" class="btn btn-primary" data-on-click="openAddWordModal()">
             <i class="bi bi-plus-circle me-2"></i>
             {{ _('Add Word') }}
         </button>
-        <button class="btn btn-outline-primary" onclick="location.reload()">
+        <button class="btn btn-outline-primary" data-on-click="location.reload()">
             <i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}
         </button>
         <a href="{{ url_for('categories_list') }}" class="btn btn-outline-secondary">
@@ -134,7 +134,7 @@
                 <i class="bi bi-arrow-down-up"></i>
                 {{ _('Sort By') }}
             </label>
-            <select class="form-select" id="sortBy" onchange="applyFilters()">
+            <select class="form-select" id="sortBy" data-on-change="applyFilters()">
                 <option value="word-asc">{{ _('Word (A-Z)') }}</option>
                 <option value="word-desc">{{ _('Word (Z-A)') }}</option>
                 <option value="id-asc">{{ _('ID (Low-High)') }}</option>
@@ -147,7 +147,7 @@
                 <i class="bi bi-layout-three-columns"></i>
                 {{ _('Display Format') }}
             </label>
-            <select class="form-select" id="displayFormat" onchange="changeDisplayFormat()">
+            <select class="form-select" id="displayFormat" data-on-change="changeDisplayFormat()">
                 <option value="table">{{ _('Table') }}</option>
                 <option value="list">{{ _('List') }}</option>
                 <option value="grid">{{ _('Grid') }}</option>
@@ -160,7 +160,7 @@
                 <i class="bi bi-list-ol"></i>
                 {{ _('Per Page') }}
             </label>
-            <select class="form-select" id="itemsPerPage" onchange="changePageSize()">
+            <select class="form-select" id="itemsPerPage" data-on-change="changePageSize()">
                 <option value="10" selected>10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
@@ -184,10 +184,10 @@
         </small>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllFilters()">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="clearAllFilters()">
             <i class="bi bi-x-circle me-1"></i>{{ _('Clear Filters') }}
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportWords()">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportWords()">
             <i class="bi bi-download me-1"></i>{{ _('Export') }}
         </button>
     </div>
@@ -205,7 +205,7 @@
                         <th>
                             <div class="d-flex align-items-center">
                                 <span>{{ _('Word') }}</span>
-                                <button class="btn btn-sm btn-link p-0 ms-1" onclick="sortByColumn('word')" title="{{ _('Sort by word') }}" id="sortBtn-word">
+                                <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortByColumn('word')" title="{{ _('Sort by word') }}" id="sortBtn-word">
                                     <i class="bi bi-arrow-down-up" id="sortIcon-word"></i>
                                 </button>
                             </div>
@@ -300,7 +300,7 @@
     <div id="emptyState" class="text-center p-5" style="display: none;">
         <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
         <p class="text-muted mt-3">{{ _('No words found') }}</p>
-        <button type="button" class="btn btn-primary mt-3" onclick="openAddWordModal()">
+        <button type="button" class="btn btn-primary mt-3" data-on-click="openAddWordModal()">
             <i class="bi bi-plus-circle me-2"></i>
             {{ _('Add First Word') }}
         </button>
@@ -340,7 +340,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                <button type="button" class="btn btn-primary" onclick="saveWordToCategory()">{{ _('Add Word') }}</button>
+                <button type="button" class="btn btn-primary" data-on-click="saveWordToCategory()">{{ _('Add Word') }}</button>
             </div>
         </div>
     </div>
@@ -375,26 +375,7 @@
         "total": _('total')
     }
 }|tojson }}</script>
-<script>
-// Ensure jQuery is loaded before Select2
-(function() {
-    function loadSelect2() {
-        if (typeof jQuery !== 'undefined') {
-            const script = document.createElement('script');
-            script.src = "{{ url_for('static', filename='dist/js/select2.min.js') }}";
-            script.onload = function() {
-                console.log('Select2 loaded successfully');
-            };
-            script.onerror = function() {
-                console.error('Failed to load Select2');
-            };
-            document.head.appendChild(script);
-        } else {
-            setTimeout(loadSelect2, 50);
-        }
-    }
-    loadSelect2();
-})();
-</script>
+<script src="{{ url_for('static', filename='js/modules/core/select2-loader.js') }}"
+        data-select2-src="{{ url_for('static', filename='dist/js/select2.min.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/category-words-page.js') }}"></script>
 {% endblock %}

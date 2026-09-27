@@ -146,12 +146,16 @@ def pg_settings(tmp_path_factory):
             f"{source}: {settings.get('host')}:{settings.get('port')} -> {reason}"
             + (f" (uri: {detail})" if detail != "from environment" else ""))
 
-    pytest.skip(
+    message = (
         "No reachable PostgreSQL for the integration suite. Tried:\n  - "
         + "\n  - ".join(attempts)
         + "\nPoint the suite at a server with DB_HOST/DB_PORT/DB_USER/DB_PASSWORD "
           "(a test-named database is created on it; application data is not touched)."
     )
+    if os.environ.get("REQUIRE_POSTGRES") == "1":
+        # CI: a missing database must fail the run, not skip it into green.
+        pytest.fail(message, pytrace=False)
+    pytest.skip(message)
 
 
 @pytest.fixture(scope="session")

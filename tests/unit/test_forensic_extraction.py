@@ -362,7 +362,7 @@ class TestMacroExtraction:
 class TestPdfFeatures:
     @pytest.fixture()
     def pdf(self, tmp_path):
-        fitz = pytest.importorskip("fitz")
+        fitz = pytest.importorskip("pymupdf")
         document = fitz.open()
         page = document.new_page()
         page.insert_text((72, 72), "page text layer")
@@ -398,7 +398,7 @@ class TestPdfFeatures:
         assert result["embedded_files"][0]["materialised_as"]
 
     def test_javascript_and_form_fields_are_reported(self, tmp_path):
-        fitz = pytest.importorskip("fitz")
+        fitz = pytest.importorskip("pymupdf")
         document = fitz.open()
         page = document.new_page()
         widget = fitz.Widget()
@@ -416,7 +416,7 @@ class TestPdfFeatures:
         assert "ABC-123" in result["forensic_text"]
 
     def test_encrypted_pdf_is_reported_as_encrypted_not_failed(self, tmp_path):
-        fitz = pytest.importorskip("fitz")
+        fitz = pytest.importorskip("pymupdf")
         document = fitz.open()
         document.new_page().insert_text((72, 72), "secret")
         path = tmp_path / "locked.pdf"

@@ -147,7 +147,7 @@ async function loadAssignments(page = 1) {
                 <td class="text-end">
                     ${analystState.canCategorize ? `
                     <button type="button" class="btn btn-sm btn-outline-danger"
-                            onclick="removeAssignment(${row.path_id}, ${row.category_id})"
+                            data-on-click="removeAssignment(${row.path_id}, ${row.category_id})"
                             title="Remove this analyst category (returns the file to uncategorized scope)">
                         <i class="bi bi-x-lg"></i>
                     </button>` : ''}
@@ -332,13 +332,13 @@ async function refreshStatsAndFilters() {
                             </div>
                             <div class="analyst-category-actions btn-group btn-group-sm">
                                 <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        onclick="filterByCategory(${cat.id})"
+                                        data-on-click="filterByCategory(${cat.id})"
                                         title="${escapeAttr(analystT('showFilesInCategory', 'Show files in this category'))}">
                                     <i class="bi bi-funnel"></i>
                                 </button>
                                 ${canManage ? `
                                 <button type="button" class="btn btn-sm btn-outline-danger"
-                                        onclick="deleteAnalystCategory(this)"
+                                        data-on-click="deleteAnalystCategory(this)"
                                         title="${escapeAttr(analystT('deleteCategoryTitle', 'Delete category (files return to uncategorized)'))}">
                                     <i class="bi bi-trash"></i>
                                 </button>` : ''}

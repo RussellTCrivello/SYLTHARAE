@@ -16,7 +16,7 @@
     <div class="d-flex gap-2 flex-wrap">
         <a href="{{ url_for('files.file_types_page') }}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-break me-1" aria-hidden="true"></i>{{ _('Browse by type') }}</a>
         <a href="{{ url_for('operations_input_page') }}" class="btn btn-outline-primary"><i class="bi bi-plus-circle" aria-hidden="true"></i>{{ _('Upload Files') }}</a>
-        <button type="button" class="btn btn-outline-primary" onclick="location.reload()"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>{{ _('Refresh') }}</button>
+        <button type="button" class="btn btn-outline-primary" data-on-click="location.reload()"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>{{ _('Refresh') }}</button>
     </div>
 </div>
 
@@ -191,34 +191,34 @@
         <div class="action-bar">
             <div class="action-group">
                 <span class="action-label">{{ _('Selection:') }}</span>
-                <button class="btn-action" onclick="selectAllFiles()">
+                <button class="btn-action" data-on-click="selectAllFiles()">
                     <i class="bi bi-check-square"></i>
                     {{ _('Select All') }}
                 </button>
-                <button class="btn-action" onclick="deselectAllFiles()">
+                <button class="btn-action" data-on-click="deselectAllFiles()">
                     <i class="bi bi-square"></i>
                     {{ _('Select None') }}
                 </button>
             </div>
             <div class="action-group">
                 <span class="action-label">{{ _('Bulk Actions:') }}</span>
-                <button class="btn-action btn-primary" id="bulkAnalyzeBtn" onclick="bulkAnalyze()" disabled>
+                <button class="btn-action btn-primary" id="bulkAnalyzeBtn" data-on-click="bulkAnalyze()" disabled>
                     <i class="bi bi-lightning-charge"></i>
                     {{ _('Analyze') }}
                 </button>
-                <button class="btn-action btn-outline-primary" id="bulkExportBtn" onclick="bulkExport()" disabled>
+                <button class="btn-action btn-outline-primary" id="bulkExportBtn" data-on-click="bulkExport()" disabled>
                     <i class="bi bi-download"></i>
                     {{ _('Export') }}
                 </button>
-                <button type="button" class="btn-action btn-outline-primary" id="bulkNamesCsvBtn" onclick="exportSelectedFileNames('csv')" disabled>
+                <button type="button" class="btn-action btn-outline-primary" id="bulkNamesCsvBtn" data-on-click="exportSelectedFileNames('csv')" disabled>
                     <i class="bi bi-filetype-csv" aria-hidden="true"></i>
                     {{ _('Filenames CSV') }}
                 </button>
-                <button type="button" class="btn-action btn-outline-primary" id="bulkNamesExcelBtn" onclick="exportSelectedFileNames('excel')" disabled>
+                <button type="button" class="btn-action btn-outline-primary" id="bulkNamesExcelBtn" data-on-click="exportSelectedFileNames('excel')" disabled>
                     <i class="bi bi-file-earmark-excel" aria-hidden="true"></i>
                     {{ _('Filenames Excel') }}
                 </button>
-                <button class="btn-action btn-outline-danger" id="bulkDeleteBtn" onclick="bulkDelete()" disabled>
+                <button class="btn-action btn-outline-danger" id="bulkDeleteBtn" data-on-click="bulkDelete()" disabled>
                     <i class="bi bi-trash"></i>
                     {{ _('Delete') }}
                 </button>
@@ -250,7 +250,7 @@
         </div>
         <div class="d-flex align-items-center">
             <label for="perPageFiles" class="form-label me-2 mb-0">{{ _('Per Page:') }}</label>
-            <select id="perPageFiles" class="form-select form-select-sm" style="width: auto;" onchange="changeFilesPageSize()">
+            <select id="perPageFiles" class="form-select form-select-sm" style="width: auto;" data-on-change="changeFilesPageSize()">
                 {% set current_limit = request.args.get('limit', '10') %}
                 <option value="10" {% if current_limit == '10' %}selected{% endif %}>10</option>
                 <option value="25" {% if current_limit == '25' %}selected{% endif %}>25</option>
@@ -269,7 +269,7 @@
                     <thead>
                         <tr>
                             <th class="col-checkbox">
-                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
+                                <input type="checkbox" id="selectAllCheckbox" data-on-change="toggleSelectAll(this)">
                             </th>
                             <th class="col-number">#</th>
                             <th class="col-name">{{ _('File Name') }}</th>
@@ -295,7 +295,7 @@
                                 <input type="checkbox" 
                                        class="file-checkbox" 
                                        value="{{ file[0] }}" 
-                                       onchange="updateBulkToolbar()">
+                                       data-on-change="updateBulkToolbar()">
                             </td>
                             <td class="col-number">
                                 <span class="row-number">{{ row_number }}</span>
@@ -347,7 +347,7 @@
                                         <i class="bi bi-eye"></i>
                                     </a>
                                         <button class="btn-action-icon btn-danger"
-                                            onclick="deleteFile({{ file[0] }})"
+                                            data-on-click="deleteFile({{ file[0] }})"
                                             title="{{ _('Delete') }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -382,7 +382,7 @@
                     <input type="checkbox" 
                            class="file-checkbox file-card-checkbox" 
                            value="{{ file[0] }}" 
-                           onclick="event.stopPropagation(); updateBulkToolbar();">
+                           data-on-click="event.stopPropagation(); updateBulkToolbar();">
                     <div class="file-card-icon">
                         <i class="bi bi-file-earmark-text"></i>
                     </div>
@@ -404,12 +404,12 @@
                         </div>
                     </div>
                     <div class="file-card-actions">
-                        <button class="btn btn-sm btn-primary" onclick="quickPreview({{ file[0] }}); event.stopPropagation();">
-                            <i class="bi bi-eye"></i>
-                        </button>
+                        {#- The "quick preview" eye button called a placeholder that only
+                            logged to the console (and was not even loaded here); the
+                            file page below is the preview. -#}
                         <a href="{{ url_for('files.file_detail', file_id=file[0], **nav_params) }}"
                            class="btn btn-sm btn-outline-primary" 
-                           onclick="event.stopPropagation();">
+                           data-on-click="event.stopPropagation();">
                             <i class="bi bi-box-arrow-up-right"></i>
                         </a>
                     </div>

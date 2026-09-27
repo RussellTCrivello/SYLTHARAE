@@ -19,11 +19,11 @@
         </h1>
     </div>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-primary" onclick="openSourceModal()">
+        <button type="button" class="btn btn-primary" data-on-click="openSourceModal()">
             <i class="bi bi-plus-circle me-2"></i>
             {{ _('Add Source') }}
         </button>
-        <button class="btn btn-outline-primary" onclick="location.reload()">
+        <button class="btn btn-outline-primary" data-on-click="location.reload()">
             <i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}
         </button>
     </div>
@@ -134,7 +134,7 @@
                 <i class="bi bi-arrow-down-up"></i>
                 {{ _('Sort By') }}
             </label>
-            <select class="form-select" id="sortBy" onchange="applyFilters()">
+            <select class="form-select" id="sortBy" data-on-change="applyFilters()">
                 <option value="name-asc">{{ _('Name (A-Z)') }}</option>
                 <option value="name-desc">{{ _('Name (Z-A)') }}</option>
                 <option value="importance-desc" selected>{{ _('Importance (High-Low)') }}</option>
@@ -151,7 +151,7 @@
                 <i class="bi bi-layout-three-columns"></i>
                 {{ _('Display Format') }}
             </label>
-            <select class="form-select" id="displayFormat" onchange="changeDisplayFormat()">
+            <select class="form-select" id="displayFormat" data-on-change="changeDisplayFormat()">
                 <option value="grid" selected>{{ _('Grid') }}</option>
                 <option value="table">{{ _('Table') }}</option>
                 <option value="list">{{ _('List') }}</option>
@@ -163,7 +163,7 @@
                 <i class="bi bi-list-ol"></i>
                 {{ _('Per Page') }}
             </label>
-            <select class="form-select" id="itemsPerPage" onchange="changePageSize()">
+            <select class="form-select" id="itemsPerPage" data-on-change="changePageSize()">
                 {% set current_limit = request.args.get('limit', 50)|int %}
                 <option value="10" {% if current_limit == 10 %}selected{% endif %}>10</option>
                 <option value="25" {% if current_limit == 25 %}selected{% endif %}>25</option>
@@ -307,27 +307,27 @@
                     <div class="d-flex align-items-center mb-2">
                         <input type="checkbox" class="form-check-input source-checkbox me-2" 
                                value="{{ source.id }}" 
-                               onchange="updateBulkButtons()"
+                               data-on-change="updateBulkButtons()"
                                aria-label="{{ _('Select source') }}: {{ source.name }}">
                         <small class="text-muted">{{ _('Select') }}</small>
                     </div>
                     <div class="btn-group btn-group-sm w-100" role="group">
-                        <button class="btn btn-outline-primary" onclick="viewSource('{{ source.id }}')" title="{{ _('View Details') }}">
+                        <button class="btn btn-outline-primary" data-on-click="viewSource('{{ source.id }}')" title="{{ _('View Details') }}">
                             <i class="bi bi-eye"></i>
                         </button>
-                        <button class="btn btn-outline-success" onclick="editSource('{{ source.id }}')" title="{{ _('Edit Source') }}">
+                        <button class="btn btn-outline-success" data-on-click="editSource('{{ source.id }}')" title="{{ _('Edit Source') }}">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-outline-info" onclick="duplicateSource('{{ source.id }}')" title="{{ _('Duplicate Source') }}">
+                        <button class="btn btn-outline-info" data-on-click="duplicateSource('{{ source.id }}')" title="{{ _('Duplicate Source') }}">
                             <i class="bi bi-files"></i>
                         </button>
-                        <button class="btn btn-outline-secondary" onclick="exportSource('{{ source.id }}')" title="{{ _('Export Data') }}">
+                        <button class="btn btn-outline-secondary" data-on-click="exportSource('{{ source.id }}')" title="{{ _('Export Data') }}">
                             <i class="bi bi-download"></i>
                         </button>
-                        <button class="btn btn-outline-primary" onclick="viewSourceCategoriesKeywords('{{ source.id }}')" title="{{ _('View Categories & Keywords') }}">
+                        <button class="btn btn-outline-primary" data-on-click="viewSourceCategoriesKeywords('{{ source.id }}')" title="{{ _('View Categories & Keywords') }}">
                             <i class="bi bi-tags"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick='deleteSource("{{ source.id }}", {{ source.name|tojson }})' title="{{ _('Delete Source') }}">
+                        <button class="btn btn-outline-danger" data-on-click='deleteSource("{{ source.id }}", {{ source.name|tojson }})' title="{{ _('Delete Source') }}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -338,7 +338,7 @@
         <div class="col-12">
             <div class="text-center text-muted py-5">
                 <i class="bi bi-inbox display-4 d-block mb-3"></i>
-                <p>{{ _('No sources yet.') }} <a href="#" onclick="openSourceModal(); return false;">{{ _('Add your first source') }}</a></p>
+                <p>{{ _('No sources yet.') }} <a href="#" data-on-click="openSourceModal(); return false;">{{ _('Add your first source') }}</a></p>
             </div>
         </div>
         {% endfor %}
@@ -506,7 +506,7 @@
                     <i class="bi bi-x-circle me-2"></i>
                     {{ _('Cancel') }}
                 </button>
-                <button type="button" class="btn btn-primary" onclick="submitSourceForm()">
+                <button type="button" class="btn btn-primary" data-on-click="submitSourceForm()">
                     <i class="bi bi-check-circle me-2"></i>
                     <span id="submitButtonText">{{ _('Create Source') }}</span>
                 </button>
@@ -571,59 +571,5 @@
     }
 }|tojson }}</script>
 <script type="module" src="{{ url_for('static', filename='js/pages/sources-list-page.js') }}"></script>
-<script>
-// Fallback for onclick handlers before module loads
-// These functions retry multiple times to ensure the module has loaded
-function createRetryFunction(fnName, maxRetries = 20, delay = 50) {
-    const retryWrapper = function(...args) {
-        let retries = 0;
-        const tryCall = () => {
-            const fn = window[fnName];
-            // Check if function exists and is not the retry wrapper itself
-            if (typeof fn === 'function' && fn !== retryWrapper && !fn.toString().includes('createRetryFunction')) {
-                // Real function is loaded, call it
-                try {
-                    return fn(...args);
-                } catch (error) {
-                    console.error(`Error calling ${fnName}:`, error);
-                }
-            } else if (retries < maxRetries) {
-                // Function not loaded yet, retry
-                retries++;
-                setTimeout(tryCall, delay);
-            } else {
-                console.error(`Function ${fnName} not available after ${maxRetries} retries`);
-                alert(`Error: ${fnName} function is not available. Please refresh the page.`);
-            }
-        };
-        tryCall();
-    };
-    // Mark this as a retry wrapper so we can detect it
-    retryWrapper._isRetryWrapper = true;
-    return retryWrapper;
-}
-
-// Set up fallback functions only if they don't exist or are retry wrappers
-(function() {
-    const functionsToSetup = [
-        'openSourceModal',
-        'viewSource',
-        'editSource',
-        'duplicateSource',
-        'exportSource',
-        'viewSourceCategoriesKeywords',
-        'toggleSourceStatus',
-        'deleteSource',
-        'submitSourceForm'
-    ];
-    
-    functionsToSetup.forEach(fnName => {
-        const existing = window[fnName];
-        // Only set up retry if function doesn't exist or is a retry wrapper
-        if (typeof existing !== 'function' || existing._isRetryWrapper) {
-            window[fnName] = createRetryFunction(fnName);
-        }
-    });
-})();
-</script>
+<script src="{{ url_for('static', filename='js/pages/sources-list-fallbacks.js') }}"></script>
 {% endblock %}

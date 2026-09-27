@@ -42,7 +42,7 @@ from core.monitoring.monitor import PerformanceMonitor
 from core.security.rate_limit import limiter
 from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
-from functools import wraps
+from functools import lru_cache, wraps
 from flask import make_response, request
 import time
 
@@ -80,9 +80,13 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 # false. Trust X-Forwarded-For/-Proto/-Host only when the operator declares
 # how many proxies sit in front of the app (default 0 = trust nothing, since
 # a directly exposed server must not believe client-supplied headers).
+from apps.web.deployment import parse_trusted_proxy_count
+
 try:
-    _trusted_proxies = max(0, int(os.environ.get('TRUSTED_PROXY_COUNT', '0') or 0))
-except ValueError:
+    _trusted_proxies = parse_trusted_proxy_count(os.environ.get('TRUSTED_PROXY_COUNT'))
+except ValueError as _proxy_error:
+    # run_web.py refuses to start on this; other entry points trust no proxy.
+    logger.error("%s - trusting no proxy", _proxy_error)
     _trusted_proxies = 0
 if _trusted_proxies:
     from werkzeug.middleware.proxy_fix import ProxyFix
@@ -303,11 +307,16 @@ logger.info("✅ Gzip compression enabled")
 @app.after_request
 def add_performance_headers(response):
     """Add performance and caching headers to all responses"""
-    # Cache static assets for 1 year
+    # CACHE-02: static assets are revalidated on every use (a cheap 304 via
+    # ETag/Last-Modified). Most asset URLs, and every ES-module import inside
+    # them, carry no version, so a long-lived "immutable" cache would pin the
+    # previous release's JavaScript in browsers after an upgrade. Flask already
+    # sends no-cache; the max-age/immutable once added here contradicted it.
     if request.endpoint and 'static' in request.endpoint:
-        response.cache_control.max_age = 31536000
+        response.cache_control.no_cache = True
+        response.cache_control.max_age = None
+        response.cache_control.immutable = False
         response.cache_control.public = True
-        response.cache_control.immutable = True
     # CACHE-01: API responses are per-user, fast-changing data (a PATCH to
     # /api/auth/users/<id> was invisible to the browser's immediate re-read
     # of /api/auth/users for up to 5 minutes). Never let browsers reuse them.
@@ -352,6 +361,35 @@ def after_request(response):
     return response
 
 # ---------------------------------------------------------------------------
+# Release information on every page: the running version, and - because
+# SYLTHARAE is AGPL-3.0-or-later (section 13) - where its users can get the
+# corresponding source. Whoever runs a modified copy must point
+# SOURCE_CODE_URL at their modified source (docs/LICENSING.md).
+# ---------------------------------------------------------------------------
+DEFAULT_SOURCE_CODE_URL = 'https://github.com/RussellTCrivello/SYLTHARAE'
+
+
+def source_code_url():
+    """The configured source URL; only http(s) URLs are accepted."""
+    return _validated_source_code_url((os.environ.get('SOURCE_CODE_URL') or '').strip())
+
+
+@lru_cache(maxsize=8)
+def _validated_source_code_url(configured):
+    if configured.lower().startswith(('https://', 'http://')):
+        return configured
+    if configured:  # logged once per value, not on every page
+        logger.warning("SOURCE_CODE_URL must be an http(s) URL; using %s", DEFAULT_SOURCE_CODE_URL)
+    return DEFAULT_SOURCE_CODE_URL
+
+
+@app.context_processor
+def inject_release_info():
+    from version import get_version
+    return {'version': get_version(), 'source_code_url': source_code_url()}
+
+
+# ---------------------------------------------------------------------------
 # SEC-09: Browser security headers on every response
 # ---------------------------------------------------------------------------
 @app.after_request
@@ -365,7 +403,10 @@ def add_security_headers(response):
     response.headers.setdefault(
         'Content-Security-Policy',
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "  # legacy inline scripts; see docs/SECURITY.md
+        # RES-CSP-01: no inline script. Handlers are data-on-<event> attributes run
+        # by static/js/modules/core/declarative-events.js; page data travels in
+        # <script type="application/json"> blocks, which are not executed.
+        "script-src 'self'; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: blob:; "
         "font-src 'self'; "
@@ -506,6 +547,27 @@ def handle_csrf_error(e):
         return jsonify({'error': 'CSRF token is missing or invalid'}), 400
     # For non-JSON requests, Flask-WTF will handle it automatically
     return render_template('500.html', error=str(e)), 400
+
+RATE_LIMITED_MESSAGE = 'Too many attempts. Wait a minute and try again.'
+
+
+@app.errorhandler(429)
+def handle_rate_limited(error):
+    """A rate limit was exceeded (flask-limiter).
+
+    JSON for JSON and API callers: the default response is an HTML page, and
+    the sign-in form - like every fetch() in the app - parsed it as JSON,
+    failed, and told a locked-out user "An internal error occurred". Other
+    callers get a plain page. Limiter headers, if enabled, are added later by
+    flask-limiter's own after-request hook.
+    """
+    from flask_babel import gettext
+    message = gettext(RATE_LIMITED_MESSAGE)
+    if (request.is_json or request.path.startswith('/api/')
+            or request.accept_mimetypes.best == 'application/json'):
+        return jsonify({'error': message, 'code': 'rate_limited'}), 429
+    return message, 429, {'Content-Type': 'text/plain; charset=utf-8'}
+
 
 @app.route('/api/csrf-token', methods=['GET'])
 def get_csrf_token():

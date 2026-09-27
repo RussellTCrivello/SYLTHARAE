@@ -109,7 +109,7 @@ def first_page_text(
         try:
             # PyMuPDF is the project's supported PDF engine. Prefer it so this
             # feature works in the same install profile as PDF ingestion.
-            import fitz
+            import pymupdf as fitz
 
             with fitz.open(str(path)) as document:
                 if len(document):

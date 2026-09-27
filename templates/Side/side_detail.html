@@ -106,7 +106,7 @@
                 <a href="{{ url_for('sides_list') }}?edit={{ side.id }}" class="btn btn-success">
                     <i class="bi bi-pencil me-2"></i>{{ _('Edit Side') }}
                 </a>
-                <button type="button" class="btn btn-outline-danger" onclick='deleteSide({{ side.id }}, {{ side.name|tojson }})'>
+                <button type="button" class="btn btn-outline-danger" data-on-click='deleteSide({{ side.id }}, {{ side.name|tojson }})'>
                     <i class="bi bi-trash me-2"></i>{{ _('Delete Side') }}
                 </button>
             </div>

@@ -1168,14 +1168,14 @@ function displayResults(results, pagination) {
 
         return `
             <div class="result-item ${searchState.selectedIds.has(fileId) ? 'result-selected' : ''}" data-file-id="${fileId}">
-                <div class="result-select" onclick="event.stopPropagation()">
+                <div class="result-select" data-on-click="event.stopPropagation()">
                     <input class="form-check-input result-checkbox" type="checkbox"
                            ${searchState.selectedIds.has(fileId) ? 'checked' : ''}
-                           onchange="toggleResultSelection(${fileId}, this.checked)"
+                           data-on-change="toggleResultSelection(${fileId}, this.checked)"
                            title="${escapeAttr(tPage('selectForCategorization', 'Select for manual categorization'))}"
                            aria-label="${escapeAttr(tPage('selectFileForCategorization', 'Select {file} for manual categorization').replace('{file}', result.file_name || 'file'))}">
                 </div>
-                <div class="result-body" onclick="openResultInNewTab(event, ${fileId})"
+                <div class="result-body" data-on-click="openResultInNewTab(event, ${fileId})"
                      title="${escapeAttr(tPage('openInNewTab', 'Open in new tab'))}">
                     <div class="result-title-row">
                         <span class="result-file-icon ${typeInfo.css}" title="${escapeAttr(fileType || '')}">
@@ -1183,7 +1183,7 @@ function displayResults(results, pagination) {
                         </span>
                         <a class="result-title result-title-link" href="${fileDetailHref(fileId)}"
                            target="_blank" rel="noopener"
-                           onclick="event.stopPropagation()">${escapeHtml(result.file_name || tPage('untitled', 'Untitled'))}</a>
+                           data-on-click="event.stopPropagation()">${escapeHtml(result.file_name || tPage('untitled', 'Untitled'))}</a>
                         ${fileType ? `<span class="result-type-chip ${typeInfo.css}">${escapeHtml(fileType)}</span>` : ''}
                         ${result.relevance_score ? `<span class="relevance-badge">${Math.round(result.relevance_score * 100)}%</span>` : ''}
                     </div>
@@ -1213,25 +1213,25 @@ function displayResults(results, pagination) {
                     ` : ''}
                     <div class="result-hover-actions">
                         <button type="button" class="result-action-btn result-action-review"
-                                onclick="reviewResultInPane(${fileId}, event)"
+                                data-on-click="reviewResultInPane(${fileId}, event)"
                                 title="${escapeAttr(tPage('reviewInPane', 'Review beside results'))}"
                                 aria-label="${escapeAttr(tPage('reviewInPane', 'Review beside results'))}">
                             <i class="bi bi-layout-split" aria-hidden="true"></i>
                         </button>
                         <button type="button" class="result-action-btn result-action-preview"
-                                onclick="showFilePreview(${fileId}); event.stopPropagation();"
+                                data-on-click="showFilePreview(${fileId}); event.stopPropagation();"
                                 title="${escapeAttr(tPage('preview', 'Quick preview (stays on this page)'))}"
                                 aria-label="${escapeAttr(tPage('preview', 'Quick preview (stays on this page)'))}">
                             <i class="bi bi-eye" aria-hidden="true"></i>
                         </button>
                         <button type="button" class="result-action-btn result-action-export"
-                                onclick="exportSingleFileText(${fileId}, event)"
+                                data-on-click="exportSingleFileText(${fileId}, event)"
                                 title="${escapeAttr(tPage('exportText', 'Download extracted text'))}"
                                 aria-label="${escapeAttr(tPage('exportText', 'Download extracted text'))}">
                             <i class="bi bi-file-earmark-arrow-down" aria-hidden="true"></i>
                         </button>
                         <button type="button" class="result-action-btn result-action-open"
-                                onclick="openResultInNewTab(event, ${fileId})"
+                                data-on-click="openResultInNewTab(event, ${fileId})"
                                 title="${escapeAttr(tPage('openInNewTab', 'Open in new tab'))}"
                                 aria-label="${escapeAttr(tPage('openInNewTab', 'Open in new tab'))}">
                             <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
@@ -2980,12 +2980,12 @@ async function renderSavedSearchMenu() {
         }
         list.innerHTML = searches.map(s => `
             <div class="ssm-item">
-                <button type="button" class="ssm-run" onclick="applySavedSearchById(${s.id})"
+                <button type="button" class="ssm-run" data-on-click="applySavedSearchById(${s.id})"
                         title="${escapeAttr(tPage('runSavedSearch', 'Run this search'))}">
                     <span class="ssm-name">${escapeHtml(s.name)}</span>
                     ${s.query ? `<span class="ssm-query">${escapeHtml(s.query)}</span>` : ''}
                 </button>
-                <button type="button" class="ssm-delete" onclick="deleteSavedSearchById(${s.id}, event)"
+                <button type="button" class="ssm-delete" data-on-click="deleteSavedSearchById(${s.id}, event)"
                         title="${escapeAttr(tPage('deleteSearch', 'Delete'))}"
                         aria-label="${escapeAttr(tPage('deleteSearch', 'Delete'))}">
                     <i class="bi bi-trash" aria-hidden="true"></i>

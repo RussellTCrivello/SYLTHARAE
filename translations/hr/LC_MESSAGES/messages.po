@@ -10546,3 +10546,18 @@ msgstr "Vratit će se na prijevod iz kataloga"
 #: core/interfaces/registry.py
 msgid "Review and manage localized strings across every screen."
 msgstr "Pregledajte i upravljajte lokaliziranim tekstom na svim zaslonima."
+
+msgid "Source code"
+msgstr "Izvorni kod"
+
+msgid "SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code."
+msgstr "SYLTHARAE je slobodni softver pod licencom GNU AGPL-3.0 ili novijom. Preuzmite njegov izvorni kod."
+
+msgid "Current Password"
+msgstr "Trenutna lozinka"
+
+msgid "Enter your current password."
+msgstr "Unesite trenutnu lozinku."
+
+msgid "The new password must be different from the current one."
+msgstr "Nova lozinka mora se razlikovati od trenutne."

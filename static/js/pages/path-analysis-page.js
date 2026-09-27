@@ -2477,8 +2477,8 @@ function renderClassificationDetails(classifications) {
             <tr class="category-row-clickable" 
                 data-category="${categoryName.replace(/"/g, '&quot;')}"
                 style="background: ${backgroundColor}; border-bottom: 1px solid var(--table-border); cursor: pointer; transition: background-color 0.2s;"
-                onmouseover="this.style.background='var(--table-row-hover)'"
-                onmouseout="this.style.background='${backgroundColor}'">
+                data-on-mouseover="this.style.background='var(--table-row-hover)'"
+                data-on-mouseout="this.style.background='${backgroundColor}'">
                 <td style="padding: 0.75rem;">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <i class="bi bi-tag-fill" style="color: ${categoryColor};"></i>
@@ -2602,7 +2602,7 @@ function renderModalFiles(files, category) {
         const hasKeywords = file.keywords && file.keywords.length > 0;
         
         html += `
-            <div class="modal-file-card" onclick="window.open('/file/${file.id}', '_blank')">
+            <div class="modal-file-card" data-on-click="window.open('/file/${file.id}', '_blank')">
                 <div class="modal-file-header">
                     <div class="modal-file-icon">${fileIcon}</div>
                     <div class="modal-file-info">
@@ -2840,8 +2840,8 @@ function renderCategoryWordsDetails(categories) {
                 data-category-id="${categoryId}"
                 data-category-name="${categoryName.replace(/"/g, '&quot;')}"
                 style="background: ${backgroundColor}; border-bottom: 1px solid var(--table-border); cursor: pointer; transition: background-color 0.2s;"
-                onmouseover="this.style.background='var(--table-row-hover)'"
-                onmouseout="this.style.background='${backgroundColor}'">
+                data-on-mouseover="this.style.background='var(--table-row-hover)'"
+                data-on-mouseout="this.style.background='${backgroundColor}'">
                 <td style="padding: 0.75rem;">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <i class="bi bi-bookmark-fill" style="color: ${categoryColor};"></i>
@@ -2984,8 +2984,8 @@ function renderCategoryWords(words, categoryName, categoryId) {
                  data-word-text="${wordTextEscaped}"
                  data-category-id="${categoryId || ''}"
                  style="background: var(--bg-section); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; transition: all 0.2s; cursor: pointer;"
-                 onmouseover="this.style.borderColor='var(--primary-color)'; this.style.transform='translateY(-2px)'; const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(); this.style.boxShadow='0 4px 12px ' + (primaryColor ? primaryColor + '26' : 'rgba(102, 126, 234, 0.15)');"
-                 onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                 data-on-mouseover="this.style.borderColor='var(--primary-color)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px color-mix(in srgb, var(--primary-color, rgb(102, 126, 234)) 15%, transparent)';"
+                 data-on-mouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                     <span style="font-weight: 600; color: var(--text-heading); word-break: break-word;">${word.word}</span>
                     <span style="background: ${usageColor}; color: var(--text-white); padding: 0.125rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600; flex-shrink: 0; margin-left: 0.5rem;">
@@ -3141,7 +3141,7 @@ function renderWordFiles(files, wordText, wordDisplay, categoryId = null, catego
         const fileIcon = getFileIcon(file.type);
         
         html += `
-            <div class="modal-file-card" onclick="window.open('/file/${file.id}', '_blank')">
+            <div class="modal-file-card" data-on-click="window.open('/file/${file.id}', '_blank')">
                 <div class="modal-file-header">
                     <div class="modal-file-icon">${fileIcon}</div>
                     <div class="modal-file-info">

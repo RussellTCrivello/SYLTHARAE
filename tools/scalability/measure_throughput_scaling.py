@@ -85,7 +85,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--sizes", default="1000,10000,25000")
     ap.add_argument("--workers", type=int, default=6)
-    ap.add_argument("--out", default="/tmp/scaling.json")
+    ap.add_argument("--out", default="scaling.json")  # not a guessable path in shared /tmp
     ap.add_argument("--workdir", default=None)
     args = ap.parse_args(argv)
 

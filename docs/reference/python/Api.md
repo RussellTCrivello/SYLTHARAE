@@ -42,12 +42,13 @@ _No module docstring._
 
 Content Analysis API Routes
 
-- `analyze_file(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/file/<int:file_id>', methods=['GET'])</sub> - Analyze a single file by ID.
-- `analyze_batch()` <sub>content_analysis_bp.route('/api/analysis/batch', methods=['POST'])</sub> - Analyze multiple files in batch.
-- `get_sentiment(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/sentiment/<int:file_id>', methods=['GET'])</sub> - Get sentiment analysis for a single file
-- `get_topics(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/topics/<int:file_id>', methods=['GET'])</sub> - Get topic analysis for a single file
-- `get_entities(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/entities/<int:file_id>', methods=['GET'])</sub> - Get entity analysis for a single file
-- `get_statistics(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/statistics/<int:file_id>', methods=['GET'])</sub> - Get statistical analysis for a single file
+- **class `_AnalysisFailed`**(Exception) - The engine reported an error; its text stays in the server log.
+- `analyze_file(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/file/<int:file_id>', methods=['GET'])</sub> - Word count, distinct words, category occurrences and a preview.
+- `get_statistics(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/statistics/<int:file_id>', methods=['GET'])</sub> - The numeric part of the file analysis.
+- `analyze_batch()` <sub>content_analysis_bp.route('/api/analysis/batch', methods=['POST'])</sub> - Analyse several files: ``{"file_ids": [1, 2, 3]}``.
+- `get_sentiment(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/sentiment/<int:file_id>', methods=['GET'])</sub>
+- `get_topics(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/topics/<int:file_id>', methods=['GET'])</sub>
+- `get_entities(file_id: int)` <sub>content_analysis_bp.route('/api/analysis/entities/<int:file_id>', methods=['GET'])</sub>
 
 ### `Api/blueprints/files.py`
 
@@ -206,7 +207,7 @@ Authentication routes (SEC-01).
 - `login()` <sub>auth_bp.route('/auth/login', methods=['POST'])</sub>
 - `logout()` <sub>auth_bp.route('/auth/logout', methods=['POST'])</sub>
 - `me()` <sub>auth_bp.route('/auth/me', methods=['GET'])</sub>
-- `change_password()` <sub>auth_bp.route('/auth/change-password', methods=['POST'])</sub>
+- `change_password()` <sub>auth_bp.route('/auth/change-password', methods=['POST'])</sub> - Change the signed-in user's password; the current password is required.
 - `first_admin_page()` <sub>auth_bp.route('/auth/first-admin', methods=['GET'])</sub>
 - `first_admin_create()` <sub>auth_bp.route('/auth/first-admin', methods=['POST'])</sub> - Create the initial administrator. Only functional while zero users exist.
 - `api_list_users()` <sub>auth_bp.route('/api/auth/users', methods=['GET'])</sub>

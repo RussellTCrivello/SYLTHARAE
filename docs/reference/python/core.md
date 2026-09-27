@@ -628,7 +628,7 @@ Shared installation services — single source of truth for all setup operations
 - `ensure_runtime_directories() -> Dict[str, str]` - Create all required runtime directories. Returns name→path mapping.
 - `mark_system_initialized() -> bool` - Write the filesystem marker that indicates a successful installation.
 - `verify_installation(host: str = 'localhost', port: int = 5432, user: str = 'postgres', password: str = '', database: str = 'analysis') -> Dict[str, Any]` - Run post-install checks and return structured results.
-- `run_installation(config: Dict[str, str]) -> Dict[str, Any]` - Execute the complete installation sequence.
+- `run_installation(config: Dict[str, str], client_ip: str = '') -> Dict[str, Any]` - Execute the complete installation sequence.
 
 ### `core/interfaces/__init__.py`
 
@@ -858,7 +858,7 @@ Pluggable OCR engine layer (PHASE 2A).
 - **class `OcrBlock`** - One recognised text region.
 - **class `OcrResult`** - Engine-agnostic OCR outcome with provenance.
   - `succeeded(self) -> bool` *(property)*
-  - `mean_confidence(self) -> Optional[float]` *(property)* - Mean confidence over blocks that reported one, else ``None``.
+  - `mean_confidence(self) -> Optional[float]` *(property)* - Mean confidence (0.0-1.0) over blocks that reported one.
   - `block_count(self) -> int` *(property)*
   - `to_content_fields(self) -> dict` - Flatten into the keys the storage layer consumes.
 - **class `BaseOcrEngine`**(ABC) - Interface every OCR backend must satisfy.
@@ -880,7 +880,7 @@ Pluggable OCR engine layer (PHASE 2A).
 - `ocr_engine_name() -> str` - Name of the selected engine, or ``'none'``.
 - `reset_engine_cache() -> None` - Clear the cached selection. Intended for tests.
 - `recognize_best(engine: BaseOcrEngine, preprocessed: Any, original: Optional[Any] = None, languages: Optional[Sequence[str]] = None, threshold: float = LOW_CO...` - Recognise, retrying on the un-preprocessed image when confidence is low.
-- `recognize_image(image: Any, languages: Optional[Iterable[str]] = None) -> OcrResult` - Recognise text in a PIL image using the selected engine, auto-trying rotations (0, 90, 180, 270) if needed.
+- `recognize_image(image: Any, languages: Optional[Iterable[str]] = None) -> OcrResult` - Recognise text in a PIL image with the selected engine, in any orientation.
 
 ### `core/path_safety.py`
 
@@ -986,6 +986,8 @@ User/account service backed by PostgreSQL (SEC-01, SEC-02).
   - `__init__(self, message: str, code: str = 'auth_error')`
 - **class `InvalidCredentials`**(AuthError) - _undocumented_
   - `__init__(self)`
+- **class `InvalidCurrentPassword`**(AuthError) - _undocumented_
+  - `__init__(self)`
 - **class `AccountLocked`**(AuthError) - _undocumented_
   - `__init__(self, remaining_minutes: int)`
 - **class `AccountDisabled`**(AuthError) - _undocumented_
@@ -1002,8 +1004,7 @@ User/account service backed by PostgreSQL (SEC-01, SEC-02).
   - `get_user_by_id(self, user_id: int) -> Optional[User]`
   - `create_user(self, username: str, password: str, role: str = ROLE_ANALYST, must_change_password: bool = False) -> User` - Create a user account. Password is hashed before storage.
   - `set_password(self, user_id: int, new_password: str, require_change: bool = False) -> None` - Admin/initiated password reset. Revokes all sessions for the user.
-  - `change_password(self, user_id: int, current_password: str, new_password: str) -> None`
-  - `change_own_password(self, user_id: int, new_password: str) -> None` - User changing their own password (already authenticated).
+  - `change_own_password(self, user_id: int, current_password: str, new_password: str, keep_session_id: Optional[str] = None) -> None` - A signed-in user changing their own password (RES-AUTH-02).
   - `set_role(self, user_id: int, role: str) -> None`
   - `set_active(self, user_id: int, is_active: bool) -> None`
   - `delete_user(self, user_id: int) -> None` - Permanently remove a user account.

@@ -91,7 +91,7 @@
                 <a href="{{ url_for('keywords_add') }}?keyword_id={{ keyword.id }}" class="btn btn-success">
                     <i class="bi bi-pencil me-2"></i> {{ _('Edit Keyword') }}
                 </a>
-                <button class="btn btn-outline-danger" onclick="deleteKeyword({{ keyword.id }})">
+                <button class="btn btn-outline-danger" data-on-click="deleteKeyword({{ keyword.id }})">
                     <i class="bi bi-trash me-2"></i> {{ _('Delete Keyword') }}
                 </button>
             </div>

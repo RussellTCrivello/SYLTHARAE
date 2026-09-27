@@ -142,8 +142,8 @@ class TestReaderMatrix:
         assert result is not None
 
     def test_pdf_reader_if_available(self, router, tmp_path):
-        pytest.importorskip("fitz", reason="PyMuPDF not installed")
-        import fitz
+        pytest.importorskip("pymupdf", reason="PyMuPDF not installed")
+        import pymupdf as fitz
 
         fixture = tmp_path / "fixture.pdf"
         doc = fitz.open()

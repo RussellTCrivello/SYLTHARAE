@@ -1,8 +1,12 @@
 """
 Entry point for the web application.
 
-This script initializes the Flask web application and starts the development server.
-For production deployment, use a WSGI server like Gunicorn or uWSGI.
+This script validates the deployment settings (apps/web/deployment.py), then
+serves the Flask application: with Flask's built-in server by default, or with
+Waitress when WSGI_SERVER=waitress - the production setting (docs/OPERATIONS.md).
+Background jobs run as threads inside this one process, so run exactly one
+process per database; multi-process servers such as Gunicorn or uWSGI with
+several workers are not supported.
 
 Usage:
     python run_web.py
@@ -101,21 +105,30 @@ initialize_system()
 # Import and run the web app
 from apps.web.app import app
 
+#: Exit status when start-up validation refuses the settings. The systemd unit
+#: (deploy/systemd/syltharae.service) does not restart on it.
+EXIT_REFUSED = 2
+
+
 def main():
     """Console entry point (pyproject: file-analysis-web = run_web:main)."""
-    globals()['_run_main']()
+    from apps.web.deployment import DeploymentError
+
+    try:
+        globals()['_run_main']()
+    except DeploymentError as exc:
+        print(f"[ERROR] {exc}", file=sys.stderr)
+        sys.exit(EXIT_REFUSED)
 
 
 def _run_main():
     # SEC-10: debug mode is environment-controlled and never hardcoded.
-    # Production startup must reject debug mode.
-    flask_env = os.environ.get('FLASK_ENV', 'production').lower()
+    # Start-up validation refuses invalid or dangerous settings (debug mode in
+    # production among them) and warns about unsafe production ones.
+    from apps.web.deployment import enforce
+
+    enforce(printer=print)  # raises DeploymentError (a RuntimeError) on errors
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 'yes')
-    if debug_mode and flask_env == 'production':
-        raise RuntimeError(
-            "Refusing to start: FLASK_DEBUG is enabled while FLASK_ENV=production. "
-            "Set FLASK_ENV=development for debug mode."
-        )
     if debug_mode:
         print("[WARNING] Flask debug mode is ENABLED - development use only")
 
@@ -150,4 +163,4 @@ def _run_main():
 if __name__ == '__main__':
     # `python run_web.py` must start the server (previously it imported the
     # app and exited silently, leaving beginners at an empty prompt).
-    _run_main()
+    main()

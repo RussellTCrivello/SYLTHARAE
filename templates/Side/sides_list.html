@@ -19,11 +19,11 @@
         </h1>
     </div>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-primary" onclick="openSideModal()">
+        <button type="button" class="btn btn-primary" data-on-click="openSideModal()">
             <i class="bi bi-plus-circle me-2"></i>
             {{ _('Add Side') }}
         </button>
-        <button class="btn btn-outline-primary" onclick="location.reload()">
+        <button class="btn btn-outline-primary" data-on-click="location.reload()">
             <i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}
         </button>
     </div>
@@ -131,7 +131,7 @@
                 <i class="bi bi-arrow-down-up"></i>
                 {{ _('Sort By') }}
             </label>
-            <select class="form-select" id="sortBy" onchange="applyFilters()">
+            <select class="form-select" id="sortBy" data-on-change="applyFilters()">
                 <option value="name-asc">{{ _('Name (A-Z)') }}</option>
                 <option value="name-desc">{{ _('Name (Z-A)') }}</option>
                 <option value="importance-desc" selected>{{ _('Importance (High-Low)') }}</option>
@@ -150,7 +150,7 @@
                 <i class="bi bi-layout-three-columns"></i>
                 {{ _('Display Format') }}
             </label>
-            <select class="form-select" id="displayFormat" onchange="changeDisplayFormat()">
+            <select class="form-select" id="displayFormat" data-on-change="changeDisplayFormat()">
                 <option value="grid" selected>{{ _('Grid') }}</option>
                 <option value="table">{{ _('Table') }}</option>
                 <option value="list">{{ _('List') }}</option>
@@ -162,7 +162,7 @@
                 <i class="bi bi-list-ol"></i>
                 {{ _('Per Page') }}
             </label>
-            <select class="form-select" id="itemsPerPage" onchange="changePageSize()">
+            <select class="form-select" id="itemsPerPage" data-on-change="changePageSize()">
                 {% set current_limit = request.args.get('limit', 50)|int %}
                 <option value="10" {% if current_limit == 10 %}selected{% endif %}>10</option>
                 <option value="25" {% if current_limit == 25 %}selected{% endif %}>25</option>
@@ -262,27 +262,27 @@
                     <div class="d-flex align-items-center mb-2">
                         <input type="checkbox" class="form-check-input side-checkbox me-2" 
                                value="{{ side.id }}" 
-                               onchange="updateBulkButtons()"
+                               data-on-change="updateBulkButtons()"
                                aria-label="{{ _('Select side') }}: {{ side.name }}">
                         <small class="text-muted">{{ _('Select') }}</small>
                     </div>
                     <div class="btn-group btn-group-sm w-100" role="group">
-                        <button class="btn btn-outline-primary" onclick="viewSide({{ side.id }})" title="{{ _('View Details') }}">
+                        <button class="btn btn-outline-primary" data-on-click="viewSide({{ side.id }})" title="{{ _('View Details') }}">
                             <i class="bi bi-eye"></i>
                         </button>
-                        <button class="btn btn-outline-success" onclick="editSide({{ side.id }})" title="{{ _('Edit Side') }}">
+                        <button class="btn btn-outline-success" data-on-click="editSide({{ side.id }})" title="{{ _('Edit Side') }}">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-outline-info" onclick="duplicateSide({{ side.id }})" title="{{ _('Duplicate Side') }}">
+                        <button class="btn btn-outline-info" data-on-click="duplicateSide({{ side.id }})" title="{{ _('Duplicate Side') }}">
                             <i class="bi bi-files"></i>
                         </button>
-                        <button class="btn btn-outline-secondary" onclick="exportSide({{ side.id }})" title="{{ _('Export Data') }}">
+                        <button class="btn btn-outline-secondary" data-on-click="exportSide({{ side.id }})" title="{{ _('Export Data') }}">
                             <i class="bi bi-download"></i>
                         </button>
-                        <button class="btn btn-outline-primary" onclick="viewSideCategoriesKeywords({{ side.id }})" title="{{ _('View Categories & Keywords') }}">
+                        <button class="btn btn-outline-primary" data-on-click="viewSideCategoriesKeywords({{ side.id }})" title="{{ _('View Categories & Keywords') }}">
                             <i class="bi bi-tags"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick='deleteSide({{ side.id }}, {{ side.name|tojson }})' title="{{ _('Delete Side') }}">
+                        <button class="btn btn-outline-danger" data-on-click='deleteSide({{ side.id }}, {{ side.name|tojson }})' title="{{ _('Delete Side') }}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -293,7 +293,7 @@
         <div class="col-12">
             <div class="text-center text-muted py-5">
                 <i class="bi bi-inbox display-4 d-block mb-3"></i>
-                <p>{{ _('No sides yet.') }} <a href="#" onclick="openSideModal(); return false;">{{ _('Add your first side') }}</a></p>
+                <p>{{ _('No sides yet.') }} <a href="#" data-on-click="openSideModal(); return false;">{{ _('Add your first side') }}</a></p>
             </div>
         </div>
         {% endfor %}
@@ -367,7 +367,7 @@
                     <i class="bi bi-x-circle me-2"></i>
                     {{ _('Cancel') }}
                 </button>
-                <button type="button" class="btn btn-primary" onclick="submitSideForm()">
+                <button type="button" class="btn btn-primary" data-on-click="submitSideForm()">
                     <i class="bi bi-check-circle me-2"></i>
                     <span id="submitButtonText">{{ _('Create Side') }}</span>
                 </button>
@@ -429,16 +429,5 @@
     }
 }|tojson }}</script>
 <script type="module" src="{{ url_for('static', filename='js/pages/sides-list-page.js') }}"></script>
-<script>
-// Fallback for onclick handlers before module loads
-if (typeof window.openSideModal === 'undefined') {
-    window.openSideModal = function() { setTimeout(() => window.openSideModal?.(), 100); };
-    window.viewSide = function(id) { setTimeout(() => window.viewSide?.(id), 100); };
-    window.editSide = function(id) { setTimeout(() => window.editSide?.(id), 100); };
-    window.duplicateSide = function(id) { setTimeout(() => window.duplicateSide?.(id), 100); };
-    window.toggleSideStatus = function(id) { setTimeout(() => window.toggleSideStatus?.(id), 100); };
-    window.deleteSide = function(id) { setTimeout(() => window.deleteSide?.(id), 100); };
-    window.submitSideForm = function() { setTimeout(() => window.submitSideForm?.(), 100); };
-}
-</script>
+<script src="{{ url_for('static', filename='js/pages/sides-list-fallbacks.js') }}"></script>
 {% endblock %}

@@ -119,8 +119,8 @@
                                            id="appName" 
                                            value="{{ user_settings.get('system', 'app_name', 'File Analysis') }}"
                                            placeholder="{{ _('File Analysis') }}"
-                                           oninput="updateAppBrandingPreview()"
-                                           onchange="updateAppBranding('app_name', this.value)">
+                                           data-on-input="updateAppBrandingPreview()"
+                                           data-on-change="updateAppBranding('app_name', this.value)">
                                     <div class="setting-description mt-2">
                                         {{ _('The name displayed in the sidebar and browser title') }}
                                     </div>
@@ -139,9 +139,9 @@
                                             <input type="file" class="form-control form-control-sm" 
                                                    id="logoUpload" 
                                                    accept="image/*"
-                                                   onchange="handleLogoUpload(this)">
+                                                   data-on-change="handleLogoUpload(this)">
                                             {% if user_settings.get('system', 'app_logo') %}
-                                            <button class="btn btn-sm btn-outline-danger" type="button" onclick="removeLogo()" title="{{ _('Remove Logo') }}">
+                                            <button class="btn btn-sm btn-outline-danger" type="button" data-on-click="removeLogo()" title="{{ _('Remove Logo') }}">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                             {% endif %}
@@ -160,10 +160,10 @@
                                                    id="appIcon" 
                                                    value="{{ user_settings.get('system', 'app_icon', 'bi-file-earmark-text') }}"
                                                    placeholder="bi-file-earmark-text"
-                                                   oninput="updateAppBrandingPreview()"
-                                                   onchange="updateAppBranding('app_icon', this.value)"
+                                                   data-on-input="updateAppBrandingPreview()"
+                                                   data-on-change="updateAppBranding('app_icon', this.value)"
                                                    {% if user_settings.get('system', 'app_logo') %}disabled{% endif %}>
-                                            <button class="btn btn-outline-secondary" type="button" onclick="openIconPicker()" title="{{ _('Pick Icon') }}" {% if user_settings.get('system', 'app_logo') %}disabled{% endif %}>
+                                            <button class="btn btn-outline-secondary" type="button" data-on-click="openIconPicker()" title="{{ _('Pick Icon') }}" {% if user_settings.get('system', 'app_logo') %}disabled{% endif %}>
                                                 <i class="bi bi-palette"></i>
                                             </button>
                                         </div>
@@ -221,7 +221,7 @@
                                 data-language-option="{{ lang_code }}"
                                 role="radio"
                                 aria-checked="{% if lang_code == system_language %}true{% else %}false{% endif %}"
-                                onclick="selectSystemLanguage('{{ lang_code }}')">
+                                data-on-click="selectSystemLanguage('{{ lang_code }}')">
                             <span class="language-card-check"><i class="bi bi-check-circle-fill"></i></span>
                             <span class="language-card-native">{{ lang_name }}</span>
                             <span class="language-card-meta">
@@ -240,7 +240,7 @@
                     </div>
                     <!-- Kept for backwards compatibility with systemSettingChanged listeners -->
                     <select class="form-select form-select-sm d-none" id="systemLanguageSelect"
-                            onchange="toggleSystemSetting('language', this.value)">
+                            data-on-change="toggleSystemSetting('language', this.value)">
                         {% for lang_code, lang_name in languages.items() %}
                         <option value="{{ lang_code }}" {% if user_settings.get('system', 'language', 'en') == lang_code %}selected{% endif %}>{{ lang_name }}</option>
                         {% endfor %}
@@ -251,7 +251,7 @@
                     <div class="setting-label">
                         <strong>{{ _('Timezone') }}</strong>
                         <select class="form-select form-select-sm" style="width: auto;"
-                                onchange="toggleSystemSetting('timezone', this.value)">
+                                data-on-change="toggleSystemSetting('timezone', this.value)">
                             <option value="UTC" {% if user_settings.get('system', 'timezone', 'UTC') == 'UTC' %}selected{% endif %}>UTC</option>
                             <option value="America/New_York" {% if user_settings.get('system', 'timezone', 'UTC') == 'America/New_York' %}selected{% endif %}>America/New_York</option>
                             <option value="Europe/London" {% if user_settings.get('system', 'timezone', 'UTC') == 'Europe/London' %}selected{% endif %}>Europe/London</option>
@@ -267,7 +267,7 @@
                     <div class="setting-label">
                         <strong>{{ _('Date Format') }}</strong>
                         <select class="form-select form-select-sm" style="width: auto;"
-                                onchange="toggleSystemSetting('date_format', this.value)">
+                                data-on-change="toggleSystemSetting('date_format', this.value)">
                             <option value="YYYY-MM-DD" {% if user_settings.get('system', 'date_format', 'YYYY-MM-DD') == 'YYYY-MM-DD' %}selected{% endif %}>YYYY-MM-DD</option>
                             <option value="MM/DD/YYYY" {% if user_settings.get('system', 'date_format', 'YYYY-MM-DD') == 'MM/DD/YYYY' %}selected{% endif %}>MM/DD/YYYY</option>
                             <option value="DD/MM/YYYY" {% if user_settings.get('system', 'date_format', 'YYYY-MM-DD') == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
@@ -282,7 +282,7 @@
                     <div class="setting-label">
                         <strong>{{ _('Time Format') }}</strong>
                         <select class="form-select form-select-sm" style="width: auto;"
-                                onchange="toggleSystemSetting('time_format', this.value)">
+                                data-on-change="toggleSystemSetting('time_format', this.value)">
                             <option value="24h" {% if user_settings.get('system', 'time_format', '24h') == '24h' %}selected{% endif %}>24-hour</option>
                             <option value="12h" {% if user_settings.get('system', 'time_format', '24h') == '12h' %}selected{% endif %}>12-hour (AM/PM)</option>
                         </select>
@@ -312,7 +312,7 @@
                 <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="autoSave"
                                    {% if user_settings.get('system', 'auto_save', True) %}checked{% endif %}
-                                   onchange="toggleSystemSetting('auto_save', this.checked)">
+                                   data-on-change="toggleSystemSetting('auto_save', this.checked)">
                     </div>
                 </div>
             </div>
@@ -330,7 +330,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="confirmActions"
                                    {% if user_settings.get('system', 'confirm_actions', True) %}checked{% endif %}
-                                   onchange="toggleSystemSetting('confirm_actions', this.checked)">
+                                   data-on-change="toggleSystemSetting('confirm_actions', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -365,7 +365,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="animationsEnabled"
                                    {% if user_settings.get('system', 'animations_enabled', True) %}checked{% endif %}
-                                   onchange="toggleSystemSetting('animations_enabled', this.checked)">
+                                   data-on-change="toggleSystemSetting('animations_enabled', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -383,7 +383,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="breadcrumbsEnabled"
                                    {% if user_settings.get('system', 'show_breadcrumbs', True) %}checked{% endif %}
-                                   onchange="toggleSystemSetting('show_breadcrumbs', this.checked)">
+                                   data-on-change="toggleSystemSetting('show_breadcrumbs', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -401,7 +401,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="compactMode"
                                    {% if user_settings.get('system', 'compact_mode', False) %}checked{% endif %}
-                                   onchange="toggleSystemSetting('compact_mode', this.checked)">
+                                   data-on-change="toggleSystemSetting('compact_mode', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -419,7 +419,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="compactView"
                                    {% if user_settings.get('display', 'compact_view', False) %}checked{% endif %}
-                                   onchange="toggleUserSetting('display', 'compact_view', this.checked)">
+                                   data-on-change="toggleUserSetting('display', 'compact_view', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -437,7 +437,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="showFilePreview"
                                    {% if user_settings.get('display', 'show_file_preview', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('display', 'show_file_preview', this.checked)">
+                                   data-on-change="toggleUserSetting('display', 'show_file_preview', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -455,7 +455,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="showMetadata"
                                    {% if user_settings.get('display', 'show_metadata', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('display', 'show_metadata', this.checked)">
+                                   data-on-change="toggleUserSetting('display', 'show_metadata', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -469,7 +469,7 @@
                         {{ _('Select the application theme') }}
                     </div>
                     <select class="form-select" id="theme" 
-                            onchange="toggleSystemSetting('theme', this.value)">
+                            data-on-change="toggleSystemSetting('theme', this.value)">
                         <option value="light" {% if user_settings.get('system', 'theme', 'light') == 'light' %}selected{% endif %}>{{ _('Light') }}</option>
                         <option value="dark" {% if user_settings.get('system', 'theme', 'light') == 'dark' %}selected{% endif %}>{{ _('Dark') }}</option>
                         <option value="auto" {% if user_settings.get('system', 'theme', 'light') == 'auto' %}selected{% endif %}>{{ _('Auto') }} ({{ _('System Preference') }})</option>
@@ -484,7 +484,7 @@
                         {{ _('Number of items to display per page in lists and tables (System-wide)') }}
                     </div>
                     <select class="form-select" id="itemsPerPage" 
-                            onchange="toggleSystemSetting('items_per_page', parseInt(this.value))">
+                            data-on-change="toggleSystemSetting('items_per_page', parseInt(this.value))">
                         <option value="10" {% if user_settings.get('system', 'items_per_page', 10) == 10 %}selected{% endif %}>10 {{ _('items') }}</option>
                         <option value="25" {% if user_settings.get('system', 'items_per_page', 10) == 25 %}selected{% endif %}>25 {{ _('items') }}</option>
                         <option value="50" {% if user_settings.get('system', 'items_per_page', 10) == 50 %}selected{% endif %}>50 {{ _('items') }}</option>
@@ -501,7 +501,7 @@
                         {{ _('Number of results per page for search and file lists (Display-specific)') }}
                     </div>
                     <select class="form-select" id="resultsPerPage" 
-                            onchange="toggleUserSetting('display', 'results_per_page', parseInt(this.value))">
+                            data-on-change="toggleUserSetting('display', 'results_per_page', parseInt(this.value))">
                         <option value="10" {% if user_settings.get('display', 'results_per_page', 50) == 10 %}selected{% endif %}>10 {{ _('items') }}</option>
                         <option value="25" {% if user_settings.get('display', 'results_per_page', 50) == 25 %}selected{% endif %}>25 {{ _('items') }}</option>
                         <option value="50" {% if user_settings.get('display', 'results_per_page', 50) == 50 %}selected{% endif %}>50 {{ _('items') }}</option>
@@ -518,7 +518,7 @@
                         {{ _('Default sorting method for file lists (Display-specific)') }}
                     </div>
                     <select class="form-select" id="displayDefaultSort"
-                            onchange="toggleUserSetting('display', 'default_sort', this.value)">
+                            data-on-change="toggleUserSetting('display', 'default_sort', this.value)">
                         <option value="date_creation" {% if user_settings.get('display', 'default_sort', 'date_creation') == 'date_creation' %}selected{% endif %}>{{ _('Creation Date') }}</option>
                         <option value="file_name" {% if user_settings.get('display', 'default_sort', 'date_creation') == 'file_name' %}selected{% endif %}>{{ _('File Name') }}</option>
                         <option value="file_size" {% if user_settings.get('display', 'default_sort', 'date_creation') == 'file_size' %}selected{% endif %}>{{ _('File Size') }}</option>
@@ -534,7 +534,7 @@
                         {{ _('Default sort order for display (ascending or descending)') }}
                     </div>
                     <select class="form-select" id="displaySortDirection"
-                            onchange="toggleUserSetting('display', 'sort_direction', this.value)">
+                            data-on-change="toggleUserSetting('display', 'sort_direction', this.value)">
                         <option value="desc" {% if user_settings.get('display', 'sort_direction', 'desc') == 'desc' %}selected{% endif %}>{{ _('Descending') }} ({{ _('Newest first') }})</option>
                         <option value="asc" {% if user_settings.get('display', 'sort_direction', 'desc') == 'asc' %}selected{% endif %}>{{ _('Ascending') }} ({{ _('Oldest first') }})</option>
                     </select>
@@ -548,7 +548,7 @@
                         {{ _('Default sorting method for file lists (System-wide)') }}
                     </div>
                     <select class="form-select" id="defaultSort"
-                            onchange="toggleSystemSetting('default_sort', this.value)">
+                            data-on-change="toggleSystemSetting('default_sort', this.value)">
                         <option value="date_creation" {% if user_settings.get('system', 'default_sort', 'date_creation') == 'date_creation' %}selected{% endif %}>{{ _('Creation Date') }}</option>
                         <option value="file_name" {% if user_settings.get('system', 'default_sort', 'date_creation') == 'file_name' %}selected{% endif %}>{{ _('File Name') }}</option>
                         <option value="file_size" {% if user_settings.get('system', 'default_sort', 'date_creation') == 'file_size' %}selected{% endif %}>{{ _('File Size') }}</option>
@@ -564,7 +564,7 @@
                         {{ _('Default sort order (ascending or descending) - System-wide') }}
                     </div>
                     <select class="form-select" id="sortDirection"
-                            onchange="toggleSystemSetting('sort_direction', this.value)">
+                            data-on-change="toggleSystemSetting('sort_direction', this.value)">
                         <option value="desc" {% if user_settings.get('system', 'sort_direction', 'desc') == 'desc' %}selected{% endif %}>{{ _('Descending') }} ({{ _('Newest first') }})</option>
                         <option value="asc" {% if user_settings.get('system', 'sort_direction', 'desc') == 'asc' %}selected{% endif %}>{{ _('Ascending') }} ({{ _('Oldest first') }})</option>
                     </select>
@@ -594,11 +594,11 @@
                             <p class="text-muted mb-0 small">{{ _('Customize colors, typography, spacing, and visual elements across your entire application') }}</p>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-primary btn-sm" onclick="saveThemeColors()">
+                            <button class="btn btn-primary btn-sm" data-on-click="saveThemeColors()">
                                 <i class="bi bi-save me-1"></i>
                                 {{ _('Save All') }}
                             </button>
-                            <button class="btn btn-outline-warning btn-sm" onclick="resetAllThemeColors()">
+                            <button class="btn btn-outline-warning btn-sm" data-on-click="resetAllThemeColors()">
                                 <i class="bi bi-arrow-counterclockwise me-1"></i>
                                 {{ _('Reset All') }}
                             </button>
@@ -645,14 +645,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="primaryColor" 
                                                        value="{{ user_settings.get('theme', 'primary_color', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('primary-color', this.value); updateColorSwatch('primaryColor', this.value)"
+                                                       data-on-change="updateThemeColor('primary-color', this.value); updateColorSwatch('primaryColor', this.value)"
                                                        style="width: 60px; height: 40px;">
                                                 <input type="text" class="form-control" 
                                                        id="primaryColorText" 
                                                        value="{{ user_settings.get('theme', 'primary_color', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('primary-color', this.value); updateColorSwatch('primaryColor', this.value)"
+                                                       data-on-change="updateThemeColor('primary-color', this.value); updateColorSwatch('primaryColor', this.value)"
                                                        placeholder="#4f46e5">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('primary-color')" title="{{ _('Reset to default') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('primary-color')" title="{{ _('Reset to default') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -673,14 +673,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="secondaryColor" 
                                                        value="{{ user_settings.get('theme', 'secondary_color', '#06b6d4') }}"
-                                                       onchange="updateThemeColor('secondary-color', this.value); updateColorSwatch('secondaryColor', this.value)"
+                                                       data-on-change="updateThemeColor('secondary-color', this.value); updateColorSwatch('secondaryColor', this.value)"
                                                        style="width: 60px; height: 40px;">
                                                 <input type="text" class="form-control" 
                                                        id="secondaryColorText" 
                                                        value="{{ user_settings.get('theme', 'secondary_color', '#06b6d4') }}"
-                                                       onchange="updateThemeColor('secondary-color', this.value); updateColorSwatch('secondaryColor', this.value)"
+                                                       data-on-change="updateThemeColor('secondary-color', this.value); updateColorSwatch('secondaryColor', this.value)"
                                                        placeholder="#06b6d4">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('secondary-color')" title="{{ _('Reset to default') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('secondary-color')" title="{{ _('Reset to default') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -700,14 +700,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="successColor" 
                                                        value="{{ user_settings.get('theme', 'success_color', '#10b981') }}"
-                                                       onchange="updateThemeColor('success-color', this.value); updateColorSwatch('successColor', this.value)"
+                                                       data-on-change="updateThemeColor('success-color', this.value); updateColorSwatch('successColor', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="successColorText" 
                                                        value="{{ user_settings.get('theme', 'success_color', '#10b981') }}"
-                                                       onchange="updateThemeColor('success-color', this.value); updateColorSwatch('successColor', this.value)"
+                                                       data-on-change="updateThemeColor('success-color', this.value); updateColorSwatch('successColor', this.value)"
                                                        placeholder="#10b981">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('success-color')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('success-color')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -727,14 +727,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="dangerColor" 
                                                        value="{{ user_settings.get('theme', 'danger_color', '#ef4444') }}"
-                                                       onchange="updateThemeColor('danger-color', this.value); updateColorSwatch('dangerColor', this.value)"
+                                                       data-on-change="updateThemeColor('danger-color', this.value); updateColorSwatch('dangerColor', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="dangerColorText" 
                                                        value="{{ user_settings.get('theme', 'danger_color', '#ef4444') }}"
-                                                       onchange="updateThemeColor('danger-color', this.value); updateColorSwatch('dangerColor', this.value)"
+                                                       data-on-change="updateThemeColor('danger-color', this.value); updateColorSwatch('dangerColor', this.value)"
                                                        placeholder="#ef4444">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('danger-color')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('danger-color')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -754,14 +754,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="warningColor" 
                                                        value="{{ user_settings.get('theme', 'warning_color', '#f59e0b') }}"
-                                                       onchange="updateThemeColor('warning-color', this.value); updateColorSwatch('warningColor', this.value)"
+                                                       data-on-change="updateThemeColor('warning-color', this.value); updateColorSwatch('warningColor', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="warningColorText" 
                                                        value="{{ user_settings.get('theme', 'warning_color', '#f59e0b') }}"
-                                                       onchange="updateThemeColor('warning-color', this.value); updateColorSwatch('warningColor', this.value)"
+                                                       data-on-change="updateThemeColor('warning-color', this.value); updateColorSwatch('warningColor', this.value)"
                                                        placeholder="#f59e0b">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('warning-color')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('warning-color')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -797,14 +797,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="bgLight" 
                                                        value="{{ user_settings.get('theme', 'bg_light', '#f8fafc') }}"
-                                                       onchange="updateThemeColor('bg-light', this.value); updateColorSwatch('bgLight', this.value)"
+                                                       data-on-change="updateThemeColor('bg-light', this.value); updateColorSwatch('bgLight', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="bgLightText" 
                                                        value="{{ user_settings.get('theme', 'bg_light', '#f8fafc') }}"
-                                                       onchange="updateThemeColor('bg-light', this.value); updateColorSwatch('bgLight', this.value)"
+                                                       data-on-change="updateThemeColor('bg-light', this.value); updateColorSwatch('bgLight', this.value)"
                                                        placeholder="#f8fafc">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('bg-light')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('bg-light')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -822,14 +822,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="bgWhite" 
                                                        value="{{ user_settings.get('theme', 'bg_white', '#ffffff') }}"
-                                                       onchange="updateThemeColor('bg-white', this.value); updateColorSwatch('bgWhite', this.value)"
+                                                       data-on-change="updateThemeColor('bg-white', this.value); updateColorSwatch('bgWhite', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="bgWhiteText" 
                                                        value="{{ user_settings.get('theme', 'bg_white', '#ffffff') }}"
-                                                       onchange="updateThemeColor('bg-white', this.value); updateColorSwatch('bgWhite', this.value)"
+                                                       data-on-change="updateThemeColor('bg-white', this.value); updateColorSwatch('bgWhite', this.value)"
                                                        placeholder="#ffffff">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('bg-white')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('bg-white')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -847,14 +847,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="bgSection" 
                                                        value="{{ user_settings.get('theme', 'bg_section', '#f8fafc') }}"
-                                                       onchange="updateThemeColor('bg-section', this.value); updateColorSwatch('bgSection', this.value)"
+                                                       data-on-change="updateThemeColor('bg-section', this.value); updateColorSwatch('bgSection', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="bgSectionText" 
                                                        value="{{ user_settings.get('theme', 'bg_section', '#f8fafc') }}"
-                                                       onchange="updateThemeColor('bg-section', this.value); updateColorSwatch('bgSection', this.value)"
+                                                       data-on-change="updateThemeColor('bg-section', this.value); updateColorSwatch('bgSection', this.value)"
                                                        placeholder="#f8fafc">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('bg-section')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('bg-section')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -872,14 +872,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="textDark" 
                                                        value="{{ user_settings.get('theme', 'text_dark', '#1e293b') }}"
-                                                       onchange="updateThemeColor('text-dark', this.value); updateColorSwatch('textDark', this.value)"
+                                                       data-on-change="updateThemeColor('text-dark', this.value); updateColorSwatch('textDark', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="textDarkText" 
                                                        value="{{ user_settings.get('theme', 'text_dark', '#1e293b') }}"
-                                                       onchange="updateThemeColor('text-dark', this.value); updateColorSwatch('textDark', this.value)"
+                                                       data-on-change="updateThemeColor('text-dark', this.value); updateColorSwatch('textDark', this.value)"
                                                        placeholder="#1e293b">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('text-dark')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('text-dark')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -897,14 +897,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="textLight" 
                                                        value="{{ user_settings.get('theme', 'text_light', '#64748b') }}"
-                                                       onchange="updateThemeColor('text-light', this.value); updateColorSwatch('textLight', this.value)"
+                                                       data-on-change="updateThemeColor('text-light', this.value); updateColorSwatch('textLight', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="textLightText" 
                                                        value="{{ user_settings.get('theme', 'text_light', '#64748b') }}"
-                                                       onchange="updateThemeColor('text-light', this.value); updateColorSwatch('textLight', this.value)"
+                                                       data-on-change="updateThemeColor('text-light', this.value); updateColorSwatch('textLight', this.value)"
                                                        placeholder="#64748b">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('text-light')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('text-light')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -922,14 +922,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="textMuted" 
                                                        value="{{ user_settings.get('theme', 'text_muted', '#94a3b8') }}"
-                                                       onchange="updateThemeColor('text-muted', this.value); updateColorSwatch('textMuted', this.value)"
+                                                       data-on-change="updateThemeColor('text-muted', this.value); updateColorSwatch('textMuted', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="textMutedText" 
                                                        value="{{ user_settings.get('theme', 'text_muted', '#94a3b8') }}"
-                                                       onchange="updateThemeColor('text-muted', this.value); updateColorSwatch('textMuted', this.value)"
+                                                       data-on-change="updateThemeColor('text-muted', this.value); updateColorSwatch('textMuted', this.value)"
                                                        placeholder="#94a3b8">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('text-muted')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('text-muted')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -947,14 +947,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="borderColor" 
                                                        value="{{ user_settings.get('theme', 'border_color', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('border-color', this.value); updateColorSwatch('borderColor', this.value)"
+                                                       data-on-change="updateThemeColor('border-color', this.value); updateColorSwatch('borderColor', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="borderColorText" 
                                                        value="{{ user_settings.get('theme', 'border_color', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('border-color', this.value); updateColorSwatch('borderColor', this.value)"
+                                                       data-on-change="updateThemeColor('border-color', this.value); updateColorSwatch('borderColor', this.value)"
                                                        placeholder="#e2e8f0">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('border-color')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('border-color')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -972,14 +972,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="borderLight" 
                                                        value="{{ user_settings.get('theme', 'border_light', '#f1f5f9') }}"
-                                                       onchange="updateThemeColor('border-light', this.value); updateColorSwatch('borderLight', this.value)"
+                                                       data-on-change="updateThemeColor('border-light', this.value); updateColorSwatch('borderLight', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="borderLightText" 
                                                        value="{{ user_settings.get('theme', 'border_light', '#f1f5f9') }}"
-                                                       onchange="updateThemeColor('border-light', this.value); updateColorSwatch('borderLight', this.value)"
+                                                       data-on-change="updateThemeColor('border-light', this.value); updateColorSwatch('borderLight', this.value)"
                                                        placeholder="#f1f5f9">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('border-light')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('border-light')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -997,14 +997,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="borderDark" 
                                                        value="{{ user_settings.get('theme', 'border_dark', '#cbd5e1') }}"
-                                                       onchange="updateThemeColor('border-dark', this.value); updateColorSwatch('borderDark', this.value)"
+                                                       data-on-change="updateThemeColor('border-dark', this.value); updateColorSwatch('borderDark', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="borderDarkText" 
                                                        value="{{ user_settings.get('theme', 'border_dark', '#cbd5e1') }}"
-                                                       onchange="updateThemeColor('border-dark', this.value); updateColorSwatch('borderDark', this.value)"
+                                                       data-on-change="updateThemeColor('border-dark', this.value); updateColorSwatch('borderDark', this.value)"
                                                        placeholder="#cbd5e1">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('border-dark')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('border-dark')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1037,14 +1037,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="gradientStart" 
                                                        value="{{ user_settings.get('theme', 'gradient_start', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('gradient-start', this.value)"
+                                                       data-on-change="updateThemeColor('gradient-start', this.value)"
                                                        style="width: 60px; height: 40px;">
                                                 <input type="text" class="form-control" 
                                                        id="gradientStartText" 
                                                        value="{{ user_settings.get('theme', 'gradient_start', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('gradient-start', this.value)"
+                                                       data-on-change="updateThemeColor('gradient-start', this.value)"
                                                        placeholder="#4f46e5">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('gradient-start')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('gradient-start')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1059,14 +1059,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="gradientEnd" 
                                                        value="{{ user_settings.get('theme', 'gradient_end', '#06b6d4') }}"
-                                                       onchange="updateThemeColor('gradient-end', this.value)"
+                                                       data-on-change="updateThemeColor('gradient-end', this.value)"
                                                        style="width: 60px; height: 40px;">
                                                 <input type="text" class="form-control" 
                                                        id="gradientEndText" 
                                                        value="{{ user_settings.get('theme', 'gradient_end', '#06b6d4') }}"
-                                                       onchange="updateThemeColor('gradient-end', this.value)"
+                                                       data-on-change="updateThemeColor('gradient-end', this.value)"
                                                        placeholder="#06b6d4">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('gradient-end')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('gradient-end')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1079,14 +1079,14 @@
                                             <label class="form-label fw-semibold mb-2">{{ _('Direction') }}</label>
                                             <div class="d-flex gap-2">
                                                 <select class="form-select" id="gradientDirection"
-                                                        onchange="updateThemeColor('gradient-direction', this.value)">
+                                                        data-on-change="updateThemeColor('gradient-direction', this.value)">
                                                     <option value="0deg" {% if user_settings.get('theme', 'gradient_direction', '135deg') == '0deg' %}selected{% endif %}>→ Horizontal</option>
                                                     <option value="90deg" {% if user_settings.get('theme', 'gradient_direction', '135deg') == '90deg' %}selected{% endif %}>↓ Vertical</option>
                                                     <option value="135deg" {% if user_settings.get('theme', 'gradient_direction', '135deg') == '135deg' %}selected{% endif %}>↘ Diagonal</option>
                                                     <option value="45deg" {% if user_settings.get('theme', 'gradient_direction', '135deg') == '45deg' %}selected{% endif %}>↗ Diagonal</option>
                                                     <option value="180deg" {% if user_settings.get('theme', 'gradient_direction', '135deg') == '180deg' %}selected{% endif %}>← Reverse</option>
                                                 </select>
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('gradient-direction')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('gradient-direction')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1130,14 +1130,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="sidebarBg" 
                                                        value="{{ user_settings.get('theme', 'sidebar_bg', '#1e293b') }}"
-                                                       onchange="updateThemeColor('sidebar-bg', this.value); updateColorSwatch('sidebarBg', this.value)"
+                                                       data-on-change="updateThemeColor('sidebar-bg', this.value); updateColorSwatch('sidebarBg', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="sidebarBgText" 
                                                        value="{{ user_settings.get('theme', 'sidebar_bg', '#1e293b') }}"
-                                                       onchange="updateThemeColor('sidebar-bg', this.value); updateColorSwatch('sidebarBg', this.value)"
+                                                       data-on-change="updateThemeColor('sidebar-bg', this.value); updateColorSwatch('sidebarBg', this.value)"
                                                        placeholder="#1e293b">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('sidebar-bg')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('sidebar-bg')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1155,14 +1155,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="sidebarText" 
                                                        value="{{ user_settings.get('theme', 'sidebar_text', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('sidebar-text', this.value); updateColorSwatch('sidebarText', this.value)"
+                                                       data-on-change="updateThemeColor('sidebar-text', this.value); updateColorSwatch('sidebarText', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="sidebarTextText" 
                                                        value="{{ user_settings.get('theme', 'sidebar_text', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('sidebar-text', this.value); updateColorSwatch('sidebarText', this.value)"
+                                                       data-on-change="updateThemeColor('sidebar-text', this.value); updateColorSwatch('sidebarText', this.value)"
                                                        placeholder="#e2e8f0">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('sidebar-text')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('sidebar-text')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1180,14 +1180,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="sidebarActive" 
                                                        value="{{ user_settings.get('theme', 'sidebar_active', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('sidebar-active', this.value); updateColorSwatch('sidebarActive', this.value)"
+                                                       data-on-change="updateThemeColor('sidebar-active', this.value); updateColorSwatch('sidebarActive', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="sidebarActiveText" 
                                                        value="{{ user_settings.get('theme', 'sidebar_active', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('sidebar-active', this.value); updateColorSwatch('sidebarActive', this.value)"
+                                                       data-on-change="updateThemeColor('sidebar-active', this.value); updateColorSwatch('sidebarActive', this.value)"
                                                        placeholder="#4f46e5">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('sidebar-active')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('sidebar-active')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1205,14 +1205,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="sidebarHover" 
                                                        value="{{ user_settings.get('theme', 'sidebar_hover', '#334155') }}"
-                                                       onchange="updateThemeColor('sidebar-hover', this.value); updateColorSwatch('sidebarHover', this.value)"
+                                                       data-on-change="updateThemeColor('sidebar-hover', this.value); updateColorSwatch('sidebarHover', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="sidebarHoverText" 
                                                        value="{{ user_settings.get('theme', 'sidebar_hover', '#334155') }}"
-                                                       onchange="updateThemeColor('sidebar-hover', this.value); updateColorSwatch('sidebarHover', this.value)"
+                                                       data-on-change="updateThemeColor('sidebar-hover', this.value); updateColorSwatch('sidebarHover', this.value)"
                                                        placeholder="#334155">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('sidebar-hover')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('sidebar-hover')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1248,14 +1248,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="btnPrimary" 
                                                        value="{{ user_settings.get('theme', 'btn_primary', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('btn-primary', this.value); updateColorSwatch('btnPrimary', this.value)"
+                                                       data-on-change="updateThemeColor('btn-primary', this.value); updateColorSwatch('btnPrimary', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="btnPrimaryText" 
                                                        value="{{ user_settings.get('theme', 'btn_primary', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('btn-primary', this.value); updateColorSwatch('btnPrimary', this.value)"
+                                                       data-on-change="updateThemeColor('btn-primary', this.value); updateColorSwatch('btnPrimary', this.value)"
                                                        placeholder="#4f46e5">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('btn-primary')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('btn-primary')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1273,14 +1273,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="btnPrimaryHover" 
                                                        value="{{ user_settings.get('theme', 'btn_primary_hover', '#4338ca') }}"
-                                                       onchange="updateThemeColor('btn-primary-hover', this.value); updateColorSwatch('btnPrimaryHover', this.value)"
+                                                       data-on-change="updateThemeColor('btn-primary-hover', this.value); updateColorSwatch('btnPrimaryHover', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="btnPrimaryHoverText" 
                                                        value="{{ user_settings.get('theme', 'btn_primary_hover', '#4338ca') }}"
-                                                       onchange="updateThemeColor('btn-primary-hover', this.value); updateColorSwatch('btnPrimaryHover', this.value)"
+                                                       data-on-change="updateThemeColor('btn-primary-hover', this.value); updateColorSwatch('btnPrimaryHover', this.value)"
                                                        placeholder="#4338ca">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('btn-primary-hover')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('btn-primary-hover')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1298,14 +1298,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="btnSecondary" 
                                                        value="{{ user_settings.get('theme', 'btn_secondary', '#06b6d4') }}"
-                                                       onchange="updateThemeColor('btn-secondary', this.value); updateColorSwatch('btnSecondary', this.value)"
+                                                       data-on-change="updateThemeColor('btn-secondary', this.value); updateColorSwatch('btnSecondary', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="btnSecondaryText" 
                                                        value="{{ user_settings.get('theme', 'btn_secondary', '#06b6d4') }}"
-                                                       onchange="updateThemeColor('btn-secondary', this.value); updateColorSwatch('btnSecondary', this.value)"
+                                                       data-on-change="updateThemeColor('btn-secondary', this.value); updateColorSwatch('btnSecondary', this.value)"
                                                        placeholder="#06b6d4">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('btn-secondary')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('btn-secondary')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1323,14 +1323,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="btnSecondaryHover" 
                                                        value="{{ user_settings.get('theme', 'btn_secondary_hover', '#0891b2') }}"
-                                                       onchange="updateThemeColor('btn-secondary-hover', this.value); updateColorSwatch('btnSecondaryHover', this.value)"
+                                                       data-on-change="updateThemeColor('btn-secondary-hover', this.value); updateColorSwatch('btnSecondaryHover', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="btnSecondaryHoverText" 
                                                        value="{{ user_settings.get('theme', 'btn_secondary_hover', '#0891b2') }}"
-                                                       onchange="updateThemeColor('btn-secondary-hover', this.value); updateColorSwatch('btnSecondaryHover', this.value)"
+                                                       data-on-change="updateThemeColor('btn-secondary-hover', this.value); updateColorSwatch('btnSecondaryHover', this.value)"
                                                        placeholder="#0891b2">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('btn-secondary-hover')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('btn-secondary-hover')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1367,14 +1367,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="chartColor{{ i }}" 
                                                        value="{{ user_settings.get('theme', 'chart_color_' ~ i, ['#667eea', '#764ba2', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'][i-1]) }}"
-                                                       onchange="updateThemeColor('chart-color-{{ i }}', this.value); updateColorSwatch('chartColor{{ i }}', this.value)"
+                                                       data-on-change="updateThemeColor('chart-color-{{ i }}', this.value); updateColorSwatch('chartColor{{ i }}', this.value)"
                                                        style="width: 40px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="chartColor{{ i }}Text" 
                                                        value="{{ user_settings.get('theme', 'chart_color_' ~ i, ['#667eea', '#764ba2', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'][i-1]) }}"
-                                                       onchange="updateThemeColor('chart-color-{{ i }}', this.value); updateColorSwatch('chartColor{{ i }}', this.value)"
+                                                       data-on-change="updateThemeColor('chart-color-{{ i }}', this.value); updateColorSwatch('chartColor{{ i }}', this.value)"
                                                        placeholder="#667eea">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('chart-color-{{ i }}')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('chart-color-{{ i }}')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1407,7 +1407,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="spacingXs" 
                                                    value="{{ user_settings.get('theme', 'spacing_xs', '0.5rem') }}"
-                                                   onchange="updateThemeSpacing('spacing-xs', this.value)"
+                                                   data-on-change="updateThemeSpacing('spacing-xs', this.value)"
                                                    placeholder="0.5rem">
                                             <small class="text-muted">{{ _('Tight spacing') }}</small>
                                         </div>
@@ -1420,7 +1420,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="spacingSm" 
                                                    value="{{ user_settings.get('theme', 'spacing_sm', '0.75rem') }}"
-                                                   onchange="updateThemeSpacing('spacing-sm', this.value)"
+                                                   data-on-change="updateThemeSpacing('spacing-sm', this.value)"
                                                    placeholder="0.75rem">
                                             <small class="text-muted">{{ _('Compact spacing') }}</small>
                                         </div>
@@ -1433,7 +1433,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="spacingMd" 
                                                    value="{{ user_settings.get('theme', 'spacing_md', '1rem') }}"
-                                                   onchange="updateThemeSpacing('spacing-md', this.value)"
+                                                   data-on-change="updateThemeSpacing('spacing-md', this.value)"
                                                    placeholder="1rem">
                                             <small class="text-muted">{{ _('Base unit') }}</small>
                                         </div>
@@ -1446,7 +1446,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="spacingLg" 
                                                    value="{{ user_settings.get('theme', 'spacing_lg', '1.5rem') }}"
-                                                   onchange="updateThemeSpacing('spacing-lg', this.value)"
+                                                   data-on-change="updateThemeSpacing('spacing-lg', this.value)"
                                                    placeholder="1.5rem">
                                             <small class="text-muted">{{ _('Section spacing') }}</small>
                                         </div>
@@ -1459,7 +1459,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="spacingXl" 
                                                    value="{{ user_settings.get('theme', 'spacing_xl', '2rem') }}"
-                                                   onchange="updateThemeSpacing('spacing-xl', this.value)"
+                                                   data-on-change="updateThemeSpacing('spacing-xl', this.value)"
                                                    placeholder="2rem">
                                             <small class="text-muted">{{ _('Major breaks') }}</small>
                                         </div>
@@ -1472,7 +1472,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="sidebarWidth" 
                                                    value="{{ user_settings.get('theme', 'sidebar_width', '260px') }}"
-                                                   onchange="updateThemeSpacing('sidebar-width', this.value)"
+                                                   data-on-change="updateThemeSpacing('sidebar-width', this.value)"
                                                    placeholder="260px">
                                             <small class="text-muted">{{ _('Navigation width') }}</small>
                                         </div>
@@ -1503,7 +1503,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="fontSizeBase" 
                                                    value="{{ user_settings.get('theme', 'font_size_base', '1rem') }}"
-                                                   onchange="updateThemeSpacing('font-size-base', this.value)"
+                                                   data-on-change="updateThemeSpacing('font-size-base', this.value)"
                                                    placeholder="1rem">
                                         </div>
                                     </div>
@@ -1515,7 +1515,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="fontSizeSm" 
                                                    value="{{ user_settings.get('theme', 'font_size_sm', '0.875rem') }}"
-                                                   onchange="updateThemeSpacing('font-size-sm', this.value)"
+                                                   data-on-change="updateThemeSpacing('font-size-sm', this.value)"
                                                    placeholder="0.875rem">
                                         </div>
                                     </div>
@@ -1527,7 +1527,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="fontSizeLg" 
                                                    value="{{ user_settings.get('theme', 'font_size_lg', '1.5rem') }}"
-                                                   onchange="updateThemeSpacing('font-size-lg', this.value)"
+                                                   data-on-change="updateThemeSpacing('font-size-lg', this.value)"
                                                    placeholder="1.5rem">
                                         </div>
                                     </div>
@@ -1539,7 +1539,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="fontSizeXl" 
                                                    value="{{ user_settings.get('theme', 'font_size_xl', '1.75rem') }}"
-                                                   onchange="updateThemeSpacing('font-size-xl', this.value)"
+                                                   data-on-change="updateThemeSpacing('font-size-xl', this.value)"
                                                    placeholder="1.75rem">
                                         </div>
                                     </div>
@@ -1569,7 +1569,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="borderRadiusSm" 
                                                    value="{{ user_settings.get('theme', 'border_radius_sm', '0.375rem') }}"
-                                                   onchange="updateThemeSpacing('border-radius-sm', this.value)"
+                                                   data-on-change="updateThemeSpacing('border-radius-sm', this.value)"
                                                    placeholder="0.375rem">
                                         </div>
                                     </div>
@@ -1581,7 +1581,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="borderRadiusMd" 
                                                    value="{{ user_settings.get('theme', 'border_radius_md', '0.5rem') }}"
-                                                   onchange="updateThemeSpacing('border-radius-md', this.value)"
+                                                   data-on-change="updateThemeSpacing('border-radius-md', this.value)"
                                                    placeholder="0.5rem">
                                         </div>
                                     </div>
@@ -1593,7 +1593,7 @@
                                             <input type="text" class="form-control form-control-sm" 
                                                    id="borderRadiusLg" 
                                                    value="{{ user_settings.get('theme', 'border_radius_lg', '0.75rem') }}"
-                                                   onchange="updateThemeSpacing('border-radius-lg', this.value)"
+                                                   data-on-change="updateThemeSpacing('border-radius-lg', this.value)"
                                                    placeholder="0.75rem">
                                         </div>
                                     </div>
@@ -1603,7 +1603,7 @@
                                         <div class="card-body">
                                             <label class="form-label fw-semibold mb-2">{{ _('Shadow Intensity') }}</label>
                                             <select class="form-select form-select-sm" id="shadowIntensity"
-                                                    onchange="updateThemeSpacing('shadow-md', this.value === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : this.value === 'medium' ? '0 2px 8px rgba(0,0,0,0.08)' : '0 4px 12px rgba(0,0,0,0.12)')">
+                                                    data-on-change="updateThemeSpacing('shadow-md', this.value === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : this.value === 'medium' ? '0 2px 8px rgba(0,0,0,0.08)' : '0 4px 12px rgba(0,0,0,0.12)')">
                                                 <option value="light">{{ _('Light') }}</option>
                                                 <option value="medium" selected>{{ _('Medium') }}</option>
                                                 <option value="heavy">{{ _('Heavy') }}</option>
@@ -1641,14 +1641,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="infoColor" 
                                                        value="{{ user_settings.get('theme', 'info_color', '#3b82f6') }}"
-                                                       onchange="updateThemeColor('info-color', this.value); updateColorSwatch('infoColor', this.value)"
+                                                       data-on-change="updateThemeColor('info-color', this.value); updateColorSwatch('infoColor', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="infoColorText" 
                                                        value="{{ user_settings.get('theme', 'info_color', '#3b82f6') }}"
-                                                       onchange="updateThemeColor('info-color', this.value); updateColorSwatch('infoColor', this.value)"
+                                                       data-on-change="updateThemeColor('info-color', this.value); updateColorSwatch('infoColor', this.value)"
                                                        placeholder="#3b82f6">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('info-color')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('info-color')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1666,14 +1666,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="linkColor" 
                                                        value="{{ user_settings.get('theme', 'link_color', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('link-color', this.value); updateColorSwatch('linkColor', this.value)"
+                                                       data-on-change="updateThemeColor('link-color', this.value); updateColorSwatch('linkColor', this.value)"
                                                        style="width: 50px; height: 36px;">
                                                 <input type="text" class="form-control form-control-sm" 
                                                        id="linkColorText" 
                                                        value="{{ user_settings.get('theme', 'link_color', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('link-color', this.value); updateColorSwatch('linkColor', this.value)"
+                                                       data-on-change="updateThemeColor('link-color', this.value); updateColorSwatch('linkColor', this.value)"
                                                        placeholder="#4f46e5">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="resetThemeColor('link-color')" title="{{ _('Reset') }}">
+                                                <button class="btn btn-sm btn-outline-secondary" data-on-click="resetThemeColor('link-color')" title="{{ _('Reset') }}">
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                 </button>
                                             </div>
@@ -1709,14 +1709,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="sectionBg" 
                                                        value="{{ user_settings.get('theme', 'section_bg', '#ffffff') }}"
-                                                       onchange="updateThemeColor('section-bg', this.value); updateColorSwatch('sectionBg', this.value)"
+                                                       data-on-change="updateThemeColor('section-bg', this.value); updateColorSwatch('sectionBg', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="sectionBgText" 
                                                        value="{{ user_settings.get('theme', 'section_bg', '#ffffff') }}"
-                                                       onchange="updateThemeColor('section-bg', this.value); updateColorSwatch('sectionBg', this.value)"
+                                                       data-on-change="updateThemeColor('section-bg', this.value); updateColorSwatch('sectionBg', this.value)"
                                                        placeholder="#ffffff">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('section-bg')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('section-bg')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1734,14 +1734,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="cardBg" 
                                                        value="{{ user_settings.get('theme', 'card_bg', '#ffffff') }}"
-                                                       onchange="updateThemeColor('card-bg', this.value); updateColorSwatch('cardBg', this.value)"
+                                                       data-on-change="updateThemeColor('card-bg', this.value); updateColorSwatch('cardBg', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="cardBgText" 
                                                        value="{{ user_settings.get('theme', 'card_bg', '#ffffff') }}"
-                                                       onchange="updateThemeColor('card-bg', this.value); updateColorSwatch('cardBg', this.value)"
+                                                       data-on-change="updateThemeColor('card-bg', this.value); updateColorSwatch('cardBg', this.value)"
                                                        placeholder="#ffffff">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('card-bg')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('card-bg')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1759,14 +1759,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="sectionBorder" 
                                                        value="{{ user_settings.get('theme', 'section_border', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('section-border', this.value); updateColorSwatch('sectionBorder', this.value)"
+                                                       data-on-change="updateThemeColor('section-border', this.value); updateColorSwatch('sectionBorder', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="sectionBorderText" 
                                                        value="{{ user_settings.get('theme', 'section_border', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('section-border', this.value); updateColorSwatch('sectionBorder', this.value)"
+                                                       data-on-change="updateThemeColor('section-border', this.value); updateColorSwatch('sectionBorder', this.value)"
                                                        placeholder="#e2e8f0">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('section-border')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('section-border')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1784,14 +1784,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="cardBorder" 
                                                        value="{{ user_settings.get('theme', 'card_border', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('card-border', this.value); updateColorSwatch('cardBorder', this.value)"
+                                                       data-on-change="updateThemeColor('card-border', this.value); updateColorSwatch('cardBorder', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="cardBorderText" 
                                                        value="{{ user_settings.get('theme', 'card_border', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('card-border', this.value); updateColorSwatch('cardBorder', this.value)"
+                                                       data-on-change="updateThemeColor('card-border', this.value); updateColorSwatch('cardBorder', this.value)"
                                                        placeholder="#e2e8f0">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('card-border')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('card-border')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1827,14 +1827,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="tableHeaderBg" 
                                                        value="{{ user_settings.get('theme', 'table_header_bg', '#f8fafc') }}"
-                                                       onchange="updateThemeColor('table-header-bg', this.value); updateColorSwatch('tableHeaderBg', this.value)"
+                                                       data-on-change="updateThemeColor('table-header-bg', this.value); updateColorSwatch('tableHeaderBg', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="tableHeaderBgText" 
                                                        value="{{ user_settings.get('theme', 'table_header_bg', '#f8fafc') }}"
-                                                       onchange="updateThemeColor('table-header-bg', this.value); updateColorSwatch('tableHeaderBg', this.value)"
+                                                       data-on-change="updateThemeColor('table-header-bg', this.value); updateColorSwatch('tableHeaderBg', this.value)"
                                                        placeholder="#f8fafc">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('table-header-bg')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('table-header-bg')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1852,14 +1852,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="tableRowHover" 
                                                        value="{{ user_settings.get('theme', 'table_row_hover', '#f8fafc') }}"
-                                                       onchange="updateThemeColor('table-row-hover', this.value); updateColorSwatch('tableRowHover', this.value)"
+                                                       data-on-change="updateThemeColor('table-row-hover', this.value); updateColorSwatch('tableRowHover', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="tableRowHoverText" 
                                                        value="{{ user_settings.get('theme', 'table_row_hover', '#f8fafc') }}"
-                                                       onchange="updateThemeColor('table-row-hover', this.value); updateColorSwatch('tableRowHover', this.value)"
+                                                       data-on-change="updateThemeColor('table-row-hover', this.value); updateColorSwatch('tableRowHover', this.value)"
                                                        placeholder="#f8fafc">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('table-row-hover')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('table-row-hover')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1877,14 +1877,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="tableBorder" 
                                                        value="{{ user_settings.get('theme', 'table_border', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('table-border', this.value); updateColorSwatch('tableBorder', this.value)"
+                                                       data-on-change="updateThemeColor('table-border', this.value); updateColorSwatch('tableBorder', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="tableBorderText" 
                                                        value="{{ user_settings.get('theme', 'table_border', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('table-border', this.value); updateColorSwatch('tableBorder', this.value)"
+                                                       data-on-change="updateThemeColor('table-border', this.value); updateColorSwatch('tableBorder', this.value)"
                                                        placeholder="#e2e8f0">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('table-border')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('table-border')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1920,14 +1920,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="inputBg" 
                                                        value="{{ user_settings.get('theme', 'input_bg', '#ffffff') }}"
-                                                       onchange="updateThemeColor('input-bg', this.value); updateColorSwatch('inputBg', this.value)"
+                                                       data-on-change="updateThemeColor('input-bg', this.value); updateColorSwatch('inputBg', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="inputBgText" 
                                                        value="{{ user_settings.get('theme', 'input_bg', '#ffffff') }}"
-                                                       onchange="updateThemeColor('input-bg', this.value); updateColorSwatch('inputBg', this.value)"
+                                                       data-on-change="updateThemeColor('input-bg', this.value); updateColorSwatch('inputBg', this.value)"
                                                        placeholder="#ffffff">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('input-bg')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('input-bg')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1945,14 +1945,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="inputBorder" 
                                                        value="{{ user_settings.get('theme', 'input_border', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('input-border', this.value); updateColorSwatch('inputBorder', this.value)"
+                                                       data-on-change="updateThemeColor('input-border', this.value); updateColorSwatch('inputBorder', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="inputBorderText" 
                                                        value="{{ user_settings.get('theme', 'input_border', '#e2e8f0') }}"
-                                                       onchange="updateThemeColor('input-border', this.value); updateColorSwatch('inputBorder', this.value)"
+                                                       data-on-change="updateThemeColor('input-border', this.value); updateColorSwatch('inputBorder', this.value)"
                                                        placeholder="#e2e8f0">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('input-border')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('input-border')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1970,14 +1970,14 @@
                                                 <input type="color" class="form-control form-control-color flex-shrink-0" 
                                                        id="inputFocus" 
                                                        value="{{ user_settings.get('theme', 'input_focus', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('input-focus', this.value); updateColorSwatch('inputFocus', this.value)"
+                                                       data-on-change="updateThemeColor('input-focus', this.value); updateColorSwatch('inputFocus', this.value)"
                                                        style="width: 45px; height: 32px;">
                                                 <input type="text" class="form-control form-control-sm flex-grow-1" 
                                                        id="inputFocusText" 
                                                        value="{{ user_settings.get('theme', 'input_focus', '#4f46e5') }}"
-                                                       onchange="updateThemeColor('input-focus', this.value); updateColorSwatch('inputFocus', this.value)"
+                                                       data-on-change="updateThemeColor('input-focus', this.value); updateColorSwatch('inputFocus', this.value)"
                                                        placeholder="#4f46e5">
-                                                <button class="btn btn-sm btn-outline-secondary p-1" onclick="resetThemeColor('input-focus')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
+                                                <button class="btn btn-sm btn-outline-secondary p-1" data-on-click="resetThemeColor('input-focus')" title="{{ _('Reset') }}" style="width: 28px; height: 28px; padding: 0;">
                                                     <i class="bi bi-arrow-counterclockwise" style="font-size: 0.75rem;"></i>
                                                 </button>
                                             </div>
@@ -1995,21 +1995,21 @@
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <div class="d-flex gap-2">
-                            <button class="btn btn-primary" onclick="saveThemeColors()">
+                            <button class="btn btn-primary" data-on-click="saveThemeColors()">
                                 <i class="bi bi-save me-2"></i>
                                 {{ _('Save All Settings') }}
                             </button>
-                            <button class="btn btn-outline-secondary" type="button" onclick="openGlobalCssEditor()">
+                            <button class="btn btn-outline-secondary" type="button" data-on-click="openGlobalCssEditor()">
                                 <i class="bi bi-code-slash me-2"></i>
                                 {{ _('Edit Global CSS') }}
                             </button>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline-warning" onclick="resetAllThemeColors()">
+                            <button class="btn btn-outline-warning" data-on-click="resetAllThemeColors()">
                                 <i class="bi bi-arrow-counterclockwise me-2"></i>
                                 {{ _('Reset All') }}
                             </button>
-                            <button class="btn btn-outline-info" onclick="previewThemeColors()">
+                            <button class="btn btn-outline-info" data-on-click="previewThemeColors()">
                                 <i class="bi bi-eye me-2"></i>
                                 {{ _('Preview') }}
                             </button>
@@ -2047,13 +2047,13 @@
                         <div id="globalCssMessage" class="mt-3" style="display:none;"></div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" onclick="applyGlobalCssPreview()">
+                        <button type="button" class="btn btn-outline-secondary" data-on-click="applyGlobalCssPreview()">
                             <i class="bi bi-eye me-2"></i>{{ _('Preview (no save)') }}
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="saveGlobalCss()">
+                        <button type="button" class="btn btn-primary" data-on-click="saveGlobalCss()">
                             <i class="bi bi-save me-2"></i>{{ _('Save Global CSS') }}
                         </button>
-                        <button type="button" class="btn btn-outline-danger" onclick="resetGlobalCss()">
+                        <button type="button" class="btn btn-outline-danger" data-on-click="resetGlobalCss()">
                             <i class="bi bi-trash me-2"></i>{{ _('Clear') }}
                         </button>
                     </div>
@@ -2073,7 +2073,7 @@
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <input type="text" class="form-control" id="iconSearch" placeholder="{{ _('Search icons...') }}" onkeyup="filterIcons(this.value)">
+                            <input type="text" class="form-control" id="iconSearch" placeholder="{{ _('Search icons...') }}" data-on-keyup="filterIcons(this.value)">
                         </div>
                             <style>
                                 .icon-item .card {
@@ -2092,103 +2092,103 @@
                             </style>
                             <div class="row g-2" id="iconGrid">
                             <!-- Popular icons -->
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-file-earmark-text" onclick="selectIcon('bi-file-earmark-text')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-file-earmark-text" data-on-click="selectIcon('bi-file-earmark-text')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-file-earmark-text" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">file-text</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-app" onclick="selectIcon('bi-app')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-app" data-on-click="selectIcon('bi-app')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-app" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">app</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-folder" onclick="selectIcon('bi-folder')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-folder" data-on-click="selectIcon('bi-folder')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-folder" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">folder</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-database" onclick="selectIcon('bi-database')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-database" data-on-click="selectIcon('bi-database')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-database" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">database</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-graph-up" onclick="selectIcon('bi-graph-up')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-graph-up" data-on-click="selectIcon('bi-graph-up')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-graph-up" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">graph-up</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-file-earmark-code" onclick="selectIcon('bi-file-earmark-code')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-file-earmark-code" data-on-click="selectIcon('bi-file-earmark-code')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-file-earmark-code" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">code</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-box" onclick="selectIcon('bi-box')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-box" data-on-click="selectIcon('bi-box')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-box" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">box</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-gear" onclick="selectIcon('bi-gear')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-gear" data-on-click="selectIcon('bi-gear')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-gear" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">gear</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-layers" onclick="selectIcon('bi-layers')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-layers" data-on-click="selectIcon('bi-layers')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-layers" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">layers</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-grid" onclick="selectIcon('bi-grid')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-grid" data-on-click="selectIcon('bi-grid')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-grid" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">grid</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-stack" onclick="selectIcon('bi-stack')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-stack" data-on-click="selectIcon('bi-stack')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-stack" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">stack</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-archive" onclick="selectIcon('bi-archive')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-archive" data-on-click="selectIcon('bi-archive')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-archive" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">archive</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-files" onclick="selectIcon('bi-files')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-files" data-on-click="selectIcon('bi-files')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-files" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">files</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-folder2-open" onclick="selectIcon('bi-folder2-open')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-folder2-open" data-on-click="selectIcon('bi-folder2-open')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-folder2-open" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">folder-open</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-briefcase" onclick="selectIcon('bi-briefcase')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-briefcase" data-on-click="selectIcon('bi-briefcase')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-briefcase" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">briefcase</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-cpu" onclick="selectIcon('bi-cpu')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-cpu" data-on-click="selectIcon('bi-cpu')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-cpu" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">cpu</small>
                                 </div>
                             </div>
-                            <div class="col-3 col-md-2 icon-item" data-icon="bi-diagram-3" onclick="selectIcon('bi-diagram-3')">
+                            <div class="col-3 col-md-2 icon-item" data-icon="bi-diagram-3" data-on-click="selectIcon('bi-diagram-3')">
                                 <div class="card border text-center p-2">
                                     <i class="bi bi-diagram-3" style="font-size: 1.5rem;"></i>
                                     <small class="d-block mt-1">diagram</small>
@@ -2226,7 +2226,7 @@
                         {{ _('Default search interface to use') }}
                     </div>
                     <select class="form-select" id="defaultSearchType"
-                            onchange="toggleUserSetting('search', 'default_search_type', this.value)">
+                            data-on-change="toggleUserSetting('search', 'default_search_type', this.value)">
                         <option value="basic" {% if user_settings.get('search', 'default_search_type', 'basic') == 'basic' %}selected{% endif %}>{{ _('Basic Search') }}</option>
                         <option value="advanced" {% if user_settings.get('search', 'default_search_type', 'basic') == 'advanced' %}selected{% endif %}>{{ _('Advanced Search') }}</option>
                     </select>
@@ -2245,7 +2245,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="caseSensitive"
                                    {% if user_settings.get('search', 'case_sensitive', False) %}checked{% endif %}
-                                   onchange="toggleUserSetting('search', 'case_sensitive', this.checked)">
+                                   data-on-change="toggleUserSetting('search', 'case_sensitive', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2263,7 +2263,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="highlightResults"
                                    {% if user_settings.get('search', 'highlight_results', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('search', 'highlight_results', this.checked)">
+                                   data-on-change="toggleUserSetting('search', 'highlight_results', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2281,7 +2281,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="searchInContent"
                                    {% if user_settings.get('search', 'search_in_content', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('search', 'search_in_content', this.checked)">
+                                   data-on-change="toggleUserSetting('search', 'search_in_content', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2299,7 +2299,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="searchInFilename"
                                    {% if user_settings.get('search', 'search_in_filename', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('search', 'search_in_filename', this.checked)">
+                                   data-on-change="toggleUserSetting('search', 'search_in_filename', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2317,7 +2317,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="searchInMetadata"
                                    {% if user_settings.get('search', 'search_in_metadata', False) %}checked{% endif %}
-                                   onchange="toggleUserSetting('search', 'search_in_metadata', this.checked)">
+                                   data-on-change="toggleUserSetting('search', 'search_in_metadata', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2401,7 +2401,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="autoProcessUploads"
                                    {% if user_settings.get('processing', 'auto_process_uploads', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('processing', 'auto_process_uploads', this.checked)">
+                                   data-on-change="toggleUserSetting('processing', 'auto_process_uploads', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2419,7 +2419,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="extractArchives"
                                    {% if user_settings.get('processing', 'extract_archives', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('processing', 'extract_archives', this.checked)">
+                                   data-on-change="toggleUserSetting('processing', 'extract_archives', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2437,7 +2437,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="extractAttachments"
                                    {% if user_settings.get('processing', 'extract_attachments', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('processing', 'extract_attachments', this.checked)">
+                                   data-on-change="toggleUserSetting('processing', 'extract_attachments', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2455,7 +2455,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="processNested"
                                    {% if user_settings.get('processing', 'process_nested', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('processing', 'process_nested', this.checked)">
+                                   data-on-change="toggleUserSetting('processing', 'process_nested', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2473,7 +2473,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="calculateHashes"
                                    {% if user_settings.get('processing', 'calculate_hashes', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('processing', 'calculate_hashes', this.checked)">
+                                   data-on-change="toggleUserSetting('processing', 'calculate_hashes', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2491,7 +2491,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="extractText"
                                    {% if user_settings.get('processing', 'extract_text', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('processing', 'extract_text', this.checked)">
+                                   data-on-change="toggleUserSetting('processing', 'extract_text', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2752,7 +2752,7 @@
                 {% endif %}
                 
                 <div class="mt-4 d-flex gap-2">
-                    <button class="btn btn-outline-warning" onclick="resetInterfaceSettings()">
+                    <button class="btn btn-outline-warning" data-on-click="resetInterfaceSettings()">
                         <i class="bi bi-arrow-counterclockwise me-2"></i>
                         {{ _('Reset to Defaults') }}
                     </button>
@@ -2794,7 +2794,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="notificationsEnabled"
                                    {% if user_settings.get('system', 'notifications_enabled', True) %}checked{% endif %}
-                                   onchange="toggleSystemSetting('notifications_enabled', this.checked)">
+                                   data-on-change="toggleSystemSetting('notifications_enabled', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2812,7 +2812,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="emailNotifications"
                                    {% if user_settings.get('notifications', 'email_notifications', False) %}checked{% endif %}
-                                   onchange="toggleUserSetting('notifications', 'email_notifications', this.checked)">
+                                   data-on-change="toggleUserSetting('notifications', 'email_notifications', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2830,7 +2830,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="processingComplete"
                                    {% if user_settings.get('notifications', 'processing_complete', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('notifications', 'processing_complete', this.checked)">
+                                   data-on-change="toggleUserSetting('notifications', 'processing_complete', this.checked)">
                         </div>
                     </div>
             </div>
@@ -2848,7 +2848,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="batchComplete"
                                    {% if user_settings.get('notifications', 'batch_complete', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('notifications', 'batch_complete', this.checked)">
+                                   data-on-change="toggleUserSetting('notifications', 'batch_complete', this.checked)">
                         </div>
                     </div>
             </div>
@@ -2866,7 +2866,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="errorsOnly"
                                    {% if user_settings.get('notifications', 'errors_only', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('notifications', 'errors_only', this.checked)">
+                                   data-on-change="toggleUserSetting('notifications', 'errors_only', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2891,7 +2891,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="similarFilesEnabled"
                                    {% if user_settings.get('notifications', 'similar_files_enabled', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('notifications', 'similar_files_enabled', this.checked)">
+                                   data-on-change="toggleUserSetting('notifications', 'similar_files_enabled', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2909,7 +2909,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="futureDatesEnabled"
                                    {% if user_settings.get('notifications', 'future_dates_enabled', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('notifications', 'future_dates_enabled', this.checked)">
+                                   data-on-change="toggleUserSetting('notifications', 'future_dates_enabled', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2927,7 +2927,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="futureEventsEnabled"
                                    {% if user_settings.get('notifications', 'future_events_enabled', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('notifications', 'future_events_enabled', this.checked)">
+                                   data-on-change="toggleUserSetting('notifications', 'future_events_enabled', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2945,7 +2945,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="autoAnalyzeFiles"
                                    {% if user_settings.get('notifications', 'auto_analyze_files', True) %}checked{% endif %}
-                                   onchange="toggleUserSetting('notifications', 'auto_analyze_files', this.checked)">
+                                   data-on-change="toggleUserSetting('notifications', 'auto_analyze_files', this.checked)">
                         </div>
                     </div>
                 </div>
@@ -2960,7 +2960,7 @@
                     <input type="number" class="form-control" id="upcomingEventsDays" 
                            min="7" max="365" step="7"
                            value="{{ user_settings.get('notifications', 'upcoming_events_days', 30) }}"
-                           onchange="toggleUserSetting('notifications', 'upcoming_events_days', parseInt(this.value))">
+                           data-on-change="toggleUserSetting('notifications', 'upcoming_events_days', parseInt(this.value))">
                 </div>
             </div>
         </div>
@@ -3418,11 +3418,11 @@
     <p class="text-muted mb-3">{{ _('Manage search result caching for improved performance.') }}</p>
     
                 <div class="d-flex gap-3 mb-3">
-        <button class="btn btn-warning" onclick="clearSearchCache()">
+        <button class="btn btn-warning" data-on-click="clearSearchCache()">
             <i class="bi bi-trash me-2"></i>
                         {{ _('Clear Cache') }}
         </button>
-        <button class="btn btn-outline-primary" onclick="viewCacheStats()">
+        <button class="btn btn-outline-primary" data-on-click="viewCacheStats()">
             <i class="bi bi-bar-chart me-2"></i>
                         {{ _('View Statistics') }}
         </button>
@@ -3523,28 +3523,5 @@
 <!-- Settings UI Controller (UI interactions) -->
 <script type="module" src="{{ url_for('static', filename='js/settings/settings-ui.js') }}"></script>
 <!-- Language picker controller (visual language selection) -->
-<script>
-    /**
-     * Apply a system language selection from the visual language picker.
-     * Updates the picker state instantly and delegates the actual switch to
-     * the LanguageSwitcher (persists system-wide, then reloads).
-     */
-    window.selectSystemLanguage = function (code) {
-        // Instant visual feedback (page reload finalizes the state)
-        document.querySelectorAll('[data-language-option]').forEach(function (btn) {
-            var isActive = btn.getAttribute('data-language-option') === code;
-            btn.classList.toggle('active', isActive);
-            btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
-        });
-        var hiddenSelect = document.getElementById('systemLanguageSelect');
-        if (hiddenSelect) { hiddenSelect.value = code; }
-
-        if (window.LanguageSwitcher && typeof window.LanguageSwitcher.changeLanguage === 'function') {
-            window.LanguageSwitcher.changeLanguage(code);
-        } else if (window.toggleSystemSetting) {
-            // Fallback: stage the change for the standard Save flow
-            window.toggleSystemSetting('language', code);
-        }
-    };
-</script>
+<script src="{{ url_for('static', filename='js/settings/language-picker.js') }}"></script>
 {% endblock %}

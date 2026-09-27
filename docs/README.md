@@ -10,6 +10,7 @@ Start with the task you have.
 | [OPERATIONS.md](OPERATIONS.md) | Production serving with Waitress (systemd and Windows service), health checks, logs, backups, upgrades, rollback, recovery, maintenance |
 | [CONFIGURATION.md](CONFIGURATION.md) | Every environment variable the code reads, with defaults; runtime settings; reserved variables |
 | [SECURITY.md](SECURITY.md) | Threat model, authentication and roles, request protections, file and archive safety, deployment checklist, reporting |
+| [LICENSING.md](LICENSING.md) | The AGPL-3.0-or-later licence, the section 13 source link (`SOURCE_CODE_URL`), third-party notices, the dependency licence check |
 
 ## Understand the system
 
@@ -26,7 +27,7 @@ Start with the task you have.
 |---|---|
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Setup, where things go, quality gates, commit and release conventions |
 | [TESTING.md](TESTING.md) | Test layers, the disposable database, running tests, generated-document checks, the live smoke test |
-| [../AUDIT_REPORT.md](../AUDIT_REPORT.md) | The v2.1.1 audit: findings, fixes, residual items, test evidence |
+| [../AUDIT_REPORT.md](../AUDIT_REPORT.md) | The v2.1.1 audit and the v2.2.0 follow-up: findings, fixes, the CI OCR failure matrix, residual items, test evidence |
 | [../CHANGELOG.md](../CHANGELOG.md) | Release history |
 
 ## Generated references (do not edit by hand)

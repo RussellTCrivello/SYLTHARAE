@@ -67,7 +67,7 @@ backups, upgrades, rollback) are in [docs/OPERATIONS.md](docs/OPERATIONS.md).
 | [DOMAIN_MODEL](docs/DOMAIN_MODEL.md), [DATABASE](docs/DATABASE.md) | Identity model, tables, migrations |
 | [DEVELOPMENT](docs/DEVELOPMENT.md), [TESTING](docs/TESTING.md) | Contributing, quality gates, test layers, live smoke test |
 | [PRODUCTIZATION_MAP](docs/PRODUCTIZATION_MAP.md) | Capability → screen → API → service → storage → tests |
-| [AUDIT_REPORT](AUDIT_REPORT.md) | The v2.1.1 audit: findings, fixes, residual items, test evidence |
+| [AUDIT_REPORT](AUDIT_REPORT.md) | The v2.1.1 audit and the v2.2.0 follow-up: findings, fixes, residual items, test evidence |
 | [CHANGELOG](CHANGELOG.md) | Release history |
 
 [docs/README.md](docs/README.md) indexes every document.
@@ -89,6 +89,15 @@ explains how to regenerate them.
   [component library](docs/COMPONENT_LIBRARY.md),
   [screen inspector evidence](docs/SCREEN_INSPECTOR_EVIDENCE.md),
   [action surface audit](docs/ACTION_SURFACE_AUDIT.md)
+
+## Licence
+
+SYLTHARAE is free software under the GNU Affero General Public License,
+version 3 or later ([LICENSE](LICENSE)). If you run a modified copy for other
+people over a network, you must offer them your source. Set `SOURCE_CODE_URL`
+for the **Source code** link every page shows. Third-party files keep their
+own licences ([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). See
+[docs/LICENSING.md](docs/LICENSING.md).
 
 ## Project status
 

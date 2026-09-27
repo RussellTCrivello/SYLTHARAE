@@ -17,6 +17,7 @@ import uuid
 import re
 
 from core.errors import client_error, new_correlation_id, sanitize_message
+from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
 from .settings_manager import get_settings_manager
 from .database_validation import DatabaseConfigRejected
 
@@ -676,6 +677,11 @@ def reset_interfaces():
 # THEME ENDPOINTS
 # ============================================================================
 
+# Every page reads its theme from here on load (theme-manager.js), so it is an
+# interactive read: under the 60/minute default a quick browse - or an office
+# sharing one address behind a NAT - was refused (seen in the live browser
+# smoke through nginx). See INTERACTIVE_READ_LIMIT.
+@limiter.limit(INTERACTIVE_READ_LIMIT)
 @settings_bp.route('/theme', methods=['GET'])
 @handle_errors
 def get_theme_settings():

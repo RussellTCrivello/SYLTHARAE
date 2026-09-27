@@ -6,6 +6,26 @@ logs, backups, upgrades, rollback and recovery. Installation is in
 
 ## 1. Production serving
 
+The production layout, verified end to end for every release
+([TESTING.md](TESTING.md#live-smoke-test)):
+
+```text
+browser --HTTPS/2--> nginx :443 (TLS; :80 only redirects)
+        --HTTP/1.1--> Waitress 127.0.0.1:5000 (one process: web + background jobs)
+        --> Flask --> PostgreSQL
+```
+
+| File | Purpose |
+|---|---|
+| [`deploy/nginx/syltharae.conf`](../deploy/nginx/syltharae.conf) | TLS reverse proxy: HTTP→HTTPS redirect, TLS 1.2/1.3, HTTP/2, proxy headers, upload size, timeouts |
+| [`deploy/systemd/syltharae.service`](../deploy/systemd/syltharae.service) | The application as a sandboxed Linux service |
+
+`tests/integration/test_deploy_nginx.py` runs `nginx -t` on the nginx file,
+and `tests/unit/test_deploy_configs.py` checks both files against the
+settings they depend on.
+
+### Waitress
+
 `python run_web.py` serves with Flask's built-in server unless told
 otherwise. That server is for development and single-workstation use only.
 **In production use Waitress**, a pure-Python WSGI server that runs on
@@ -26,50 +46,142 @@ FLASK_HOST=127.0.0.1       # listen only for the proxy
 FLASK_PORT=5000
 ```
 
+The setup wizard writes `WSGI_SERVER` and `TRUSTED_PROXY_COUNT` to `.env`
+from the environment the server was started with (`waitress` by default in
+production when it is installed; the proxy count is never guessed), so a
+restart keeps them.
+
 `run_web.py` then prints `[OK] Serving with Waitress (32 threads)`. It
 still runs `core.init` first (settings, resource coordinator, pending
-migrations), so the start-up behaviour is identical to development. If
-Waitress is selected but not installed, the server says so and falls back
-to the built-in server rather than refusing to start.
+migrations), so the start-up behaviour is identical to development.
 
 Background jobs run on threads inside this one process, so run **one**
 application process per database. Scale with `WAITRESS_THREADS` and the
-processing worker settings, not with more processes.
+processing worker settings, not with more processes (Gunicorn or uWSGI
+workers would each run their own jobs).
 
-Put a reverse proxy in front for TLS (nginx example in
-[INSTALL.md Step 10](INSTALL.md#step-10---production-hardening)). Keep
-`proxy_read_timeout` long (600 s) for large uploads and the job stream.
+### Start-up checks
+
+Before serving, `run_web.py` checks its settings (`apps/web/deployment.py`).
+Settings that would make the server unsafe or wrong **stop it**: it prints
+what to change and exits with status 2, which the systemd unit does not
+retry (`RestartPreventExitStatus=2`).
+
+| Refused (exit 2) | Why |
+|---|---|
+| `FLASK_DEBUG` on with `FLASK_ENV=production` | the debugger runs code sent by any client |
+| `TRUSTED_PROXY_COUNT` not a whole number ≥ 0 | it used to be ignored silently, trusting no proxy |
+| `FLASK_PORT` not a port number | |
+
+Warnings do not stop the server; each says what to change. All but the
+last apply only with `FLASK_ENV=production`:
+
+| Warning | When |
+|---|---|
+| development server in production | `WSGI_SERVER` is not `waitress` |
+| Waitress missing | `WSGI_SERVER=waitress` but the package is not installed (the built-in server is used) |
+| proxy can be bypassed | `TRUSTED_PROXY_COUNT` > 0 while `FLASK_HOST` accepts outside connections: clients could then forge their address |
+| no TLS proxy | `TRUSTED_PROXY_COUNT=0` and `FLASK_HOST` accepts outside connections: browsers talk to the server directly over plain HTTP, so `Secure` cookies and HSTS cannot work |
+| short secret key | `FLASK_SECRET_KEY` shorter than 32 characters |
+| invalid thread count | `WAITRESS_THREADS` is not a number (32 is used); in every environment |
+
+`python verify_readiness.py` reports the same findings (refusals as
+critical), and `--json` prints them as JSON for automation.
+
+### Reverse proxy and TLS
+
+Use [`deploy/nginx/syltharae.conf`](../deploy/nginx/syltharae.conf):
+
+1. Copy it to `/etc/nginx/sites-available/` (and link it from
+   `sites-enabled/`) or to `/etc/nginx/conf.d/`.
+2. Replace `syltharae.example.org` and the two certificate paths. For Let's
+   Encrypt, the HTTP server already serves `/.well-known/acme-challenge/`
+   from `/var/www/letsencrypt`.
+3. `sudo nginx -t && sudo systemctl reload nginx`.
+
+It is tested with nginx 1.24 (Ubuntu 24.04, in CI), 1.26 and 1.28. On 1.25.1 and
+later, `nginx -t` warns that `listen ... http2` is deprecated; the directive
+still works, and it is kept because Debian 12 and Ubuntu 24.04 ship versions
+without the newer `http2 on;`.
+
+What the application relies on:
+
+* **Proxy headers.** With `TRUSTED_PROXY_COUNT=1` the application believes
+  one proxy's `X-Forwarded-For`, `-Proto` and `-Host`. The proxy must
+  **set** `X-Forwarded-For` to the connecting address (`$remote_addr`), not
+  append to what the client sent (`$proxy_add_x_forwarded_for`), and must
+  pass `X-Forwarded-Proto` and `X-Forwarded-Host` (or the original `Host`).
+  Count every proxy in the chain: behind a load balancer *and* nginx, set
+  `TRUSTED_PROXY_COUNT=2`.
+* **Only the proxy reaches the application**: `FLASK_HOST=127.0.0.1` (or a
+  firewall). Otherwise a client can talk to Waitress directly and claim any
+  address.
+* **Security headers come from the application**, including HSTS, which it
+  sends only in production over HTTPS. Do not add them in nginx: browsers
+  combine duplicated headers.
+* **Sizes and timeouts.** `client_max_body_size` must be at least
+  `OPERATIONS_MAX_UPLOAD_MB` (2 GB by default); browsers send larger files in
+  chunks. `proxy_read_timeout 600s` covers long exports; the job event
+  streams send `X-Accel-Buffering: no`, so nginx does not buffer them.
+* **Long-lived HTTP/2 connections.** Each page makes about 50 requests. When
+  nginx ends a connection after `keepalive_requests` (default 1000), browsers
+  can lose the requests they had just sent on it, and the page loads with
+  scripts missing - buttons that do nothing until a reload. The shipped
+  site sets `keepalive_requests 100000;` and `keepalive_time 1h;`; keep both
+  if you write your own configuration.
+
+### Deployment verification
+
+After installing or changing the proxy, check from a client machine
+(replace the host name):
+
+1. **HTTP redirects to HTTPS**: `curl -sI http://syltharae.example.org/`
+   answers `301` with `Location: https://…`.
+2. **Sign-in works.** If it fails with **400 "CSRF token is missing or
+   invalid"**, the proxy is not passing the public host name and scheme
+   (`X-Forwarded-Host`/`Host`, `X-Forwarded-Proto`): the application checks
+   that a form comes from its own HTTPS origin, and without those headers it
+   sees `http://127.0.0.1:5000` instead. Fix the proxy headers; do not turn
+   CSRF protection off. `tests/security/test_proxy_deployment.py` keeps this
+   behaviour under test.
+3. **HSTS is sent**: `curl -sI https://syltharae.example.org/health` shows
+   `Strict-Transport-Security`. If not, the application does not see HTTPS:
+   check `X-Forwarded-Proto` and `TRUSTED_PROXY_COUNT`.
+4. **Real client addresses are recorded**: after signing in,
+   `SELECT action, ip_address FROM audit_log ORDER BY id DESC LIMIT 5;`
+   shows your address, not the proxy's (`127.0.0.1`). If it shows the
+   proxy's, set `TRUSTED_PROXY_COUNT`.
+5. **Optional, complete**: run the live smoke test through the proxy
+   (`SMOKE_BASE_URL=https://syltharae.example.org`, see
+   [TESTING.md](TESTING.md#live-smoke-test)) against a test installation.
 
 ### Linux: systemd
 
-```ini
-# /etc/systemd/system/syltharae.service
-[Unit]
-Description=SYLTHARAE
-After=network-online.target postgresql.service
-Wants=network-online.target
-
-[Service]
-User=syltharae
-Group=syltharae
-WorkingDirectory=/opt/syltharae
-EnvironmentFile=/opt/syltharae/.env
-Environment=APP_DATA_DIR=/var/lib/syltharae
-ExecStart=/opt/syltharae/.venv/bin/python run_web.py
-Restart=on-failure
-RestartSec=5
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=full
-
-[Install]
-WantedBy=multi-user.target
-```
+Use [`deploy/systemd/syltharae.service`](../deploy/systemd/syltharae.service).
+It expects the application in `/opt/syltharae` with its virtual environment
+in `/opt/syltharae/.venv`, and data in `/var/lib/syltharae`; edit the paths
+if yours differ.
 
 ```bash
+sudo useradd --system --home /var/lib/syltharae --shell /usr/sbin/nologin syltharae
+sudo install -d -o syltharae -g syltharae -m 0750 /var/lib/syltharae
+sudo chown -R syltharae:syltharae /opt/syltharae
+sudo cp deploy/systemd/syltharae.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now syltharae
 journalctl -u syltharae -f
 ```
+
+* Settings come from `/opt/syltharae/.env`, which the application reads
+  itself. The unit has no `EnvironmentFile=`: systemd parses quotes and `$`
+  differently, so a password written by the setup wizard could be read
+  wrongly.
+* The unit is sandboxed (`ProtectSystem=strict`, no capabilities, private
+  `/tmp` and devices, …): `systemd-analyze security syltharae` rates it 3.2,
+  "OK". It may write only `/var/lib/syltharae` and `/opt/syltharae` (the
+  wizard's `.env`, `.flask_secret_key`, `.system_initialized`). Remove
+  `PrivateDevices=true` if `COMPUTE_MODE` uses a GPU.
+* A refused start-up (exit status 2) is not restarted; read the reason with
+  `journalctl -u syltharae`.
 
 ### Windows: service
 
@@ -95,6 +207,80 @@ settings store is unavailable. Before installation is finished it redirects
 to `/setup` (302), like every other page. Point load balancers and
 monitoring at it; `python verify_readiness.py --json` is the deeper check to
 run after deployments.
+
+### OCR self-check
+
+Tesseract is a system package, so what OCR does depends on the host, not on
+`requirements.txt`. Run the self-check after installing or upgrading
+Tesseract or its language packs, and after moving to a new host:
+
+    python tools/ci/ocr_selfcheck.py --require tesseract --languages heb,eng,ara
+
+The report has three stages:
+
+* `[engines]`: each engine (available or why not, version, languages or
+  model) and the one ingestion will select;
+* `[languages]`: requested languages that are not installed;
+* `[samples]`: generated images read through the reader ingestion uses
+  (upright, turned 90/180/270 degrees, 12 px text). The confidence shown is
+  the one that would be stored.
+
+`--json PATH` also saves the report. CI runs the check before the test
+suite. On this release (Tesseract 5.3.4 with the models Ubuntu 24.04
+packages) all five samples read correctly at confidence 0.95-0.96.
+
+Each sample gets one classification:
+
+| Classification | Meaning | What to do |
+|---|---|---|
+| `success` | The expected text was read at confidence 0.75 or more. | Nothing. |
+| `low_confidence` | The expected text was read, but below 0.75. | Ingestion keeps such text and stores its confidence. On a clean sample this points at the models: reinstall the standard `tesseract-ocr-*` packages. |
+| `wrong_text` | Text was read, but not the expected text. | The models or the engine version are wrong ([INSTALL.md](INSTALL.md) E14). |
+| `no_text` | The engine ran and read nothing. | Check `tesseract --list-langs` and that the binary matches its `tessdata`. |
+| `invocation_failed` | The engine failed, or its confidence could not be read (`confidence_error` says why). | Check the error in the report, `TESSERACT_CMD`, and the `tessdata` directory. |
+| `unavailable` | No engine could run. | Install Tesseract ([INSTALL.md](INSTALL.md#ocr-engines-and-language-packs)). |
+
+Exit status:
+
+* **Without `--require`**, the check only reports and exits 0.
+* **With `--require ENGINE`**, it exits 1 when:
+  * that engine is unavailable;
+  * another engine is selected (the order is fixed: Tesseract, then RapidOCR);
+  * a requested language is missing (`missing_languages`);
+  * or the upright sample is not `success`.
+
+  Turned and small samples are reported but do not fail the check; the test
+  suite asserts them.
+
+### OCR results on ingested files
+
+Each file's OCR outcome is stored in `extraction_provenance`
+([DOMAIN_MODEL.md §1.5](DOMAIN_MODEL.md)). `GET /api/file/<id>/details`
+returns all of it. The file details view shows engine, confidence and
+"derived" only (OCR-UI-01 in [AUDIT_REPORT.md](../AUDIT_REPORT.md)).
+
+* **Low confidence.** `ocr.confidence` is the mean word confidence (0-1).
+  Low values are kept, not discarded: the text is searchable and the
+  number tells the analyst how far to trust it. Below about 0.75 the reader
+  already retried on the unprocessed image and kept the better reading
+  (`ocr.input_variant`). `null` means no measurement, with
+  `ocr.confidence_error` saying why; it never means a low score.
+* **Missing language.** `ocr.missing_languages` lists requested languages
+  whose models were not installed. The log has
+  `Missing Tesseract language data for <file>`. Install the pack
+  ([INSTALL.md](INSTALL.md) E13).
+* **Engine failure.** The error is logged, stored in
+  `diagnostics.engine_error`, and the file is `partially_processed`, with
+  `ocr engine error: ...` in its status detail.
+* **No engine.** Images store `diagnostics.reason`
+  `ocr_required_engine_unavailable`. A scanned PDF page keeps its own text
+  layer if it has one (`text_layer_fallback`); otherwise the page counts as
+  failed.
+* **Turned pages.** `ocr.rotation` on an image, or `ocr.rotated_pages` on a
+  PDF, records that the text was read after turning it.
+
+Files ingested before an engine or language pack was fixed keep their
+earlier text; see REPROCESS-01 in [AUDIT_REPORT.md](../AUDIT_REPORT.md).
 
 ## 3. Logs and monitoring
 

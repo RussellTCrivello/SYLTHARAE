@@ -12,6 +12,7 @@ from pathlib import Path
 
 from core.errors import client_error
 from core.security.flask_ext import admin_required, current_user
+from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,12 @@ def get_all_translations(locale: str = None) -> dict:
     return translations
 
 
+# Every page loads its UI strings from here on boot (app-i18n.js), so it is an
+# interactive read like the theme: under the 600/hour default the catalog was
+# refused after ~600 page views from one address (live browser smoke through
+# nginx) - an office behind one NAT address gets there in an hour. See
+# INTERACTIVE_READ_LIMIT.
+@limiter.limit(INTERACTIVE_READ_LIMIT)
 @translations_bp.route('/api/i18n/catalog', methods=['GET'])
 def get_i18n_catalog():
     """Public, read-only client localization catalog.

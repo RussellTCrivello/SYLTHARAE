@@ -45,7 +45,7 @@ numpy>=1.26                           # [WIN-BINARY] numerical arrays used by OC
 # -----------------------------------------------------------------------------
 # PDF, office, rich text, email attachment, and spreadsheet readers
 # -----------------------------------------------------------------------------
-PyMuPDF>=1.24                         # [WIN-BINARY] PDF rendering and text extraction
+PyMuPDF>=1.24.3                       # [WIN-BINARY] PDF rendering and text extraction
 pypdf>=6.0                             # [WIN-NATIVE] PDF parsing (maintained successor of PyPDF2)
 python-docx>=1.1                      # [WIN-NATIVE] DOCX extraction
 openpyxl>=3.1                         # [WIN-NATIVE] XLSX extraction

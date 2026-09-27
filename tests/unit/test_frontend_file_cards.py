@@ -38,6 +38,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 MODULE = PROJECT_ROOT / "static/js/modules/views/file-view.js"
+RUNTIME = PROJECT_ROOT / "static/js/modules/core/declarative-events.js"
 
 DOM_STUB = r"""
 // Minimal DOM stub: escapeHtml() serialises through a text node in the real
@@ -129,6 +130,7 @@ globalThis.captured = () => {
 """
 
 HARNESS = r"""
+import { readFileSync } from 'node:fs';
 import '__STUB__';
 const mod = await import('__MODULE__');
 
@@ -151,14 +153,20 @@ mod.renderFilesView(files, 'category', "Item's name", pagination);
 const html = globalThis.captured();
 
 // --- What a browser does with the emitted handlers -----------------------
-// Compile every inline handler. A syntax error here is the console error the
-// operator reported ("missing ) after argument list").
+// Parse every declarative handler with the shipped runtime (RES-CSP-01: the
+// handlers are data-on-<event> attributes, run without inline script). A
+// syntax error here is the defect the operator reported as "missing ) after
+// argument list" when these were inline handlers.
+new Function(readFileSync(__RUNTIME_PATH__, 'utf8'))();
+const runtime = globalThis.SyltharaeDeclarativeEvents;
+const decode = (v) => v.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const handlerErrors = [];
 let handlerCount = 0;
-for (const m of html.matchAll(/\son([a-z]+)\s*=\s*"([^"]*)"/gi)) {
+for (const m of html.matchAll(/\sdata-on-([a-z]+)\s*=\s*"([^"]*)"/gi)) {
     handlerCount++;
     try {
-        new Function(m[2]);
+        runtime.parse(decode(m[2]));
     } catch (e) {
         handlerErrors.push({ event: m[1], handler: m[2].slice(0, 120), error: e.message });
     }
@@ -191,11 +199,12 @@ const parseAttrs = (inner) => {
 };
 const cardTags = [...html.matchAll(/<(div|a|button|input|span)\b([^>]*)>/g)]
     .map(t => ({ tag: t[1], attrs: parseAttrs(t[2]) }));
-const eventAttrs = cardTags.flatMap(t => t.attrs.filter(a => /^on/i.test(a)));
-const unexpectedEventAttrs = eventAttrs.filter(a => !['onclick', 'onmouseover', 'onmouseout', 'oninput', 'onchange'].includes(a.toLowerCase()));
+// No inline handler at all; declarative ones only for the events a card uses.
+const eventAttrs = cardTags.flatMap(t => t.attrs.filter(a => /^(data-)?on/i.test(a)));
+const unexpectedEventAttrs = eventAttrs.filter(a => !['data-on-click', 'data-on-mouseover', 'data-on-mouseout', 'data-on-input', 'data-on-change'].includes(a.toLowerCase()));
 
 // The stored row the handler used to embed: no filename may appear as code.
-const handlerTexts = [...html.matchAll(/\son[a-z]+\s*=\s*"([^"]*)"/gi)].map(m => m[1]);
+const handlerTexts = [...html.matchAll(/\s(?:data-)?on-?[a-z]+\s*=\s*"([^"]*)"/gi)].map(m => m[1]);
 const nameInHandler = handlerTexts.some(h => h.includes('report.pdf') || h.includes('final'));
 
 // --- Wiring: the details action must still be reachable ------------------
@@ -271,6 +280,7 @@ def rendered(node, tmp_path_factory):
     harness = tmp / "harness.mjs"
     harness.write_text(
         HARNESS.replace("__STUB__", stub.as_uri()).replace("__MODULE__", MODULE.as_uri())
+        .replace("__RUNTIME_PATH__", json.dumps(str(RUNTIME)))
     )
     proc = subprocess.run([node, str(harness)], capture_output=True, text=True, timeout=120)
     assert proc.returncode == 0, f"node failed: {proc.stderr[:2000]}"

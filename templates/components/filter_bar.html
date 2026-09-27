@@ -23,7 +23,7 @@
            {{ search_group('searchKeywords', _('Search Keywords'),
                            _('Search keywords...'), onclear='clearSearch()') }}
            {% call filter_group('statusFilter', _('Status'), 'bi-check-circle') %}
-               <select class="form-select" id="statusFilter" onchange="applyFilters()">…</select>
+               <select class="form-select" id="statusFilter" data-on-change="applyFilters()">…</select>
            {% endcall %}
        {% endcall %}
 #}

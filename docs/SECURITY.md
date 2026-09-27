@@ -34,9 +34,28 @@ and a compromised administrator account.
 * **Cookies** are `HttpOnly`, `SameSite=Lax`, and `Secure` when
   `FLASK_ENV=production` - which means production must be served over HTTPS
   ([INSTALL.md Step 10](INSTALL.md#step-10---production-hardening)).
-* **Lockout**: `SECURITY_MAX_FAILED_LOGINS` (5) failures lock the account for
-  `SECURITY_LOCKOUT_MINUTES` (15). The login endpoint is limited to 10
-  requests per minute per client.
+* **Lockout**: `SECURITY_MAX_FAILED_LOGINS` (5) wrong passwords lock the
+  account for `SECURITY_LOCKOUT_MINUTES` (15). Both sign-in and password
+  changes count. The sign-in and change-password endpoints are each limited
+  to 10 requests per minute per client, and answer `429` JSON
+  (`code: rate_limited`) when the limit is hit. Every other endpoint has the
+  default limits (`RATE_LIMIT_PER_MINUTE`, `RATE_LIMIT_PER_HOUR`), except the
+  read-only calls interactive pages repeat - the theme, interface strings and
+  notification count each page loads, archive sections, reader chunks, job
+  polling - which have a bounded 600 per minute (`INTERACTIVE_READ_LIMIT` in
+  `core/security/rate_limit.py`), so ordinary browsing is not refused.
+* **Changing your own password** (`POST /auth/change-password`) requires the
+  current password, so an unattended browser or a stolen session cannot take
+  the account over (RES-AUTH-02, fixed in 2.2.0):
+  * A wrong current password counts towards the lockout. If it locks the
+    account, every session of that account ends, including the one that
+    tried.
+  * A successful change signs out the account's other sessions and keeps the
+    current one.
+  * The new password must differ from the current one and meet
+    `PASSWORD_MIN_LENGTH`.
+  * `password.change`, `password.change_failed` and `password.change_locked`
+    are written to the audit log.
 * **Temporary passwords** (the generated first-run password, accounts created
   or reset by an administrator, recovery passwords) set
   `must_change_password`. Until it is changed the account can reach only the
@@ -113,19 +132,41 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
   (`static/js/modules/core/utils.js`). File names, words, paths and every
   other database value are attacker-controlled - they come from ingested
   files (AUDIT-XSS-01).
-* **Headers** on every response: `Content-Security-Policy` (`default-src
-  'self'`, `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'`),
+* **Headers** on every response: `Content-Security-Policy` (below),
   `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
   `Referrer-Policy: strict-origin-when-cross-origin`, a restrictive
   `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`, and
   `Strict-Transport-Security` in production over HTTPS (AUDIT-HSTS-01).
-  Pages and `/api/*` responses are `no-store`.
-* **`'unsafe-inline'` in the CSP.** Some legacy templates still contain
-  inline `<script>` blocks and inline event handlers, so `script-src` allows
-  inline code. This weakens the CSP as an XSS backstop; the escaping rules
-  above are the primary control. Removing it requires moving those blocks
-  into `static/js/pages/` modules - tracked in
-  [AUDIT_REPORT.md](../AUDIT_REPORT.md).
+  Pages and `/api/*` responses are `no-store`; static files are `no-cache`
+  (revalidated by ETag).
+* **Content-Security-Policy.** Every page is served with:
+
+  `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'`
+
+  `script-src 'self'` means the browser runs no inline script, no `eval`
+  and no `javascript:` URL, so markup injected despite the escaping above
+  cannot execute (RES-CSP-01, resolved in 2.2.0):
+  * Event handlers are `data-on-<event>="expression"` attributes (for
+    example `data-on-click="applyFilters()"`), run by
+    `static/js/modules/core/declarative-events.js`. It parses the expression
+    with a small interpreter - calls, member access, literals, `this`,
+    `event`, `return false` and `.style` assignment - and never uses `eval`
+    or `Function`. Because it still lets markup call page functions, it
+    refuses `eval`, `Function`, string timers, `fetch`, `constructor`,
+    `__proto__`, HTML-writing sinks and similar names, both by name and by
+    identity. Output escaping is still the primary control.
+  * Page scripts are static files; server values reach them through
+    `<script type="application/json" id="…-page-data">` blocks, which the
+    browser does not execute.
+  * `tests/unit/test_csp_no_inline_script.py` fails on any inline handler,
+    inline `<script>`, `javascript:` URL or string evaluation in a template,
+    a script or a served page. `tools/smoke/browser_smoke.mjs` loads every
+    page in a real browser under this policy
+    ([TESTING.md](TESTING.md#browser-smoke-test)).
+  * `style-src` still allows `'unsafe-inline'`: templates use `style`
+    attributes, and Settings applies administrator-authored custom CSS.
+    Injected CSS cannot run script, so this is an accepted residual
+    (RES-CSP-02 in [AUDIT_REPORT.md](../AUDIT_REPORT.md#residual-items-at-v220)).
 * The original-file viewer opts into `X-Frame-Options: SAMEORIGIN` for the
   one response that must be framed by the application itself.
 
@@ -136,8 +177,14 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
 * Database credentials live in `.env` (git-ignored) or the environment. The
   settings API never returns the database password.
 * `verify_readiness.py` scans for committed credentials and refuses debug
-  mode in production; `run_web.py` refuses `FLASK_DEBUG=true` with
-  `FLASK_ENV=production`.
+  mode in production. `run_web.py` refuses to start (exit status 2) with
+  `FLASK_DEBUG=true` in production, a non-numeric `TRUSTED_PROXY_COUNT` or an
+  invalid port, and warns about unsafe production settings
+  ([OPERATIONS.md](OPERATIONS.md#start-up-checks)).
+* The setup wizard's `.env` (mode 0600) holds the database password and the
+  secret key but not the administrator's password (INSTALL-ENV-01): the
+  account is created in the database, and `APP_ADMIN_PASSWORD` is read only
+  while no account exists.
 * Errors returned to clients are generic (`client_error`, SEC-08); details
   are logged server-side only.
 
@@ -148,9 +195,16 @@ resource, detail, client address, time): `login.success`, `login.failed`,
 `login.locked`, `logout`, `password.change`, `user.create`, `user.update`,
 `user.delete`, `user.password_reset`, `user.password_recovery`,
 `user.first_admin_created`, `bootstrap.initial_admin_created`,
-`setup.initial_admin_created`, `jobs.cancel`. Behind a reverse proxy set
-`TRUSTED_PROXY_COUNT` so the recorded address is the client's, not the
-proxy's (AUDIT-PROXY-01).
+`setup.initial_admin_created`, `jobs.cancel`, `password.change_failed`,
+`password.change_locked`. Behind a reverse proxy set `TRUSTED_PROXY_COUNT` so
+the recorded address is the client's, not the proxy's (AUDIT-PROXY-01).
+
+The address is always the one `TRUSTED_PROXY_COUNT` establishes
+(`request.remote_addr`), the same one rate limiting uses. The sign-in,
+sign-out and password records used to take the first `X-Forwarded-For` value
+themselves, which any client can write (AUDIT-PROXY-02). The live smoke test
+sends a forged `X-Forwarded-For` on every request and checks that it never
+reaches the log.
 
 ## 8. Dependencies
 
@@ -162,18 +216,26 @@ proxy's (AUDIT-PROXY-01).
 pip install pip-audit && pip-audit -r requirements.txt
 ```
 
+CI runs `pip-audit` on every push, and bandit against
+[`tools/security/bandit-baseline.json`](../tools/security/bandit-baseline.json):
+the baseline holds only the documented residuals RES-SQL-01 (B608),
+RES-XML-01 (B314) and RES-BIND-01 (B104)
+([AUDIT_REPORT.md](../AUDIT_REPORT.md#residual-items-at-v220)), so any new
+medium- or high-severity finding fails the build.
+
 Front-end libraries are vendored under `static/` (no CDN), so an offline
 installation loads nothing from the internet.
 
 ## 9. Deployment checklist
 
-- [ ] HTTPS in front of the app, `TRUSTED_PROXY_COUNT` set to the number of proxies
+- [ ] HTTPS in front of the app (`deploy/nginx/syltharae.conf`), `TRUSTED_PROXY_COUNT` set to the number of proxies, `FLASK_HOST=127.0.0.1`
+- [ ] [Deployment verification](OPERATIONS.md#deployment-verification) done: redirect, sign-in, HSTS, client addresses in the audit log
 - [ ] `FLASK_ENV=production`, `FLASK_DEBUG=false`, long random `FLASK_SECRET_KEY`
 - [ ] Initial admin password changed; `initial_admin_password.txt` gone
 - [ ] Every person has their own account with the narrowest role
 - [ ] `INGESTION_ROOTS` limited to the evidence folders
 - [ ] Database role limited to its own database; PostgreSQL not exposed publicly
-- [ ] `RATELIMIT_STORAGE_URI` set when running more than one process
+- [ ] One server process per database (the rate-limit counters live in it)
 - [ ] Backups of PostgreSQL and `APP_DATA_DIR`, and a tested restore
 - [ ] `python verify_readiness.py` passes
 
@@ -182,5 +244,11 @@ installation loads nothing from the internet.
 `tests/security/` covers authentication and authorisation per role, CSRF,
 rate limiting, import/export gating, interface visibility, settings error
 hygiene, job security and the audit remediations
-(`test_audit_remediation.py`). `tests/unit/test_audit_remediation_static.py`
-holds the static front-end checks (escaping, CSRF headers).
+(`test_audit_remediation.py`), the password change (`test_change_password.py`)
+and the reverse-proxy contract (`test_proxy_deployment.py`: sign-in through a
+proxy, the 400 when a proxy drops the host name, the audit address, HSTS
+conditions, forwarded headers ignored without a trusted proxy).
+`tests/unit/test_audit_remediation_static.py` holds the static front-end
+checks (escaping, CSRF headers). `tools/smoke/live_smoke.py` and
+`browser_smoke.mjs` check the same through a real nginx, over HTTPS
+([TESTING.md](TESTING.md)).

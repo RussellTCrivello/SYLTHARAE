@@ -3,17 +3,17 @@ Centralized Version Management
 Single source of truth for application versioning
 """
 
-__version__ = "2.1.1"
-__version_info__ = (2, 1, 1)
+__version__ = "2.2.0"
+__version_info__ = (2, 2, 0)
 
 # Build metadata
-__build_date__ = "2026-09-25"
-__python_requires__ = ">=3.11"
+__build_date__ = "2026-09-26"
+__python_requires__ = ">=3.10"  # pyproject.toml requires-python
 
 # Component versions (for reference)
 COMPONENT_VERSIONS = {
     "application": __version__,
-    "python_min": "3.11",
+    "python_min": "3.10",
     "python_max": "3.12",
 }
 

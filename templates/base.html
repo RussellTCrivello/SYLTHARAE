@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    {#- Runs data-on-<event> handlers without inline script (RES-CSP-01).
+        Synchronous and first, so every control drawn below is live. -#}
+    <script src="{{ url_for('static', filename='js/modules/core/declarative-events.js') }}"></script>
     {#- One default app name for every fallback position, matching the
         settings model default ("SYLTHARAE System", settings/settings_models.py).
         Empty stored values also fall back instead of producing a blank title,
@@ -56,22 +59,7 @@
     <script type="application/json" id="global-custom-css-data">{{ {
         "custom_css": (user_settings.get('theme', 'custom_css', '') if user_settings else "")
     }|tojson }}</script>
-    <script>
-        (function() {
-            try {
-                var el = document.getElementById('global-custom-css');
-                var dataEl = document.getElementById('global-custom-css-data');
-                if (!el || !dataEl) return;
-                var parsed = JSON.parse(dataEl.textContent || '{}');
-                var css = (parsed && parsed.custom_css) ? String(parsed.custom_css) : '';
-                // Avoid style tag breakouts if someone pastes HTML
-                css = css.replace(/<\/style>/gi, '');
-                el.textContent = css;
-            } catch (e) {
-                // no-op
-            }
-        })();
-    </script>
+    <script src="{{ url_for('static', filename='js/modules/core/global-custom-css.js') }}"></script>
     
     <!-- Theme Colors Configuration -->
     {% set theme = user_settings.get('theme') if user_settings else {} %}
@@ -245,7 +233,7 @@
         <div class="sidebar-logo">
             {% if user_settings and user_settings.get('system', 'app_logo') %}
             <img src="{{ user_settings.get('system', 'app_logo') }}" alt="{{ _brand_name }}"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='';">
+                 data-on-error="this.style.display='none'; this.nextElementSibling.style.display='';">
             <i class="bi {{ _brand_icon }}" style="display: none;" aria-hidden="true"></i>
             {% else %}
             <i class="bi {{ _brand_icon }}" aria-hidden="true"></i>
@@ -258,13 +246,18 @@
             {% include 'components/sidebar_nav.html' %}
         </nav>
 
-        <!-- Sidebar Footer: installation version only. Language selection is
-             available once in the top bar, including at narrow viewports. -->
+        <!-- Sidebar Footer: the running version and the AGPL-3.0 section 13
+             source offer. Language selection is in the top bar. -->
         <div class="sidebar-footer">
             <span class="sidebar-version">
                 <i class="bi bi-info-circle" aria-hidden="true"></i>
-                {{ _('Version') }} {{ version|default('2.0.0') }}
+                {{ _('Version') }} {{ version }}
             </span>
+            <a class="sidebar-version sidebar-source" href="{{ source_code_url }}" rel="noopener" target="_blank"
+               title="{{ _('SYLTHARAE is free software under the GNU AGPL-3.0-or-later. Get its source code.') }}">
+                <i class="bi bi-code-slash" aria-hidden="true"></i>
+                {{ _('Source code') }} (AGPL-3.0)
+            </a>
         </div>
     </div>
     
@@ -441,6 +434,12 @@
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
+                            <label class="form-label" for="currentPasswordInput">{{ _('Current Password') }}</label>
+                            <input type="password" class="form-control" id="currentPasswordInput" required autocomplete="current-password"
+                                   data-required-message="{{ _('Enter your current password.') }}"
+                                   data-unchanged-message="{{ _('The new password must be different from the current one.') }}">
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label" for="newPasswordInput">{{ _('New Password') }}</label>
                             <input type="password" class="form-control" id="newPasswordInput" required minlength="{{ password_min_length|default(12) }}" autocomplete="new-password"
                                    data-minimum-message="{{ _('New password must be at least %(min)s characters.', min=password_min_length|default(12)) }}">
@@ -483,33 +482,10 @@
     <script type="module" src="{{ url_for('static', filename='js/modules/rendering/cursor-pagination.js') }}" defer></script>
     
     <!-- Language Initialization (Run Immediately, Before DOM Ready) -->
-    <script>
-        // Initialize language and direction immediately to prevent FOUC (Flash of Unstyled Content)
-        (function() {
-            try {
-                const htmlElement = document.documentElement;
-                const currentLang = htmlElement.getAttribute('lang') || '{{ current_language|default("en") }}';
-                const isRTL = ['ar', 'fa', 'he', 'ur'].includes(currentLang);
-                
-                // Apply direction immediately
-                htmlElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
-                htmlElement.setAttribute('lang', currentLang);
-                
-                // Store in sessionStorage for JavaScript modules
-                if (typeof sessionStorage !== 'undefined') {
-                    try {
-                        sessionStorage.setItem('userLanguage', currentLang);
-                        sessionStorage.setItem('rtlDirection', isRTL ? 'rtl' : 'ltr');
-                        sessionStorage.setItem('languageChangeTime', Date.now().toString());
-                    } catch (e) {
-                        // Ignore sessionStorage errors
-                    }
-                }
-            } catch (e) {
-                console.warn('Language initialization error:', e);
-            }
-        })();
-    </script>
+    <script type="application/json" id="language-init-data">{{ {
+    "currentLanguage": current_language|default("en")
+}|tojson }}</script>
+    <script src="{{ url_for('static', filename='js/modules/core/language-init.js') }}"></script>
     
     <!-- Language Persistence Manager (CRITICAL: Load First to Intercept All Requests) -->
     <script type="module" src="{{ url_for('static', filename='js/modules/core/language-persistence.js') }}"></script>
@@ -551,15 +527,7 @@
     {% if inspector_enabled %}
     {% from 'components/screen_inspector.html' import screen_inspector %}
     {{ screen_inspector(enabled=True, interface_id=inspector_interface) }}
-    <script type="module">
-        // Deferred scripts run before DOMContentLoaded, so the runtime is there;
-        // `init()` is idempotent, which is what lets a page module call it too.
-        document.addEventListener('DOMContentLoaded', function () {
-            if (window.ScreenInspector) {
-                window.ScreenInspector.init();
-            }
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/modules/core/screen-inspector-init.js') }}"></script>
     {% endif %}
 
     {#- One live region for the whole application: an action that finished
