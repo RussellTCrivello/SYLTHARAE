@@ -211,6 +211,7 @@ if (typeof window !== 'undefined') {
     window.navigateFileInModal = fileNavigation.navigateFileInModal;
     window.selectAllFiles = fileSelection.selectAllFiles;
     window.deselectAllFiles = fileSelection.deselectAllFiles;
+    window.toggleAllFilesSelection = fileSelection.toggleAllFilesSelection;
     window.exportSelectedFiles = fileSelection.exportSelectedFiles;
     window.exportSelectedOriginals = fileSelection.exportSelectedOriginals;
     window.filterDisplayedFiles = fileSelection.filterDisplayedFiles;

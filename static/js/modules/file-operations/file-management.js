@@ -163,6 +163,15 @@ const FileManagement = {
             this.deselectAllFiles();
         }
     },
+
+    /**
+     * The single select/deselect control (see file-selection.js): selects
+     * everything when nothing is selected, clears the selection otherwise.
+     */
+    toggleAllFilesSelection() {
+        fileSelection.toggleAllFilesSelection();
+        this.updateBulkToolbar();
+    },
     
     updateBulkToolbar() {
         const selected = document.querySelectorAll('.file-checkbox:checked').length;
@@ -188,6 +197,9 @@ const FileManagement = {
             selectAllCheckbox.checked = selected === allCheckboxes.length;
             selectAllCheckbox.indeterminate = selected > 0 && selected < allCheckboxes.length;
         }
+
+        // Keep the single select/deselect toggle in sync with the selection.
+        fileSelection.updateSelectToggle();
     },
     
     // ==================== FILTER MANAGEMENT ====================
