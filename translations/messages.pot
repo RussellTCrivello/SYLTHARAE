@@ -13697,3 +13697,48 @@ msgstr ""
 #: templates/Reports/reports.html
 msgid "No runs match this filter."
 msgstr ""
+
+msgid "Files are made on the server from the rows this run stored. Each has a manifest and a SHA-256 checksum; every download is recorded in the audit log."
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Create file"
+msgstr ""
+
+msgid "All datasets"
+msgstr ""
+
+msgid "No files have been made from this run yet."
+msgstr ""
+
+msgid "Files can be made from completed runs only."
+msgstr ""
+
+msgid "This file already exists and is listed below."
+msgstr ""
+
+msgid "File created."
+msgstr ""
+
+#, python-format
+msgid "Not available yet: %(format)s (%(reason)s)"
+msgstr ""
+
+#, python-format
+msgid "%(n)s bytes"
+msgstr ""
+
+msgid "Manifest"
+msgstr ""
+
+msgid "Verify"
+msgstr ""
+
+msgid "Verified: the stored file matches its SHA-256 checksum and its manifest."
+msgstr ""
+
+#, python-format
+msgid "Verification failed: %(checks)s. The file will not be sent."
+msgstr ""

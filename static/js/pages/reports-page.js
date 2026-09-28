@@ -2,7 +2,9 @@
  * Reports page: run registered reports and read their results.
  *
  * A view over the server contract only (Api/routes/reports.py, GET
- * /api/search/saved, GET /api/jobs/<id>). The browser never computes a
+ * /api/search/saved, GET /api/jobs/<id>[/errors]). Files (artifacts) are
+ * rendered by the server; the page only asks for one and links to the
+ * download, which the server audits (DATA_EXPORTED). The browser never computes a
  * count, a status or a result: it sends the report id and the parameters the
  * user gave, follows the job, and renders what the server recorded -
  * including its error code and message verbatim, the snapshot, the
@@ -27,6 +29,7 @@ const state = {
     run: null,               // the run shown in the detail panel
     datasetKey: null,
     rowOffset: 0,
+    formats: [],             // [{format, single_dataset}] from the artifacts list
 };
 
 // ---------------------------------------------------------------------------
@@ -140,8 +143,8 @@ async function guarded(fn) {
 
 const FINISHED = new Set(['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'FAILED', 'CANCELLED']);
 
-async function followJob(job) {
-    const target = document.getElementById('reportJob');
+async function followJob(job, targetId = 'reportJob') {
+    const target = document.getElementById(targetId);
     let current = job;
     for (let i = 0; !FINISHED.has(current.status) && i < DATA.job_poll_limit; i += 1) {
         target.textContent = fmt(L.job_running, { id: current.job_id, status: current.status });
@@ -449,6 +452,7 @@ async function openRun(id) {
         clear('runDataPager');
         emptyRow('runDataRows', 1, L.no_rows);
     }
+    await loadFiles();
     const url = new URL(window.location.href);
     url.searchParams.set('run', String(run.id));
     window.history.replaceState(null, '', url);
@@ -495,6 +499,119 @@ async function loadRows() {
 }
 
 // ---------------------------------------------------------------------------
+// Files (artifacts): made on the server, downloaded as attachments
+// ---------------------------------------------------------------------------
+
+function fileDatasetSync() {
+    const format = document.getElementById('fileFormat').value;
+    const spec = state.formats.find((f) => f.format === format);
+    const select = clear('fileDataset');
+    if (spec && spec.single_dataset) {
+        for (const ds of state.run.datasets || []) {
+            select.append(el('option', { value: ds.dataset_key, text: ds.dataset_key }));
+        }
+        select.disabled = false;
+        select.value = (state.run.datasets || [])[0]?.dataset_key || '';
+    } else {
+        select.append(el('option', { value: '', text: L.all_datasets }));
+        select.disabled = true;
+        select.value = '';
+    }
+}
+
+function fileRow(file) {
+    const base = `/api/reports/artifacts/${encodeURIComponent(file.id)}`;
+    const verify = el('button', { type: 'button', class: 'btn btn-outline-secondary btn-sm', text: L.verify });
+    verify.addEventListener('click', () => guarded(async () => {
+        const result = await api('GET', `${base}/verify`);
+        const box = clear('fileVerify');
+        const failed = Object.entries(result.checks || {}).filter(([, ok]) => !ok).map(([k]) => k);
+        box.append(el('span', { class: result.ok ? 'text-success' : 'text-danger',
+            text: result.ok ? L.verified_ok : fmt(L.verified_bad, { checks: failed.join(', ') }) }));
+    }));
+    const actions = el('td', { class: 'text-nowrap' },
+        el('a', { class: 'btn btn-outline-primary btn-sm me-1', href: `${base}/download`, download: file.filename, text: L.download }),
+        el('a', { class: 'btn btn-outline-secondary btn-sm me-1', href: `${base}/manifest`, download: `${file.filename}.manifest.json`, text: L.manifest }),
+        verify);
+    return el('tr', {},
+        el('td', { dir: 'ltr', text: `${file.format} (${file.renderer_version})` }),
+        el('td', { dir: 'ltr', text: file.dataset_key || L.all_datasets }),
+        el('td', { dir: 'ltr', class: 'text-break', text: file.filename }),
+        el('td', { text: fmt(L.bytes, { n: file.byte_size }) }),
+        el('td', { dir: 'ltr', class: 'font-monospace small text-break', title: `manifest ${file.manifest_sha256}`, text: file.sha256 }),
+        el('td', {}, when(file.created_at), ' ', userText(file.creator_username)),
+        actions);
+}
+
+async function loadFiles() {
+    const run = state.run;
+    show('runFiles', true);
+    clear('fileVerify');
+    clear('fileJob');
+    const completed = run.status === 'completed';
+    document.getElementById('fileControls').classList.toggle('d-none', !(completed && DATA.can_run));
+    if (!completed) {
+        clear('fileUnavailable').append(L.files_completed_only);
+        emptyRow('fileRows', 7, L.no_files);
+        return;
+    }
+    const body = await api('GET', `/api/reports/runs/${encodeURIComponent(run.id)}/artifacts`);
+    state.formats = body.formats || [];
+    // Reloading the list (after a file is made) keeps what the user chose.
+    const previous = { format: document.getElementById('fileFormat').value,
+        dataset: document.getElementById('fileDataset').value };
+    const select = clear('fileFormat');
+    for (const f of state.formats) select.append(el('option', { value: f.format, text: f.format.toUpperCase() }));
+    const keep = state.formats.some((f) => f.format === previous.format);
+    select.value = keep ? previous.format : (state.formats.length ? state.formats[0].format : '');
+    fileDatasetSync();
+    const datasets = document.getElementById('fileDataset');
+    if (keep && !datasets.disabled && (state.run.datasets || []).some((d) => d.dataset_key === previous.dataset)) {
+        datasets.value = previous.dataset;
+    }
+    const unavailable = clear('fileUnavailable');
+    for (const u of body.unavailable || []) {
+        unavailable.append(el('div', { text: fmt(L.unavailable, { format: u.format.toUpperCase(), reason: u.reason }) }));
+    }
+    if (!body.items.length) {
+        emptyRow('fileRows', 7, L.no_files);
+        return;
+    }
+    const tbody = clear('fileRows');
+    for (const file of body.items) tbody.append(fileRow(file));
+}
+
+async function createFile() {
+    const run = state.run;
+    const format = document.getElementById('fileFormat').value;
+    const payload = { format };
+    const spec = state.formats.find((f) => f.format === format);
+    if (spec && spec.single_dataset) payload.dataset_key = document.getElementById('fileDataset').value;
+    const button = document.getElementById('fileCreate');
+    button.disabled = true;
+    try {
+        const body = await api('POST', `/api/reports/runs/${encodeURIComponent(run.id)}/artifacts`, payload);
+        if (body.existing) {
+            await loadFiles();
+            clear('fileJob').append(L.file_existing);
+            return;
+        }
+        const job = body.job ? await followJob(body.job, 'fileJob') : null;
+        await loadFiles();
+        if (job) {
+            clear('fileJob').append(job.status === 'COMPLETED'
+                ? L.file_created : fmt(L.job_done, { id: job.job_id, status: job.status }));
+            if (job.status === 'FAILED') {
+                const detail = await api('GET', `/api/jobs/${encodeURIComponent(job.job_id)}/errors`);
+                if (detail.errors && detail.errors.length) showError(new Error(detail.errors.join('; ')));
+            }
+        }
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Wiring
 // ---------------------------------------------------------------------------
 
@@ -514,6 +631,8 @@ async function init() {
         state.rowOffset = 0;
         guarded(loadRows);
     });
+    on('fileFormat', 'change', fileDatasetSync);
+    on('fileCreate', 'click', () => guarded(createFile));
     if (!DATA.can_run) notice(L.read_only);
     await guarded(loadDefinitions);
     await guarded(loadRuns);

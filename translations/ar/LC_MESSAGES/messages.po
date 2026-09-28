@@ -11353,3 +11353,48 @@ msgstr "لا تزال المهمة %(id)s قيد التشغيل؛ حدّث قا�
 #: templates/Reports/reports.html
 msgid "No runs match this filter."
 msgstr "لا توجد عمليات تشغيل تطابق هذا المرشّح."
+
+msgid "Files are made on the server from the rows this run stored. Each has a manifest and a SHA-256 checksum; every download is recorded in the audit log."
+msgstr "تُنشأ الملفات على الخادم من الصفوف التي خزّنها هذا التشغيل. لكل ملف بيان ومجموع تحقق SHA-256، وتُسجَّل كل عملية تنزيل في سجل التدقيق."
+
+msgid "Format"
+msgstr "الصيغة"
+
+msgid "Create file"
+msgstr "إنشاء ملف"
+
+msgid "All datasets"
+msgstr "كل مجموعات البيانات"
+
+msgid "No files have been made from this run yet."
+msgstr "لم يُنشأ أي ملف من هذا التشغيل بعد."
+
+msgid "Files can be made from completed runs only."
+msgstr "لا يمكن إنشاء الملفات إلا من عمليات التشغيل المكتملة."
+
+msgid "This file already exists and is listed below."
+msgstr "هذا الملف موجود بالفعل وهو مدرج أدناه."
+
+msgid "File created."
+msgstr "تم إنشاء الملف."
+
+#, python-format
+msgid "Not available yet: %(format)s (%(reason)s)"
+msgstr "غير متاح بعد: %(format)s (%(reason)s)"
+
+#, python-format
+msgid "%(n)s bytes"
+msgstr "%(n)s بايت"
+
+msgid "Manifest"
+msgstr "البيان"
+
+msgid "Verify"
+msgstr "تحقّق"
+
+msgid "Verified: the stored file matches its SHA-256 checksum and its manifest."
+msgstr "تم التحقق: الملف المخزَّن يطابق مجموع التحقق SHA-256 والبيان الخاص به."
+
+#, python-format
+msgid "Verification failed: %(checks)s. The file will not be sent."
+msgstr "فشل التحقق: %(checks)s. لن يُرسَل الملف."

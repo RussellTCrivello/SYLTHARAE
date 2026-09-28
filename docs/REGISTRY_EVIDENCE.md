@@ -146,7 +146,7 @@ Cross-cutting settings that are **not** features (they belong to an existing int
 <!-- BEGIN GENERATED APPLICATION EVIDENCE -->
 ### 7. Endpoint coverage
 
-- Endpoints in the application's URL map (static excluded): **388**
+- Endpoints in the application's URL map (static excluded): **394**
 - User-facing page endpoints: **52**
 - Owned by an interface: **70**
 - **Unmanaged user-facing endpoints**: **0**
@@ -159,7 +159,7 @@ Unmanaged user-facing endpoints: **0** — every page the application serves is 
 | Classification | Endpoints |
 | --- | --- |
 | ACTION | 9 |
-| API_ENDPOINT | 309 |
+| API_ENDPOINT | 315 |
 | INTERNAL_PAGE | 1 |
 | REDIRECT | 1 |
 | SYSTEM_ENDPOINT | 16 |
@@ -170,7 +170,7 @@ By blueprint:
 
 | Blueprint | Endpoints |
 | --- | --- |
-| (app) | 190 |
+| (app) | 196 |
 | analytics | 22 |
 | archives_api | 10 |
 | auth | 12 |
@@ -202,7 +202,7 @@ The coverage rule tolerates exactly these, by name — a new page cannot be adde
 
 **TEST_ENDPOINT_PREFIXES** (1): `/_test/`
 
-Endpoints the interface switch does not gate (API, system and infrastructure; authentication and authorization are unchanged): **326**
+Endpoints the interface switch does not gate (API, system and infrastructure; authentication and authorization are unchanged): **332**
 
 ### 10. Rendered navigation
 

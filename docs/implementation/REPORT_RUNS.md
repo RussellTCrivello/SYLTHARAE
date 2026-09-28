@@ -2,8 +2,9 @@
 
 A run executes one registered report definition (`core/reporting`, step 13)
 for one requester, as a background job, and records what was computed, for
-whom, from which data. Artifacts and their manifest (formats, SHA-256,
-`DATA_EXPORTED`) are step 15; this step stores the datasets and shows them.
+whom, from which data. This step stores the datasets and shows them; files made
+from a completed run (formats, manifest, SHA-256, `DATA_EXPORTED`) are step
+15, described in [REPORT_ARTIFACTS.md](REPORT_ARTIFACTS.md).
 
 ## Why these pieces, and not new ones
 
@@ -139,8 +140,9 @@ and removed afterwards. Start-up on a clean clone is step 27.
 - Translations are not reviewed by native speakers.
 - Only `search_results@1` is registered; the other catalog reports need their
   datasets and analytics (steps 16-17).
-- No artifacts, downloads, manifest or `DATA_EXPORTED` yet (step 15); no
-  scheduling (20); no retention of runs (21): rows are kept until then.
+- Artifacts and downloads: see [REPORT_ARTIFACTS.md](REPORT_ARTIFACTS.md)
+  (step 15). No scheduling (20); no retention of runs (21): rows are kept
+  until then.
 - Stored rows are bounded by each dataset's `row_limit` (at most 100,000 by
   the model's ceiling); a large capped dataset is stored in full up to that
   limit.

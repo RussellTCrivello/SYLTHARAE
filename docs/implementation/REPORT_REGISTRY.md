@@ -3,8 +3,9 @@
 `core/reporting/` holds the declarations every later reporting step builds
 on: **what a report is**, **which data it reads**, **who may run it** and
 **what its numbers mean**. It executes nothing. The runner (step 14) binds and
-runs the declared SQL inside the existing JobManager; artifacts and manifests
-are step 15.
+runs the declared SQL inside the existing JobManager
+([REPORT_RUNS.md](REPORT_RUNS.md)); artifacts and manifests are step 15
+([REPORT_ARTIFACTS.md](REPORT_ARTIFACTS.md)).
 
 ## Why a new package, not an extension
 
@@ -140,10 +141,11 @@ only when their datasets exist and are verified.
 * **The compiler's semantics are not in the dataset fingerprint.** The
   fingerprint pins the declared SQL (including `CANONICAL_FROM`, which is
   interpolated). A change inside `compile_criteria` is not pinned here; each
-  run will record the criteria fingerprint (step 15). A compiler version
-  constant does not exist yet.
-* **No API.** A definitions listing and run submission arrive with the
-  runner (step 14), which is their first consumer.
+  run records the criteria fingerprint and each dataset's query fingerprint
+  (step 14), so a changed compilation is visible as a different query
+  fingerprint. A compiler version constant does not exist yet.
+* **API.** The definitions listing and run submission arrived with the
+  runner (step 14, `Api/routes/reports.py`).
 * **Translations are self-authored**, not native-reviewed.
 * **The existing Arabic string for "Side"** (reused as a column label) is
   `الجوانب` ("sides", plural). It predates this step and is left unchanged

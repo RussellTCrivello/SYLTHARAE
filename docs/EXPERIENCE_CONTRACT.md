@@ -75,10 +75,10 @@ Counted from the catalogs the build ships - the Babel catalogs under `translatio
 
 | Language | Catalog entries | Source strings | Translated | Fallback | Missing | Coverage | Of which translated |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ar` | 3375 | 3014 | 3005 | 9 | 0 | 100.0% | 99.7% |
-| `fa` | 3375 | 3014 | 3007 | 7 | 0 | 100.0% | 99.8% |
-| `he` | 3375 | 3014 | 3001 | 13 | 0 | 100.0% | 99.6% |
-| `hr` | 3130 | 3014 | 2930 | 23 | 61 | 98.0% | 97.2% |
+| `ar` | 3389 | 3028 | 3019 | 9 | 0 | 100.0% | 99.7% |
+| `fa` | 3389 | 3028 | 3021 | 7 | 0 | 100.0% | 99.8% |
+| `he` | 3389 | 3028 | 3015 | 13 | 0 | 100.0% | 99.6% |
+| `hr` | 3144 | 3028 | 2944 | 23 | 61 | 98.0% | 97.2% |
 
 ### Coverage per screen
 
@@ -126,5 +126,5 @@ These have a contract derived from the registry, so they work: they have an iden
 
 Every contract passes the declarative checks: no SQL, no imports, no calls, no authorisation decisions, destructive actions carry a confirmation, bulk actions require a selection, and no key holds two different source strings.
 
-_Generated from 29 contracts, 3014 source strings and 5 catalogs._
+_Generated from 29 contracts, 3028 source strings and 5 catalogs._
 <!-- END GENERATED EXPERIENCE CONTRACT -->

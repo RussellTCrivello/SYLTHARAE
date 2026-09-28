@@ -137,6 +137,14 @@ const RUN = {
   datasets: [{ dataset_key: 'search_results.matches@1', row_count: 2, truncated: true, semantics: 'capped',
                query_fingerprint: 'b'.repeat(64) }],
 };
+const FILE = { id: 9, run_id: 5, format: 'csv', dataset_key: 'search_results.matches@1',
+  renderer_version: 'report-csv/1', filename: 'report_search_results_v1_run5_search_results.csv',
+  media_type: 'text/csv', byte_size: 120, sha256: 'c'.repeat(64), manifest_sha256: 'd'.repeat(64),
+  creator_username: HOSTILE, creator_role: 'analyst', job_id: 'J2', created_at: '2026-09-28T10:01:00+00:00' };
+const ARTIFACTS = { success: true, items: [FILE],
+  formats: [{ format: 'csv', renderer_version: 'report-csv/1', single_dataset: true },
+            { format: 'json', renderer_version: 'report-json/1', single_dataset: false }],
+  unavailable: [{ format: 'pdf', reason: `step 18 ${HOSTILE}` }] };
 const baseRoutes = (run) => [
   [/\/api\/reports\/definitions$/, () => ({ success: true, items: [DEFINITION] })],
   [/\/api\/search\/saved$/, () => ({ success: true, searches: [{ id: 3, name: HOSTILE }] })],
@@ -145,6 +153,10 @@ const baseRoutes = (run) => [
     success: true, dataset_key: 'search_results.matches@1', semantics: 'capped', row_limit: 2,
     row_count: 2, truncated: true, columns: COLUMNS,
     rows: [{ path_id: 1, file_name: HOSTILE, note: null }, { path_id: 2, file_name: 'b', note: '' }] })],
+  [/\/api\/reports\/runs\/5\/artifacts$/, (url, init) => (init && init.method === 'POST'
+    ? { success: true, existing: true, artifact: FILE, job: null } : ARTIFACTS)],
+  [/\/api\/reports\/artifacts\/9\/verify$/, () => ({ success: true, ok: false,
+    checks: { content_sha256: true, manifest_sha256: false } })],
   [/\/api\/reports\/runs\/5$/, () => ({ success: true, run })],
 ];
 
@@ -207,6 +219,49 @@ const baseRoutes = (run) => [
   check('saved search id sent', posted[0] && posted[0].saved_search_id === 3 && !('criteria' in posted[0].parameters),
         JSON.stringify(posted[0]));
   check('report identity sent', posted[0] && posted[0].report_id === 'search_results' && posted[0].version === 1);
+}
+
+// 5. Files: formats from the server, CSV needs a dataset, links, verification.
+{
+  const posted = [];
+  const routes = baseRoutes(RUN).map(([re, f]) => (String(re).includes('artifacts$')
+    ? [re, (url, init) => { if (init && init.method === 'POST') posted.push(JSON.parse(init.body)); return f(url, init); }]
+    : [re, f]));
+  const { byId, calls } = await run({ data: { can_run: true, is_admin: false, list_limit: 50, row_page: 100,
+                                              max_row_page: 500, job_poll_ms: 1, job_poll_limit: 3 },
+                                      routes });
+  check('files section shown', !byId.runFiles.classList.contains('d-none'));
+  check('formats from the server', byId.fileFormat.children.map((o) => o.attrs.value).join() === 'csv,json',
+        byId.fileFormat.children.map((o) => o.attrs.value));
+  check('csv offers the run datasets', !byId.fileDataset.disabled
+        && byId.fileDataset.children.map((o) => o.attrs.value).join() === 'search_results.matches@1');
+  const row = byId.fileRows.children[0];
+  const links = row.children[6].children;
+  check('download link', links[0].attrs.href === '/api/reports/artifacts/9/download'
+        && links[0].attrs.download === FILE.filename, links[0].attrs);
+  check('manifest link', links[1].attrs.href === '/api/reports/artifacts/9/manifest');
+  check('sha shown', row.children[4].textContent === FILE.sha256);
+  check('creator is text', !row.innerHTML.includes('<img') && row.textContent.includes(HOSTILE));
+  check('unavailable format stated as text', byId.fileUnavailable.textContent.includes('PDF')
+        && !byId.fileUnavailable.innerHTML.includes('<img'), byId.fileUnavailable.textContent);
+  for (const f of byId.fileCreate.listeners.click || []) f();
+  await new Promise((r) => setTimeout(r, 30));
+  check('create posts format and dataset', posted.length === 1 && posted[0].format === 'csv'
+        && posted[0].dataset_key === 'search_results.matches@1', posted);
+  check('existing file reported', byId.fileJob.textContent === LABELS.file_existing, byId.fileJob.textContent);
+  byId.fileFormat.value = 'json';
+  for (const f of byId.fileFormat.listeners.change || []) f();
+  check('json covers all datasets', byId.fileDataset.disabled && byId.fileDataset.value === '');
+  for (const f of byId.fileCreate.listeners.click || []) f();
+  await new Promise((r) => setTimeout(r, 30));
+  check('format choice kept after the list reloads', byId.fileFormat.value === 'json', byId.fileFormat.value);
+  check('json posts no dataset', posted.length === 2 && posted[1].format === 'json' && !('dataset_key' in posted[1]),
+        posted[1]);
+  for (const f of links[2].listeners.click || []) f();
+  await new Promise((r) => setTimeout(r, 30));
+  check('failed verification named', byId.fileVerify.textContent
+        === LABELS.verified_bad.replace('%(checks)s', 'manifest_sha256'), byId.fileVerify.textContent);
+  check('file list read from the server', calls.some(([m, u]) => m === 'GET' && u === '/api/reports/runs/5/artifacts'));
 }
 
 process.exit(failures ? 1 : 0);

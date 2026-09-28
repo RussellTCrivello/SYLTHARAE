@@ -11487,3 +11487,48 @@ msgstr "کار %(id)s هنوز در حال اجراست؛ بعداً فهرست 
 #: templates/Reports/reports.html
 msgid "No runs match this filter."
 msgstr "هیچ اجرایی با این فیلتر مطابقت ندارد."
+
+msgid "Files are made on the server from the rows this run stored. Each has a manifest and a SHA-256 checksum; every download is recorded in the audit log."
+msgstr "فایل‌ها روی سرور از ردیف‌هایی که این اجرا ذخیره کرده ساخته می‌شوند. هر فایل یک مانیفست و یک چک‌سام SHA-256 دارد و هر بارگیری در گزارش ممیزی ثبت می‌شود."
+
+msgid "Format"
+msgstr "قالب"
+
+msgid "Create file"
+msgstr "ساخت فایل"
+
+msgid "All datasets"
+msgstr "همه مجموعه‌داده‌ها"
+
+msgid "No files have been made from this run yet."
+msgstr "هنوز هیچ فایلی از این اجرا ساخته نشده است."
+
+msgid "Files can be made from completed runs only."
+msgstr "فقط از اجراهای کامل‌شده می‌توان فایل ساخت."
+
+msgid "This file already exists and is listed below."
+msgstr "این فایل از قبل وجود دارد و در زیر فهرست شده است."
+
+msgid "File created."
+msgstr "فایل ساخته شد."
+
+#, python-format
+msgid "Not available yet: %(format)s (%(reason)s)"
+msgstr "هنوز در دسترس نیست: %(format)s (%(reason)s)"
+
+#, python-format
+msgid "%(n)s bytes"
+msgstr "%(n)s بایت"
+
+msgid "Manifest"
+msgstr "مانیفست"
+
+msgid "Verify"
+msgstr "راستی‌آزمایی"
+
+msgid "Verified: the stored file matches its SHA-256 checksum and its manifest."
+msgstr "راستی‌آزمایی شد: فایل ذخیره‌شده با چک‌سام SHA-256 و مانیفست خود مطابقت دارد."
+
+#, python-format
+msgid "Verification failed: %(checks)s. The file will not be sent."
+msgstr "راستی‌آزمایی ناموفق بود: %(checks)s. فایل ارسال نخواهد شد."

@@ -104,6 +104,28 @@
                 <tbody id="runDataRows"></tbody>
             {% endcall %}
             <nav id="runDataPager" class="d-flex justify-content-between align-items-center"></nav>
+
+            <section id="runFiles" class="mt-4 d-none" aria-labelledby="runFilesTitle">
+                <h3 class="fs-6 mb-1" id="runFilesTitle">{{ _('Files') }}</h3>
+                <p class="small text-muted mb-2">{{ _('Files are made on the server from the rows this run stored. Each has a manifest and a SHA-256 checksum; every download is recorded in the audit log.') }}</p>
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" id="fileControls">
+                    <label class="small" for="fileFormat">{{ _('Format') }}</label>
+                    <select class="form-select form-select-sm w-auto" id="fileFormat"></select>
+                    <label class="small" for="fileDataset">{{ _('Dataset') }}</label>
+                    <select class="form-select form-select-sm w-auto" id="fileDataset"></select>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="fileCreate"><i class="bi bi-file-earmark-arrow-down me-1"></i>{{ _('Create file') }}</button>
+                    <div id="fileJob" class="small" aria-live="polite"></div>
+                </div>
+                <div id="fileUnavailable" class="small text-muted mb-2"></div>
+                <div id="fileVerify" class="small mb-2" role="status"></div>
+                {% call data_table(id='fileTable', variant='sm align-middle') %}
+                    <thead><tr>
+                        <th>{{ _('Format') }}</th><th>{{ _('Dataset') }}</th><th>{{ _('File') }}</th>
+                        <th>{{ _('Size') }}</th><th>SHA-256</th><th>{{ _('Created') }}</th><th></th>
+                    </tr></thead>
+                    <tbody id="fileRows"></tbody>
+                {% endcall %}
+            </section>
         </div>
     </section>
 </div>
@@ -151,6 +173,16 @@
     "job_timeout": _('Job %(id)s is still running; refresh the runs list later.'),
     "page": _('%(from)s-%(to)s of %(total)s'), "previous": _('Previous'), "next": _('Next'),
     "request_failed": _('The request failed'),
+    "all_datasets": _('All datasets'),
+    "no_files": _('No files have been made from this run yet.'),
+    "files_completed_only": _('Files can be made from completed runs only.'),
+    "file_existing": _('This file already exists and is listed below.'),
+    "file_created": _('File created.'),
+    "unavailable": _('Not available yet: %(format)s (%(reason)s)'),
+    "bytes": _('%(n)s bytes'),
+    "download": _('Download'), "manifest": _('Manifest'), "verify": _('Verify'),
+    "verified_ok": _('Verified: the stored file matches its SHA-256 checksum and its manifest.'),
+    "verified_bad": _('Verification failed: %(checks)s. The file will not be sent.'),
 } |tojson }}</script>
 <script type="module" src="{{ url_for('static', filename='js/pages/reports-page.js') }}"></script>
 {% endblock %}

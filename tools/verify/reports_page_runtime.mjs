@@ -1,5 +1,5 @@
 /**
- * Runtime check of the Reports page module against a running server (step 14).
+ * Runtime check of the Reports page module against a running server (steps 14-15).
  *
  *   node tools/verify/reports_page_runtime.mjs <base-url> <state-dir>
  *
@@ -125,6 +125,39 @@ check(/finished: COMPLETED/.test(text('reportJob')), `the finished job stays rep
 check(rows('runRows').length === before + 1, 'the new run is listed');
 check(/Completed/.test(text('runDetailTitle')) && !text('runDetailTitle').includes(`#${ids.first} `),
     `the new run is opened: ${text('runDetailTitle')}`);
+
+// Files (step 15): make an HTML file of the new run as a job, download it,
+// check its SHA-256 against what the page shows, verify it, ask again.
+check(!hidden('runFiles') && !hidden('fileControls'), 'files section offered for the completed run');
+const formats = byId('fileFormat').children.map((o) => o.getAttribute('value'));
+check(formats.join() === 'csv,html,json,xlsx', `formats from the server: ${formats}`);
+check(/Not available yet: PDF/.test(text('fileUnavailable')), `unavailable formats stated: ${text('fileUnavailable')}`);
+check(/No files have been made/.test(text('fileRows')), 'no files yet');
+byId('fileFormat').value = 'html';
+byId('fileFormat').dispatch('change');
+check(byId('fileDataset').disabled === true, 'html covers every dataset (no dataset choice)');
+byId('fileCreate').dispatch('click');
+await settle(900);
+check(requests.some((r) => /^POST \/api\/reports\/runs\/\d+\/artifacts$/.test(r)), 'the page asks for the file');
+check(/File created\./.test(text('fileJob')), `file job reported: ${text('fileJob')}`);
+const fileRows = rows('fileRows');
+check(fileRows.length === 1 && /html/.test(fileRows[0].textContent), `one file listed: ${fileRows[0]?.textContent}`);
+const shownSha = fileRows[0].children[4].textContent.trim();
+const download = fileRows[0].children[6].children[0].getAttribute('href');
+const response = await nativeFetch(new URL(download, base), { headers: { Cookie: cookie } });
+const bytes = Buffer.from(await response.arrayBuffer());
+const { createHash } = await import('node:crypto');
+const measured = createHash('sha256').update(bytes).digest('hex');
+check(response.status === 200 && measured === shownSha, `downloaded bytes hash to the shown SHA-256 (${measured.slice(0, 12)})`);
+check(/^attachment; filename="report_search_results_v1_run\d+\.html"$/.test(response.headers.get('content-disposition') || ''),
+    `downloaded as an attachment: ${response.headers.get('content-disposition')}`);
+check(Boolean(response.headers.get('x-disclosure-audit-id')), 'the download was recorded (DATA_EXPORTED)');
+fileRows[0].children[6].children[2].dispatch('click');
+await settle();
+check(/^Verified:/.test(text('fileVerify')), `verification shown: ${text('fileVerify')}`);
+byId('fileCreate').dispatch('click');
+await settle();
+check(/already exists/.test(text('fileJob')) && rows('fileRows').length === 1, `repeat request: ${text('fileJob')}`);
 
 // Invalid JSON: reported before any request.
 const posts = requests.filter((r) => r === 'POST /api/reports/runs').length;

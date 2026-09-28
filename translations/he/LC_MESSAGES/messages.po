@@ -11191,3 +11191,48 @@ msgstr "משימה %(id)s עדיין רצה; רעננו את רשימת ההרצ
 #: templates/Reports/reports.html
 msgid "No runs match this filter."
 msgstr "אין הרצות התואמות למסנן זה."
+
+msgid "Files are made on the server from the rows this run stored. Each has a manifest and a SHA-256 checksum; every download is recorded in the audit log."
+msgstr "הקבצים נוצרים בשרת מהשורות שהריצה הזו שמרה. לכל קובץ יש מניפסט וסכום ביקורת SHA-256, וכל הורדה נרשמת ביומן הביקורת."
+
+msgid "Format"
+msgstr "תבנית"
+
+msgid "Create file"
+msgstr "יצירת קובץ"
+
+msgid "All datasets"
+msgstr "כל מערכי הנתונים"
+
+msgid "No files have been made from this run yet."
+msgstr "עדיין לא נוצרו קבצים מהריצה הזו."
+
+msgid "Files can be made from completed runs only."
+msgstr "ניתן ליצור קבצים רק מריצות שהושלמו."
+
+msgid "This file already exists and is listed below."
+msgstr "הקובץ הזה כבר קיים ומופיע למטה."
+
+msgid "File created."
+msgstr "הקובץ נוצר."
+
+#, python-format
+msgid "Not available yet: %(format)s (%(reason)s)"
+msgstr "עדיין לא זמין: %(format)s (%(reason)s)"
+
+#, python-format
+msgid "%(n)s bytes"
+msgstr "%(n)s בתים"
+
+msgid "Manifest"
+msgstr "מניפסט"
+
+msgid "Verify"
+msgstr "אימות"
+
+msgid "Verified: the stored file matches its SHA-256 checksum and its manifest."
+msgstr "אומת: הקובץ השמור תואם לסכום הביקורת SHA-256 שלו ולמניפסט שלו."
+
+#, python-format
+msgid "Verification failed: %(checks)s. The file will not be sent."
+msgstr "האימות נכשל: %(checks)s. הקובץ לא יישלח."

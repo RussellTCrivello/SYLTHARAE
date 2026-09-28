@@ -587,6 +587,17 @@ class JobManager:
 
             return run_report_job(get_connection, run_id=options["run_id"], job_id=job_id,
                                   progress_cb=progress_cb, cancel_cb=report_cancelled)
+        if job_type == "report_artifact":
+            # Report artifacts (services/reporting/artifacts.py): render a
+            # completed run's stored datasets and store the bytes with their
+            # manifest and SHA-256, once per (run, format, dataset, renderer).
+            from Api.utils.utils import get_connection
+            from services.reporting.artifacts import run_artifact_job
+
+            return run_artifact_job(get_connection, run_id=options["run_id"],
+                                    fmt=options["format"], dataset_key=options.get("dataset_key"),
+                                    creator_id=options["creator_id"], job_id=record["job_id"],
+                                    progress_cb=progress_cb)
         raise ValueError(f"Unknown job type: {job_type}")
 
     #: Jobs that change stored content or signals, and the rule-evaluation

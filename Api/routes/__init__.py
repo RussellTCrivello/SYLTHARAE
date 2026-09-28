@@ -62,6 +62,7 @@ def register_all_routes(app, babel_instance=None):
     scenarios.register_scenario_routes(app)
     # Step 14 report runs (report_run job, one snapshot per run)
     reports.register_report_routes(app)
+    reports.register_report_artifact_routes(app)
     # Unified operations API + pages (Input / Import Center / Job Center)
     app.register_blueprint(operations_api.operations_bp)
     operations_pages.register_operations_pages(app)

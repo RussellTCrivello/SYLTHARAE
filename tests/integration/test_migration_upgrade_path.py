@@ -568,11 +568,14 @@ def test_m0022_report_runs_constraints_immutability_and_downgrade(legacy_db):
         conn.rollback()
     conn.commit()
 
-    [m22] = [m for m in discover_migrations() if m.version == "0022"]
-    m22.module.downgrade(conn)
-    with conn.cursor() as cur:
-        cur.execute("DELETE FROM schema_migrations WHERE version = '0022'")
-    conn.commit()
+    # Downgrades go newest-first: anything newer that references report_runs
+    # (0023 report_artifacts) is downgraded before 0022.
+    for migration in sorted((m for m in discover_migrations() if m.version >= "0022"),
+                            key=lambda m: m.version, reverse=True):
+        migration.module.downgrade(conn)
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM schema_migrations WHERE version = %s", (migration.version,))
+        conn.commit()
     with conn.cursor() as cur:
         cur.execute("SELECT to_regclass('report_runs'), to_regclass('report_run_datasets'),"
                     " to_regclass('scenarios') IS NOT NULL")
@@ -582,3 +585,92 @@ def test_m0022_report_runs_constraints_immutability_and_downgrade(legacy_db):
         assert cur.fetchone()[0] == 0
     conn.rollback()
     assert run_migrations(conn)[0] == "0022"
+
+
+def test_m0023_report_artifacts_digest_checks_immutability_and_downgrade(legacy_db):
+    """0023: PostgreSQL itself refuses an artifact whose recorded size or
+    SHA-256 does not describe its bytes, an unsafe filename, a second copy of
+    the same rendering and any change except the creator's deletion; deleting
+    the run deletes its artifacts; downgrade removes only report_artifacts."""
+    import hashlib
+
+    conn, seeded = legacy_db
+    assert run_migrations(conn)[-1] >= "0023"
+    uid = seeded["user_id"]
+    fp = "d" * 64
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO users (username, password_hash, role) VALUES"
+                    " ('m23_creator', 'x', 'analyst') RETURNING id")
+        creator = cur.fetchone()[0]
+        cur.execute("INSERT INTO report_runs (report_id, report_version, definition_fingerprint,"
+                    " parameters, parameters_fingerprint, requested_by, requester_username,"
+                    " requester_role, status, snapshot, snapshot_at, started_at, finished_at,"
+                    " generator_version) VALUES ('r', 1, %s, '{}', %s, %s, 'legacy_admin',"
+                    " 'admin', 'completed', '1:1:', NOW(), NOW(), NOW(), 'g/1') RETURNING id",
+                    (fp, fp, uid))
+        run_id = cur.fetchone()[0]
+    conn.commit()
+    body = b"artifact-bytes"
+    digest = hashlib.sha256(body).hexdigest()
+    insert = ("INSERT INTO report_artifacts (run_id, format, dataset_key, renderer_version,"
+              " filename, media_type, byte_size, sha256, content, manifest, manifest_sha256,"
+              " created_by, creator_username, creator_role) VALUES (%s, %s, %s, 'r/1', %s,"
+              " 'text/plain', %s, %s, %s, %s, %s, %s, 'm23_creator', 'analyst') RETURNING id")
+
+    def args(**kw):
+        values = dict(fmt="json", ds=None, name="report_r_v1_run1.json", size=len(body),
+                      sha=digest, content=psycopg2.Binary(body), manifest='{"a": 1}',
+                      msha=fp, by=creator)
+        values.update(kw)
+        return (run_id, values["fmt"], values["ds"], values["name"], values["size"],
+                values["sha"], values["content"], values["manifest"], values["msha"],
+                values["by"])
+
+    with conn.cursor() as cur:
+        cur.execute(insert, args())
+        aid = cur.fetchone()[0]
+        conn.commit()
+        for constraint, bad in (("ck_report_artifacts_digest", args(fmt="csv", sha="0" * 64)),
+                                ("ck_report_artifacts_size", args(fmt="csv", size=1)),
+                                ("ck_report_artifacts_filename", args(fmt="csv", name="../x")),
+                                ("ck_report_artifacts_filename", args(fmt="csv", name="a/b.csv")),
+                                ("ck_report_artifacts_format", args(fmt="CSV!")),
+                                ("ck_report_artifacts_manifest", args(fmt="csv", manifest="[]")),
+                                ("ck_report_artifacts_manifest", args(fmt="csv", msha="x"))):
+            with pytest.raises(psycopg2.errors.CheckViolation, match=constraint):
+                cur.execute(insert, bad)
+            conn.rollback()
+        with pytest.raises(psycopg2.errors.UniqueViolation, match="uq_report_artifacts_rendering"):
+            cur.execute(insert, args())
+        conn.rollback()
+        cur.execute(insert, args(fmt="csv", ds="d@1", name="report_r_v1_run1_d.csv"))
+        csv_id = cur.fetchone()[0]
+        conn.commit()
+        for sql in ("UPDATE report_artifacts SET filename = 'other.json' WHERE id = %s",
+                    "UPDATE report_artifacts SET manifest = '{}' WHERE id = %s",
+                    "UPDATE report_artifacts SET created_by = NULL, job_id = 'j' WHERE id = %s"):
+            with pytest.raises(psycopg2.errors.IntegrityConstraintViolation, match="immutable"):
+                cur.execute(sql, (aid,))
+            conn.rollback()
+        cur.execute("DELETE FROM users WHERE id = %s", (creator,))
+        conn.commit()
+        cur.execute("SELECT created_by, creator_username FROM report_artifacts WHERE id = %s",
+                    (aid,))
+        assert cur.fetchone() == (None, "m23_creator")
+        cur.execute("DELETE FROM report_runs WHERE id = %s", (run_id,))
+        cur.execute("SELECT count(*) FROM report_artifacts WHERE id IN (%s, %s)", (aid, csv_id))
+        assert cur.fetchone()[0] == 0
+        conn.rollback()
+
+    [m23] = [m for m in discover_migrations() if m.version == "0023"]
+    m23.module.downgrade(conn)
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM schema_migrations WHERE version = '0023'")
+    conn.commit()
+    with conn.cursor() as cur:
+        cur.execute("SELECT to_regclass('report_artifacts'), to_regclass('report_runs') IS NOT NULL")
+        assert cur.fetchone() == (None, True)
+        cur.execute("SELECT count(*) FROM pg_proc WHERE proname = 'report_artifacts_immutable'")
+        assert cur.fetchone()[0] == 0
+    conn.rollback()
+    assert run_migrations(conn)[0] == "0023"

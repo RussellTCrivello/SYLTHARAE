@@ -1,4 +1,4 @@
-"""Reports API (step 14: runs).
+"""Reports API (step 14: runs; step 15: artifacts).
 
 ============================================================  =====================================
 ``GET  /reports``                                              the Reports page (registry ``reports``)
@@ -13,6 +13,16 @@
 ``GET  /api/reports/runs/<id>``                                one run and its dataset summaries
 ``GET  /api/reports/runs/<id>/datasets/<key>``                 a page of one dataset's rows
                                                                (``limit`` <= 500, ``offset``)
+``GET  /api/reports/runs/<id>/artifacts``                      the files made from a run
+``POST /api/reports/runs/<id>/artifacts``                      make one ``{format, dataset_key?}``
+                                                               (a ``report_artifact`` job; 202;
+                                                               200 with the existing file when
+                                                               that rendering already exists)
+``GET  /api/reports/artifacts/<id>``                           one file's record and manifest
+``GET  /api/reports/artifacts/<id>/verify``                    recompute and compare both digests
+``GET  /api/reports/artifacts/<id>/download``                  the bytes (``DATA_EXPORTED``)
+``GET  /api/reports/artifacts/<id>/manifest``                  the manifest file (canonical JSON;
+                                                               its SHA-256 is ``manifest_sha256``)
 ============================================================  =====================================
 
 Creating a run is a write: viewers are read-only (SEC-02), so they see the
@@ -20,7 +30,11 @@ reports their role may read (``can_run: false``) and get 403 on submission.
 A report the caller's role may not read, and a run the caller may not read,
 are both 404 (absent and not permitted are the same answer). Submitting a run
 is audited (``report.run``). Viewing stored rows in the application is not an
-export; downloading an artifact (step 15) is, and will record DATA_EXPORTED.
+export; downloading an artifact or its manifest is, and records DATA_EXPORTED
+(fail-closed hook, ``core/security/disclosure.py``) with the report, run,
+criteria and query fingerprints. Creating a file is a write (analyst/admin)
+and is audited (``report.artifact``). Files are visible exactly when their run
+is; a file whose bytes no longer match the recorded SHA-256 is never sent.
 """
 
 from __future__ import annotations
@@ -203,3 +217,155 @@ def register_report_routes(app):
         except ValueError as exc:
             return _error("VALIDATION_FAILED", str(exc), 400)
         return jsonify(dict(page, success=True))
+
+
+def register_report_artifact_routes(app):
+    """Step 15: artifacts of completed runs (services/reporting/artifacts.py)."""
+    from flask import Response
+
+    from Api.utils.utils import get_connection
+    from core.security.disclosure import note_disclosure
+    from services.reporting import artifacts as files
+
+    def err(exc):
+        return _error(exc.code, exc.message, exc.status)
+
+    @app.route("/api/reports/runs/<int:run_id>/artifacts", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_report_artifacts(run_id):
+        try:
+            with get_connection() as conn:
+                items = files.list_artifacts(conn, run_id, user=current_user())
+        except files.runs.ReportRunError as exc:
+            return err(exc)
+        from core.reporting.render import NOT_YET, RENDERERS, SINGLE_DATASET
+        return jsonify({"success": True, "items": items, "formats": [
+            {"format": f, "renderer_version": v, "single_dataset": f in SINGLE_DATASET}
+            for f, v in sorted(RENDERERS.items())],
+            "unavailable": [{"format": f, "reason": r} for f, r in sorted(NOT_YET.items())]})
+
+    @app.route("/api/reports/runs/<int:run_id>/artifacts", methods=["POST"])
+    @login_required
+    @limiter.limit("30 per minute")
+    def api_report_artifact_create(run_id):
+        from core.security.service import get_auth_service
+        from services.jobs.manager import JobManager
+        from services.jobs.models import job_to_api
+
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return _error("VALIDATION_FAILED", "a JSON object is required", 400)
+        unknown = sorted(set(data) - {"format", "dataset_key"})
+        if unknown:
+            return _error("VALIDATION_FAILED", f"unknown field(s): {', '.join(unknown)}", 400)
+        user = current_user()
+        try:
+            with get_connection() as conn:
+                plan = files.request_artifact(conn, run_id, user=user, fmt=data.get("format"),
+                                              dataset_key=data.get("dataset_key"))
+        except files.runs.ReportRunError as exc:
+            return err(exc)
+        if "existing" in plan:
+            return jsonify({"success": True, "existing": True, "artifact": plan["existing"],
+                            "job": None}), 200
+        spec = plan["create"]
+        get_auth_service().audit(
+            "report.artifact", user_id=getattr(user, "id", None),
+            username=getattr(user, "username", None), resource=f"report_run:{run_id}",
+            detail={"format": spec["format"], "dataset_key": spec["dataset_key"]},
+            ip_address=request.remote_addr)
+        manager = JobManager.get_instance()
+        try:
+            job = manager.create_job(
+                "report_artifact", source=f"reports:run:{run_id}:{spec['format']}",
+                options={"run_id": run_id, "format": spec["format"],
+                         "dataset_key": spec["dataset_key"],
+                         "creator_id": getattr(user, "id", None)},
+                created_by=getattr(user, "username", None) or "system")
+        except Exception:
+            logger.exception("report_artifact job creation failed for run %s", run_id)
+            return _error("JOB_CREATE_FAILED", "The job could not be created", 500)
+        current = manager.get(job["job_id"]) or job
+        artifact = None
+        if manager.synchronous:
+            with get_connection() as conn:
+                found = files._existing(conn, run_id, spec["format"], spec["dataset_key"])
+            artifact = files.artifact_to_api(found) if found else None
+        return jsonify({"success": True, "existing": False, "artifact": artifact,
+                        "job": job_to_api(current)}), (200 if manager.synchronous else 202)
+
+    @app.route("/api/reports/artifacts/<int:artifact_id>", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_report_artifact(artifact_id):
+        try:
+            with get_connection() as conn:
+                item = files.get_artifact(conn, artifact_id, user=current_user())
+        except files.runs.ReportRunError as exc:
+            return err(exc)
+        return jsonify({"success": True, "artifact": item})
+
+    @app.route("/api/reports/artifacts/<int:artifact_id>/verify", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_report_artifact_verify(artifact_id):
+        try:
+            with get_connection() as conn:
+                outcome = files.verify_artifact(conn, artifact_id, user=current_user())
+        except files.runs.ReportRunError as exc:
+            return err(exc)
+        return jsonify(dict(outcome, success=True))
+
+    def _disclose(row, what):
+        manifest = row["manifest"]
+        note_disclosure(
+            kind="report_artifact" if what == "content" else "report_manifest",
+            scope=f"report_run:{row['run_id']}", format=row["format"] if what == "content"
+            else "json", row_count=manifest.get("row_count"),
+            truncated=manifest.get("truncated"),
+            criteria_fingerprint=manifest["run"].get("criteria_fingerprint"),
+            query_fingerprint=[d["query_fingerprint"] for d in manifest["datasets"]
+                               if row["dataset_key"] in (None, d["dataset_key"])],
+            report=manifest["report"]["key"],
+            definition_fingerprint=manifest["report"]["definition_fingerprint"],
+            report_run_id=row["run_id"], artifact_id=row["id"],
+            artifact_content_sha256=row["sha256"],
+            manifest_sha256=row["manifest_sha256"],
+            snapshot=manifest["snapshot"]["id"])
+
+    def _attachment(body, media_type, filename, row):
+        response = Response(body, mimetype=media_type)
+        response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Artifact-SHA256"] = row["sha256"]
+        response.headers["X-Manifest-SHA256"] = row["manifest_sha256"]
+        return response
+
+    @app.route("/api/reports/artifacts/<int:artifact_id>/download", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_report_artifact_download(artifact_id):
+        try:
+            with get_connection() as conn:
+                row = files.artifact_for_download(conn, artifact_id, user=current_user())
+        except files.runs.ReportRunError as exc:
+            return err(exc)
+        _disclose(row, "content")
+        return _attachment(row["content"], row["media_type"], row["filename"], row)
+
+    @app.route("/api/reports/artifacts/<int:artifact_id>/manifest", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_report_artifact_manifest(artifact_id):
+        from core.reporting.render import canonical_json
+
+        try:
+            with get_connection() as conn:
+                row = files.artifact_for_download(conn, artifact_id, user=current_user())
+        except files.runs.ReportRunError as exc:
+            return err(exc)
+        _disclose(row, "manifest")
+        body = canonical_json(row["manifest"])
+        return _attachment(body, "application/json", row["filename"] + ".manifest.json", row)

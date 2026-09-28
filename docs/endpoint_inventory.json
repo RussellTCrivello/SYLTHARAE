@@ -901,6 +901,78 @@
     "internal": true
   },
   {
+    "endpoint": "api_report_artifact",
+    "rule": "/api/reports/artifacts/<int:artifact_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_artifact_create",
+    "rule": "/api/reports/runs/<int:run_id>/artifacts",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_artifact_download",
+    "rule": "/api/reports/artifacts/<int:artifact_id>/download",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_artifact_manifest",
+    "rule": "/api/reports/artifacts/<int:artifact_id>/manifest",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_artifact_verify",
+    "rule": "/api/reports/artifacts/<int:artifact_id>/verify",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_artifacts",
+    "rule": "/api/reports/runs/<int:run_id>/artifacts",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_report_definitions",
     "rule": "/api/reports/definitions",
     "methods": [
