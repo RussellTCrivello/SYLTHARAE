@@ -560,7 +560,9 @@ notificationsPage.getTypeIcon = function(type) {
         'batch_complete': '<i class="bi bi-box-seam" aria-hidden="true"></i>',
         'error': '<i class="bi bi-x-octagon-fill" aria-hidden="true"></i>',
         'warning': '<i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>',
-        'info': '<i class="bi bi-info-circle-fill" aria-hidden="true"></i>'
+        'info': '<i class="bi bi-info-circle-fill" aria-hidden="true"></i>',
+        'rule_match': '<i class="bi bi-funnel-fill" aria-hidden="true"></i>',
+        'rule_status': '<i class="bi bi-slash-circle" aria-hidden="true"></i>'
     };
     return icons[type] || '<i class="bi bi-bell-fill" aria-hidden="true"></i>';
 };

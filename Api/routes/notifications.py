@@ -11,6 +11,9 @@ from core.monitoring.notification_service import (
     NotificationType,
     NotificationPriority,
     notification_from_row,
+    ALERT_COLUMNS,
+    visibility_clause,
+    utc_today,
 )
 from core.monitoring.notification_display import format_title_message, display_payload
 from Api.utils import execute_query
@@ -72,6 +75,16 @@ def _current_signals(hash_id: int, reference_date: date) -> dict:
     return body
 
 
+def _viewer_id():
+    """Id of the signed-in user. Every alerts read and write is limited to
+    what this user may see: system-wide alerts and alerts addressed to them
+    (a monitoring rule's alerts go to its owner only - administrators
+    included, nobody reads another user's rule alerts)."""
+    from core.security.flask_ext import current_user
+
+    return getattr(current_user(), 'id', None)
+
+
 def register_notification_routes(app):
     """Register notification routes with the Flask app"""
     
@@ -118,7 +131,8 @@ def register_notification_routes(app):
                 notification_type=type_enum,
                 priority=priority_enum,
                 unread_only=unread_only,
-                limit=limit
+                limit=limit,
+                for_user_id=_viewer_id(),
             )
             
             # Single shared formatter keeps displayed titles/messages
@@ -143,7 +157,9 @@ def register_notification_routes(app):
             notification_service = get_notification_service()
             days_ahead = request.args.get('days', 30, type=int)
             
-            upcoming = notification_service.get_upcoming_events(days_ahead=days_ahead)
+            upcoming = notification_service.get_upcoming_events(days_ahead=days_ahead,
+                                                                for_user_id=_viewer_id())
+            today = utc_today()
             
             events_data = []
             for n in upcoming:
@@ -156,7 +172,7 @@ def register_notification_routes(app):
                     'file_name': n.file_name,
                     'file_path': n.file_path,
                     'event_date': n.event_date.isoformat() if n.event_date else None,
-                    'days_until': (n.event_date - date.today()).days if n.event_date else None,
+                    'days_until': (n.event_date - today).days if n.event_date else None,
                     'metadata': n.metadata,
                     'created_at': n.created_at.isoformat()
                 })
@@ -178,14 +194,11 @@ def register_notification_routes(app):
             notification_service = get_notification_service()
             # Direct row lookup - no forced refresh, no linear scan of
             # an in-memory list capped at 10 000 entries.
+            viewer = _viewer_id()
             row = execute_query(
-                """
-                SELECT id, type, priority, title, message, file_id, file_name,
-                       file_path, event_date, metadata, created_at, read, dismissed
-                FROM alerts
-                WHERE id = %s AND dismissed = FALSE
-                """,
-                (notification_id,),
+                f"SELECT {ALERT_COLUMNS} FROM alerts"
+                f" WHERE id = %s AND dismissed = FALSE AND {visibility_clause()}",
+                (notification_id, viewer),
                 fetch="one"
             )
             notification = notification_from_row(row) if row else None
@@ -194,7 +207,8 @@ def register_notification_routes(app):
                 # Fallback covers pending (temp-id) notifications in memory.
                 notification = next(
                     (
-                        n for n in notification_service.get_notifications(limit=5000)
+                        n for n in notification_service.get_notifications(
+                            limit=5000, for_user_id=viewer)
                         if n.id == notification_id
                     ),
                     None,
@@ -222,7 +236,8 @@ def register_notification_routes(app):
         """Mark notification as read"""
         try:
             notification_service = get_notification_service()
-            success = notification_service.mark_as_read(notification_id)
+            success = notification_service.mark_as_read(notification_id,
+                                                        for_user_id=_viewer_id())
             
             if success:
                 return jsonify({
@@ -244,7 +259,8 @@ def register_notification_routes(app):
         """Dismiss a notification"""
         try:
             notification_service = get_notification_service()
-            success = notification_service.dismiss_notification(notification_id)
+            success = notification_service.dismiss_notification(notification_id,
+                                                                for_user_id=_viewer_id())
             
             if success:
                 return jsonify({
@@ -363,7 +379,7 @@ def register_notification_routes(app):
             # Exact SQL aggregates (COUNT/GROUP BY).  No forced refresh,
             # no in-memory scan: totals stay correct at any table size and
             # the 30-second stats poll stops racing concurrent refreshes.
-            stats = notification_service.get_stats()
+            stats = notification_service.get_stats(for_user_id=_viewer_id())
 
             return jsonify({
                 'success': True,

@@ -175,6 +175,9 @@ def test_display_payload_carries_every_field():
     assert set(payload) == {
         "id", "type", "priority", "title", "message", "file_id", "file_name",
         "file_path", "event_date", "metadata", "created_at", "read", "dismissed",
+        "addressed", "rule_id",
     }
     assert payload["event_date"] == "2030-05-01"
+    # A system-wide notification: addressed to nobody in particular, no rule.
+    assert payload["addressed"] is False and payload["rule_id"] is None
     assert payload["type"] == "info"

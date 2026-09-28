@@ -287,3 +287,92 @@ def test_m0019_keeps_legacy_geo_mentions_through_upgrade_and_downgrade(legacy_db
         assert info.value.diag.constraint_name == "ck_content_signals_resolution"
     conn.rollback()
     assert run_migrations(conn)[0] == "0019"
+
+
+def test_m0020_addresses_alerts_and_downgrade_never_widens_them(legacy_db):
+    """0020 adds recipients to ``alerts``: existing alerts stay system-wide;
+    a rule alert must have a recipient; downgrade removes addressed alerts
+    rather than turning them into alerts every user would see."""
+    conn, seeded = legacy_db
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO alerts (type, priority, title, message)"
+                    " VALUES ('info', 'low', 'legacy', 'kept') RETURNING id")
+        legacy_alert = cur.fetchone()[0]
+    conn.commit()
+    assert run_migrations(conn)[-1] >= "0020"
+    uid = seeded["user_id"]
+    with conn.cursor() as cur:
+        cur.execute("SELECT recipient_user_id, rule_id FROM alerts WHERE id = %s", (legacy_alert,))
+        assert cur.fetchone() == (None, None)
+        cur.execute("INSERT INTO monitoring_rules (owner_user_id, name, definition,"
+                    " definition_fingerprint) VALUES (%s, 'r', '{}', %s) RETURNING id",
+                    (uid, "a" * 64))
+        rule_id = cur.fetchone()[0]
+        conn.commit()
+        checks = [
+            ("INSERT INTO alerts (type, priority, title, message, rule_id)"
+             " VALUES ('rule_match', 'low', 't', 'm', %s)", (rule_id,), "ck_alerts_rule_addressed"),
+            ("UPDATE monitoring_rules SET status = 'disabled' WHERE id = %s", (rule_id,),
+             "ck_monitoring_rules_disabled_reason"),
+            ("UPDATE monitoring_rules SET status = 'active', disabled_reason = 'x' WHERE id = %s",
+             (rule_id,), "ck_monitoring_rules_disabled_reason"),
+            ("UPDATE monitoring_rules SET baselined_version = 2 WHERE id = %s", (rule_id,),
+             "ck_monitoring_rules_baselined"),
+            ("UPDATE monitoring_rules SET definition_fingerprint = %s WHERE id = %s",
+             ("Z" * 64, rule_id), "ck_monitoring_rules_fingerprint"),
+            ("INSERT INTO rule_evaluations (rule_id, rule_version, trigger, status,"
+             " definition_fingerprint, reference_date, evaluated_at)"
+             " VALUES (%s, 1, 'manual', 'failed', %s, CURRENT_DATE, NOW())",
+             (rule_id, "a" * 64), "ck_rule_evaluations_error"),
+        ]
+        for sql, params, constraint in checks:
+            with pytest.raises(psycopg2.errors.CheckViolation) as info:
+                cur.execute(sql, params)
+            assert info.value.diag.constraint_name == constraint
+            conn.rollback()
+        # One live rule name per owner (case-insensitive); archived names are free.
+        with pytest.raises(psycopg2.errors.UniqueViolation):
+            cur.execute("INSERT INTO monitoring_rules (owner_user_id, name, definition,"
+                        " definition_fingerprint) VALUES (%s, 'R', '{}', %s)", (uid, "a" * 64))
+        conn.rollback()
+        cur.execute("UPDATE monitoring_rules SET status = 'archived' WHERE id = %s", (rule_id,))
+        cur.execute("INSERT INTO monitoring_rules (owner_user_id, name, definition,"
+                    " definition_fingerprint) VALUES (%s, 'R', '{}', %s)", (uid, "a" * 64))
+        # Ledger dedup: the second insert of a subject is a no-op.
+        cur.execute("INSERT INTO rule_evaluations (rule_id, rule_version, trigger, status,"
+                    " definition_fingerprint, reference_date, evaluated_at)"
+                    " VALUES (%s, 1, 'manual', 'completed', %s, CURRENT_DATE, NOW()) RETURNING id",
+                    (rule_id, "a" * 64))
+        eid = cur.fetchone()[0]
+        for _ in range(2):
+            cur.execute("INSERT INTO rule_subject_ledger (rule_id, subject_key, hash_id,"
+                        " rule_version, state, group_key, first_matched_at,"
+                        " matched_evaluation_id, state_changed_at) VALUES (%s, 'signal:x', %s, 1,"
+                        " 'pending', 'g', NOW(), %s, NOW())"
+                        " ON CONFLICT (rule_id, subject_key) DO NOTHING",
+                        (rule_id, seeded["hash_id"], eid))
+        cur.execute("SELECT count(*) FROM rule_subject_ledger WHERE rule_id = %s", (rule_id,))
+        assert cur.fetchone()[0] == 1
+        with pytest.raises(psycopg2.errors.CheckViolation) as info:
+            cur.execute("UPDATE rule_subject_ledger SET state = 'notified' WHERE rule_id = %s",
+                        (rule_id,))
+        assert info.value.diag.constraint_name == "ck_rule_ledger_notified"
+        conn.rollback()
+        cur.execute("INSERT INTO alerts (type, priority, title, message, recipient_user_id,"
+                    " rule_id) VALUES ('rule_match', 'low', 't', 'm', %s, %s)", (uid, rule_id))
+    conn.commit()
+    for migration in reversed([m for m in discover_migrations() if m.version >= "0020"]):
+        migration.module.downgrade(conn)
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM schema_migrations WHERE version = %s", (migration.version,))
+        conn.commit()
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM alerts ORDER BY id")
+        assert cur.fetchall() == [(legacy_alert,)]          # the addressed alert is gone
+        cur.execute("SELECT to_regclass('monitoring_rules'), to_regclass('rule_subject_ledger')")
+        assert cur.fetchone() == (None, None)
+        cur.execute("SELECT count(*) FROM information_schema.columns WHERE table_name = 'alerts'"
+                    " AND column_name IN ('recipient_user_id', 'rule_id', 'rule_evaluation_id')")
+        assert cur.fetchone()[0] == 0
+    conn.rollback()
+    assert run_migrations(conn)[0] == "0020"

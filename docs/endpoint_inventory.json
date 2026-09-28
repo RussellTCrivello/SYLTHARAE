@@ -901,6 +901,150 @@
     "internal": true
   },
   {
+    "endpoint": "api_rule_archive",
+    "rule": "/api/rules/<int:rule_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rule_evaluate",
+    "rule": "/api/rules/<int:rule_id>/evaluate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rule_evaluations",
+    "rule": "/api/rules/<int:rule_id>/evaluations",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rule_get",
+    "rule": "/api/rules/<int:rule_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rule_pause",
+    "rule": "/api/rules/<int:rule_id>/pause",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rule_resume",
+    "rule": "/api/rules/<int:rule_id>/resume",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rule_suppress",
+    "rule": "/api/rules/<int:rule_id>/suppress",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rule_update",
+    "rule": "/api/rules/<int:rule_id>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rule_versions",
+    "rule": "/api/rules/<int:rule_id>/versions",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rules_create",
+    "rule": "/api/rules",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rules_evaluate_all",
+    "rule": "/api/rules/evaluate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_rules_list",
+    "rule": "/api/rules",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "rules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_save_search",
     "rule": "/api/search/saved",
     "methods": [

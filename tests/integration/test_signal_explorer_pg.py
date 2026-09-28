@@ -9,6 +9,7 @@ which is itself the path under test.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import uuid
 from datetime import date
@@ -57,7 +58,7 @@ def world(pg_db):
     def store(text, key):
         marker = f"{_U}hz{next(_N)}"
         return ContentDBService().process_full_document(
-            hash_value=f"{marker:0<64}"[:64], source_id=ids[f"source_{key}"],
+            hash_value=hashlib.sha256(marker.encode()).hexdigest(), source_id=ids[f"source_{key}"],
             side_id=ids[f"side_{key}"], file_name=f"{marker}.txt",
             file_path=f"/tmp/hz/{marker}.txt", file_size=100, file_type="txt",
             file_status="Read", file_date=date(2026, 1, 1), content_words=["hz", marker],

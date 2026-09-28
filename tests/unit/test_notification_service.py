@@ -357,3 +357,47 @@ def test_dismiss_reports_database_hits_without_memory_entries(api_utils):
 
     assert service.dismiss_notification(42) is True
     assert service.dismiss_notification(777) is False
+
+
+def test_a_database_error_while_marking_propagates_instead_of_reading_as_not_found(api_utils):
+    # Previously swallowed and reported as False -> the route answered 404
+    # "not found" for a notification that exists. The route maps it to 500.
+    service = make_service(api_utils)
+
+    def failing(query, params, fetch):
+        if "UPDATE alerts" in query:
+            raise RuntimeError("connection lost")
+        return None
+
+    api_utils.handler["fn"] = failing
+    with pytest.raises(RuntimeError, match="connection lost"):
+        service.mark_as_read(42)
+    with pytest.raises(RuntimeError, match="connection lost"):
+        service.dismiss_notification(42)
+
+
+def test_upcoming_event_counts_use_the_utc_date(api_utils, monkeypatch):
+    # Event dates are stored from UTC-based signals; the server's local date
+    # could be a day off. get_stats must compare against utc_today().
+    import core.monitoring.notification_service as ns
+
+    monkeypatch.setattr(ns, "utc_today", lambda: date(2031, 1, 2))
+    seen = []
+
+    def recorder(query, params, fetch):
+        if "event_date" in query:
+            seen.append(params)
+        return None
+
+    api_utils.handler["fn"] = recorder
+    make_service(api_utils).get_stats(for_user_id=5)
+    assert seen and any(date(2031, 1, 2) in (p or ()) for p in seen)
+
+
+def test_utc_today_is_the_utc_date():
+    from datetime import timezone
+
+    import core.monitoring.notification_service as ns
+
+    before = datetime.now(timezone.utc).date()
+    assert ns.utc_today() in (before, before + timedelta(days=1))

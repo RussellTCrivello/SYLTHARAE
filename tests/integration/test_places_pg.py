@@ -6,6 +6,7 @@ bootstrap), the real ingestion path, the real JobManager and the HTTP API.
 
 from __future__ import annotations
 
+import hashlib
 import copy
 import uuid
 from datetime import date
@@ -50,7 +51,7 @@ def _store(tenant, raw_text=TEXT):
 
     marker = f"{_U}geo{next(_N)}"
     return ContentDBService().process_full_document(
-        hash_value=f"{marker:0<64}"[:64], source_id=tenant["source_id"],
+        hash_value=hashlib.sha256(marker.encode()).hexdigest(), source_id=tenant["source_id"],
         side_id=tenant["side_id"], file_name=f"{marker}.txt", file_path=f"/tmp/geo/{marker}.txt",
         file_size=100, file_type="txt", file_status="Read", file_date=date(2026, 1, 1),
         content_words=["talks", marker], raw_text=raw_text, attempts=1)

@@ -17,6 +17,9 @@ Design rules (accuracy first):
 * Future-date messages recompute ``days_until`` LIVE from ``event_date``;
   the value frozen into ``metadata.days_until`` at creation time goes stale
   the day after the scan.
+* Rule notifications (``rule_match``, ``rule_status``) are rendered from
+  their structured metadata (rule name, subject counts, overflow, the reason a
+  rule was disabled), so they are translated at display time.
 * Types without special rendering pass through the stored title/message
   unchanged (no fabricated defaults).
 
@@ -172,6 +175,38 @@ def format_title_message(notification: Notification, translate) -> Tuple[str, st
             title = translate("Information")
         message = n.message
 
+    elif n.type == NotificationType.RULE_MATCH:
+        name = metadata.get("rule_name") or n.title
+        count = metadata.get("subject_count", 0)
+        delivery = metadata.get("delivery")
+        if delivery == "digest":
+            title = translate("Rule digest: %(name)s", name=name)
+            message = translate("%(count)s new matches since the last digest", count=count)
+        elif delivery == "overflow":
+            title = translate("Rule: %(name)s", name=name)
+            message = translate(
+                "%(count)s further matches in %(groups)s groups (notification limit"
+                " per evaluation reached)", count=count, groups=metadata.get("group_count", 0))
+        else:
+            title = translate("Rule: %(name)s", name=name)
+            label = metadata.get("group_label")
+            if label:
+                message = translate("%(count)s new matches: %(label)s", count=count, label=label)
+            else:
+                message = translate("%(count)s new matches", count=count)
+
+    elif n.type == NotificationType.RULE_STATUS:
+        name = metadata.get("rule_name") or n.title
+        title = translate("Rule disabled: %(name)s", name=name)
+        reason = metadata.get("disabled_reason")
+        if reason == "owner_inactive":
+            message = translate("The rule was disabled because its owner's account is inactive.")
+        elif reason == "owner_role":
+            message = translate("The rule was disabled because its owner's role no longer"
+                                " allows monitoring rules.")
+        else:
+            message = n.message
+
     return title, message
 
 
@@ -193,4 +228,7 @@ def display_payload(notification: Notification, translate) -> dict:
         "created_at": n.created_at.isoformat(),
         "read": n.read,
         "dismissed": n.dismissed,
+        # True when the notification is addressed to the viewer alone.
+        "addressed": n.recipient_user_id is not None,
+        "rule_id": n.rule_id,
     }

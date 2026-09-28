@@ -22,7 +22,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 
-def main(pg_dir: str, contents: int = 20_000) -> None:
+def load_corpus(pg_dir: str, contents: int = 20_000):
+    """Create/reuse ``syltharae_perf`` with the synthetic corpus. Returns
+    ``(connection settings, id of the first perf source)``. Also used by
+    tools/perf/rule_engine_perf.py."""
     import os
 
     import pgserver
@@ -96,6 +99,16 @@ def main(pg_dir: str, contents: int = 20_000) -> None:
         print("signals:", cur.fetchone()[0])
         cur.execute("SELECT min(id) FROM sources")
         first_source = cur.fetchone()[0]
+    conn.close()
+    return cfg, first_source
+
+
+def main(pg_dir: str, contents: int = 20_000) -> None:
+    import psycopg2
+
+    cfg, first_source = load_corpus(pg_dir, contents)
+    conn = psycopg2.connect(host=cfg["host"], port=cfg["port"], user="postgres",
+                            dbname=cfg["database"])
 
     from core.criteria.compiler import AccessScope
     from core.criteria.model import Criteria, from_dict

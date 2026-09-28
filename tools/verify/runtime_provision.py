@@ -4,7 +4,7 @@
 
 Starts a pgserver instance under ``<state-dir>/pg`` (left running), creates a
 database through the application's own bootstrap (all migrations), creates
-an administrator and a viewer, and stores documents through the real
+an administrator, a viewer and two analysts, and stores documents through the real
 ingestion service (``ContentDBService.process_full_document``: detection runs
 at ingestion). Writes ``<state-dir>/env.json`` with the ``DB_*`` variables
 and the credentials the server and ``runtime_check_signals.py`` need.
@@ -57,10 +57,14 @@ def main(state_dir: str) -> None:
 
     auth = get_auth_service()
     users = {"admin": ("rt_admin", "runtime-admin-password-1"),
-             "viewer": ("rt_viewer", "runtime-viewer-password-1")}
-    for role, (username, password) in users.items():
+             "viewer": ("rt_viewer", "runtime-viewer-password-1"),
+             # Two analysts: monitoring-rule notifications must stay with
+             # their owner (tools/verify/runtime_check_rules.py).
+             "analyst": ("rt_analyst", "runtime-analyst-password-1"),
+             "analyst2": ("rt_analyst2", "runtime-analyst2-password-1")}
+    for key, (username, password) in users.items():
         if auth.get_user_by_username(username) is None:
-            auth.create_user(username, password, role=role)
+            auth.create_user(username, password, role=key.rstrip("2"))
 
     import psycopg2
 

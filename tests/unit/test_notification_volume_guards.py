@@ -40,9 +40,9 @@ def test_paginated_route_never_forces_a_refresh():
 
 def test_stats_route_uses_sql_aggregates_not_in_memory_counts():
     source = NOTIFICATIONS.read_text(encoding="utf-8")
-    # /stats body: get_stats() only
+    # /stats body: the SQL aggregates only, limited to what the caller may see
     stats_fn = source.split("def get_notification_stats()", 1)[1].split("@app.route", 1)[0]
-    assert "get_stats()" in stats_fn
+    assert "get_stats(for_user_id=_viewer_id())" in stats_fn
     assert "refresh_notifications()" not in stats_fn
     assert "get_notifications(limit=" not in stats_fn
 

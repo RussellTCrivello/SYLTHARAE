@@ -6,6 +6,7 @@ and the real JobManager - not a synthetic demo.
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 from datetime import date
 
@@ -52,7 +53,7 @@ def _store(tenant, raw_text=MULTILINGUAL, hash_value=None, source_id=None):
     n = next(_N)
     marker = f"{_U}sig{n}"
     return ContentDBService().process_full_document(
-        hash_value=hash_value or f"{marker:0<64}"[:64],
+        hash_value=hash_value or hashlib.sha256(marker.encode()).hexdigest(),
         source_id=source_id or tenant["source_id"], side_id=tenant["side_id"],
         file_name=f"{marker}.txt", file_path=f"/tmp/sig/{marker}.txt", file_size=100,
         file_type="txt", file_status="Read", file_date=date(2026, 1, 1),

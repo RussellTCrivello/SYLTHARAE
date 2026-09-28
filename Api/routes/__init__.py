@@ -12,6 +12,7 @@ def register_all_routes(app, babel_instance=None):
     from . import operations_api, operations_pages
     from . import signals
     from . import places
+    from . import rules
     # Import new settings routes (replaces old settings.py) - optional
     try:
         from settings.routes import register_settings_routes
@@ -53,6 +54,8 @@ def register_all_routes(app, babel_instance=None):
     signals.register_signal_routes(app)
     # Phase 2 gazetteer (read-only)
     places.register_place_routes(app)
+    # Step 11 monitoring rules (evaluated by the rule_evaluation job)
+    rules.register_rule_routes(app)
     # Unified operations API + pages (Input / Import Center / Job Center)
     app.register_blueprint(operations_api.operations_bp)
     operations_pages.register_operations_pages(app)

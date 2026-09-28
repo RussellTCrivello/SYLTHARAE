@@ -4,7 +4,7 @@ System-wide notification management for alerts, similar files, and future events
 """
 
 import logging
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
@@ -32,10 +32,18 @@ class NotificationType(Enum):
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"
+    # Monitoring rules (services/monitoring): always addressed to the rule's
+    # owner (``recipient_user_id``), never system-wide.
+    RULE_MATCH = "rule_match"
+    RULE_STATUS = "rule_status"
 
 
 class NotificationPriority(Enum):
-    """Notification priority levels"""
+    """Notification priority levels.
+
+    New notifications derive their priority (core/monitoring/priority.py),
+    which never yields CRITICAL; the value stays readable for rows written
+    before that rule existed."""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -58,13 +66,68 @@ class Notification:
     created_at: datetime
     read: bool = False
     dismissed: bool = False
+    #: None = system-wide (every user sees it); otherwise the only user who does.
+    recipient_user_id: Optional[int] = None
+    #: The monitoring rule that produced it, if any.
+    rule_id: Optional[int] = None
 
 
 #: Column order shared by every ``SELECT ... FROM alerts`` in this service.
 ALERT_COLUMNS = (
     "id, type, priority, title, message, file_id, file_name, "
-    "file_path, event_date, metadata, created_at, read, dismissed"
+    "file_path, event_date, metadata, created_at, read, dismissed, "
+    "recipient_user_id, rule_id"
 )
+
+
+def visibility_clause(alias: str = "") -> str:
+    """SQL condition: the alerts a user may see - system-wide ones and those
+    addressed to them. Takes one parameter, the user id; ``None`` (no
+    user) leaves only system-wide alerts, because ``= NULL`` is never true."""
+    col = f"{alias}." if alias else ""
+    return f"({col}recipient_user_id IS NULL OR {col}recipient_user_id = %s)"
+
+
+def visible_to(notification: "Notification", user_id: Optional[int]) -> bool:
+    return (notification.recipient_user_id is None
+            or (user_id is not None and notification.recipient_user_id == user_id))
+
+
+def utc_today() -> date:
+    """"Today" for notifications: the UTC date, the same clock the signal
+    routes and rule evaluations use (the server's local date could differ
+    from both)."""
+    return datetime.now(timezone.utc).date()
+
+
+def insert_alerts(cur, notifications: List["Notification"]) -> List[int]:
+    """Insert notifications through the caller's cursor, in the caller's
+    transaction, and return their ids in order.
+
+    Used where a notification must commit or roll back together with other
+    writes (a rule evaluation records which alert delivered which match). It
+    bypasses the in-memory queue on purpose; call
+    ``get_notification_service().refresh_notifications()`` after the commit
+    if system-wide alerts were written.
+    """
+    ids: List[int] = []
+    for n in notifications:
+        if n.type in (NotificationType.RULE_MATCH, NotificationType.RULE_STATUS) \
+                and n.recipient_user_id is None:
+            raise ValueError("rule notifications must be addressed to a user")
+        cur.execute(
+            "INSERT INTO alerts (type, priority, title, message, file_id, file_name,"
+            " file_path, event_date, metadata, created_at, read, dismissed,"
+            " recipient_user_id, rule_id, rule_evaluation_id)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (n.type.value, n.priority.value, n.title, n.message, n.file_id, n.file_name,
+             n.file_path, n.event_date, json.dumps(n.metadata, ensure_ascii=False),
+             n.created_at, n.read, n.dismissed, n.recipient_user_id, n.rule_id,
+             n.metadata.get("evaluation_id")))
+        row = cur.fetchone()
+        n.id = row["id"] if isinstance(row, dict) else row[0]
+        ids.append(n.id)
+    return ids
 
 
 def notification_from_row(row) -> Notification:
@@ -93,6 +156,8 @@ def notification_from_row(row) -> Notification:
         created_at=row[10],
         read=bool(row[11]),
         dismissed=bool(row[12]),
+        recipient_user_id=row[13] if len(row) > 13 else None,
+        rule_id=row[14] if len(row) > 14 else None,
     )
 
 
@@ -130,7 +195,7 @@ class NotificationService:
             f"""
             SELECT {ALERT_COLUMNS}
             FROM alerts
-            WHERE dismissed = FALSE
+            WHERE dismissed = FALSE AND recipient_user_id IS NULL
             ORDER BY created_at DESC
             LIMIT {int(limit)}
             """,
@@ -144,6 +209,29 @@ class NotificationService:
             except Exception as e:
                 self.logger.warning(f"Error loading notification: {e}")
         return fetched
+
+    def _fetch_addressed(self, user_id: int, notification_type, priority, unread_only: bool,
+                         limit: int) -> List[Notification]:
+        """Alerts addressed to ``user_id``, read from the database each time.
+        They are not cached: one user's volume must never push another
+        user's alerts out of a shared list."""
+        from Api.utils import execute_query
+
+        where = ["dismissed = FALSE", "recipient_user_id = %s"]
+        params: list = [user_id]
+        if notification_type:
+            where.append("type = %s")
+            params.append(notification_type.value)
+        if priority:
+            where.append("priority = %s")
+            params.append(priority.value)
+        if unread_only:
+            where.append("read = FALSE")
+        params.append(int(limit))
+        rows = execute_query(
+            f"SELECT {ALERT_COLUMNS} FROM alerts WHERE {' AND '.join(where)}"
+            " ORDER BY created_at DESC, id DESC LIMIT %s", tuple(params), fetch="all")
+        return [notification_from_row(r) for r in rows or []]
 
     def _load_notifications(self):
         """Load notifications from database (atomic swap, pending preserved)."""
@@ -186,12 +274,6 @@ class NotificationService:
         
         return self._save_notification(notification)
     
-    # Legacy priority bands (days until the date). Product defaults carried
-    # over unchanged from the previous implementation; they are not derived
-    # from a published source. Phase 3 replaces them with computed priority.
-    _FUTURE_DATE_BANDS = ((7, NotificationPriority.CRITICAL), (30, NotificationPriority.HIGH),
-                          (90, NotificationPriority.MEDIUM))
-
     def create_future_date_notification(self, *, file_id: int, file_name: str, file_path: str,
                                         signal: Dict[str, Any],
                                         reference_date: date) -> Notification:
@@ -200,14 +282,19 @@ class NotificationService:
         ``signal`` is a row from ``signal_store.signals_for`` (content_signals);
         ``reference_date`` is the explicit clock the orientation was computed
         against. Approximate dates (Hijri) keep their whole range.
+
+        Priority is derived (core/monitoring/priority.py) from the signal's
+        confidence and how soon the date is; it replaced fixed day bands that
+        made every date within a week CRITICAL whatever the evidence.
         """
+        from core.monitoring.priority import derive_priority
+
         event_date = date.fromisoformat(signal["date_from"])
         days_until = (event_date - reference_date).days
-        priority = NotificationPriority.HIGH
-        for limit, band in self._FUTURE_DATE_BANDS:
-            if days_until <= limit:
-                priority = band
-                break
+        date_to = date.fromisoformat(signal["date_to"]) if signal.get("date_to") else None
+        priority_value, priority_basis = derive_priority(
+            [(signal.get("confidence"), event_date, date_to)], reference_date)
+        priority = NotificationPriority(priority_value)
         notification = Notification(
             id=None,
             type=NotificationType.FUTURE_DATE,
@@ -238,6 +325,7 @@ class NotificationService:
                 "reference_date": reference_date.isoformat(),
                 "days_until": days_until,
                 "event_type": "explicit_date",
+                "priority_basis": priority_basis,
             },
             created_at=datetime.now(),
         )
@@ -420,16 +508,22 @@ class NotificationService:
         notification_type: Optional[NotificationType] = None,
         priority: Optional[NotificationPriority] = None,
         unread_only: bool = False,
-        limit: int = 100
+        limit: int = 100,
+        for_user_id: Optional[int] = None,
     ) -> List[Notification]:
         """
-        Get notifications with filters.
-        Uses in-memory list only (no database query).
-        Includes both persisted and pending notifications.
+        Get the notifications ``for_user_id`` may see, with filters.
+
+        System-wide notifications come from the in-memory list (persisted and
+        pending); notifications addressed to ``for_user_id`` are read from the
+        database. Without a user only system-wide notifications are returned.
         """
         # Combine persisted and pending notifications (pending may have temp IDs)
         with self._lock:
-            all_notifications = list(self._notifications)
+            all_notifications = [n for n in self._notifications if n.recipient_user_id is None]
+        if for_user_id is not None:
+            all_notifications += self._fetch_addressed(
+                for_user_id, notification_type, priority, unread_only, limit)
         
         if notification_type:
             all_notifications = [n for n in all_notifications if n.type == notification_type]
@@ -444,122 +538,54 @@ class NotificationService:
         all_notifications = [n for n in all_notifications if not n.dismissed]
         
         # Sort by created_at descending
-        all_notifications.sort(key=lambda x: x.created_at, reverse=True)
+        all_notifications.sort(key=lambda x: (x.created_at, x.id or 0), reverse=True)
         
         return all_notifications[:limit]
     
-    def mark_as_read(self, notification_id: int) -> bool:
-        """Mark notification as read"""
-        try:
-            # Use execute_query from Api.utils or database.queries
-            try:
-                from Api.utils import execute_query
-            except ImportError:
-                from database import DatabaseHub
-                db_hub = DatabaseHub()
-                def execute_query(query, params=None, fetch="all"):
-                    conn = db_hub._get_connection()
-                    cursor = conn.cursor()
-                    try:
-                        if params:
-                            cursor.execute(query, params)
-                        else:
-                            cursor.execute(query)
-                        if fetch == "all":
-                            result = cursor.fetchall()
-                        elif fetch == "one":
-                            result = cursor.fetchone()
-                        else:
-                            conn.commit()
-                            result = None
-                        if fetch is not None:
-                            conn.commit()
-                        return result if result else ([] if fetch == "all" else None)
-                    finally:
-                        cursor.close()
-            
-            updated_row = execute_query(
-                "UPDATE alerts SET read = TRUE WHERE id = %s RETURNING id",
-                (notification_id,),
-                fetch="one"
-            )
-            
-            # Update in memory (covers pending objects that are not in the DB yet)
+    def _set_flag(self, notification_id: int, column: str, for_user_id: Optional[int]) -> bool:
+        """Set ``read``/``dismissed`` on one notification the user may see.
+
+        The visibility rule is part of the UPDATE's WHERE clause, so a
+        notification addressed to someone else is "not found" - it is
+        neither changed nor confirmed to exist.
+        """
+        assert column in ("read", "dismissed")
+        # Pending notifications (negative temporary ids) are not in the
+        # database yet; they are always system-wide.
+        if notification_id < 0:
             with self._lock:
                 for notification in self._notifications:
-                    if notification.id == notification_id:
-                        notification.read = True
-                        self.logger.debug(f"Marked notification {notification_id} as read")
+                    if notification.id == notification_id and visible_to(notification,
+                                                                         for_user_id):
+                        setattr(notification, column, True)
                         return True
-            
-            # Not in memory: True iff the database row existed and was updated.
-            # (No full-table refresh - a refresh here raced concurrent readers.)
-            if updated_row:
-                self.logger.debug(f"Marked notification {notification_id} as read (database row)")
-                return True
-            
-        except Exception as e:
-            self.logger.error(f"Error marking notification as read: {e}")
             return False
-        
-        return False
-    
-    def dismiss_notification(self, notification_id: int) -> bool:
-        """Dismiss a notification"""
-        try:
-            # Use execute_query from Api.utils or database.queries
-            try:
-                from Api.utils import execute_query
-            except ImportError:
-                from database import DatabaseHub
-                db_hub = DatabaseHub()
-                def execute_query(query, params=None, fetch="all"):
-                    conn = db_hub._get_connection()
-                    cursor = conn.cursor()
-                    try:
-                        if params:
-                            cursor.execute(query, params)
-                        else:
-                            cursor.execute(query)
-                        if fetch == "all":
-                            result = cursor.fetchall()
-                        elif fetch == "one":
-                            result = cursor.fetchone()
-                        else:
-                            conn.commit()
-                            result = None
-                        if fetch is not None:
-                            conn.commit()
-                        return result if result else ([] if fetch == "all" else None)
-                    finally:
-                        cursor.close()
-            
-            updated_row = execute_query(
-                "UPDATE alerts SET dismissed = TRUE WHERE id = %s RETURNING id",
-                (notification_id,),
-                fetch="one"
-            )
-            
-            # Update in memory (covers pending objects that are not in the DB yet)
-            with self._lock:
-                for notification in self._notifications:
-                    if notification.id == notification_id:
-                        notification.dismissed = True
-                        self.logger.debug(f"Dismissed notification {notification_id}")
-                        return True
-            
-            # Not in memory: True iff the database row existed and was updated.
-            # (No full-table refresh - a refresh here raced concurrent readers.)
-            if updated_row:
-                self.logger.debug(f"Dismissed notification {notification_id} (database row)")
-                return True
-            
-        except Exception as e:
-            self.logger.error(f"Error dismissing notification: {e}")
+        from Api.utils import execute_query
+
+        updated_row = execute_query(
+            f"UPDATE alerts SET {column} = TRUE WHERE id = %s AND {visibility_clause()}"
+            " RETURNING id",
+            (notification_id, for_user_id),
+            fetch="one",
+        )
+        if not updated_row:
             return False
-        
-        return False
-    
+        with self._lock:
+            for notification in self._notifications:
+                if notification.id == notification_id:
+                    setattr(notification, column, True)
+        return True
+
+    def mark_as_read(self, notification_id: int, for_user_id: Optional[int] = None) -> bool:
+        """Mark a notification ``for_user_id`` may see as read. Returns False
+        when there is no such notification. Database errors propagate."""
+        return self._set_flag(notification_id, "read", for_user_id)
+
+    def dismiss_notification(self, notification_id: int,
+                             for_user_id: Optional[int] = None) -> bool:
+        """Dismiss a notification ``for_user_id`` may see (see mark_as_read)."""
+        return self._set_flag(notification_id, "dismissed", for_user_id)
+
     def refresh_notifications(self) -> int:
         """
         Reload notifications from database (useful after external changes).
@@ -588,7 +614,7 @@ class NotificationService:
         self.logger.info(f"Refreshed notifications: {loaded} loaded")
         return loaded
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self, for_user_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Exact notification statistics.
 
@@ -598,7 +624,8 @@ class NotificationService:
         LIMIT 1000.  Pending (unflushed) notifications are overlaid so brand
         new alerts are counted immediately.
         """
-        today = date.today()
+        today = utc_today()
+        visible = visibility_clause()
         stats: Dict[str, Any] = {
             'total': 0,
             'unread': 0,
@@ -615,8 +642,8 @@ class NotificationService:
                 SELECT COUNT(*) AS total,
                        COUNT(*) FILTER (WHERE NOT read) AS unread
                 FROM alerts
-                WHERE dismissed = FALSE
-                """,
+                WHERE dismissed = FALSE AND """ + visible,
+                (for_user_id,),
                 fetch="one"
             )
             if row:
@@ -627,9 +654,10 @@ class NotificationService:
                 """
                 SELECT type, COUNT(*)
                 FROM alerts
-                WHERE dismissed = FALSE
+                WHERE dismissed = FALSE AND """ + visible + """
                 GROUP BY type
                 """,
+                (for_user_id,),
                 fetch="all"
             ) or []:
                 stats['by_type'][type_row[0]] = int(type_row[1])
@@ -638,9 +666,10 @@ class NotificationService:
                 """
                 SELECT priority, COUNT(*)
                 FROM alerts
-                WHERE dismissed = FALSE
+                WHERE dismissed = FALSE AND """ + visible + """
                 GROUP BY priority
                 """,
+                (for_user_id,),
                 fetch="all"
             ) or []:
                 stats['by_priority'][priority_row[0]] = int(priority_row[1])
@@ -652,8 +681,9 @@ class NotificationService:
                 WHERE type = %s
                   AND dismissed = FALSE
                   AND event_date BETWEEN %s AND %s
-                """,
-                (NotificationType.FUTURE_DATE.value, today, today + timedelta(days=30)),
+                  AND """ + visible,
+                (NotificationType.FUTURE_DATE.value, today, today + timedelta(days=30),
+                 for_user_id),
                 fetch="one"
             )
             if upcoming_row:
@@ -663,13 +693,14 @@ class NotificationService:
                 f"SQL stats unavailable, falling back to in-memory counts "
                 f"(list capped at {1000}): {e}"
             )
-            for n in self.get_notifications(limit=1000):
+            for n in self.get_notifications(limit=1000, for_user_id=for_user_id):
                 stats['total'] += 1
                 if not n.read:
                     stats['unread'] += 1
                 stats['by_type'][n.type.value] = stats['by_type'].get(n.type.value, 0) + 1
                 stats['by_priority'][n.priority.value] = stats['by_priority'].get(n.priority.value, 0) + 1
-            stats['upcoming_events'] = len(self.get_upcoming_events(days_ahead=30))
+            stats['upcoming_events'] = len(self.get_upcoming_events(days_ahead=30,
+                                                                    for_user_id=for_user_id))
             return stats
 
         # Overlay notifications that are still queued (not in the DB yet).
@@ -690,9 +721,11 @@ class NotificationService:
 
         return stats
 
-    def get_upcoming_events(self, days_ahead: int = 30) -> List[Notification]:
-        """Get upcoming events within specified days (SQL + pending overlay)."""
-        today = date.today()
+    def get_upcoming_events(self, days_ahead: int = 30,
+                            for_user_id: Optional[int] = None) -> List[Notification]:
+        """Upcoming future-date events ``for_user_id`` may see, within
+        ``days_ahead`` UTC days (SQL + pending overlay)."""
+        today = utc_today()
         end_date = today + timedelta(days=days_ahead)
 
         try:
@@ -704,10 +737,11 @@ class NotificationService:
                 WHERE type = %s
                   AND dismissed = FALSE
                   AND event_date BETWEEN %s AND %s
-                ORDER BY event_date ASC
+                  AND {visibility_clause()}
+                ORDER BY event_date ASC, id ASC
                 LIMIT 1000
                 """,
-                (NotificationType.FUTURE_DATE.value, today, end_date),
+                (NotificationType.FUTURE_DATE.value, today, end_date, for_user_id),
                 fetch="all"
             )
             upcoming = [notification_from_row(row) for row in rows or []]
@@ -715,7 +749,8 @@ class NotificationService:
             self.logger.warning(f"SQL upcoming query unavailable, using in-memory list: {e}")
             notifications = self.get_notifications(
                 notification_type=NotificationType.FUTURE_DATE,
-                unread_only=False
+                unread_only=False,
+                for_user_id=for_user_id,
             )
             upcoming = [
                 n for n in notifications

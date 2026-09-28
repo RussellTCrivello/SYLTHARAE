@@ -105,6 +105,21 @@ authenticated role.
   path.
 * Re-detection (`POST /api/signals/redetect`) is admin-only.
 
+**Monitoring rules and notifications** (`/api/rules*`,
+[implementation/RULE_ENGINE.md](implementation/RULE_ENGINE.md)):
+* A notification with a `recipient_user_id` is visible only to that user,
+  administrators included. The filter is part of the SQL of every read and of
+  mark-read/dismiss; a notification addressed to someone else is a `404`.
+  A rule notification without a recipient is refused (code and CHECK).
+* Only an active analyst or admin may create or edit a rule, and only their
+  own. Admins may pause, resume, archive, suppress or evaluate any rule, but
+  not change its definition. Other users' rules are a `404`.
+* Each evaluation re-reads the owner. An inactive or demoted owner's rule is
+  disabled and notifies nothing; the criteria are compiled with the owner's
+  `AccessScope`, stored with the evaluation.
+* Priority is derived and cannot be supplied by a caller (400).
+* Rule changes are written to `audit_log`.
+
 The **setup wizard** is public only until installation: after that `/setup`
 redirects home, `/api/setup/install` answers 409, and the system check and
 database probe require an administrator (AUDIT-SETUP-01).
