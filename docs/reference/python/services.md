@@ -91,7 +91,7 @@ Import services: structured data imports distinct from file ingestion.
 
 Backup import + server batch import services.
 
-- **class `BackupImportValidationError`**(ValueError) - Invalid backup import request; ``str(exc)`` is client-safe.
+- **class `BackupImportValidationError`**(ClientSafeError, ValueError) - Invalid backup import request; ``str(exc)`` is client-safe.
 - **class `BackupImportRequest`** - _undocumented_
   - `to_dict(self) -> dict`
 - **class `SimpleResult`** - _undocumented_
@@ -108,7 +108,7 @@ Backup import + server batch import services.
 
 Domain import service (the engine formerly driven by run_import.py).
 
-- **class `DomainImportValidationError`**(ValueError) - Invalid import request; ``str(exc)`` is client-safe.
+- **class `DomainImportValidationError`**(ClientSafeError, ValueError) - Invalid import request; ``str(exc)`` is client-safe.
 - **class `DomainImportRequest`** - _undocumented_
   - `to_dict(self) -> dict`
 - **class `DomainImportResult`** - _undocumented_
@@ -137,7 +137,7 @@ Ingestion request/options models.
 
 Ingestion service: the engine behind the Input UI, the jobs API and the
 
-- **class `IngestionValidationError`**(ValueError) - Raised for invalid requests; ``str(exc)`` is client-safe.
+- **class `IngestionValidationError`**(ClientSafeError, ValueError) - Raised for invalid requests; ``str(exc)`` is client-safe.
 - **class `IngestionResult`** - Structured outcome of one ingestion execution.
   - `to_dict(self) -> Dict[str, Any]`
 - **class `_ControlRequested`**(Exception) - Internal: cooperative cancel/pause hit during engine execution.

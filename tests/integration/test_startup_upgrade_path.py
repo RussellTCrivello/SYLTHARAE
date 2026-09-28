@@ -195,3 +195,27 @@ def test_the_app_fixture_does_not_mark_the_checkout(app):
     assert init.INIT_MARKER_FILE.exists()
     assert init.INIT_MARKER_FILE.resolve().parent != Path(os.getcwd()).resolve()
     assert init.INIT_MARKER_FILE.resolve().parent != Path(__file__).resolve().parents[2]
+
+
+def test_a_refused_connection_reports_the_servers_reason(pg_db, app, monkeypatch, tmp_path,
+                                                         capsys):
+    """Field report: no DB password yet -> the warning said "unreachable"."""
+    import core.initialization as init
+
+    init_mod = _no_marker_no_config(monkeypatch, tmp_path)
+    cfg = dict(init_mod._schema_db_config())
+    cfg.update(host="127.0.0.1", port=1)            # nothing listens on port 1
+    monkeypatch.setattr(init_mod, "_schema_db_config", lambda: cfg)
+    assert init_mod.upgrade_installed_schema() == []
+    out = capsys.readouterr().out
+    assert "[WARNING] Schema upgrade skipped - cannot connect to 127.0.0.1:1/" in out
+    assert "Connection refused" in out
+
+
+def test_connection_failure_reason_strips_the_libpq_preamble():
+    from core.initialization import _connection_failure_reason
+
+    exc = Exception('connection to server at "localhost" (::1), port 5432 failed: '
+                    'fe_sendauth: no password supplied\n'
+                    'connection to server at "localhost" (127.0.0.1), port 5432 failed: x')
+    assert _connection_failure_reason(exc) == "fe_sendauth: no password supplied"

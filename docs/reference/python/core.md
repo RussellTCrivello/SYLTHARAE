@@ -351,6 +351,7 @@ Text helpers shared by every content detector.
 
 Secure error handling (SEC-08).
 
+- **class `ClientSafeError`**(Exception) - An error whose ``str(exc)`` is written for the end user.
 - `new_correlation_id() -> str` - Generate a correlation id like ``ERR-20260910-000123``.
 - `sanitize_message(message: str) -> str` - Best-effort scrubbing of low-level details from any text we must emit.
 - `client_safe_message(exc: Exception, subsystem: str = 'web') -> str` - SEC-08: log full detail server-side, return a client-safe message.

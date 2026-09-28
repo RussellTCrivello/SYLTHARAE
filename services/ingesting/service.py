@@ -25,8 +25,10 @@ from core.path_safety import (
 )
 from services.ingesting.options import IngestionOptions, IngestionRequest  # noqa: F401
 
+from core.errors import ClientSafeError
 
-class IngestionValidationError(ValueError):
+
+class IngestionValidationError(ClientSafeError, ValueError):
     """Raised for invalid requests; ``str(exc)`` is client-safe."""
 
 

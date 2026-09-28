@@ -392,13 +392,18 @@ class JobManager:
                 final_stats=final_stats,
             )
         except Exception as exc:
-            logger.exception("Job %s failed", job_id)
-            from core.errors import client_safe_message
+            from core.errors import ClientSafeError, client_safe_message
 
             flush_progress()
-            self._finish(job_id, job_state.FAILED, errors=[
-                client_safe_message(exc, subsystem="services.jobs")
-            ])
+            if isinstance(exc, ClientSafeError):
+                # A rejection (invalid request, missing file), not a fault:
+                # the user needs the reason, not a correlation id.
+                logger.warning("Job %s rejected: %s", job_id, exc)
+                message = str(exc)
+            else:
+                logger.exception("Job %s failed", job_id)
+                message = client_safe_message(exc, subsystem="services.jobs")
+            self._finish(job_id, job_state.FAILED, errors=[message])
 
     def _job_context(self, record, progress_cb, throttle) -> Dict[str, Any]:
         """Context handed to custom starters (import services)."""

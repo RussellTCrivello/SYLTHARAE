@@ -256,9 +256,25 @@ def installed_schema_present(cfg: Dict[str, Any]) -> Optional[bool]:
     """Whether the application database exists and holds the critical tables.
 
     ``True``: installed; ``False``: the database is missing or has not been
-    installed (setup pending); ``None``: the server could not be reached, so
-    the question cannot be answered. Never creates anything.
+    installed (setup pending); ``None``: no connection could be made, so the
+    question cannot be answered. Never creates anything.
     """
+    return _probe_installed_schema(cfg)[0]
+
+
+def _connection_failure_reason(exc: Exception) -> str:
+    """The server's reason from a libpq connection error, without the preamble.
+
+    ``connection to server at "localhost" (::1), port 5432 failed: fe_sendauth:
+    no password supplied`` -> ``fe_sendauth: no password supplied``. libpq
+    repeats the message per address tried; the first line suffices.
+    """
+    first = (str(exc).strip().splitlines() or [""])[0]
+    return first.rsplit(" failed: ", 1)[-1].strip() or exc.__class__.__name__
+
+
+def _probe_installed_schema(cfg: Dict[str, Any]):
+    """``(installed_schema_present, reason)``; ``reason`` is set when ``None``."""
     import psycopg2
 
     try:
@@ -267,14 +283,14 @@ def installed_schema_present(cfg: Dict[str, Any]) -> Optional[bool]:
                                 connect_timeout=5)
     except psycopg2.OperationalError as exc:
         if "does not exist" in str(exc):
-            return False
-        return None
+            return False, None
+        return None, _connection_failure_reason(exc)
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT count(*) FROM information_schema.tables"
                         " WHERE table_schema = 'public' AND table_name = ANY(%s)",
                         (list(CRITICAL_TABLES),))
-            return cur.fetchone()[0] == len(CRITICAL_TABLES)
+            return cur.fetchone()[0] == len(CRITICAL_TABLES), None
     finally:
         conn.close()
 
@@ -355,10 +371,13 @@ def upgrade_installed_schema():
     except Exception as e:
         _startup_print(f"[WARNING] Schema upgrade skipped - no database configuration: {e}")
         return []
-    present = installed_schema_present(cfg)
+    present, reason = _probe_installed_schema(cfg)
     if present is None:
-        _startup_print(f"[WARNING] Schema upgrade skipped - database "
-                       f"{_describe_target(cfg)} unreachable")
+        # "unreachable" was printed for every failure, including a server that
+        # answered and refused the credentials (field report: fe_sendauth: no
+        # password supplied, before the setup wizard had written .env).
+        _startup_print(f"[WARNING] Schema upgrade skipped - cannot connect to "
+                       f"{_describe_target(cfg)}: {reason}")
         return []
     if not present:
         logger.info("No installed schema in %s yet; setup pending, nothing migrated",

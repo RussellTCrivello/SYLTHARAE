@@ -66,6 +66,7 @@ python -m pytest -p no:cacheprovider -o addopts="" -q -rf tests
 | Step 11 Rule engine | 3 077 | 30 | 97 | identical to step 10 (compared with `comm`) |
 | Step 12 Scenarios + `/monitoring` | 3 123 | 30 | 97 | identical to step 11 (compared with `comm`); generated docs regenerated with their own commands before the run |
 | Field fixes: start-up upgrade + gazetteer packaging | 3 128 | 30 | 97 | 29 OCR (no Tesseract) + select2 licensing. The first run had 31: `test_reference_docs_are_current`, stale because of the two new public start-up functions; regenerated with `tools/docs/generate_reference.py` (diff: 2 lines). The step-12 failure list was lost when the sandbox restarted, so the comparison is by category, not `comm`; the list is now kept in [REGRESSION_FAILURES.txt](REGRESSION_FAILURES.txt) |
+| Field fixes 2: import rejections, escaping, connection reason | 3 144 | 30 | 97 | identical to the recorded list (`comm` against REGRESSION_FAILURES.txt); the 31st on the first run was again `test_reference_docs_are_current` (new public names), regenerated |
 
 On the `294104e` run a 31st failure first appeared:
 `test_screen_inspector.py::...test_the_document_is_what_the_product_now_says`.
@@ -101,7 +102,9 @@ page's template.
 
 Startup logged `column "recipient_user_id" does not exist` against a
 database that had not received m0020. Two independent defects, plus the test
-fixture that hid the first one:
+fixture that hid the first one. The second report (the same day, after those
+fixes: `Internal error (ERR-20260928-000002)` from a domain import) added the
+last three rows:
 
 | Defect | Origin | Root cause | Fix | Evidence |
 | --- | --- | --- | --- | --- |
@@ -109,6 +112,9 @@ fixture that hid the first one:
 | A failing migration at start-up was reported as "database unreachable" | pre-existing | every exception was logged as a skipped check | `[ERROR] Schema upgrade FAILED on <target>: <migration error - cause>`; unreachable stays a warning | `test_a_failing_migration_is_reported_as_a_failure_not_as_unreachable` |
 | The gazetteer seed and all its inputs were never committed; m0019 failed on every clone (`SeedIntegrityError`) | **introduced by this work (step 9)** | `.gitignore` ignores `data/`; the files existed only in the sandbox, so the step 9 PostgreSQL verification was environment-dependent | `.gitignore` re-includes `data/gazetteer/`; seed rebuilt from a new Wikidata query (see `data/gazetteer/SOURCES.md`), `SEED_VERSION` `2026-09-28.2` | fresh `runtime_provision.py` bootstrap applies 0001-0021 from a clean tree; `test_gazetteer_packaging.py` fails against the old `.gitignore` (checked) |
 | The test suite left `.system_initialized` in the checkout | pre-existing (`tests/conftest.py` `app` fixture) | the marker path is CWD-relative and the fixture wrote it deliberately | the fixture points `INIT_MARKER_FILE` at a session temporary directory | `test_the_app_fixture_does_not_mark_the_checkout`; a full run leaves no marker |
+| Import Center: a path typed as the domain data file name showed `Internal error (ERR-20260928-000002)` (second field report) | pre-existing | the preview and start routes created the job without running `DomainImportService.validate`; the rejection happened in the worker, and the job manager reported every exception as an internal error | both routes validate before persisting (400, no job row); `core.errors.ClientSafeError` marks exceptions whose text is for the user (the three import/ingest validation errors, already documented as client-safe) and the job manager shows those verbatim, logged as warnings; the message says "Enter only the file name (for example domain_data.xlsx), not a path" and where the file must be, without echoing the input; Windows separators are refused on a Linux server too; only files match (`..` used to resolve to a directory and reach the importer) | `test_domain_import_rejections.py` (15): 13 fail on the old code (negative control) |
+| Job errors/warnings, Import Center messages, preview and source menus were inserted as HTML (stored/reflected XSS through file names and paths) | pre-existing, found while fixing the above | `innerHTML` with server text | escaped / `textContent` | `tests/js/job_error_escaping_smoke.mjs` runs the real page modules: a hostile string becomes a live `<img onerror>` on the old pages, text on the new ones |
+| The start-up warning said "unreachable" when the server answered and refused the connection (`fe_sendauth: no password supplied`, before setup had written `.env`) | this work (first fix) | the reason was discarded | `[WARNING] Schema upgrade skipped - cannot connect to <target>: <server's reason>` | `test_a_refused_connection_reports_the_servers_reason`; `run_web.py` against a closed port prints `... cannot connect to 127.0.0.1:1/syltharae_runtime: Connection refused` |
 
 **Consequence for earlier claims.** The RUNTIME-VERIFIED runs of steps 10-12
 started `run_web.py` from a checkout carrying the marker left by the tests, and
@@ -143,6 +149,9 @@ Start-up is now covered by the control run above. The packaging audit
 
 | Defect | Found by | Why not fixed now |
 | --- | --- | --- |
+| Import Center: the domain data field says "data file name (optional)", and Validate/Preview use the default file when it is empty, but Start refuses an empty field (`No data_file provided`) | second field report | `test_frontend_workflow.py` pins the 400 for an omitted `data_file`; changing it is an owner decision (open question 2) |
+| Other pages may insert server text with `innerHTML` the same way | the escaping fix above | a sweep belongs to the step 25 security audit; only the pages on this failure path were fixed |
+| Before setup, every request logs the same connection traceback several times (first field log) | first field log | noise, not a wrong result; left for the packaging audit (step 27) |
 | Arabic catalog (baseline `0521aa5`): 4 msgstrs drop `{operation}` / `{category}` / `{word}` (e.g. "Files in "{category}" Category" -> "Files"), 4 are truncated at an escaped quote (end in a literal backslash). he/fa/hr only drop the English plural `{s}`, which is correct for those languages | catalog-wide placeholder scan during step 12 | word-list/category screens, outside step 12; belongs to step 18 (multilingual rendering), where they can be fixed and checked on the screens that use them |
 
 ## Open questions for the owner
@@ -151,3 +160,6 @@ Start-up is now covered by the control run above. The packaging audit
    `categorys(id, word_id)` has no parent column. It is refused, not
    ignored. Should a hierarchy be added (a migration), or should the option
    be removed from the contract?
+2. **Domain import without a file name.** Should *Start import* use the default
+   `domain_data.xlsx` when the field is empty (as Validate and Preview already
+   do), or should the field stop saying "optional"?
