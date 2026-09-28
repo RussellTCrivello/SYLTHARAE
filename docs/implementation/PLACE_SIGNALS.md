@@ -51,7 +51,7 @@ job as temporal signals.
 * `content_signals.resolution` gains `identified`, which the CHECK
   `ck_content_signals_identified_place` allows only for `place_mention`.
 * **Deviation from the spec's four name types:** `unclassified` exists
-  because 17 places record no native (P1705) label, so endonym/exonym cannot
+  because 15 places record no native (P1705) label (17 in the lost seed `.1`), so endonym/exonym cannot
   be decided from the source. Claiming one would be invented data.
 
 ### `path_geo_mentions` compatibility
@@ -162,7 +162,7 @@ Single process in this sandbox, 1 MB of text, `place_intel.detect` /
 | typical prose (one place per ~1 KB) | 959 | 0.69 s |
 | dense mixed en/ar/he/fa/hr (a place every ~24 chars) | 42,306 | 2.5-2.8 s |
 | temporal detector, same dense text | 3,846 | 2.2 s |
-| gazetteer index build (1,153 names) | - | 12 ms |
+| gazetteer index build (1,153 names; measured on seed `.1`, current `.2` has 1,155) | - | 12 ms |
 
 Before the shared `SentenceIndex` (binary search), evidence-sentence lookup
 was a linear scan per signal - O(signals × sentences) - in both detectors:

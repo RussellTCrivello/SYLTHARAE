@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build ``data/gazetteer/places_seed.json`` from the raw Wikidata rows.
 
-Inputs (all committed):
+Inputs (all committed and tracked in git - ``.gitignore`` re-includes
+``data/gazetteer/``; ``tests/unit/test_gazetteer_packaging.py`` guards it):
 
 * ``data/gazetteer/raw/wdqs_batch*.txt`` - WDQS output rows of
   ``tools/gazetteer/wikidata_query.rq``;
@@ -44,7 +45,7 @@ CURATION = ROOT / "data" / "gazetteer" / "curation.json"
 OUTPUT = ROOT / "data" / "gazetteer" / "places_seed.json"
 
 SEED_FORMAT = 1
-SEED_VERSION = "2026-09-28.1"
+SEED_VERSION = "2026-09-28.2"
 RETRIEVED = "2026-09-28"
 FEATURE_TYPES = ("city", "country", "region")
 NAME_TYPE_ORDER = ("endonym", "exonym", "unclassified", "variant", "historical")

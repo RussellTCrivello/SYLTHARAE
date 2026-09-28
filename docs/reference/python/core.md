@@ -760,7 +760,9 @@ System Initialization Module
 - `initialize_from_config(config: Dict[str, Any])` - Initialize system settings from config.json
 - `initialize_paths(config: Dict[str, Any])` - Initialize directory paths from config
 - `initialize_database_config(config: Dict[str, Any], skip_connection_test: bool = True)` - Apply the database configuration from config.json.
+- `installed_schema_present(cfg: Dict[str, Any]) -> Optional[bool]` - Whether the application database exists and holds the critical tables.
 - `upgrade_database_schema()` - Apply pending schema migrations to the configured database.
+- `upgrade_installed_schema()` - Apply pending migrations when the application database is installed.
 - `initialize_system(first_startup: bool = False)` - Initialize the entire system
 - `ensure_system_initialized()` - Ensure system is initialized, run initialization if needed
 

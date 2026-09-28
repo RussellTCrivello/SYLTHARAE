@@ -76,6 +76,13 @@ node_modules/
 
 # Runtime settings store (created on first boot; may hold deployment config)
 data/
+# ...except the committed gazetteer seed and its inputs (data/gazetteer/), which
+# migration m0019 loads. Git cannot re-include a file under an ignored directory,
+# so re-include the top-level data/ dir, ignore its contents, then except gazetteer/.
+# tests/unit/test_gazetteer_packaging.py guards this.
+!/data/
+/data/*
+!/data/gazetteer/
 # ...but the apps.importing.data PACKAGE (source code, not datasets) lives in
 # a directory with the same name and must be tracked. Re-include the directory,
 # then keep datasets inside it ignored.
