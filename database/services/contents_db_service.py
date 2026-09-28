@@ -1434,11 +1434,12 @@ class ContentDBService:
                             result, 'title', title_err, file_name, path_id
                         )
 
-                # 10. Temporal signals (derived) ------------------------------
+                # 10. Content signals (derived): temporal, then places -----
                 # Detected on the *stored* display text so every signal's
-                # offsets address contents_raw. Contained like keywords and
-                # title; a failure is recorded as a failed run (never as
-                # "nothing found") and marks the document partial.
+                # offsets address contents_raw. Each detector is contained
+                # in its own savepoint like keywords and title; a failure is
+                # recorded as a failed run (never as "nothing found") and
+                # marks the document partial.
                 self._detect_signals(result, hash_id, raw_text, raw_stored,
                                      file_name, path_id)
 
@@ -1460,8 +1461,20 @@ class ContentDBService:
             )
             raise
 
+    #: result key per detector (``signals`` predates the place detector).
+    _SIGNAL_RESULT_KEYS = {"temporal": "signals", "places": "place_signals"}
+
     def _detect_signals(self, result, hash_id, raw_text, raw_stored, file_name, path_id):
-        """Step 10: temporal signals for new content (see services/detection)."""
+        """Step 10: every registered detector (services/detection/detectors.py)."""
+        from services.detection import detectors
+
+        for name in detectors.NAMES:
+            key = self._SIGNAL_RESULT_KEYS.get(name, f"{name}_signals")
+            self._detect_one(result, key, name, hash_id, raw_text, raw_stored,
+                             file_name, path_id)
+
+    def _detect_one(self, result, key, detector, hash_id, raw_text, raw_stored,
+                    file_name, path_id):
         from database.database.repository.contents_repo import _sanitise_pg_text
         from services.detection import signal_store
 
@@ -1475,18 +1488,20 @@ class ContentDBService:
                         # will retry once display text exists.
                         signal_store.record_run(
                             cur, hash_id, status="failed", trigger=trigger,
+                            detector=detector,
                             error="display text was not stored; signals need "
                                   "stored text for their offsets")
-                        result['signals'] = {"status": "failed"}
+                        result[key] = {"status": "failed"}
                         return
                     text = _sanitise_pg_text(raw_text)[0] if raw_text else raw_text
                     anchor, _ = signal_store.anchor_for(cur, hash_id)
-                    result['signals'] = signal_store.detect_and_store(
-                        cur, hash_id, text, anchor, trigger=trigger)
+                    result[key] = signal_store.detect_and_store(
+                        cur, hash_id, text, anchor, trigger=trigger, detector=detector)
         except TransactionAbortedError:
             raise
         except Exception as sig_err:
-            self._note_optional_failure(result, 'signals', sig_err, file_name, path_id)
+            self._note_optional_failure(result, key, sig_err, file_name, path_id)
+            result[key] = {"status": "failed"}
             try:
                 with self.savepoint():
                     with self.contents_repo.get_cursor(commit=False) as cur:
@@ -1494,13 +1509,13 @@ class ContentDBService:
                         while root.__cause__ is not None:  # name the driver error,
                             root = root.__cause__         # not its wrappers
                         signal_store.record_run(
-                            cur, hash_id, status="failed", trigger=trigger,
+                            cur, hash_id, status="failed", trigger=trigger, detector=detector,
                             error=f"{type(root).__name__}: {str(root).strip()}")
             except TransactionAbortedError:
                 raise
             except Exception:
-                logger.exception("Could not record the failed signal run for hash_id=%s",
-                                 hash_id)
+                logger.exception("Could not record the failed %s run for hash_id=%s",
+                                 detector, hash_id)
 
     def _note_optional_failure(self, result, step, error, file_name, path_id):
         """Record a contained failure of a derived-data step.

@@ -88,6 +88,14 @@ class TestBootstrap:
             "idx_content_signal_runs_version",
             # m0018
             "idx_content_signals_confidence",
+            # m0019
+            "uq_geo_places_key",
+            "uq_geo_place_names",
+            "idx_geo_place_names_key",
+            "idx_geo_place_names_place",
+            "content_signal_places_pkey",
+            "idx_content_signal_places_place",
+            "idx_content_signals_detector",
         }
         with db_conn.cursor() as cur:
             cur.execute("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")

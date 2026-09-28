@@ -36,7 +36,7 @@ _INSERT = (
     " char_start, char_end, language, calendar, resolution, date_from, date_to,"
     " text_orientation, anchor_date, evidence, dedup_key, method, confidence,"
     " confidence_basis, evidence_sentence, sentence_start, sentence_end) VALUES %s"
-    " ON CONFLICT (dedup_key) DO NOTHING RETURNING id"
+    " ON CONFLICT (dedup_key) DO NOTHING RETURNING id, dedup_key"
 )
 
 _UPSERT_RUN = (
@@ -51,8 +51,8 @@ _UPSERT_RUN = (
 )
 
 
-def _row(hash_id: int, sig: temporal_intel.TemporalSignal) -> Tuple:
-    return (hash_id, temporal_intel.DETECTOR_NAME, sig.detector_ver, sig.signal_type, sig.value,
+def _row(hash_id: int, detector: str, sig) -> Tuple:
+    return (hash_id, detector, sig.detector_ver, sig.signal_type, sig.value,
             sig.surface, sig.char_start, sig.char_end, sig.language, sig.calendar,
             sig.resolution, sig.date_from, sig.date_to, sig.text_orientation, sig.anchor_date,
             psycopg2.extras.Json(sig.evidence), sig.dedup_key(hash_id), sig.method,
@@ -60,37 +60,59 @@ def _row(hash_id: int, sig: temporal_intel.TemporalSignal) -> Tuple:
             sig.sentence_end)
 
 
-def store_detection(cur, hash_id: int, result: temporal_intel.DetectionResult, *,
-                    trigger: str, job_id: Optional[str] = None) -> Dict[str, Any]:
-    """Replace this content's temporal signals with ``result`` and record the run."""
+def store_detection(cur, hash_id: int, result, *, trigger: str,
+                    job_id: Optional[str] = None) -> Dict[str, Any]:
+    """Replace this content's signals from ``result.detector`` and record the run.
+
+    Place signals also get their candidate places (``content_signal_places``)
+    in the same transaction, so a place signal never exists without them.
+    """
+    detector = getattr(result, "detector", temporal_intel.DETECTOR_NAME)
     cur.execute("DELETE FROM content_signals WHERE hash_id = %s AND detector = %s",
-                (hash_id, temporal_intel.DETECTOR_NAME))
+                (hash_id, detector))
     replaced = cur.rowcount
     inserted = 0
     if result.signals:
-        rows = [_row(hash_id, s) for s in result.signals]
-        returned = psycopg2.extras.execute_values(cur, _INSERT, rows, page_size=500, fetch=True)
+        rows = [_row(hash_id, detector, s) for s in result.signals]
+        returned = psycopg2.extras.execute_values(
+            cur, _INSERT, rows, page_size=500, fetch=True)
         inserted = len(returned)
+        ids = {key: sid for sid, key in returned}
+        links = [(ids[s.dedup_key(hash_id)], pid) for s in result.signals
+                 if s.dedup_key(hash_id) in ids for pid in getattr(s, "place_ids", ())]
+        missing = [s.value for s in result.signals if s.signal_type == "place_mention"
+                   and s.dedup_key(hash_id) in ids and not getattr(s, "place_ids", ())]
+        if missing:
+            raise ValueError(f"place signals without candidate places: {missing[:3]}")
+        if links:
+            psycopg2.extras.execute_values(
+                cur, "INSERT INTO content_signal_places (signal_id, place_id) VALUES %s",
+                links, page_size=1000)
     status = "truncated" if result.truncated else "complete"
-    cur.execute(_UPSERT_RUN, (hash_id, temporal_intel.DETECTOR_NAME, result.detector_ver, status,
+    cur.execute(_UPSERT_RUN, (hash_id, detector, result.detector_ver, status,
                               result.anchor_date, result.chars_total, result.chars_scanned,
                               inserted, trigger, job_id, None))
-    return {"hash_id": hash_id, "status": status, "signals": inserted,
+    return {"hash_id": hash_id, "detector": detector, "status": status, "signals": inserted,
             "duplicates_skipped": len(result.signals) - inserted, "replaced": replaced,
             "truncated": result.truncated}
 
 
 def record_run(cur, hash_id: int, *, status: str, trigger: str, error: Optional[str] = None,
                anchor_date: Optional[datetime.date] = None, job_id: Optional[str] = None,
-               chars_total: Optional[int] = None) -> None:
+               chars_total: Optional[int] = None,
+               detector: str = temporal_intel.DETECTOR_NAME,
+               detector_ver: Optional[str] = None) -> None:
     """Record a run that produced no signals by design (no text) or failed."""
+    from services.detection import detectors
+
     if status == "failed" and not error:
         raise ValueError("a failed run must record its error")
+    if detector_ver is None:
+        detector_ver = detectors.recorded_version(cur, detector)
     if status == "no_text":
         cur.execute("DELETE FROM content_signals WHERE hash_id = %s AND detector = %s",
-                    (hash_id, temporal_intel.DETECTOR_NAME))
-    cur.execute(_UPSERT_RUN, (hash_id, temporal_intel.DETECTOR_NAME,
-                              temporal_intel.DETECTOR_VERSION, status, anchor_date, chars_total,
+                    (hash_id, detector))
+    cur.execute(_UPSERT_RUN, (hash_id, detector, detector_ver, status, anchor_date, chars_total,
                               0 if chars_total is not None else None, 0, trigger, job_id,
                               error[:2000] if error else None))
 
@@ -125,12 +147,17 @@ def stored_text(cur, hash_id: int) -> Optional[str]:
 
 
 def detect_and_store(cur, hash_id: int, text: Optional[str], anchor_date: Optional[datetime.date],
-                     *, trigger: str, job_id: Optional[str] = None) -> Dict[str, Any]:
+                     *, trigger: str, job_id: Optional[str] = None,
+                     detector: str = temporal_intel.DETECTOR_NAME) -> Dict[str, Any]:
+    """Run one detector over ``text`` and store its signals and run row."""
+    from services.detection import detectors
+
+    impl = detectors.get(detector)
     if text is None or not text.strip():
         record_run(cur, hash_id, status="no_text", trigger=trigger, anchor_date=anchor_date,
-                   job_id=job_id, chars_total=len(text or ""))
-        return {"hash_id": hash_id, "status": "no_text", "signals": 0}
-    result = temporal_intel.detect(text, anchor_date=anchor_date)
+                   job_id=job_id, chars_total=len(text or ""), detector=detector)
+        return {"hash_id": hash_id, "detector": detector, "status": "no_text", "signals": 0}
+    result = impl.detect(cur, text, anchor_date)
     return store_detection(cur, hash_id, result, trigger=trigger, job_id=job_id)
 
 
@@ -140,7 +167,7 @@ def detect_and_store(cur, hash_id: int, text: Optional[str], anchor_date: Option
 
 
 def signals_for(cur, hash_id: int, reference_date: datetime.date, *,
-                scope: AccessScope) -> Dict[str, Any]:
+                scope: AccessScope, detectors: Optional[Sequence[str]] = None) -> Dict[str, Any]:
     """Signals and run status for one content, with clock orientation computed
     against ``reference_date`` (explicit; never an implicit clock).
 
@@ -163,40 +190,68 @@ def signals_for(cur, hash_id: int, reference_date: datetime.date, *,
                     (hash_id, list(scope.allowed_source_ids)))
     if cur.fetchone() is None:
         raise LookupError(hash_id)
-    cur.execute("SELECT detector_ver, status, anchor_date, chars_total, chars_scanned,"
+    from core.detection.signal_model import ContentSignal
+    from services.detection import detectors as registry
+
+    wanted = registry.validate(list(detectors) if detectors else None)
+    cur.execute("SELECT detector, detector_ver, status, anchor_date, chars_total, chars_scanned,"
                 " signal_count, trigger, job_id, error, ran_at FROM content_signal_runs"
-                " WHERE hash_id = %s AND detector = %s",
-                (hash_id, temporal_intel.DETECTOR_NAME))
-    run = cur.fetchone()
-    cur.execute("SELECT signal_type, value, surface, char_start, char_end, language, calendar,"
-                " resolution, date_from, date_to, text_orientation, anchor_date, evidence,"
-                " detector_ver, method, confidence, confidence_basis, evidence_sentence,"
-                " sentence_start, sentence_end FROM content_signals WHERE hash_id = %s AND detector = %s"
-                " ORDER BY char_start, char_end, signal_type, value",
-                (hash_id, temporal_intel.DETECTOR_NAME))
+                " WHERE hash_id = %s AND detector = ANY(%s)", (hash_id, list(wanted)))
+    runs: Dict[str, Optional[Dict[str, Any]]] = {name: None for name in wanted}
+    for r in cur.fetchall():
+        current = registry.get(r[0]).version(cur)
+        runs[r[0]] = {"detector": r[0], "detector_ver": r[1], "status": r[2],
+                      "anchor_date": r[3].isoformat() if r[3] else None,
+                      "chars_total": r[4], "chars_scanned": r[5], "signal_count": r[6],
+                      "trigger": r[7], "job_id": r[8], "error": r[9],
+                      "ran_at": r[10].isoformat() if r[10] else None,
+                      "current_version": r[1] == current}
+    cur.execute("SELECT id, detector, signal_type, value, surface, char_start, char_end, language,"
+                " calendar, resolution, date_from, date_to, text_orientation, anchor_date,"
+                " evidence, detector_ver, method, confidence, confidence_basis,"
+                " evidence_sentence, sentence_start, sentence_end FROM content_signals"
+                " WHERE hash_id = %s AND detector = ANY(%s)"
+                " ORDER BY char_start, char_end, detector, signal_type, value",
+                (hash_id, list(wanted)))
+    rows = cur.fetchall()
+    candidates: Dict[int, List[Dict[str, Any]]] = {}
+    place_ids = [r[0] for r in rows if r[1] == "places"]
+    if place_ids:
+        cur.execute("SELECT csp.signal_id, g.place_key, g.label, g.feature_type, g.country_codes,"
+                    " g.latitude, g.longitude, g.retired FROM content_signal_places csp"
+                    " JOIN geo_places g ON g.id = csp.place_id WHERE csp.signal_id = ANY(%s)"
+                    " ORDER BY csp.signal_id, g.place_key", (place_ids,))
+        for c in cur.fetchall():
+            candidates.setdefault(c[0], []).append({
+                "place_key": c[1], "label": c[2], "feature_type": c[3],
+                "country_codes": list(c[4] or []), "latitude": c[5], "longitude": c[6],
+                "retired": c[7]})
     signals: List[Dict[str, Any]] = []
-    for row in cur.fetchall():
-        sig = temporal_intel.TemporalSignal(
-            signal_type=row[0], value=row[1], surface=row[2], char_start=row[3],
-            char_end=row[4], language=row[5], calendar=row[6], resolution=row[7],
-            date_from=row[8], date_to=row[9], text_orientation=row[10], anchor_date=row[11],
-            evidence=row[12] or {}, detector_ver=row[13], method=row[14],
-            confidence=row[15], confidence_basis=row[16], sentence=row[17],
-            sentence_start=row[18], sentence_end=row[19])
-        item = sig.to_dict()
-        item["clock_orientation"] = (sig.clock_orientation(reference_date)
-                                     if sig.signal_type != temporal_intel.SIGNAL_ORIENTATION
-                                     else None)
+    for row in rows:
+        fields = dict(
+            signal_type=row[2], value=row[3], surface=row[4], char_start=row[5],
+            char_end=row[6], language=row[7], calendar=row[8], resolution=row[9],
+            date_from=row[10], date_to=row[11], text_orientation=row[12], anchor_date=row[13],
+            evidence=row[14] or {}, detector_ver=row[15], method=row[16],
+            confidence=row[17], confidence_basis=row[18], sentence=row[19],
+            sentence_start=row[20], sentence_end=row[21])
+        if row[1] == temporal_intel.DETECTOR_NAME:
+            sig = temporal_intel.TemporalSignal(**fields)
+            item = sig.to_dict()
+            item["clock_orientation"] = (sig.clock_orientation(reference_date)
+                                         if sig.signal_type != temporal_intel.SIGNAL_ORIENTATION
+                                         else None)
+        else:
+            item = ContentSignal(**fields).to_dict()
+            item["clock_orientation"] = None
+        item["detector"] = row[1]
+        if row[1] == "places":
+            item["places"] = candidates.get(row[0], [])
         signals.append(item)
-    status = "not_analysed"
-    run_info = None
-    if run:
-        status = run[1]
-        run_info = {"detector_ver": run[0], "status": run[1],
-                    "anchor_date": run[2].isoformat() if run[2] else None,
-                    "chars_total": run[3], "chars_scanned": run[4], "signal_count": run[5],
-                    "trigger": run[6], "job_id": run[7], "error": run[8],
-                    "ran_at": run[9].isoformat() if run[9] else None,
-                    "current_version": run[0] == temporal_intel.DETECTOR_VERSION}
-    return {"hash_id": hash_id, "status": status, "run": run_info,
+    temporal_run = runs.get(temporal_intel.DETECTOR_NAME)
+    return {"hash_id": hash_id,
+            "status": temporal_run["status"] if temporal_run else "not_analysed",
+            "run": temporal_run,
+            "runs": {name: info or {"detector": name, "status": "not_analysed"}
+                     for name, info in runs.items()},
             "reference_date": reference_date.isoformat(), "signals": signals}

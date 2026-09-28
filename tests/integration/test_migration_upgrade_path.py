@@ -205,7 +205,7 @@ def test_m0018_keeps_pre_1_1_signals_and_enforces_complete_provenance(legacy_db)
         cur.execute(insert.format(cols="", vals=""), (seeded["hash_id"], "temporal-1.0.0", "b" * 64))
     conn.commit()
 
-    assert run_migrations(conn) == ["0018"]
+    assert run_migrations(conn)[0] == "0018"
     with conn.cursor() as cur:
         cur.execute("SELECT confidence, evidence_sentence FROM content_signals"
                     " WHERE dedup_key = %s", ("b" * 64,))
@@ -230,12 +230,60 @@ def test_m0018_keeps_pre_1_1_signals_and_enforces_complete_provenance(legacy_db)
                     (seeded["hash_id"], "temporal-1.1.0", "d" * 64, *good))
     conn.commit()
 
-    m18 = next(m for m in discover_migrations() if m.version == "0018")
-    m18.module.downgrade(conn)
+    # Reverse newest-first down to (and including) 0018.
+    for migration in reversed([m for m in discover_migrations() if m.version >= "0018"]):
+        migration.module.downgrade(conn)
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM schema_migrations WHERE version = %s", (migration.version,))
+        conn.commit()
     with conn.cursor() as cur:
-        cur.execute("DELETE FROM schema_migrations WHERE version = '0018'")
         cur.execute("SELECT count(*) FROM content_signals WHERE hash_id = %s", (seeded["hash_id"],))
         assert cur.fetchone()[0] == 2, "downgrade drops columns, not signals"
     conn.commit()
-    assert run_migrations(conn) == ["0018"]
+    assert run_migrations(conn)[0] == "0018"
 
+
+
+def test_m0019_keeps_legacy_geo_mentions_through_upgrade_and_downgrade(legacy_db):
+    """0019 replaces path_geo_mentions with a view: pre-existing rows written
+    by the old scan stay readable through it, and downgrade restores the
+    table with its rows and the m0017 resolution CHECK."""
+    conn, seeded = legacy_db
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO path_geo_mentions (hash_id, place_name, country, latitude,"
+                    " longitude, mention_count) VALUES (%s, 'Lagos', 'Nigeria', 6.5, 3.4, 3)",
+                    (seeded["hash_id"],))
+    conn.commit()
+    applied = run_migrations(conn)
+    assert applied[-1] >= "0019"
+    with conn.cursor() as cur:
+        cur.execute("SELECT place_name, country, mention_count, provenance FROM path_geo_mentions"
+                    " WHERE hash_id = %s", (seeded["hash_id"],))
+        assert cur.fetchall() == [("Lagos", "Nigeria", 3, "legacy_m0015")]
+        cur.execute("SELECT table_type FROM information_schema.tables"
+                    " WHERE table_name = 'path_geo_mentions'")
+        assert cur.fetchone()[0] == "VIEW"
+        cur.execute("SELECT count(*), bool_and(NOT retired) FROM geo_places")
+        assert cur.fetchone() == (223, True)
+    for migration in reversed([m for m in discover_migrations() if m.version >= "0019"]):
+        migration.module.downgrade(conn)
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM schema_migrations WHERE version = %s", (migration.version,))
+        conn.commit()
+    with conn.cursor() as cur:
+        cur.execute("SELECT table_type FROM information_schema.tables"
+                    " WHERE table_name = 'path_geo_mentions'")
+        assert cur.fetchone()[0] == "BASE TABLE"
+        cur.execute("SELECT place_name, mention_count FROM path_geo_mentions WHERE hash_id = %s",
+                    (seeded["hash_id"],))
+        assert cur.fetchall() == [("Lagos", 3)]
+        cur.execute("SELECT to_regclass('geo_places'), to_regclass('content_signal_places')")
+        assert cur.fetchone() == (None, None)
+        with pytest.raises(psycopg2.errors.CheckViolation) as info:
+            cur.execute("INSERT INTO content_signals (hash_id, detector, detector_ver, signal_type,"
+                        " value, surface, char_start, char_end, resolution, evidence, dedup_key)"
+                        " VALUES (%s, 'places', 'p', 'place_mention', 'v', 'x', 0, 1,"
+                        " 'identified', '{}', %s)", (seeded["hash_id"], "9" * 64))
+        assert info.value.diag.constraint_name == "ck_content_signals_resolution"
+    conn.rollback()
+    assert run_migrations(conn)[0] == "0019"

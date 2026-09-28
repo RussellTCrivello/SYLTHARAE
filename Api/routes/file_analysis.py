@@ -830,9 +830,15 @@ def fa_geolocation_places():
 @file_analysis_bp.route('/api/file-analysis/geolocation/scan', methods=['POST'])
 def fa_geolocation_scan():
     try:
+        # Delegates to the shared place detector / re-detection job
+        # (Api/services/geo_extraction_service.py); no longer writes
+        # paths.coordinates.
         force = request.args.get('force', 'false').lower() in ('1', 'true', 'yes')
-        summary = scan_and_tag_geolocations(force=force)
-        return jsonify({'success': True, 'summary': summary})
+        from core.security.flask_ext import current_user
+        user = current_user()
+        outcome = scan_and_tag_geolocations(
+            force=force, created_by=getattr(user, 'username', None) or 'system')
+        return jsonify({'success': True, **outcome})
     except Exception as e:
         logger.error(f"Error in fa_geolocation_scan: {e}", exc_info=True)
         return client_error(e, subsystem='Api.routes.file_analysis', success_key='success', status=500)

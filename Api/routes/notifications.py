@@ -48,26 +48,26 @@ def _current_signals(hash_id: int, reference_date: date) -> dict:
     """Stored signals for ``hash_id``; analyses it first when there is no run
     by the current detector version."""
     from Api.utils.utils import get_connection
-    from core.criteria.compiler import AccessScope
+    from core.criteria.access import scope_for
     from core.security.flask_ext import current_user
     from services.detection import signal_store
     from services.detection.redetection import redetect_one
 
     user = current_user()
-    scope = AccessScope.unrestricted(user_id=getattr(user, 'id', None),
-                                     role=getattr(user, 'role', None))
+    scope = scope_for(user)
 
     def read():
         with get_connection() as conn:
             try:
                 with conn.cursor() as cur:
-                    return signal_store.signals_for(cur, hash_id, reference_date, scope=scope)
+                    return signal_store.signals_for(cur, hash_id, reference_date, scope=scope,
+                                                    detectors=['temporal'])
             finally:
                 conn.rollback()
 
     body = read()
     if body['run'] is None or not body['run']['current_version']:
-        redetect_one(get_connection, hash_id)
+        redetect_one(get_connection, hash_id, detectors=['temporal'])
         body = read()
     return body
 

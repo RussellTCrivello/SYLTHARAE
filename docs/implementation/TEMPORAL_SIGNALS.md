@@ -11,7 +11,7 @@ turned "next week" into a concrete date.
 | --- | --- | --- |
 | Calendars | `core/detection/calendars.py` | Jalali (exact, 33-year arithmetic) and Hijri (tabular, returned as a +/-2 day range) to Gregorian |
 | Detector | `core/detection/temporal_intel.py` | `detect(text, anchor_date=None, languages=None)` - pure, deterministic, never reads the clock |
-| Store | `services/detection/signal_store.py` | Writes `content_signals` / `content_signal_runs`; `signals_for(cur, hash_id, reference_date, scope=)` reads with authorization |
+| Store | `services/detection/signal_store.py` | Writes `content_signals` / `content_signal_runs` for every registered detector (`services/detection/detectors.py`: `temporal`, `places` - see `PLACE_SIGNALS.md`); `signals_for(cur, hash_id, reference_date, scope=, detectors=)` reads with authorization |
 | Re-detection | `services/detection/redetection.py` | `run_redetection` (job) and `redetect_one`; one transaction per content |
 | Ingestion | `ContentDBService.process_full_document`, step 10 | Detects on the stored, sanitised display text inside its own savepoint |
 | Job type | `services/jobs/manager.py` `signal_redetection` | Existing JobManager; no second job framework |
@@ -158,6 +158,15 @@ removed from the settings page and is ignored if present in a settings file.
 The priority bands (7/30/90 days) are carried over unchanged from the
 previous implementation; they are product defaults, not sourced thresholds,
 and are replaced by computed priority in Phase 3.
+
+## Performance
+
+Evidence-sentence lookup was a linear scan over all sentences for every
+signal (O(signals x sentences)): 15 s for a dense 1 MB document. Both
+detectors now share `textspan.SentenceIndex` (binary search); the same
+megabyte takes 2.1 s for the temporal detector with identical output (all
+detector tests unchanged). `tools/perf/detector_throughput.py` reproduces
+the measurement.
 
 ## Verification
 

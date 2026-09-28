@@ -793,6 +793,18 @@
     "internal": true
   },
   {
+    "endpoint": "api_gazetteer",
+    "rule": "/api/gazetteer",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_get_category",
     "rule": "/api/categories/<int:category_id>",
     "methods": [
@@ -836,6 +848,30 @@
     ],
     "blueprint": "(app)",
     "module": "keywords",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_place",
+    "rule": "/api/places/<string:place_key>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_places",
+    "rule": "/api/places",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true

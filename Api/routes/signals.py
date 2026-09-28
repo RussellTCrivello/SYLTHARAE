@@ -1,7 +1,9 @@
-"""Content signals API (Phase 1: temporal signals, content-keyed).
+"""Content signals API (content-keyed; detectors ``temporal`` and ``places``).
 
 * ``GET  /api/content/<hash_id>/signals`` - any authenticated user. Signals
-  and the detection run status for one content. Authorization is enforced in
+  and the detection run status (per detector, ``runs``) for one content;
+  place signals carry their candidate places. ``detector`` (repeatable)
+  restricts the detectors returned. Authorization is enforced in
   ``signal_store.signals_for`` against the caller's ``AccessScope`` before
   anything is read; "absent" and "not permitted" are the same 404.
   ``reference_date`` (YYYY-MM-DD) sets the clock used for past/future
@@ -9,7 +11,8 @@
   response says so (``reference_date_source``) - the clock is never implicit.
 * ``POST /api/signals/redetect`` - administrators. Queues a
   ``signal_redetection`` job on the existing JobManager (no second job
-  framework). Body: ``{"scope": "stale"|"all"|"hash_ids", "hash_ids": [...]}``.
+  framework). Body: ``{"scope": "stale"|"all"|"hash_ids", "hash_ids": [...],
+  "detectors": ["temporal", "places"]}`` (``detectors`` optional, default all).
 """
 
 import datetime
@@ -18,9 +21,10 @@ import uuid
 
 from flask import jsonify, request
 
-from core.criteria.compiler import AccessScope
+from core.criteria.access import scope_for
 from core.security.flask_ext import admin_required, current_user, login_required
 from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
+from services.detection import detectors as detector_registry
 from services.detection import redetection, signal_store
 
 logger = logging.getLogger(__name__)
@@ -32,14 +36,6 @@ MAX_REDETECT_IDS = 10_000
 def _error(code, message, status):
     return jsonify({"success": False, "error": {
         "code": code, "message": message, "request_id": uuid.uuid4().hex[:12]}}), status
-
-
-def _scope_for(user) -> AccessScope:
-    # The schema has no per-source ACL: every authenticated role may read
-    # every source (docs/implementation/CRITERIA_SPINE.md). The scope is still
-    # passed down so a future ACL is enforced in SQL, not after retrieval.
-    return AccessScope.unrestricted(user_id=getattr(user, "id", None),
-                                    role=getattr(user, "role", None))
 
 
 def _parse_reference_date(raw):
@@ -61,6 +57,11 @@ def register_signal_routes(app):
             reference_date, source = _parse_reference_date(request.args.get("reference_date"))
         except ValueError as exc:
             return _error("VALIDATION_FAILED", str(exc), 400)
+        wanted = request.args.getlist("detector") or None
+        try:
+            detector_registry.validate(wanted)
+        except ValueError as exc:
+            return _error("VALIDATION_FAILED", str(exc), 400)
         from Api.utils.utils import get_connection
 
         try:
@@ -68,7 +69,8 @@ def register_signal_routes(app):
                 try:
                     with conn.cursor() as cur:
                         body = signal_store.signals_for(
-                            cur, hash_id, reference_date, scope=_scope_for(current_user()))
+                            cur, hash_id, reference_date, scope=scope_for(current_user()),
+                            detectors=wanted)
                 finally:
                     conn.rollback()  # read-only; never leave a transaction open
         except LookupError:
@@ -103,6 +105,10 @@ def register_signal_routes(app):
             hash_ids = sorted(set(raw))
         elif data.get("hash_ids"):
             return _error("VALIDATION_FAILED", "hash_ids is only valid with scope 'hash_ids'", 400)
+        try:
+            detectors = list(detector_registry.validate(data.get("detectors")))
+        except ValueError as exc:
+            return _error("VALIDATION_FAILED", str(exc), 400)
 
         from services.jobs.manager import JobManager
         from services.jobs.models import job_to_api
@@ -112,8 +118,9 @@ def register_signal_routes(app):
         try:
             job = manager.create_job(
                 "signal_redetection",
-                source=f"signals:{scope}" + (f":{len(hash_ids)}" if hash_ids else ""),
-                options={"scope": scope, "hash_ids": hash_ids},
+                source=f"signals:{scope}" + (f":{len(hash_ids)}" if hash_ids else "")
+                + f":{'+'.join(detectors)}",
+                options={"scope": scope, "hash_ids": hash_ids, "detectors": detectors},
                 created_by=getattr(user, "username", None) or "system",
             )
         except Exception:

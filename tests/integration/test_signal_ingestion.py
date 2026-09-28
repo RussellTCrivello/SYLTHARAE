@@ -107,7 +107,7 @@ def test_ingestion_stores_multilingual_signals_with_offsets_into_stored_text(pg_
         assert raw[ss:se] == sentence and ss <= cs < ce <= se, "sentence quotes stored text"
 
     run = _rows(pg_db, "SELECT status, signal_count, trigger, detector_ver, error"
-                       " FROM content_signal_runs WHERE hash_id = %s", (hash_id,))
+                       " FROM content_signal_runs WHERE hash_id = %s AND detector = 'temporal'", (hash_id,))
     assert run == [("complete", len(signals), "ingestion", DETECTOR_VERSION, None)]
 
 
@@ -138,7 +138,7 @@ def test_same_content_in_a_new_context_is_not_detected_twice(pg_db, tenant):
 
 def test_empty_text_is_recorded_as_no_text_not_as_nothing_found(pg_db, tenant):
     result = _store(tenant, raw_text="   ")
-    run = _rows(pg_db, "SELECT status, signal_count FROM content_signal_runs WHERE hash_id = %s",
+    run = _rows(pg_db, "SELECT status, signal_count FROM content_signal_runs WHERE hash_id = %s AND detector = 'temporal'",
                 (result["hash_id"],))
     assert run == [("no_text", 0)]
 
@@ -159,7 +159,7 @@ def test_a_database_error_in_detection_is_contained_and_recorded(pg_db, tenant, 
     status, detail = _rows(pg_db, "SELECT processing_status, status_detail FROM paths"
                                   " WHERE id = %s", (result["path_id"],))[0]
     assert status == "partially_processed" and "signals" in detail
-    run = _rows(pg_db, "SELECT status, error FROM content_signal_runs WHERE hash_id = %s",
+    run = _rows(pg_db, "SELECT status, error FROM content_signal_runs WHERE hash_id = %s AND detector = 'temporal'",
                 (hash_id,))
     assert run and run[0][0] == "failed" and "DivisionByZero" in run[0][1]
     assert _rows(pg_db, "SELECT count(*) FROM words_hashs WHERE hash_id = %s", (hash_id,))[0][0] > 0
@@ -183,7 +183,7 @@ def test_a_database_error_in_the_raw_text_step_is_contained(pg_db, tenant, monke
                                   " WHERE id = %s", (result["path_id"],))[0]
     assert status == "partially_processed" and "raw_text" in detail
     # Without stored text, signals are a recorded failure - not "none found".
-    run = _rows(pg_db, "SELECT status, error FROM content_signal_runs WHERE hash_id = %s",
+    run = _rows(pg_db, "SELECT status, error FROM content_signal_runs WHERE hash_id = %s AND detector = 'temporal'",
                 (result["hash_id"],))
     assert run[0][0] == "failed" and "display text was not stored" in run[0][1]
 
@@ -218,7 +218,7 @@ def test_redetection_job_applies_the_current_version_and_is_idempotent(pg_db, te
     assert versions == [(DETECTOR_VERSION,)], "old-version signals must be replaced, not kept"
     after = _rows(pg_db, "SELECT count(*) FROM content_signals WHERE hash_id = %s", (hash_id,))[0][0]
     assert after == before
-    run = _rows(pg_db, "SELECT trigger, job_id FROM content_signal_runs WHERE hash_id = %s",
+    run = _rows(pg_db, "SELECT trigger, job_id FROM content_signal_runs WHERE hash_id = %s AND detector = 'temporal'",
                 (hash_id,))[0]
     assert run == ("redetection", job["job_id"])
 
@@ -227,6 +227,7 @@ def test_redetection_job_applies_the_current_version_and_is_idempotent(pg_db, te
     from services.detection.redetection import run_redetection
     again = run_redetection(get_connection, scope="stale")
     stale_ids = _rows(pg_db, "SELECT count(*) FROM content_signal_runs WHERE hash_id = %s"
+                             " AND detector = 'temporal'"
                              " AND detector_ver <> %s", (hash_id, DETECTOR_VERSION))[0][0]
     assert stale_ids == 0
     second = run_redetection(get_connection, scope="stale")
@@ -322,7 +323,7 @@ def test_failed_run_requires_error_and_deleting_content_cascades(pg_db, tenant):
             assert cur.fetchone()[0] > 0
             # Content deletion cascades to its signals and runs.
             cur.execute("DELETE FROM content_signals WHERE hash_id = %s", (hash_id,))
-            cur.execute("SELECT count(*) FROM content_signal_runs WHERE hash_id = %s", (hash_id,))
+            cur.execute("SELECT count(*) FROM content_signal_runs WHERE hash_id = %s AND detector = 'temporal'", (hash_id,))
             assert cur.fetchone()[0] == 1
     finally:
         conn.rollback()
@@ -413,6 +414,6 @@ def test_redetect_api_is_admin_only_validated_and_uses_the_job_manager(
     assert resp.status_code == 200, resp.get_data(as_text=True)
     job = resp.get_json()["job"]
     assert job["job_type"] == "signal_redetection" and job["status"] == "COMPLETED"
-    run = _rows(pg_db, "SELECT trigger, job_id FROM content_signal_runs WHERE hash_id = %s",
+    run = _rows(pg_db, "SELECT trigger, job_id FROM content_signal_runs WHERE hash_id = %s AND detector = 'temporal'",
                 (hash_id,))[0]
     assert run == ("redetection", job["job_id"])

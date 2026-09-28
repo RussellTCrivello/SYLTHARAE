@@ -524,6 +524,7 @@ class JobManager:
                 get_connection, scope=options.get("scope", "stale"),
                 hash_ids=options.get("hash_ids"), job_id=job_id,
                 progress_cb=progress_cb, cancel_cb=cancelled,
+                detectors=options.get("detectors"),
             )
         raise ValueError(f"Unknown job type: {job_type}")
 

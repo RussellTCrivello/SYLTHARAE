@@ -39,6 +39,8 @@ from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from core.detection import calendars as cal
+from core.detection import textspan
+from core.detection.signal_model import ContentSignal
 
 DETECTOR_NAME = "temporal"
 DETECTOR_VERSION = "temporal-1.1.0"
@@ -69,7 +71,7 @@ CONFIDENCE_RULES = {
 
 #: Longest evidence sentence stored; longer ones are cut around the signal
 #: and flagged ``evidence["sentence_truncated"]`` - never silently.
-MAX_SENTENCE_CHARS = 1000
+MAX_SENTENCE_CHARS = textspan.MAX_SENTENCE_CHARS
 ORIENTATIONS = ("future", "present", "past")
 
 #: Texts longer than this are scanned up to the limit and the run is recorded
@@ -105,12 +107,7 @@ _CHAR_MAP = {
 _LATIN_FOLD = {"č": "c", "ć": "c", "š": "s", "ž": "z", "đ": "d"}
 
 
-def _dropped(ch: str) -> bool:
-    o = ord(ch)
-    return (0x064B <= o <= 0x065F or o == 0x0670 or o == 0x0640      # harakat, tatweel
-            or 0x0591 <= o <= 0x05C7 and ch not in "\u05BE\u05C3"      # niqqud/cantillation
-            or o in (0x200E, 0x200F, 0x061C, 0x2066, 0x2067, 0x2068, 0x2069,
-                     0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0xFEFF))
+_dropped = textspan.dropped
 
 
 def normalize(text: str) -> Tuple[str, List[int], Dict[str, int]]:
@@ -339,32 +336,9 @@ _RELATIVE_FIXED_RE = re.compile(r"(?<!\w)(?:" + "|".join(
 
 
 @dataclass(frozen=True)
-class TemporalSignal:
-    signal_type: str
-    value: str
-    surface: str
-    char_start: int
-    char_end: int
-    resolution: str
-    language: Optional[str] = None
-    calendar: Optional[str] = None
-    date_from: Optional[datetime.date] = None
-    date_to: Optional[datetime.date] = None
-    text_orientation: Optional[str] = None
-    anchor_date: Optional[datetime.date] = None
-    evidence: Dict = field(default_factory=dict, compare=False, hash=False)
+class TemporalSignal(ContentSignal):
+    """A temporal signal (fields: ``core.detection.signal_model.ContentSignal``)."""
     detector_ver: str = DETECTOR_VERSION
-    #: The pattern that matched (``evidence["pattern"]``), as a column.
-    method: Optional[str] = None
-    #: Ordinal detection confidence ``high``/``medium``/``low`` and the rule
-    #: that assigned it (see CONFIDENCE_RULES). Not a calibrated probability.
-    confidence: Optional[str] = None
-    confidence_basis: Optional[str] = None
-    #: The sentence containing the signal, quoted from the original text,
-    #: with its offsets (``sentence_start <= char_start < char_end <= sentence_end``).
-    sentence: Optional[str] = None
-    sentence_start: Optional[int] = None
-    sentence_end: Optional[int] = None
 
     def clock_orientation(self, reference_date: datetime.date) -> Optional[str]:
         """future/present/past relative to ``reference_date`` - or ``None``.
@@ -382,34 +356,6 @@ class TemporalSignal:
                     for a in readings}
         return verdicts.pop() if len(verdicts) == 1 else None
 
-    def dedup_key(self, hash_id: int) -> str:
-        """Stable identity of this signal for this content (NULL-safe).
-
-        JSON encodes a missing value as ``null``, which cannot collide with a
-        string, so two signals differing only in NULL vs "None" never merge.
-        """
-        payload = json.dumps([int(hash_id), self.detector_ver, self.signal_type, self.value,
-                              self.char_start, self.char_end,
-                              self.anchor_date.isoformat() if self.anchor_date else None],
-                             ensure_ascii=False, separators=(",", ":"))
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-    def to_dict(self) -> Dict:
-        return {
-            "signal_type": self.signal_type, "value": self.value, "surface": self.surface,
-            "char_start": self.char_start, "char_end": self.char_end,
-            "resolution": self.resolution, "language": self.language,
-            "calendar": self.calendar,
-            "date_from": self.date_from.isoformat() if self.date_from else None,
-            "date_to": self.date_to.isoformat() if self.date_to else None,
-            "text_orientation": self.text_orientation,
-            "anchor_date": self.anchor_date.isoformat() if self.anchor_date else None,
-            "evidence": self.evidence, "detector_ver": self.detector_ver,
-            "method": self.method, "confidence": self.confidence,
-            "confidence_basis": self.confidence_basis, "sentence": self.sentence,
-            "sentence_start": self.sentence_start, "sentence_end": self.sentence_end,
-        }
-
 
 @dataclass(frozen=True)
 class DetectionResult:
@@ -419,6 +365,7 @@ class DetectionResult:
     chars_total: int
     chars_scanned: int
     truncated: bool
+    detector: str = DETECTOR_NAME
 
     def by_type(self, signal_type: str) -> List[TemporalSignal]:
         return [s for s in self.signals if s.signal_type == signal_type]
@@ -827,8 +774,7 @@ def _relative_builder(ctx, ns, ne, amount, unit, lang, pattern_id, exact):
     return build
 
 
-_SENTENCE_END = re.compile(
-    r"(?:[!?؟۔]+|\n\s*\n|(?<![\d\s])\.(?=\s+\S)|(?<=(?<!\d)\d{4})\.(?=\s+\S)|\n)")
+_SENTENCE_END = textspan.SENTENCE_END
 
 
 def _confidence_basis(sig: "TemporalSignal") -> str:
@@ -855,39 +801,19 @@ def _with_provenance(ctx, sig: "TemporalSignal", sentences, reverse) -> "Tempora
     basis = _confidence_basis(sig)
     level = CONFIDENCE_RULES[basis][0]
     evidence = sig.evidence
-    s_start, s_end = sig.char_start, sig.char_end
-    pos = reverse.get(sig.char_start)
-    for ns, ne in sentences:
-        if pos is not None and ns <= pos < ne:
-            s_start, s_end = ctx.span(ns, ne)
-            break
-    # Trim surrounding whitespace, keeping the signal inside.
-    while s_start < sig.char_start and ctx.original[s_start].isspace():
-        s_start += 1
-    while s_end > sig.char_end and ctx.original[s_end - 1].isspace():
-        s_end -= 1
-    s_start, s_end = min(s_start, sig.char_start), max(s_end, sig.char_end)
-    if s_end - s_start > MAX_SENTENCE_CHARS:
-        half = max(0, (MAX_SENTENCE_CHARS - (sig.char_end - sig.char_start)) // 2)
-        s_start = max(s_start, sig.char_start - half)
-        s_end = min(s_end, max(sig.char_end + half, s_start + MAX_SENTENCE_CHARS))
+    sentence, s_start, s_end, truncated = textspan.quote_sentence(
+        ctx.original, ctx.span, sentences, reverse.get(sig.char_start),
+        sig.char_start, sig.char_end, MAX_SENTENCE_CHARS)
+    if truncated:
         evidence = dict(evidence, sentence_truncated=True)
     return TemporalSignal(**{**sig.__dict__, "evidence": evidence,
                              "method": evidence.get("pattern"), "confidence": level,
                              "confidence_basis": basis,
-                             "sentence": ctx.original[s_start:s_end],
+                             "sentence": sentence,
                              "sentence_start": s_start, "sentence_end": s_end})
 
 
-def _sentences(norm: str) -> List[Tuple[int, int]]:
-    spans, start = [], 0
-    for m in _SENTENCE_END.finditer(norm):
-        if m.end() > start:
-            spans.append((start, m.end()))
-        start = m.end()
-    if start < len(norm):
-        spans.append((start, len(norm)))
-    return spans
+_sentences = textspan.sentences
 
 
 def _orientation_cues(ctx: _Context, sentences):
@@ -977,11 +903,10 @@ def detect(text: Optional[str], *, anchor_date: Optional[datetime.date] = None,
                           "conflicting_cues": sorted(o for o in kept if o != orientation),
                           "note": "lexical cue, not a parsed tense"}))
 
+    sentence_index = textspan.SentenceIndex(sentences)
+
     def sentence_of(pos: int) -> int:
-        for i, (s, e) in enumerate(sentences):
-            if s <= pos < e:
-                return i
-        return -1
+        return sentence_index.find(pos)
 
     finished: List[TemporalSignal] = []
     reverse = {orig: i for i, orig in enumerate(index)}
@@ -993,7 +918,7 @@ def detect(text: Optional[str], *, anchor_date: Optional[datetime.date] = None,
             sig = TemporalSignal(**{**sig.__dict__, "text_orientation": orientation, "evidence": ev})
         finished.append(sig)
 
-    everything = sorted((_with_provenance(ctx, sig, sentences, reverse)
+    everything = sorted((_with_provenance(ctx, sig, sentence_index, reverse)
                          for sig in finished + orientation_signals),
                         key=lambda s: (s.char_start, s.char_end, s.signal_type, s.value))
     return DetectionResult(signals=tuple(everything), detector_ver=DETECTOR_VERSION,

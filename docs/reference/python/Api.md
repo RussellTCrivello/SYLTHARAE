@@ -399,6 +399,12 @@ Database Performance Monitoring API Routes
 - `get_slow_queries()` <sub>performance_bp.route('/queries/slow', methods=['GET'])</sub> - Get slow query information
 - `register_performance_routes(app)` - Register performance monitoring routes
 
+### `Api/routes/places.py`
+
+Gazetteer read API (Phase 2). Any authenticated user; read-only.
+
+- `register_place_routes(app)`
+
 ### `Api/routes/preview.py`
 
 File-preview endpoints backed by opaque file IDs, never server paths.
@@ -432,7 +438,7 @@ Sides routes
 
 ### `Api/routes/signals.py`
 
-Content signals API (Phase 1: temporal signals, content-keyed).
+Content signals API (content-keyed; detectors ``temporal`` and ``places``).
 
 - `register_signal_routes(app)`
 
@@ -554,14 +560,9 @@ File Preview Service
 
 ### `Api/services/geo_extraction_service.py`
 
-Content-based geolocation extraction (File Analysis: Geolocation).
+Geolocation scan (``POST /api/file-analysis/geolocation/scan``) - compatibility.
 
-- `scan_and_tag_geolocations(force: bool = False) -> dict` - Scan every canonical content's real extracted text for gazetteer places.
-
-### `Api/services/geo_gazetteer.py`
-
-A small, static world-places gazetteer used for content-based geotagging.
-
+- `scan_and_tag_geolocations(force: bool = False, *, created_by: str = 'system') -> Dict[str, Any]` - Run place detection over stored content through the job manager.
 
 ### `Api/services/import_service.py`
 
