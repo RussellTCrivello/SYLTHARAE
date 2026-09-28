@@ -709,6 +709,18 @@
     "internal": true
   },
   {
+    "endpoint": "api_export_search_columns",
+    "rule": "/api/search/export/columns",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "search",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_export_search_filenames",
     "rule": "/api/search/export-filenames",
     "methods": [
@@ -752,6 +764,18 @@
     ],
     "blueprint": "(app)",
     "module": "categories",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_formats_overview",
+    "rule": "/api/formats/overview",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "api",
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
@@ -1810,6 +1834,246 @@
     "internal": true
   },
   {
+    "endpoint": "file_analysis.fa_categories",
+    "rule": "/api/file-analysis/categories",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_category_detail",
+    "rule": "/api/file-analysis/categories/<int:category_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_category_keywords",
+    "rule": "/api/file-analysis/categories/<int:category_id>/keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_category_words",
+    "rule": "/api/file-analysis/categories/<int:category_id>/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_geolocation_places",
+    "rule": "/api/file-analysis/geolocation/places",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_geolocation_scan",
+    "rule": "/api/file-analysis/geolocation/scan",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_keywords",
+    "rule": "/api/file-analysis/keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_overview",
+    "rule": "/api/file-analysis/overview",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_relations",
+    "rule": "/api/file-analysis/relations",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_rows",
+    "rule": "/api/file-analysis/rows",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_side_categories",
+    "rule": "/api/file-analysis/sides/<int:side_id>/categories",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_side_keywords",
+    "rule": "/api/file-analysis/sides/<int:side_id>/keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_side_words",
+    "rule": "/api/file-analysis/sides/<int:side_id>/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_sides",
+    "rule": "/api/file-analysis/sides",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_source_categories",
+    "rule": "/api/file-analysis/sources/<int:source_id>/categories",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_source_keywords",
+    "rule": "/api/file-analysis/sources/<int:source_id>/keywords",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_source_words",
+    "rule": "/api/file-analysis/sources/<int:source_id>/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_sources",
+    "rule": "/api/file-analysis/sources",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_titles",
+    "rule": "/api/file-analysis/titles",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_analysis.fa_words",
+    "rule": "/api/file-analysis/words",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_analysis",
+    "module": "file_analysis",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "file_classification_page",
     "rule": "/analysis/classification",
     "methods": [
@@ -1881,6 +2145,18 @@
     "classification": "ACTION",
     "owned_by": "file_library",
     "internal": false
+  },
+  {
+    "endpoint": "files.export_excerpt",
+    "rule": "/api/files/excerpt/export",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
   },
   {
     "endpoint": "files.export_file_names",

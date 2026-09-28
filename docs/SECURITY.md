@@ -86,6 +86,13 @@ in [reference/HTTP_ROUTES.md](reference/HTTP_ROUTES.md).
 Backup export and restore (`/api/import-export/*`) contain or replace every
 evidence table and are therefore admin-only (SEC-02).
 
+**Saved searches are owned.** `/api/search/saved/<id>` (GET/PUT/DELETE)
+answers `404` unless the caller owns the search, or is an administrator and
+the search is *unowned* (legacy entries saved before per-user accounts). A
+`404` rather than `403` avoids confirming that another user's id exists.
+Previously any authenticated user could read, rename or delete any saved
+search by id (`tests/integration/test_saved_searches_pg.py`).
+
 The **setup wizard** is public only until installation: after that `/setup`
 redirects home, `/api/setup/install` answers 409, and the system check and
 database probe require an administrator (AUDIT-SETUP-01).
@@ -196,7 +203,7 @@ resource, detail, client address, time): `login.success`, `login.failed`,
 `user.delete`, `user.password_reset`, `user.password_recovery`,
 `user.first_admin_created`, `bootstrap.initial_admin_created`,
 `setup.initial_admin_created`, `jobs.cancel`, `password.change_failed`,
-`password.change_locked`. Behind a reverse proxy set `TRUSTED_PROXY_COUNT` so
+`password.change_locked`, `DATA_EXPORTED`. Behind a reverse proxy set `TRUSTED_PROXY_COUNT` so
 the recorded address is the client's, not the proxy's (AUDIT-PROXY-01).
 
 The address is always the one `TRUSTED_PROXY_COUNT` establishes
@@ -205,6 +212,26 @@ sign-out and password records used to take the first `X-Forwarded-For` value
 themselves, which any client can write (AUDIT-PROXY-02). The live smoke test
 sends a forged `X-Forwarded-For` on every request and checks that it never
 reaches the log.
+
+### Disclosure register (`DATA_EXPORTED`)
+
+Every response that hands the client a file (`Content-Disposition:
+attachment`) - search exports, bulk file exports, keyword and category
+exports, backups, original-file downloads - writes one `DATA_EXPORTED`
+record: actor and role, time, endpoint, filename, format, and the SHA-256
+and size of the bytes actually sent. Routes that know more add it (search
+exports add scope, row count, total, truncation, the criteria fingerprint
+and the full request fingerprint). The response carries
+`X-Disclosure-Audit-Id`.
+
+Coverage is enforced centrally (`core/security/disclosure.py`, an
+`after_request` hook), so a new export route cannot be added unrecorded. The
+hook **fails closed**: if the record cannot be written the export is replaced
+by `503 disclosure_audit_failed` and nothing is sent. The digest is computed
+before gzip compression. Bodies larger than 64 MiB that are streamed from
+disk are recorded with `"sha256": null` and the reason, never a guessed
+value. Inline previews (`as_attachment=False`) are not disclosures and are
+not recorded. Tests: `tests/integration/test_disclosure_audit.py`.
 
 ## 8. Dependencies
 

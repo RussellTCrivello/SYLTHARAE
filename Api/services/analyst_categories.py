@@ -46,31 +46,18 @@ DEFAULT_SCOPE = SCOPE_UNCATEGORIZED
 SCOPE_SESSION_KEY = "analyst_search_scope"
 
 
-def _escape_like(value: str) -> str:
-    """Escape ILIKE wildcards/backslashes in user-supplied filter text so a
-    literal ``%``/``_`` in a category name, query or file path is matched
-    literally instead of acting as a wildcard."""
-    return (
-        str(value)
-        .replace("\\", "\\\\")
-        .replace("%", "\\%")
-        .replace("_", "\\_")
-    )
+# One LIKE-escaping implementation for the whole product (core/criteria/sql.py).
+from core.criteria.sql import escape_like as _escape_like  # noqa: E402
+from core.criteria.model import normalize_analyst_scope as _normalize_analyst_scope  # noqa: E402
 
 
 def normalize_scope(scope: Optional[str]) -> str:
-    """Return a validated search scope, defaulting to uncategorized (FR-2.1)."""
-    if scope is None:
-        return DEFAULT_SCOPE
-    value = str(scope).strip().lower()
-    if value in VALID_SCOPES:
-        return value
-    # Common aliases accepted for convenience
-    if value in ("analyst_categorized", "analyst-categorized", "categorised"):
-        return SCOPE_CATEGORIZED
-    if value in ("", "default", "uncategorised"):
-        return SCOPE_UNCATEGORIZED
-    return DEFAULT_SCOPE
+    """Return a validated search scope, defaulting to uncategorized (FR-2.1).
+
+    Delegates to the shared normaliser so search, saved-search mapping,
+    reports and monitoring can never disagree about what a scope means.
+    """
+    return _normalize_analyst_scope(scope)
 
 
 def scope_condition(scope: Optional[str], alias: str = "p") -> Optional[str]:

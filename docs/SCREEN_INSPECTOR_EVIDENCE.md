@@ -83,7 +83,7 @@ with the evidence.
 
 | Action | Status | Where | Shared surface it uses |
 | --- | --- | --- | --- |
-| `files.reprocess` | declared, not built | Api/blueprints/files.py:122 | the shared record action surface |
+| `files.reprocess` | declared, not built | Api/blueprints/files.py:123 | the shared record action surface |
 | `files.analyze_selected` | presented, nothing binds it | file_library | the shared record action surface |
 | `files.delete_selected` | presented, nothing binds it | file_library | the shared record action surface |
 | `files.export_selected` | presented, nothing binds it | file_library | the shared record action surface |

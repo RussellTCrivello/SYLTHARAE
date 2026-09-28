@@ -43,6 +43,8 @@ class TestBootstrap:
             "titles_content", "keywords", "words_hashs", "keywords_hashs", "alerts",
             "users", "sessions", "audit_log", "schema_migrations",
             "translation_overrides",
+            # m0016: saved searches moved from data/saved_searches.json
+            "saved_searches", "saved_search_imports",
         }
         with db_conn.cursor() as cur:
             cur.execute(
@@ -70,6 +72,12 @@ class TestBootstrap:
             "idx_paths_file_path",
             "idx_paths_parent_path_id",
             "idx_titles_content_hash_id",
+            # m0016
+            "idx_saved_searches_owner_created",
+            "idx_saved_searches_fingerprint",
+            "idx_saved_searches_monitor",
+            "uq_saved_searches_legacy",
+            "uq_saved_search_imports_sha",
         }
         with db_conn.cursor() as cur:
             cur.execute("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")

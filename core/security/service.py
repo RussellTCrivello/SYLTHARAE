@@ -557,6 +557,41 @@ class AuthService:
         except Exception:
             logger.exception("Failed to write audit record for action=%s", action)
 
+    def audit_strict(
+        self,
+        action: str,
+        user_id: Optional[int] = None,
+        username: Optional[str] = None,
+        resource: Optional[str] = None,
+        detail: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None,
+    ) -> int:
+        """Append an audit record and return its id - or raise.
+
+        ``audit()`` never raises, which is right for login bookkeeping but
+        wrong for events whose *absence* is itself a governance failure. A
+        data disclosure (``DATA_EXPORTED``) must not happen unrecorded, so the
+        disclosure hook uses this variant and refuses the export when the
+        record cannot be written.
+        """
+        with self._conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO audit_log (user_id, username, action, resource, detail,"
+                " ip_address) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                (
+                    user_id,
+                    username,
+                    action,
+                    (resource or "")[:255] or None,
+                    psycopg2.extras.Json(detail) if detail else None,
+                    ip_address,
+                ),
+            )
+            audit_id = cur.fetchone()
+            conn.commit()
+        audit_id = audit_id[0] if not isinstance(audit_id, dict) else audit_id["id"]
+        return int(audit_id)
+
 
 _service: Optional[AuthService] = None
 

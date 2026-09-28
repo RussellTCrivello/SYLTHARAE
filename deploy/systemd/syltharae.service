@@ -43,8 +43,10 @@ AmbientCapabilities=
 ProtectSystem=strict
 # The data directory, plus the install directory for the files the app keeps
 # there: .env (setup wizard), .flask_secret_key, .system_initialized,
-# data/settings.json (+ data/settings_backups/), data/search_history.json,
-# data/saved_searches.json and core/.app_instance.lock. Moving these under
+# data/settings.json (+ data/settings_backups/), data/search_history.json
+# and core/.app_instance.lock. (data/saved_searches.json is no longer written:
+# saved searches live in PostgreSQL since migration 0016; a legacy file is
+# only read once, for import.) Moving these under
 # APP_DATA_DIR so the code can be read-only is follow-up DEPLOY-RW-01
 # (AUDIT_REPORT.md).
 ReadWritePaths=/var/lib/syltharae /opt/syltharae

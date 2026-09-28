@@ -702,6 +702,74 @@ def resolve(request: SearchExportRequest, analyst_scope: str) -> SearchExportRes
     return result
 
 
+def criteria_for(request: SearchExportRequest, analyst_scope: Optional[str] = None):
+    """The canonical ``Criteria`` this export's matching set corresponds to.
+
+    Used for the disclosure record's ``criteria_fingerprint``: the same
+    fingerprint a saved search or monitoring rule with the same conditions
+    carries, so the register can answer "which exports disclosed what this
+    rule watches?". ``selected`` exports are an explicit id list, not a
+    query, and have no criteria (``None``).
+    """
+    from core.criteria import Criteria, SearchOptions, Sort
+
+    if request.scope == "selected":
+        return None
+    from core.criteria.model import normalize_analyst_scope
+
+    scope = normalize_analyst_scope(analyst_scope or request.analyst_scope)
+    sort_by = request.sort_by if request.sort_by in (
+        "relevance", "date", "name", "type", "size") else "relevance"
+    return Criteria(
+        text=request.bounded_query or None,
+        case_sensitive=request.case_sensitive,
+        whole_word=request.whole_word,
+        categories=tuple(sorted(set(request.category_ids))),
+        analyst_categories=tuple(sorted(set(request.analyst_category_ids))),
+        analyst_scope=scope,
+        sources=tuple(sorted(set(request.source_ids))),
+        sides=tuple(sorted(set(request.side_ids))),
+        file_types=tuple(sorted(set(request.file_types))),
+        file_statuses=(tuple(sorted(set(request.file_statuses)))
+                       if request.file_statuses is not None else None),
+        date_from=request.date_from,
+        date_to=request.date_to,
+        hide_duplicates=request.hide_duplicates,
+        sort=(Sort(sort_by, "asc" if request.sort_order == "asc" else "desc"),),
+        options=SearchOptions(use_fuzzy=request.use_fuzzy,
+                              use_expansion=request.use_expansion,
+                              use_bm25=request.use_bm25),
+    )
+
+
+def disclosure_detail(result: SearchExportResult, analyst_scope: Optional[str],
+                      kind: str = "search_export") -> Dict[str, Any]:
+    """Facts about this export for the DATA_EXPORTED audit record."""
+    from core.criteria import sha256_hex
+
+    req = result.request
+    criteria = None
+    try:
+        criteria = criteria_for(req, analyst_scope)
+    except Exception as exc:  # a definition the criteria model refuses is recorded as such
+        logger.warning("export criteria not representable: %s", exc)
+    return {
+        "kind": kind,
+        "scope": req.scope,
+        "format": req.format,
+        "row_count": result.exported,
+        "total": result.total,
+        "truncated": result.truncated,
+        "cap": MAX_ROWS,
+        "criteria_fingerprint": criteria.fingerprint() if criteria else None,
+        "query_fingerprint": sha256_hex(req.definition),
+        "sources": sorted({int(r.get("source_id")) for r in result.rows
+                           if str(r.get("source_id") or "").isdigit()}),
+        "columns": list(req.resolved_columns),
+        "path_ids": list(req.path_ids) if req.scope == "selected" else None,
+    }
+
+
 def suggested_filename(request: SearchExportRequest) -> str:
     """A stable, harmless name: the export's own description, sanitised."""
     def _safe(value: str, limit: int) -> str:
@@ -788,6 +856,8 @@ __all__ = [
     "MAX_ROWS",
     "SearchExportRequest",
     "SearchExportResult",
+    "criteria_for",
+    "disclosure_detail",
     "export_bytes",
     "normalise",
     "parse",
