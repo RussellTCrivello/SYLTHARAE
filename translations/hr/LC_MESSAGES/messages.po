@@ -11320,3 +11320,47 @@ msgstr "Dokument %(id)s"
 #: templates/Monitoring/monitoring.html
 msgid "Your role can view monitoring but not change it."
 msgstr "Vaša uloga može pregledavati praćenje, ali ga ne može mijenjati."
+
+#: core/reporting/definitions.py
+msgid "Search Results Report"
+msgstr "Izvješće o rezultatima pretraživanja"
+
+#: core/reporting/definitions.py
+msgid "Every file that matches a saved set of search criteria, with the exact match count."
+msgstr "Svaka datoteka koja odgovara spremljenom skupu kriterija pretraživanja, uz točan broj podudaranja."
+
+#: core/reporting/definitions.py
+msgid "Search criteria"
+msgstr "Kriteriji pretraživanja"
+
+#: core/reporting/definitions.py
+msgid "File ID"
+msgstr "ID datoteke"
+
+#: core/reporting/definitions.py
+msgid "File name"
+msgstr "Naziv datoteke"
+
+#: core/reporting/definitions.py
+msgid "File type"
+msgstr "Vrsta datoteke"
+
+#: core/reporting/definitions.py
+msgid "File date"
+msgstr "Datum datoteke"
+
+#: core/reporting/definitions.py
+msgid "Content ID"
+msgstr "ID sadržaja"
+
+#: core/reporting/definitions.py
+msgid "Matching files"
+msgstr "Odgovarajuće datoteke"
+
+#: core/reporting/definitions.py
+msgid "About the Search Results Report"
+msgstr "O izvješću o rezultatima pretraživanja"
+
+#: core/reporting/definitions.py
+msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
+msgstr "Navodi datoteke koje u jednom trenutku odgovaraju vašim kriterijima, navodi ukupan broj podudaranja i upozorava kada je popis skraćen."

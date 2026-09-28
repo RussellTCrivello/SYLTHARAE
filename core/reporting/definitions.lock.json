@@ -1,0 +1,9 @@
+{
+  "datasets": {
+    "search_results.count@1": "4ffcaaa72705048eb986b46129c8f2383bd3cd08da18c96e535b7ee6c5db6764",
+    "search_results.matches@1": "15491b6eaa13b19a29c7b137fedae1869af10e48c69ae8b761d3e77505862df1"
+  },
+  "reports": {
+    "search_results@1": "82cd519e3d801e3b283bd6e00f66f2b0b87d2b6607d72545949ddf618b2b8f97"
+  }
+}

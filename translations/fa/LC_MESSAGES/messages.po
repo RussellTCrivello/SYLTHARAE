@@ -11211,3 +11211,47 @@ msgstr "سند %(id)s"
 #: templates/Monitoring/monitoring.html
 msgid "Your role can view monitoring but not change it."
 msgstr "نقش شما اجازهٔ مشاهدهٔ پایش را می‌دهد، نه تغییر آن."
+
+#: core/reporting/definitions.py
+msgid "Search Results Report"
+msgstr "گزارش نتایج جستجو"
+
+#: core/reporting/definitions.py
+msgid "Every file that matches a saved set of search criteria, with the exact match count."
+msgstr "همهٔ فایل‌هایی که با مجموعه‌ای ذخیره‌شده از معیارهای جستجو مطابقت دارند، همراه با تعداد دقیق موارد مطابق."
+
+#: core/reporting/definitions.py
+msgid "Search criteria"
+msgstr "معیارهای جستجو"
+
+#: core/reporting/definitions.py
+msgid "File ID"
+msgstr "شناسهٔ فایل"
+
+#: core/reporting/definitions.py
+msgid "File name"
+msgstr "نام فایل"
+
+#: core/reporting/definitions.py
+msgid "File type"
+msgstr "نوع فایل"
+
+#: core/reporting/definitions.py
+msgid "File date"
+msgstr "تاریخ فایل"
+
+#: core/reporting/definitions.py
+msgid "Content ID"
+msgstr "شناسهٔ محتوا"
+
+#: core/reporting/definitions.py
+msgid "Matching files"
+msgstr "فایل‌های مطابق"
+
+#: core/reporting/definitions.py
+msgid "About the Search Results Report"
+msgstr "دربارهٔ گزارش نتایج جستجو"
+
+#: core/reporting/definitions.py
+msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
+msgstr "فایل‌هایی را که در یک لحظه با معیارهای شما مطابقت دارند فهرست می‌کند، تعداد کل موارد مطابق را بیان می‌کند و هنگامی که فهرست کوتاه شده باشد آن را اعلام می‌کند."

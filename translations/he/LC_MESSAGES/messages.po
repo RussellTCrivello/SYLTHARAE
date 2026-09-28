@@ -10915,3 +10915,47 @@ msgstr "מסמך %(id)s"
 #: templates/Monitoring/monitoring.html
 msgid "Your role can view monitoring but not change it."
 msgstr "התפקיד שלך מאפשר לצפות בניטור אך לא לשנות אותו."
+
+#: core/reporting/definitions.py
+msgid "Search Results Report"
+msgstr "דוח תוצאות חיפוש"
+
+#: core/reporting/definitions.py
+msgid "Every file that matches a saved set of search criteria, with the exact match count."
+msgstr "כל קובץ שתואם קבוצה שמורה של קריטריוני חיפוש, עם המספר המדויק של ההתאמות."
+
+#: core/reporting/definitions.py
+msgid "Search criteria"
+msgstr "קריטריוני חיפוש"
+
+#: core/reporting/definitions.py
+msgid "File ID"
+msgstr "מזהה קובץ"
+
+#: core/reporting/definitions.py
+msgid "File name"
+msgstr "שם קובץ"
+
+#: core/reporting/definitions.py
+msgid "File type"
+msgstr "סוג קובץ"
+
+#: core/reporting/definitions.py
+msgid "File date"
+msgstr "תאריך קובץ"
+
+#: core/reporting/definitions.py
+msgid "Content ID"
+msgstr "מזהה תוכן"
+
+#: core/reporting/definitions.py
+msgid "Matching files"
+msgstr "קבצים תואמים"
+
+#: core/reporting/definitions.py
+msgid "About the Search Results Report"
+msgstr "אודות דוח תוצאות החיפוש"
+
+#: core/reporting/definitions.py
+msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
+msgstr "מציג את הקבצים שתואמים את הקריטריונים שלך ברגע אחד, מציין כמה התאימו בסך הכול ומודיע כאשר הרשימה מקוצרת."

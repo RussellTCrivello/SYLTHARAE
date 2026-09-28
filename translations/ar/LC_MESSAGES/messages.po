@@ -11077,3 +11077,47 @@ msgstr "المستند %(id)s"
 #: templates/Monitoring/monitoring.html
 msgid "Your role can view monitoring but not change it."
 msgstr "يتيح لك دورك عرض المراقبة دون تغييرها."
+
+#: core/reporting/definitions.py
+msgid "Search Results Report"
+msgstr "تقرير نتائج البحث"
+
+#: core/reporting/definitions.py
+msgid "Every file that matches a saved set of search criteria, with the exact match count."
+msgstr "كل ملف يطابق مجموعة محفوظة من معايير البحث، مع العدد الدقيق للمطابقات."
+
+#: core/reporting/definitions.py
+msgid "Search criteria"
+msgstr "معايير البحث"
+
+#: core/reporting/definitions.py
+msgid "File ID"
+msgstr "معرّف الملف"
+
+#: core/reporting/definitions.py
+msgid "File name"
+msgstr "اسم الملف"
+
+#: core/reporting/definitions.py
+msgid "File type"
+msgstr "نوع الملف"
+
+#: core/reporting/definitions.py
+msgid "File date"
+msgstr "تاريخ الملف"
+
+#: core/reporting/definitions.py
+msgid "Content ID"
+msgstr "معرّف المحتوى"
+
+#: core/reporting/definitions.py
+msgid "Matching files"
+msgstr "الملفات المطابقة"
+
+#: core/reporting/definitions.py
+msgid "About the Search Results Report"
+msgstr "حول تقرير نتائج البحث"
+
+#: core/reporting/definitions.py
+msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
+msgstr "يسرد الملفات التي تطابق معاييرك في لحظة واحدة، ويذكر العدد الإجمالي للمطابقات، وينبّه عندما تكون القائمة مختصرة."
