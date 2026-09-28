@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% from 'components/table.html' import data_table %}
+{% from 'components/states.html' import state_panel %}
+
+{% block title %}{{ _('Reports') }}{% endblock %}
+
+{% block content %}
+<div class="page-container" id="reportsPage">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="bi bi-file-earmark-bar-graph me-2"></i>
+                {{ _('Reports') }}
+            </h1>
+            <p class="text-muted mb-0">{{ _('Run a registered report and read exactly what it computed: every dataset comes from one database snapshot, with its counts and any shortening stated.') }}</p>
+        </div>
+    </div>
+
+    {% from 'components/page_tips.html' import page_tips %}
+    {% call page_tips() %}
+    <div class="tips-section">
+        <div class="tips-section-title"><i class="bi bi-info-circle"></i> {{ _('How reports work') }}</div>
+        <ul class="tips-list">
+            <li>{{ _('A report is a reviewed, versioned definition. Changing what a report means creates a new version; a run always records the version and fingerprint it used.') }}</li>
+            <li>{{ _('A run is a background job. All its datasets are read from the same database snapshot, so the numbers in one run always agree with each other.') }}</li>
+            <li>{{ _('Each dataset states its limit: exact results are complete or the run fails; capped and top-N results say when rows were left out.') }}</li>
+            <li>{{ _('Only documents you may read are included. You see your own runs; administrators can see everyone\'s.') }}</li>
+        </ul>
+    </div>
+    {% endcall %}
+
+    {# Filled with the server's message by reports-page.js (showError). #}
+    <div id="reportsError" class="d-none">
+        {{ state_panel('error', 'bi-exclamation-octagon', title=_('The request failed'), message=' ',
+                       tone='text-danger', role='alert') }}
+    </div>
+    <div id="reportsNotice" class="d-none" role="status"></div>
+
+    {# ------------------------------------------------------------- Run form #}
+    <form id="reportForm" class="card mb-3" autocomplete="off">
+        <div class="card-body">
+            <h2 class="fs-5">{{ _('Run a report') }}</h2>
+            <label class="form-label" for="reportSelect">{{ _('Report') }}</label>
+            <select class="form-select form-select-sm mb-2" id="reportSelect"></select>
+            <div id="reportAbout" class="small mb-2"></div>
+            <div id="reportParameters"></div>
+            <div class="d-flex gap-2 mt-2 align-items-center">
+                <button type="submit" class="btn btn-primary btn-sm" id="reportRun"><i class="bi bi-play-fill me-1"></i>{{ _('Run report') }}</button>
+                <div id="reportJob" class="small" aria-live="polite"></div>
+            </div>
+        </div>
+    </form>
+
+    {# ----------------------------------------------------------- Run history #}
+    <section class="mb-3" aria-labelledby="runsTitle">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <h2 class="fs-5 m-0" id="runsTitle">{{ _('Runs') }}</h2>
+            <div class="d-flex gap-2 align-items-center">
+                {% if page_data.is_admin %}
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="runAllUsers">
+                    <label class="form-check-label small" for="runAllUsers">{{ _('All users') }}</label>
+                </div>
+                {% endif %}
+                <label class="small" for="runStatus">{{ _('Status') }}</label>
+                <select class="form-select form-select-sm w-auto" id="runStatus">
+                    <option value="">{{ _('All') }}</option>
+                    <option value="completed">{{ _('Completed') }}</option>
+                    <option value="failed">{{ _('Failed') }}</option>
+                    <option value="refused">{{ _('Refused') }}</option>
+                    <option value="cancelled">{{ _('Cancelled') }}</option>
+                    <option value="running">{{ _('Running') }}</option>
+                    <option value="queued">{{ _('Queued') }}</option>
+                </select>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="runRefresh"><i class="bi bi-arrow-clockwise me-1"></i>{{ _('Refresh') }}</button>
+            </div>
+        </div>
+        {% call data_table(id='runTable', variant='sm table-hover align-middle') %}
+            <thead><tr>
+                <th>{{ _('Requested') }}</th><th>{{ _('Report') }}</th><th>{{ _('Status') }}</th>
+                <th>{{ _('Rows') }}</th><th>{{ _('Requested by') }}</th>
+            </tr></thead>
+            <tbody id="runRows"></tbody>
+        {% endcall %}
+        <nav id="runPager" class="d-flex justify-content-between align-items-center"></nav>
+    </section>
+
+    {# ------------------------------------------------------------ Run detail #}
+    <section id="runDetail" class="card mb-3 d-none" aria-labelledby="runDetailTitle">
+        <div class="card-body">
+            <h2 class="fs-5 mb-1" id="runDetailTitle"></h2>
+            <div id="runOutcome" class="mb-2" role="status"></div>
+            <details class="mb-2">
+                <summary>{{ _('Provenance') }}</summary>
+                <dl id="runProvenance" class="row small mb-0 mt-2"></dl>
+            </details>
+            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                <label class="small" for="runDatasetSelect">{{ _('Dataset') }}</label>
+                <select class="form-select form-select-sm w-auto" id="runDatasetSelect"></select>
+            </div>
+            <div id="runDatasetNote" class="small mb-2" role="status"></div>
+            {% call data_table(id='runDataTable', variant='sm align-middle') %}
+                <thead><tr id="runDataHead"></tr></thead>
+                <tbody id="runDataRows"></tbody>
+            {% endcall %}
+            <nav id="runDataPager" class="d-flex justify-content-between align-items-center"></nav>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="application/json" id="reports-page-data">{{ page_data|tojson }}</script>
+<script type="application/json" id="reports-page-labels">{{ {
+    "status_queued": _('Queued'), "status_running": _('Running'), "status_completed": _('Completed'),
+    "status_failed": _('Failed'), "status_refused": _('Refused'), "status_cancelled": _('Cancelled'),
+    "semantics_exact": _('Exact: every row, or the run fails.'),
+    "semantics_capped": _('Capped: at most %(limit)s rows.'),
+    "semantics_top_n": _('Top %(limit)s: a ranked prefix.'),
+    "truncated_capped": _('Shortened: this list stops at %(limit)s rows and more rows matched. The exact count is in the count dataset.'),
+    "truncated_top_n": _('Only the top %(limit)s rows are kept; more rows existed.'),
+    "complete": _('Complete: %(n)s rows.'),
+    "unit": _('Counts: %(unit)s'),
+    "datasets": _('Datasets'),
+    "criteria_source": _('Criteria from'), "from_saved": _('A saved search'),
+    "from_json": _('Criteria (JSON)'),
+    "no_saved_searches": _('You have no saved searches. Save one on the Search page, or enter criteria as JSON.'),
+    "criteria_invalid": _('The criteria are not valid JSON.'),
+    "choose": _('Choose...'),
+    "yes": _('yes'), "no": _('no'), "none": _('none'), "never": _('never'),
+    "no_reports": _('No report is available to your role.'),
+    "no_runs": _('No runs yet.'), "no_runs_filtered": _('No runs match this filter.'), "no_rows": _('This dataset has no rows.'),
+    "read_only": _('Viewers can read reports but not run them.'),
+    "refused": _('Refused: %(reason)s. Nothing was read.'),
+    "refusal_requester_inactive": _('the requesting account is inactive'),
+    "refusal_requester_deleted": _('the requesting account no longer exists'),
+    "refusal_requester_role": _('the requester\'s role may no longer run this report'),
+    "failed": _('Failed: %(error)s'),
+    "cancelled": _('Cancelled before it finished. Nothing was kept.'),
+    "pending": _('This run has not finished yet.'),
+    "completed_at": _('Completed. Snapshot taken %(when)s.'),
+    "prov_report": _('Report'), "prov_definition": _('Definition fingerprint'),
+    "prov_parameters": _('Parameters'), "prov_parameters_fp": _('Parameters fingerprint'),
+    "prov_criteria_fp": _('Criteria fingerprint'), "prov_saved_search": _('Saved search'),
+    "prov_requester": _('Requested by'), "prov_role": _('Role at run time'),
+    "prov_snapshot": _('Database snapshot'), "prov_isolation": _('Isolation'),
+    "prov_generator": _('Generator'), "prov_job": _('Job'),
+    "prov_requested": _('Requested'), "prov_started": _('Started'), "prov_finished": _('Finished'),
+    "prov_query_fp": _('Query fingerprint'),
+    "job_running": _('Job %(id)s: %(status)s...'), "job_done": _('Job %(id)s finished: %(status)s.'),
+    "job_timeout": _('Job %(id)s is still running; refresh the runs list later.'),
+    "page": _('%(from)s-%(to)s of %(total)s'), "previous": _('Previous'), "next": _('Next'),
+    "request_failed": _('The request failed'),
+} |tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/reports-page.js') }}"></script>
+{% endblock %}

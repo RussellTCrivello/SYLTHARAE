@@ -11255,3 +11255,235 @@ msgstr "دربارهٔ گزارش نتایج جستجو"
 #: core/reporting/definitions.py
 msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
 msgstr "فایل‌هایی را که در یک لحظه با معیارهای شما مطابقت دارند فهرست می‌کند، تعداد کل موارد مطابق را بیان می‌کند و هنگامی که فهرست کوتاه شده باشد آن را اعلام می‌کند."
+
+#: templates/Reports/reports.html
+msgid "Reports"
+msgstr "گزارش‌ها"
+
+#: templates/Reports/reports.html
+msgid "Run a registered report and read exactly what it computed: every dataset comes from one database snapshot, with its counts and any shortening stated."
+msgstr "یک گزارش ثبت‌شده را اجرا کنید و دقیقاً آنچه محاسبه کرده را بخوانید: هر مجموعه داده از یک تصویر لحظه‌ای پایگاه داده می‌آید، با شمارش‌ها و هر کوتاه‌سازی ذکرشده."
+
+#: templates/Reports/reports.html
+msgid "How reports work"
+msgstr "گزارش‌ها چگونه کار می‌کنند"
+
+#: templates/Reports/reports.html
+msgid "A report is a reviewed, versioned definition. Changing what a report means creates a new version; a run always records the version and fingerprint it used."
+msgstr "گزارش یک تعریف بازبینی‌شده و نسخه‌دار است. تغییر معنای گزارش نسخهٔ تازه‌ای می‌سازد؛ هر اجرا همیشه نسخه و اثرانگشتی را که به کار برده ثبت می‌کند."
+
+#: templates/Reports/reports.html
+msgid "A run is a background job. All its datasets are read from the same database snapshot, so the numbers in one run always agree with each other."
+msgstr "هر اجرا یک کار پس‌زمینه است. همهٔ مجموعه‌داده‌های آن از یک تصویر لحظه‌ای یکسان پایگاه داده خوانده می‌شوند، پس اعداد یک اجرا همیشه با هم سازگارند."
+
+#: templates/Reports/reports.html
+msgid "Each dataset states its limit: exact results are complete or the run fails; capped and top-N results say when rows were left out."
+msgstr "هر مجموعه داده حد خود را اعلام می‌کند: نتایج دقیق کامل‌اند وگرنه اجرا شکست می‌خورد؛ نتایج سقف‌دار و N-برتر می‌گویند چه وقت ردیف‌هایی کنار گذاشته شده‌اند."
+
+#: templates/Reports/reports.html
+msgid "Only documents you may read are included. You see your own runs; administrators can see everyone's."
+msgstr "فقط اسنادی که اجازهٔ خواندنشان را دارید گنجانده می‌شوند. شما اجراهای خودتان را می‌بینید؛ مدیران می‌توانند اجراهای همه را ببینند."
+
+#: templates/Reports/reports.html
+msgid "Run a report"
+msgstr "اجرای گزارش"
+
+#: templates/Reports/reports.html
+msgid "Report"
+msgstr "گزارش"
+
+#: templates/Reports/reports.html
+msgid "Run report"
+msgstr "اجرای این گزارش"
+
+#: templates/Reports/reports.html
+msgid "Runs"
+msgstr "اجراها"
+
+#: templates/Reports/reports.html
+msgid "Refused"
+msgstr "ردشده"
+
+#: templates/Reports/reports.html
+msgid "Cancelled"
+msgstr "لغوشده"
+
+#: templates/Reports/reports.html
+msgid "Running"
+msgstr "در حال اجرا"
+
+#: templates/Reports/reports.html
+msgid "Queued"
+msgstr "در صف"
+
+#: templates/Reports/reports.html
+msgid "Requested"
+msgstr "زمان درخواست"
+
+#: templates/Reports/reports.html
+msgid "Rows"
+msgstr "ردیف‌ها"
+
+#: templates/Reports/reports.html
+msgid "Requested by"
+msgstr "درخواست‌کننده"
+
+#: templates/Reports/reports.html
+msgid "Provenance"
+msgstr "خاستگاه"
+
+#: templates/Reports/reports.html
+msgid "Dataset"
+msgstr "مجموعه داده"
+
+#: templates/Reports/reports.html
+msgid "Exact: every row, or the run fails."
+msgstr "دقیق: همهٔ ردیف‌ها، وگرنه اجرا شکست می‌خورد."
+
+#: templates/Reports/reports.html
+msgid "Capped: at most %(limit)s rows."
+msgstr "سقف‌دار: حداکثر %(limit)s ردیف."
+
+#: templates/Reports/reports.html
+msgid "Top %(limit)s: a ranked prefix."
+msgstr "%(limit)s برتر: ابتدای یک فهرست رتبه‌بندی‌شده."
+
+#: templates/Reports/reports.html
+msgid "Shortened: this list stops at %(limit)s rows and more rows matched. The exact count is in the count dataset."
+msgstr "کوتاه‌شده: این فهرست در %(limit)s ردیف متوقف می‌شود و ردیف‌های بیشتری مطابقت داشتند. شمار دقیق در مجموعه دادهٔ شمارش است."
+
+#: templates/Reports/reports.html
+msgid "Only the top %(limit)s rows are kept; more rows existed."
+msgstr "فقط %(limit)s ردیف برتر نگه داشته می‌شوند؛ ردیف‌های بیشتری وجود داشت."
+
+#: templates/Reports/reports.html
+msgid "Complete: %(n)s rows."
+msgstr "کامل: %(n)s ردیف."
+
+#: templates/Reports/reports.html
+msgid "Counts: %(unit)s"
+msgstr "واحد شمارش: %(unit)s"
+
+#: templates/Reports/reports.html
+msgid "Datasets"
+msgstr "مجموعه‌داده‌ها"
+
+#: templates/Reports/reports.html
+msgid "Criteria from"
+msgstr "معیارها از"
+
+#: templates/Reports/reports.html
+msgid "A saved search"
+msgstr "یک جست‌وجوی ذخیره‌شده"
+
+#: templates/Reports/reports.html
+msgid "Criteria (JSON)"
+msgstr "معیارها (JSON)"
+
+#: templates/Reports/reports.html
+msgid "You have no saved searches. Save one on the Search page, or enter criteria as JSON."
+msgstr "هیچ جست‌وجوی ذخیره‌شده‌ای ندارید. یکی را در صفحهٔ جست‌وجو ذخیره کنید، یا معیارها را به‌صورت JSON وارد کنید."
+
+#: templates/Reports/reports.html
+msgid "The criteria are not valid JSON."
+msgstr "معیارها JSON معتبر نیستند."
+
+#: templates/Reports/reports.html
+msgid "Choose..."
+msgstr "انتخاب کنید..."
+
+#: templates/Reports/reports.html
+msgid "No report is available to your role."
+msgstr "هیچ گزارشی برای نقش شما در دسترس نیست."
+
+#: templates/Reports/reports.html
+msgid "No runs yet."
+msgstr "هنوز اجرایی وجود ندارد."
+
+#: templates/Reports/reports.html
+msgid "This dataset has no rows."
+msgstr "این مجموعه داده هیچ ردیفی ندارد."
+
+#: templates/Reports/reports.html
+msgid "Viewers can read reports but not run them."
+msgstr "بینندگان می‌توانند گزارش‌ها را بخوانند اما نمی‌توانند اجرا کنند."
+
+#: templates/Reports/reports.html
+msgid "Refused: %(reason)s. Nothing was read."
+msgstr "ردشده: %(reason)s. هیچ داده‌ای خوانده نشد."
+
+#: templates/Reports/reports.html
+msgid "the requesting account is inactive"
+msgstr "حساب درخواست‌کننده غیرفعال است"
+
+#: templates/Reports/reports.html
+msgid "the requesting account no longer exists"
+msgstr "حساب درخواست‌کننده دیگر وجود ندارد"
+
+#: templates/Reports/reports.html
+msgid "the requester's role may no longer run this report"
+msgstr "نقش درخواست‌کننده دیگر اجازهٔ اجرای این گزارش را ندارد"
+
+#: templates/Reports/reports.html
+msgid "Failed: %(error)s"
+msgstr "ناموفق: %(error)s"
+
+#: templates/Reports/reports.html
+msgid "Cancelled before it finished. Nothing was kept."
+msgstr "پیش از پایان لغو شد. چیزی نگه داشته نشد."
+
+#: templates/Reports/reports.html
+msgid "This run has not finished yet."
+msgstr "این اجرا هنوز تمام نشده است."
+
+#: templates/Reports/reports.html
+msgid "Completed. Snapshot taken %(when)s."
+msgstr "کامل شد. تصویر لحظه‌ای در %(when)s گرفته شد."
+
+#: templates/Reports/reports.html
+msgid "Parameters"
+msgstr "پارامترها"
+
+#: templates/Reports/reports.html
+msgid "Parameters fingerprint"
+msgstr "اثرانگشت پارامترها"
+
+#: templates/Reports/reports.html
+msgid "Criteria fingerprint"
+msgstr "اثرانگشت معیارها"
+
+#: templates/Reports/reports.html
+msgid "Role at run time"
+msgstr "نقش در زمان اجرا"
+
+#: templates/Reports/reports.html
+msgid "Database snapshot"
+msgstr "تصویر لحظه‌ای پایگاه داده"
+
+#: templates/Reports/reports.html
+msgid "Isolation"
+msgstr "سطح جداسازی"
+
+#: templates/Reports/reports.html
+msgid "Generator"
+msgstr "مولد"
+
+#: templates/Reports/reports.html
+msgid "Finished"
+msgstr "پایان"
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s: %(status)s..."
+msgstr "کار %(id)s: %(status)s..."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s finished: %(status)s."
+msgstr "کار %(id)s پایان یافت: %(status)s."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s is still running; refresh the runs list later."
+msgstr "کار %(id)s هنوز در حال اجراست؛ بعداً فهرست اجراها را تازه کنید."
+
+#: templates/Reports/reports.html
+msgid "No runs match this filter."
+msgstr "هیچ اجرایی با این فیلتر مطابقت ندارد."

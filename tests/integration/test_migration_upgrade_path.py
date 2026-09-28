@@ -470,3 +470,115 @@ def test_m0021_scenarios_constraints_append_only_and_downgrade_alone(legacy_db):
         assert cur.fetchone()[0] == 0
     conn.rollback()
     assert run_migrations(conn)[0] == "0021"
+
+
+def test_m0022_report_runs_constraints_immutability_and_downgrade(legacy_db):
+    """0022: a completed run names its snapshot; statuses, refusals, errors,
+    fingerprints and exact-limit semantics are CHECKed by name; a terminal
+    run and written results cannot change; deleting the requester keeps the
+    run; downgrade removes only the report tables and re-applies."""
+    conn, seeded = legacy_db
+    assert run_migrations(conn)[-1] >= "0022"
+    uid = seeded["user_id"]
+    fp = "c" * 64
+    run_sql = ("INSERT INTO report_runs (report_id, report_version, definition_fingerprint,"
+               " parameters, parameters_fingerprint, criteria_fingerprint, requested_by,"
+               " requester_username, requester_role, status, refusal_reason, error,"
+               " snapshot, snapshot_at, started_at, finished_at, generator_version)"
+               " VALUES ('search_results', %s, %s, '{}', %s, %s, %s, 'legacy_admin', 'admin',"
+               " %s, %s, %s, %s, %s, %s, %s, 'report-runner/1') RETURNING id")
+
+    def run(**kw):
+        values = dict(version=1, dfp=fp, pfp=fp, cfp=None, status="queued", refusal=None,
+                      error=None, snapshot=None, snapshot_at=None, started=None, finished=None)
+        values.update(kw)
+        return (values["version"], values["dfp"], values["pfp"], values["cfp"], uid,
+                values["status"], values["refusal"], values["error"], values["snapshot"],
+                values["snapshot_at"], values["started"], values["finished"])
+
+    ds_sql = ("INSERT INTO report_run_datasets (run_id, position, dataset_key,"
+              " dataset_fingerprint, query_fingerprint, semantics, row_limit, row_count,"
+              " truncated, columns, rows) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, '[]', %s)")
+    with conn.cursor() as cur:
+        cur.execute(run_sql, run())
+        queued = cur.fetchone()[0]
+        conn.commit()
+        checks = [
+            (run_sql, run(version=0), "ck_report_runs_version"),
+            (run_sql, run(status="bogus"), "ck_report_runs_status"),
+            (run_sql, run(status="completed"), "ck_report_runs_completed"),
+            (run_sql, run(status="refused"), "ck_report_runs_refused"),
+            (run_sql, run(refusal="role_revoked"), "ck_report_runs_refused"),
+            (run_sql, run(status="failed"), "ck_report_runs_failed"),
+            (run_sql, run(dfp="X" * 64), "ck_report_runs_fingerprints"),
+            (run_sql, run(cfp="short"), "ck_report_runs_fingerprints"),
+            (ds_sql, (queued, 0, "d@1", fp, fp, "exact", 5, 1, True, "[{}]"),
+             "ck_report_run_datasets_exact"),
+            (ds_sql, (queued, 0, "d@1", fp, fp, "some", 5, 0, False, "[]"),
+             "ck_report_run_datasets_semantics"),
+            (ds_sql, (queued, 0, "d@1", fp, fp, "capped", 5, 6, True, "[]"),
+             "ck_report_run_datasets_counts"),
+            (ds_sql, (queued, 0, "d@1", fp, fp, "capped", 5, 2, False, "[{}]"),
+             "ck_report_run_datasets_rows"),
+            (ds_sql, (queued, 0, "d@1", "z" * 64, fp, "capped", 5, 0, False, "[]"),
+             "ck_report_run_datasets_fingerprints"),
+        ]
+        for sql, params, constraint in checks:
+            with pytest.raises(psycopg2.errors.CheckViolation) as info:
+                cur.execute(sql, params)
+            assert info.value.diag.constraint_name == constraint, constraint
+            conn.rollback()
+
+        cur.execute(ds_sql, (queued, 0, "d@1", fp, fp, "capped", 5, 1, True, '[{"a": 1}]'))
+        with pytest.raises(psycopg2.errors.UniqueViolation):
+            cur.execute(ds_sql, (queued, 1, "d@1", fp, fp, "capped", 5, 0, False, "[]"))
+        conn.rollback()
+        cur.execute(ds_sql, (queued, 0, "d@1", fp, fp, "capped", 5, 1, True, '[{"a": 1}]'))
+        cur.execute("INSERT INTO saved_searches (owner_user_id, name, query, criteria,"
+                    " criteria_fingerprint, criteria_schema_version) VALUES"
+                    " (%s, 'ss22', '', '{}', %s, 1) RETURNING id", (uid, fp))
+        ss_id = cur.fetchone()[0]
+        cur.execute("UPDATE report_runs SET status = 'completed', snapshot = '1:1:', "
+                    "snapshot_at = NOW(), started_at = NOW(), finished_at = NOW(),"
+                    " saved_search_id = %s WHERE id = %s", (ss_id, queued))
+        conn.commit()
+        # Deleting the saved search clears the reference, nothing else.
+        cur.execute("DELETE FROM saved_searches WHERE id = %s", (ss_id,))
+        conn.commit()
+        cur.execute("SELECT saved_search_id, status FROM report_runs WHERE id = %s", (queued,))
+        assert cur.fetchone() == (None, "completed")
+        for sql in ("UPDATE report_runs SET error = 'x' WHERE id = %s",
+                    "UPDATE report_run_datasets SET truncated = false WHERE run_id = %s"):
+            with pytest.raises(psycopg2.errors.IntegrityConstraintViolation) as info:
+                cur.execute(sql, (queued,))
+            assert "cannot be changed" in str(info.value) or "written once" in str(info.value)
+            conn.rollback()
+
+        # The requester can be deleted; the run keeps who asked.
+        cur.execute("DELETE FROM audit_log WHERE user_id = %s", (uid,))
+        cur.execute("DELETE FROM users WHERE id = %s", (uid,))
+        conn.commit()
+        cur.execute("SELECT requested_by, requester_username, status FROM report_runs"
+                    " WHERE id = %s", (queued,))
+        assert cur.fetchone() == (None, "legacy_admin", "completed")
+        # ...and that exception does not let anything else through.
+        with pytest.raises(psycopg2.errors.IntegrityConstraintViolation):
+            cur.execute("UPDATE report_runs SET requested_by = NULL, error = 'x' WHERE id = %s",
+                        (queued,))
+        conn.rollback()
+    conn.commit()
+
+    [m22] = [m for m in discover_migrations() if m.version == "0022"]
+    m22.module.downgrade(conn)
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM schema_migrations WHERE version = '0022'")
+    conn.commit()
+    with conn.cursor() as cur:
+        cur.execute("SELECT to_regclass('report_runs'), to_regclass('report_run_datasets'),"
+                    " to_regclass('scenarios') IS NOT NULL")
+        assert cur.fetchone() == (None, None, True)
+        cur.execute("SELECT count(*) FROM pg_proc WHERE proname IN"
+                    " ('report_runs_terminal_immutable', 'report_run_datasets_write_once')")
+        assert cur.fetchone()[0] == 0
+    conn.rollback()
+    assert run_migrations(conn)[0] == "0022"

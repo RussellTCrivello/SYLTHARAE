@@ -901,6 +901,66 @@
     "internal": true
   },
   {
+    "endpoint": "api_report_definitions",
+    "rule": "/api/reports/definitions",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_run",
+    "rule": "/api/reports/runs/<int:run_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_run_create",
+    "rule": "/api/reports/runs",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_run_rows",
+    "rule": "/api/reports/runs/<int:run_id>/datasets/<dataset_key>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_report_runs",
+    "rule": "/api/reports/runs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_rule_archive",
     "rule": "/api/rules/<int:rule_id>",
     "methods": [
@@ -3791,6 +3851,18 @@
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
+  },
+  {
+    "endpoint": "reports_page",
+    "rule": "/reports",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "USER_INTERFACE",
+    "owned_by": "reports",
+    "internal": false
   },
   {
     "endpoint": "retry_file_analysis",

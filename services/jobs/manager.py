@@ -572,6 +572,21 @@ class JobManager:
                 get_connection, scenario_ids=options.get("scenario_ids"),
                 trigger=options.get("trigger", "all_scenarios"), job_id=job_id,
                 progress_cb=progress_cb, cancel_cb=scenarios_cancelled)
+        if job_type == "report_run":
+            # Report runs (services/reporting/runs.py): every dataset of the
+            # run is read in one REPEATABLE READ snapshot; the outcome
+            # (completed / failed / refused / cancelled) is recorded on the run.
+            from Api.utils.utils import get_connection
+            from services.reporting.runs import run_report_job
+
+            job_id = record["job_id"]
+
+            def report_cancelled():
+                current = self.repo.get(job_id)
+                return bool(current and current.get("cancellation_requested"))
+
+            return run_report_job(get_connection, run_id=options["run_id"], job_id=job_id,
+                                  progress_cb=progress_cb, cancel_cb=report_cancelled)
         raise ValueError(f"Unknown job type: {job_type}")
 
     #: Jobs that change stored content or signals, and the rule-evaluation

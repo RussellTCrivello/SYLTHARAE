@@ -11121,3 +11121,235 @@ msgstr "حول تقرير نتائج البحث"
 #: core/reporting/definitions.py
 msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
 msgstr "يسرد الملفات التي تطابق معاييرك في لحظة واحدة، ويذكر العدد الإجمالي للمطابقات، وينبّه عندما تكون القائمة مختصرة."
+
+#: templates/Reports/reports.html
+msgid "Reports"
+msgstr "التقارير"
+
+#: templates/Reports/reports.html
+msgid "Run a registered report and read exactly what it computed: every dataset comes from one database snapshot, with its counts and any shortening stated."
+msgstr "شغّل تقريرًا مسجّلًا واقرأ ما حسبه بالضبط: كل مجموعة بيانات تأتي من لقطة واحدة لقاعدة البيانات، مع أعدادها وأي اختصار مذكور."
+
+#: templates/Reports/reports.html
+msgid "How reports work"
+msgstr "كيف تعمل التقارير"
+
+#: templates/Reports/reports.html
+msgid "A report is a reviewed, versioned definition. Changing what a report means creates a new version; a run always records the version and fingerprint it used."
+msgstr "التقرير تعريف مُراجَع وذو إصدارات. تغيير معنى التقرير يُنشئ إصدارًا جديدًا؛ ويسجّل كل تشغيل دائمًا الإصدار والبصمة التي استخدمها."
+
+#: templates/Reports/reports.html
+msgid "A run is a background job. All its datasets are read from the same database snapshot, so the numbers in one run always agree with each other."
+msgstr "التشغيل مهمة في الخلفية. تُقرأ جميع مجموعات بياناته من لقطة قاعدة البيانات نفسها، لذا تتّفق الأرقام في التشغيل الواحد دائمًا فيما بينها."
+
+#: templates/Reports/reports.html
+msgid "Each dataset states its limit: exact results are complete or the run fails; capped and top-N results say when rows were left out."
+msgstr "تذكر كل مجموعة بيانات حدّها: النتائج الدقيقة كاملة وإلا يفشل التشغيل؛ والنتائج المحدودة ونتائج الأعلى-N تذكر متى أُغفلت صفوف."
+
+#: templates/Reports/reports.html
+msgid "Only documents you may read are included. You see your own runs; administrators can see everyone's."
+msgstr "تُضمَّن فقط المستندات التي يحق لك قراءتها. ترى عمليات التشغيل الخاصة بك؛ ويمكن للمسؤولين رؤية عمليات الجميع."
+
+#: templates/Reports/reports.html
+msgid "Run a report"
+msgstr "تشغيل تقرير"
+
+#: templates/Reports/reports.html
+msgid "Report"
+msgstr "التقرير"
+
+#: templates/Reports/reports.html
+msgid "Run report"
+msgstr "شغّل التقرير"
+
+#: templates/Reports/reports.html
+msgid "Runs"
+msgstr "عمليات التشغيل"
+
+#: templates/Reports/reports.html
+msgid "Refused"
+msgstr "مرفوض"
+
+#: templates/Reports/reports.html
+msgid "Cancelled"
+msgstr "ملغى"
+
+#: templates/Reports/reports.html
+msgid "Running"
+msgstr "قيد التشغيل"
+
+#: templates/Reports/reports.html
+msgid "Queued"
+msgstr "في الانتظار"
+
+#: templates/Reports/reports.html
+msgid "Requested"
+msgstr "وقت الطلب"
+
+#: templates/Reports/reports.html
+msgid "Rows"
+msgstr "الصفوف"
+
+#: templates/Reports/reports.html
+msgid "Requested by"
+msgstr "طلبه"
+
+#: templates/Reports/reports.html
+msgid "Provenance"
+msgstr "المصدر والتتبّع"
+
+#: templates/Reports/reports.html
+msgid "Dataset"
+msgstr "مجموعة البيانات"
+
+#: templates/Reports/reports.html
+msgid "Exact: every row, or the run fails."
+msgstr "دقيق: كل الصفوف، وإلا يفشل التشغيل."
+
+#: templates/Reports/reports.html
+msgid "Capped: at most %(limit)s rows."
+msgstr "محدود: %(limit)s صفًا على الأكثر."
+
+#: templates/Reports/reports.html
+msgid "Top %(limit)s: a ranked prefix."
+msgstr "الأعلى %(limit)s: بداية مرتّبة."
+
+#: templates/Reports/reports.html
+msgid "Shortened: this list stops at %(limit)s rows and more rows matched. The exact count is in the count dataset."
+msgstr "مختصرة: تتوقف هذه القائمة عند %(limit)s صفًا وقد طابقت صفوف أخرى. العدد الدقيق في مجموعة بيانات العدّ."
+
+#: templates/Reports/reports.html
+msgid "Only the top %(limit)s rows are kept; more rows existed."
+msgstr "تُحفظ الصفوف الأعلى %(limit)s فقط؛ وكانت هناك صفوف أخرى."
+
+#: templates/Reports/reports.html
+msgid "Complete: %(n)s rows."
+msgstr "كاملة: %(n)s صفًا."
+
+#: templates/Reports/reports.html
+msgid "Counts: %(unit)s"
+msgstr "وحدة العدّ: %(unit)s"
+
+#: templates/Reports/reports.html
+msgid "Datasets"
+msgstr "مجموعات البيانات"
+
+#: templates/Reports/reports.html
+msgid "Criteria from"
+msgstr "المعايير من"
+
+#: templates/Reports/reports.html
+msgid "A saved search"
+msgstr "بحث محفوظ"
+
+#: templates/Reports/reports.html
+msgid "Criteria (JSON)"
+msgstr "المعايير (JSON)"
+
+#: templates/Reports/reports.html
+msgid "You have no saved searches. Save one on the Search page, or enter criteria as JSON."
+msgstr "ليس لديك عمليات بحث محفوظة. احفظ واحدة في صفحة البحث، أو أدخل المعايير بصيغة JSON."
+
+#: templates/Reports/reports.html
+msgid "The criteria are not valid JSON."
+msgstr "المعايير ليست JSON صالحًا."
+
+#: templates/Reports/reports.html
+msgid "Choose..."
+msgstr "اختر..."
+
+#: templates/Reports/reports.html
+msgid "No report is available to your role."
+msgstr "لا يتوفر أي تقرير لدورك."
+
+#: templates/Reports/reports.html
+msgid "No runs yet."
+msgstr "لا توجد عمليات تشغيل بعد."
+
+#: templates/Reports/reports.html
+msgid "This dataset has no rows."
+msgstr "لا تحتوي مجموعة البيانات هذه على صفوف."
+
+#: templates/Reports/reports.html
+msgid "Viewers can read reports but not run them."
+msgstr "يمكن للمشاهدين قراءة التقارير دون تشغيلها."
+
+#: templates/Reports/reports.html
+msgid "Refused: %(reason)s. Nothing was read."
+msgstr "مرفوض: %(reason)s. لم تُقرأ أي بيانات."
+
+#: templates/Reports/reports.html
+msgid "the requesting account is inactive"
+msgstr "الحساب الطالب غير نشط"
+
+#: templates/Reports/reports.html
+msgid "the requesting account no longer exists"
+msgstr "الحساب الطالب لم يعد موجودًا"
+
+#: templates/Reports/reports.html
+msgid "the requester's role may no longer run this report"
+msgstr "لم يعد دور الطالب يسمح بتشغيل هذا التقرير"
+
+#: templates/Reports/reports.html
+msgid "Failed: %(error)s"
+msgstr "فشل: %(error)s"
+
+#: templates/Reports/reports.html
+msgid "Cancelled before it finished. Nothing was kept."
+msgstr "أُلغي قبل أن ينتهي. لم يُحفظ شيء."
+
+#: templates/Reports/reports.html
+msgid "This run has not finished yet."
+msgstr "لم ينتهِ هذا التشغيل بعد."
+
+#: templates/Reports/reports.html
+msgid "Completed. Snapshot taken %(when)s."
+msgstr "اكتمل. أُخذت اللقطة في %(when)s."
+
+#: templates/Reports/reports.html
+msgid "Parameters"
+msgstr "المعاملات"
+
+#: templates/Reports/reports.html
+msgid "Parameters fingerprint"
+msgstr "بصمة المعاملات"
+
+#: templates/Reports/reports.html
+msgid "Criteria fingerprint"
+msgstr "بصمة المعايير"
+
+#: templates/Reports/reports.html
+msgid "Role at run time"
+msgstr "الدور وقت التشغيل"
+
+#: templates/Reports/reports.html
+msgid "Database snapshot"
+msgstr "لقطة قاعدة البيانات"
+
+#: templates/Reports/reports.html
+msgid "Isolation"
+msgstr "مستوى العزل"
+
+#: templates/Reports/reports.html
+msgid "Generator"
+msgstr "المولِّد"
+
+#: templates/Reports/reports.html
+msgid "Finished"
+msgstr "انتهى"
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s: %(status)s..."
+msgstr "المهمة %(id)s: %(status)s..."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s finished: %(status)s."
+msgstr "انتهت المهمة %(id)s: %(status)s."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s is still running; refresh the runs list later."
+msgstr "لا تزال المهمة %(id)s قيد التشغيل؛ حدّث قائمة عمليات التشغيل لاحقًا."
+
+#: templates/Reports/reports.html
+msgid "No runs match this filter."
+msgstr "لا توجد عمليات تشغيل تطابق هذا المرشّح."

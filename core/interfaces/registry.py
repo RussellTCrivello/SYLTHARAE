@@ -291,6 +291,16 @@ REGISTRY: Tuple[Interface, ...] = (
         help_topic="report/detailed-dashboard",
     ),
     _if(
+        "reports", "Reports",
+        "Registered, versioned reports: choose one, give its parameters (or a "
+        "saved search), run it as a background job and read the result - every "
+        "dataset from one database snapshot, with counts and any shortening "
+        "stated.",
+        Domain.REPORT, "reports_page", "bi-file-earmark-bar-graph",
+        dependencies=("search", "jobs"),
+        help_topic="report/reports", keyboard_shortcut="g r",
+    ),
+    _if(
         "charts_dashboard", "Charts Dashboard",
         "The same stored material presented as charts and timelines.",
         Domain.REPORT, "charts_dashboard", "bi-bar-chart",

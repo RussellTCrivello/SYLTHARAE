@@ -10959,3 +10959,235 @@ msgstr "אודות דוח תוצאות החיפוש"
 #: core/reporting/definitions.py
 msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
 msgstr "מציג את הקבצים שתואמים את הקריטריונים שלך ברגע אחד, מציין כמה התאימו בסך הכול ומודיע כאשר הרשימה מקוצרת."
+
+#: templates/Reports/reports.html
+msgid "Reports"
+msgstr "דוחות"
+
+#: templates/Reports/reports.html
+msgid "Run a registered report and read exactly what it computed: every dataset comes from one database snapshot, with its counts and any shortening stated."
+msgstr "הפעילו דוח רשום וקראו בדיוק מה חישב: כל מערך נתונים נלקח מתמונת מצב אחת של מסד הנתונים, עם הספירות שלו וכל קיצור מצוין."
+
+#: templates/Reports/reports.html
+msgid "How reports work"
+msgstr "איך דוחות עובדים"
+
+#: templates/Reports/reports.html
+msgid "A report is a reviewed, versioned definition. Changing what a report means creates a new version; a run always records the version and fingerprint it used."
+msgstr "דוח הוא הגדרה שנבדקה ובעלת גרסאות. שינוי משמעות הדוח יוצר גרסה חדשה; כל הרצה מתעדת תמיד את הגרסה ואת טביעת האצבע שבהן השתמשה."
+
+#: templates/Reports/reports.html
+msgid "A run is a background job. All its datasets are read from the same database snapshot, so the numbers in one run always agree with each other."
+msgstr "הרצה היא משימת רקע. כל מערכי הנתונים שלה נקראים מאותה תמונת מצב של מסד הנתונים, ולכן המספרים בהרצה אחת תמיד מתיישבים זה עם זה."
+
+#: templates/Reports/reports.html
+msgid "Each dataset states its limit: exact results are complete or the run fails; capped and top-N results say when rows were left out."
+msgstr "כל מערך נתונים מציין את המגבלה שלו: תוצאות מדויקות שלמות, אחרת ההרצה נכשלת; תוצאות מוגבלות ותוצאות N המובילות מציינות מתי הושמטו שורות."
+
+#: templates/Reports/reports.html
+msgid "Only documents you may read are included. You see your own runs; administrators can see everyone's."
+msgstr "נכללים רק מסמכים שמותר לכם לקרוא. אתם רואים את ההרצות שלכם; מנהלים יכולים לראות את של כולם."
+
+#: templates/Reports/reports.html
+msgid "Run a report"
+msgstr "הפעלת דוח"
+
+#: templates/Reports/reports.html
+msgid "Report"
+msgstr "דוח"
+
+#: templates/Reports/reports.html
+msgid "Run report"
+msgstr "הפעל דוח"
+
+#: templates/Reports/reports.html
+msgid "Runs"
+msgstr "הרצות"
+
+#: templates/Reports/reports.html
+msgid "Refused"
+msgstr "נדחה"
+
+#: templates/Reports/reports.html
+msgid "Cancelled"
+msgstr "בוטל"
+
+#: templates/Reports/reports.html
+msgid "Running"
+msgstr "רץ"
+
+#: templates/Reports/reports.html
+msgid "Queued"
+msgstr "בתור"
+
+#: templates/Reports/reports.html
+msgid "Requested"
+msgstr "נדרש"
+
+#: templates/Reports/reports.html
+msgid "Rows"
+msgstr "שורות"
+
+#: templates/Reports/reports.html
+msgid "Requested by"
+msgstr "התבקש על ידי"
+
+#: templates/Reports/reports.html
+msgid "Provenance"
+msgstr "מקור ומעקב"
+
+#: templates/Reports/reports.html
+msgid "Dataset"
+msgstr "מערך נתונים"
+
+#: templates/Reports/reports.html
+msgid "Exact: every row, or the run fails."
+msgstr "מדויק: כל השורות, אחרת ההרצה נכשלת."
+
+#: templates/Reports/reports.html
+msgid "Capped: at most %(limit)s rows."
+msgstr "מוגבל: לכל היותר %(limit)s שורות."
+
+#: templates/Reports/reports.html
+msgid "Top %(limit)s: a ranked prefix."
+msgstr "%(limit)s המובילים: קידומת מדורגת."
+
+#: templates/Reports/reports.html
+msgid "Shortened: this list stops at %(limit)s rows and more rows matched. The exact count is in the count dataset."
+msgstr "מקוצר: הרשימה נעצרת ב-%(limit)s שורות ושורות נוספות תאמו. הספירה המדויקת נמצאת במערך נתוני הספירה."
+
+#: templates/Reports/reports.html
+msgid "Only the top %(limit)s rows are kept; more rows existed."
+msgstr "נשמרות רק %(limit)s השורות המובילות; היו שורות נוספות."
+
+#: templates/Reports/reports.html
+msgid "Complete: %(n)s rows."
+msgstr "שלם: %(n)s שורות."
+
+#: templates/Reports/reports.html
+msgid "Counts: %(unit)s"
+msgstr "יחידת ספירה: %(unit)s"
+
+#: templates/Reports/reports.html
+msgid "Datasets"
+msgstr "מערכי נתונים"
+
+#: templates/Reports/reports.html
+msgid "Criteria from"
+msgstr "הקריטריונים מתוך"
+
+#: templates/Reports/reports.html
+msgid "A saved search"
+msgstr "חיפוש שמור"
+
+#: templates/Reports/reports.html
+msgid "Criteria (JSON)"
+msgstr "קריטריונים (JSON)"
+
+#: templates/Reports/reports.html
+msgid "You have no saved searches. Save one on the Search page, or enter criteria as JSON."
+msgstr "אין לכם חיפושים שמורים. שמרו חיפוש בדף החיפוש, או הזינו קריטריונים כ-JSON."
+
+#: templates/Reports/reports.html
+msgid "The criteria are not valid JSON."
+msgstr "הקריטריונים אינם JSON תקין."
+
+#: templates/Reports/reports.html
+msgid "Choose..."
+msgstr "בחרו..."
+
+#: templates/Reports/reports.html
+msgid "No report is available to your role."
+msgstr "אין דוח זמין לתפקיד שלכם."
+
+#: templates/Reports/reports.html
+msgid "No runs yet."
+msgstr "אין הרצות עדיין."
+
+#: templates/Reports/reports.html
+msgid "This dataset has no rows."
+msgstr "אין שורות במערך נתונים זה."
+
+#: templates/Reports/reports.html
+msgid "Viewers can read reports but not run them."
+msgstr "צופים יכולים לקרוא דוחות אך לא להפעיל אותם."
+
+#: templates/Reports/reports.html
+msgid "Refused: %(reason)s. Nothing was read."
+msgstr "נדחה: %(reason)s. לא נקרא דבר."
+
+#: templates/Reports/reports.html
+msgid "the requesting account is inactive"
+msgstr "החשבון המבקש אינו פעיל"
+
+#: templates/Reports/reports.html
+msgid "the requesting account no longer exists"
+msgstr "החשבון המבקש כבר אינו קיים"
+
+#: templates/Reports/reports.html
+msgid "the requester's role may no longer run this report"
+msgstr "תפקיד המבקש כבר אינו מורשה להפעיל דוח זה"
+
+#: templates/Reports/reports.html
+msgid "Failed: %(error)s"
+msgstr "נכשל: %(error)s"
+
+#: templates/Reports/reports.html
+msgid "Cancelled before it finished. Nothing was kept."
+msgstr "בוטל לפני שהסתיים. דבר לא נשמר."
+
+#: templates/Reports/reports.html
+msgid "This run has not finished yet."
+msgstr "הרצה זו טרם הסתיימה."
+
+#: templates/Reports/reports.html
+msgid "Completed. Snapshot taken %(when)s."
+msgstr "הושלם. תמונת המצב נלקחה ב-%(when)s."
+
+#: templates/Reports/reports.html
+msgid "Parameters"
+msgstr "פרמטרים"
+
+#: templates/Reports/reports.html
+msgid "Parameters fingerprint"
+msgstr "טביעת אצבע של הפרמטרים"
+
+#: templates/Reports/reports.html
+msgid "Criteria fingerprint"
+msgstr "טביעת אצבע של הקריטריונים"
+
+#: templates/Reports/reports.html
+msgid "Role at run time"
+msgstr "תפקיד בזמן ההרצה"
+
+#: templates/Reports/reports.html
+msgid "Database snapshot"
+msgstr "תמונת מצב של מסד הנתונים"
+
+#: templates/Reports/reports.html
+msgid "Isolation"
+msgstr "רמת בידוד"
+
+#: templates/Reports/reports.html
+msgid "Generator"
+msgstr "מחולל"
+
+#: templates/Reports/reports.html
+msgid "Finished"
+msgstr "הסתיים"
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s: %(status)s..."
+msgstr "משימה %(id)s: %(status)s..."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s finished: %(status)s."
+msgstr "משימה %(id)s הסתיימה: %(status)s."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s is still running; refresh the runs list later."
+msgstr "משימה %(id)s עדיין רצה; רעננו את רשימת ההרצות מאוחר יותר."
+
+#: templates/Reports/reports.html
+msgid "No runs match this filter."
+msgstr "אין הרצות התואמות למסנן זה."

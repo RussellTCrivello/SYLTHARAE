@@ -51,6 +51,8 @@ class TestBootstrap:
             "monitoring_rules", "monitoring_rule_versions", "rule_evaluations",
             "rule_subject_ledger", "scenarios", "scenario_versions",
             "scenario_evaluations", "scenario_outcomes",
+            # m0022: report runs (step 14)
+            "report_runs", "report_run_datasets",
         }
         with db_conn.cursor() as cur:
             cur.execute(
@@ -117,6 +119,13 @@ class TestBootstrap:
             "idx_scenario_evaluations_scenario",
             "idx_scenario_outcomes_latest",
             "idx_scenario_outcomes_evaluation",
+            # m0022
+            "idx_report_runs_requester",
+            "idx_report_runs_report",
+            "idx_report_runs_job",
+            "idx_report_runs_saved_search",
+            "report_run_datasets_pkey",
+            "uq_report_run_datasets_key",
         }
         with db_conn.cursor() as cur:
             cur.execute("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")

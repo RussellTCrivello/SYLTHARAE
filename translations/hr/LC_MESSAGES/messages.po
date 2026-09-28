@@ -11364,3 +11364,235 @@ msgstr "O izvješću o rezultatima pretraživanja"
 #: core/reporting/definitions.py
 msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
 msgstr "Navodi datoteke koje u jednom trenutku odgovaraju vašim kriterijima, navodi ukupan broj podudaranja i upozorava kada je popis skraćen."
+
+#: templates/Reports/reports.html
+msgid "Reports"
+msgstr "Izvješća"
+
+#: templates/Reports/reports.html
+msgid "Run a registered report and read exactly what it computed: every dataset comes from one database snapshot, with its counts and any shortening stated."
+msgstr "Pokrenite registrirano izvješće i pročitajte točno što je izračunalo: svaki skup podataka dolazi iz jedne snimke baze podataka, s brojevima i svakim navedenim skraćivanjem."
+
+#: templates/Reports/reports.html
+msgid "How reports work"
+msgstr "Kako izvješća rade"
+
+#: templates/Reports/reports.html
+msgid "A report is a reviewed, versioned definition. Changing what a report means creates a new version; a run always records the version and fingerprint it used."
+msgstr "Izvješće je pregledana definicija s verzijama. Promjena značenja izvješća stvara novu verziju; svako pokretanje uvijek bilježi verziju i otisak koje je koristilo."
+
+#: templates/Reports/reports.html
+msgid "A run is a background job. All its datasets are read from the same database snapshot, so the numbers in one run always agree with each other."
+msgstr "Pokretanje je pozadinski posao. Svi njegovi skupovi podataka čitaju se iz iste snimke baze podataka, pa se brojevi unutar jednog pokretanja uvijek slažu."
+
+#: templates/Reports/reports.html
+msgid "Each dataset states its limit: exact results are complete or the run fails; capped and top-N results say when rows were left out."
+msgstr "Svaki skup podataka navodi svoje ograničenje: točni rezultati su potpuni ili pokretanje ne uspijeva; ograničeni i top-N rezultati kažu kada su redci izostavljeni."
+
+#: templates/Reports/reports.html
+msgid "Only documents you may read are included. You see your own runs; administrators can see everyone's."
+msgstr "Uključeni su samo dokumenti koje smijete čitati. Vidite svoja pokretanja; administratori vide svačija."
+
+#: templates/Reports/reports.html
+msgid "Run a report"
+msgstr "Pokreni izvješće"
+
+#: templates/Reports/reports.html
+msgid "Report"
+msgstr "Izvješće"
+
+#: templates/Reports/reports.html
+msgid "Run report"
+msgstr "Pokreni"
+
+#: templates/Reports/reports.html
+msgid "Runs"
+msgstr "Pokretanja"
+
+#: templates/Reports/reports.html
+msgid "Refused"
+msgstr "Odbijeno"
+
+#: templates/Reports/reports.html
+msgid "Cancelled"
+msgstr "Otkazano"
+
+#: templates/Reports/reports.html
+msgid "Running"
+msgstr "U tijeku"
+
+#: templates/Reports/reports.html
+msgid "Queued"
+msgstr "U redu čekanja"
+
+#: templates/Reports/reports.html
+msgid "Requested"
+msgstr "Zatraženo"
+
+#: templates/Reports/reports.html
+msgid "Rows"
+msgstr "Redci"
+
+#: templates/Reports/reports.html
+msgid "Requested by"
+msgstr "Zatražio"
+
+#: templates/Reports/reports.html
+msgid "Provenance"
+msgstr "Podrijetlo"
+
+#: templates/Reports/reports.html
+msgid "Dataset"
+msgstr "Skup podataka"
+
+#: templates/Reports/reports.html
+msgid "Exact: every row, or the run fails."
+msgstr "Točno: svi redci ili pokretanje ne uspijeva."
+
+#: templates/Reports/reports.html
+msgid "Capped: at most %(limit)s rows."
+msgstr "Ograničeno: najviše %(limit)s redaka."
+
+#: templates/Reports/reports.html
+msgid "Top %(limit)s: a ranked prefix."
+msgstr "Prvih %(limit)s: rangirani početak."
+
+#: templates/Reports/reports.html
+msgid "Shortened: this list stops at %(limit)s rows and more rows matched. The exact count is in the count dataset."
+msgstr "Skraćeno: popis staje na %(limit)s redaka, a podudaralo se više redaka. Točan broj nalazi se u skupu podataka s brojem."
+
+#: templates/Reports/reports.html
+msgid "Only the top %(limit)s rows are kept; more rows existed."
+msgstr "Zadržano je samo prvih %(limit)s redaka; postojalo ih je više."
+
+#: templates/Reports/reports.html
+msgid "Complete: %(n)s rows."
+msgstr "Potpuno: %(n)s redaka."
+
+#: templates/Reports/reports.html
+msgid "Counts: %(unit)s"
+msgstr "Broji se: %(unit)s"
+
+#: templates/Reports/reports.html
+msgid "Datasets"
+msgstr "Skupovi podataka"
+
+#: templates/Reports/reports.html
+msgid "Criteria from"
+msgstr "Kriteriji iz"
+
+#: templates/Reports/reports.html
+msgid "A saved search"
+msgstr "Spremljena pretraga"
+
+#: templates/Reports/reports.html
+msgid "Criteria (JSON)"
+msgstr "Kriteriji (JSON)"
+
+#: templates/Reports/reports.html
+msgid "You have no saved searches. Save one on the Search page, or enter criteria as JSON."
+msgstr "Nemate spremljenih pretraga. Spremite jednu na stranici Pretraga ili unesite kriterije kao JSON."
+
+#: templates/Reports/reports.html
+msgid "The criteria are not valid JSON."
+msgstr "Kriteriji nisu valjani JSON."
+
+#: templates/Reports/reports.html
+msgid "Choose..."
+msgstr "Odaberite..."
+
+#: templates/Reports/reports.html
+msgid "No report is available to your role."
+msgstr "Za vašu ulogu nije dostupno nijedno izvješće."
+
+#: templates/Reports/reports.html
+msgid "No runs yet."
+msgstr "Još nema pokretanja."
+
+#: templates/Reports/reports.html
+msgid "This dataset has no rows."
+msgstr "Ovaj skup podataka nema redaka."
+
+#: templates/Reports/reports.html
+msgid "Viewers can read reports but not run them."
+msgstr "Promatrači mogu čitati izvješća, ali ih ne mogu pokretati."
+
+#: templates/Reports/reports.html
+msgid "Refused: %(reason)s. Nothing was read."
+msgstr "Odbijeno: %(reason)s. Ništa nije pročitano."
+
+#: templates/Reports/reports.html
+msgid "the requesting account is inactive"
+msgstr "račun koji je zatražio nije aktivan"
+
+#: templates/Reports/reports.html
+msgid "the requesting account no longer exists"
+msgstr "račun koji je zatražio više ne postoji"
+
+#: templates/Reports/reports.html
+msgid "the requester's role may no longer run this report"
+msgstr "uloga podnositelja više ne smije pokretati ovo izvješće"
+
+#: templates/Reports/reports.html
+msgid "Failed: %(error)s"
+msgstr "Neuspjelo: %(error)s"
+
+#: templates/Reports/reports.html
+msgid "Cancelled before it finished. Nothing was kept."
+msgstr "Otkazano prije završetka. Ništa nije zadržano."
+
+#: templates/Reports/reports.html
+msgid "This run has not finished yet."
+msgstr "Ovo pokretanje još nije završilo."
+
+#: templates/Reports/reports.html
+msgid "Completed. Snapshot taken %(when)s."
+msgstr "Dovršeno. Snimka je napravljena %(when)s."
+
+#: templates/Reports/reports.html
+msgid "Parameters"
+msgstr "Parametri"
+
+#: templates/Reports/reports.html
+msgid "Parameters fingerprint"
+msgstr "Otisak parametara"
+
+#: templates/Reports/reports.html
+msgid "Criteria fingerprint"
+msgstr "Otisak kriterija"
+
+#: templates/Reports/reports.html
+msgid "Role at run time"
+msgstr "Uloga u trenutku pokretanja"
+
+#: templates/Reports/reports.html
+msgid "Database snapshot"
+msgstr "Snimka baze podataka"
+
+#: templates/Reports/reports.html
+msgid "Isolation"
+msgstr "Izolacija"
+
+#: templates/Reports/reports.html
+msgid "Generator"
+msgstr "Generator izvješća"
+
+#: templates/Reports/reports.html
+msgid "Finished"
+msgstr "Završeno"
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s: %(status)s..."
+msgstr "Posao %(id)s: %(status)s..."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s finished: %(status)s."
+msgstr "Posao %(id)s je završio: %(status)s."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s is still running; refresh the runs list later."
+msgstr "Posao %(id)s još traje; kasnije osvježite popis pokretanja."
+
+#: templates/Reports/reports.html
+msgid "No runs match this filter."
+msgstr "Nijedno pokretanje ne odgovara ovom filtru."

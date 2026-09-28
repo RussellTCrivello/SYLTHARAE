@@ -67,12 +67,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 ## Generated reference
 
 <!-- BEGIN GENERATED REGISTRY TABLE -->
-- Interfaces: **28** (features declared separately: **1**)
-- Endpoints owned: **69**
-- With a keyboard shortcut: **14**; with a help topic: **26**
-- By domain: ADMINISTRATION 1, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 2, REPORT 2, SETTINGS 3, WORK 1
-- By status: ACTIVE 27, DEPRECATED 1
-- By kind: INTERNAL 1, PAGE 26, SECTION 1
+- Interfaces: **29** (features declared separately: **1**)
+- Endpoints owned: **70**
+- With a keyboard shortcut: **15**; with a help topic: **27**
+- By domain: ADMINISTRATION 1, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 2, REPORT 3, SETTINGS 3, WORK 1
+- By status: ACTIVE 28, DEPRECATED 1
+- By kind: INTERNAL 1, PAGE 27, SECTION 1
 
 
 ### WORK (1)
@@ -119,11 +119,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `analyst_categorization` | Analyst Categories | CLASSIFY | `analyst_categorization_page` | — | any | on | `file_library` | classify/analyst-categories | — | ACTIVE |
 | `classification` | Classification | CLASSIFY | `file_classification_page` | — | any | on | `file_library`, `words` | classify/classification | — | ACTIVE |
 
-### REPORT (2)
+### REPORT (3)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `comprehensive_dashboard` | Comprehensive Dashboard | REPORT | `comprehensive_dashboard` | — | any | on | `file_library` | report/detailed-dashboard | — | ACTIVE |
+| `reports` | Reports | REPORT | `reports_page` | — | any | on | `search`, `jobs` | report/reports | g r | ACTIVE |
 | `charts_dashboard` | Charts Dashboard | REPORT | `charts_dashboard` | — | any | on | `file_library` | report/charts | — | ACTIVE |
 
 ### OPERATE (2)

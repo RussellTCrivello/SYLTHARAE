@@ -149,3 +149,10 @@ only when their datasets exist and are verified.
   `الجوانب` ("sides", plural). It predates this step and is left unchanged
   because other pages share it; it is added to the Arabic defect list for
   step 18.
+
+## Runs
+
+Execution of registered definitions (step 14) is described in
+[REPORT_RUNS.md](REPORT_RUNS.md): the `report_run` job, one
+`REPEATABLE READ, READ ONLY` snapshot per run, stored datasets with their
+fingerprints and truncation, the `/reports` page and its API.
