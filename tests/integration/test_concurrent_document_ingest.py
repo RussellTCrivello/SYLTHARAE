@@ -507,3 +507,41 @@ def test_reingesting_the_same_file_reports_the_existing_document(pg_db, tenant):
             assert cur.fetchone()[0] == 1, "re-ingest created a second hash row"
     finally:
         conn.close()
+
+
+def test_summary_tells_content_copies_from_already_recorded_files(pg_db, tenant, tmp_path,
+                                                                  capsys):
+    """Field report (Windows run after step 13): three files with content that
+    was already stored were saved as new occurrences, yet the run summary said
+    "Duplicate files: 0". Two different facts, both now counted and labelled."""
+    import uuid
+
+    from pipeline.integrated_reader import IntegratedFileReader, storage_summary_lines
+
+    unique = uuid.uuid4().hex
+    shared = f"shared content {unique} " * 20
+    (tmp_path / "a.txt").write_text(shared, encoding="utf-8")
+    (tmp_path / "b_copy_of_a.txt").write_text(shared, encoding="utf-8")
+    (tmp_path / "c.txt").write_text(f"different content {unique} " * 20, encoding="utf-8")
+
+    def run():
+        reader = IntegratedFileReader(max_workers=1, enable_storage=True,
+                                      storage_source=tenant["source_name"],
+                                      storage_side=tenant["side_name"])
+        reader.process_folder(str(tmp_path))
+        return reader.get_storage_statistics()
+
+    first = run()
+    assert first["failed"] == 0
+    assert first["completed"] == 3
+    assert first["content_reused"] == 1, first
+    assert first["duplicates"] == 0, first
+    lines = storage_summary_lines(first)
+    assert "   Files stored in database: 3" in lines
+    assert "      of which new copies of content already stored: 1" in lines
+    assert "   Files already recorded (nothing new written): 0" in lines
+    assert "Files stored in database: 3" in capsys.readouterr().out
+
+    second = run()  # the very same files again: every occurrence is recorded
+    assert second["duplicates"] == 3, second
+    assert second["completed"] == 0 and second["content_reused"] == 0, second
