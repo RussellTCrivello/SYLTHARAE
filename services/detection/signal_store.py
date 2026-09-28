@@ -166,54 +166,23 @@ def detect_and_store(cur, hash_id: int, text: Optional[str], anchor_date: Option
 # ---------------------------------------------------------------------------
 
 
-def signals_for(cur, hash_id: int, reference_date: datetime.date, *,
-                scope: AccessScope, detectors: Optional[Sequence[str]] = None) -> Dict[str, Any]:
-    """Signals and run status for one content, with clock orientation computed
-    against ``reference_date`` (explicit; never an implicit clock).
+#: The one column list every signal read uses (per content, Explorer, Horizon),
+#: so all of them serialise a signal identically via ``signal_rows_to_dicts``.
+SIGNAL_COLUMNS = (
+    "s.id, s.detector, s.signal_type, s.value, s.surface, s.char_start, s.char_end, s.language,"
+    " s.calendar, s.resolution, s.date_from, s.date_to, s.text_orientation, s.anchor_date,"
+    " s.evidence, s.detector_ver, s.method, s.confidence, s.confidence_basis,"
+    " s.evidence_sentence, s.sentence_start, s.sentence_end, s.hash_id, s.detected_at")
+SIGNAL_COLUMN_COUNT = 24
 
-    Authorization happens here, before any signal is read: the content must
-    exist and - when ``scope`` restricts sources - appear in at least one
-    allowed source. Both failures raise the same ``LookupError`` so callers
-    cannot distinguish "absent" from "not yours".
-    """
-    if not isinstance(reference_date, datetime.date):
-        raise ValueError("reference_date is required")
-    if not isinstance(scope, AccessScope):
-        raise TypeError("an AccessScope is required")
-    if scope.allowed_source_ids is None:
-        cur.execute("SELECT 1 FROM hashs WHERE id = %s", (hash_id,))
-    elif not scope.allowed_source_ids:
-        raise LookupError(hash_id)
-    else:
-        cur.execute("SELECT 1 FROM hash_contexts WHERE hash_id = %s"
-                    " AND source_id = ANY(%s) LIMIT 1",
-                    (hash_id, list(scope.allowed_source_ids)))
-    if cur.fetchone() is None:
-        raise LookupError(hash_id)
+
+def signal_rows_to_dicts(cur, rows: Sequence[tuple], reference_date: datetime.date
+                         ) -> List[Dict[str, Any]]:
+    """API form of ``SIGNAL_COLUMNS`` rows: typed through the detector's signal
+    class, clock orientation against ``reference_date``, place candidates for
+    place signals (one query for the whole batch, never one per row)."""
     from core.detection.signal_model import ContentSignal
-    from services.detection import detectors as registry
 
-    wanted = registry.validate(list(detectors) if detectors else None)
-    cur.execute("SELECT detector, detector_ver, status, anchor_date, chars_total, chars_scanned,"
-                " signal_count, trigger, job_id, error, ran_at FROM content_signal_runs"
-                " WHERE hash_id = %s AND detector = ANY(%s)", (hash_id, list(wanted)))
-    runs: Dict[str, Optional[Dict[str, Any]]] = {name: None for name in wanted}
-    for r in cur.fetchall():
-        current = registry.get(r[0]).version(cur)
-        runs[r[0]] = {"detector": r[0], "detector_ver": r[1], "status": r[2],
-                      "anchor_date": r[3].isoformat() if r[3] else None,
-                      "chars_total": r[4], "chars_scanned": r[5], "signal_count": r[6],
-                      "trigger": r[7], "job_id": r[8], "error": r[9],
-                      "ran_at": r[10].isoformat() if r[10] else None,
-                      "current_version": r[1] == current}
-    cur.execute("SELECT id, detector, signal_type, value, surface, char_start, char_end, language,"
-                " calendar, resolution, date_from, date_to, text_orientation, anchor_date,"
-                " evidence, detector_ver, method, confidence, confidence_basis,"
-                " evidence_sentence, sentence_start, sentence_end FROM content_signals"
-                " WHERE hash_id = %s AND detector = ANY(%s)"
-                " ORDER BY char_start, char_end, detector, signal_type, value",
-                (hash_id, list(wanted)))
-    rows = cur.fetchall()
     candidates: Dict[int, List[Dict[str, Any]]] = {}
     place_ids = [r[0] for r in rows if r[1] == "places"]
     if place_ids:
@@ -245,9 +214,59 @@ def signals_for(cur, hash_id: int, reference_date: datetime.date, *,
             item = ContentSignal(**fields).to_dict()
             item["clock_orientation"] = None
         item["detector"] = row[1]
+        item["signal_id"] = row[0]
+        item["hash_id"] = row[22]
+        item["detected_at"] = row[23].isoformat() if row[23] else None
         if row[1] == "places":
             item["places"] = candidates.get(row[0], [])
         signals.append(item)
+    return signals
+
+
+def signals_for(cur, hash_id: int, reference_date: datetime.date, *,
+                scope: AccessScope, detectors: Optional[Sequence[str]] = None) -> Dict[str, Any]:
+    """Signals and run status for one content, with clock orientation computed
+    against ``reference_date`` (explicit; never an implicit clock).
+
+    Authorization happens here, before any signal is read: the content must
+    exist and - when ``scope`` restricts sources - appear in at least one
+    allowed source. Both failures raise the same ``LookupError`` so callers
+    cannot distinguish "absent" from "not yours".
+    """
+    if not isinstance(reference_date, datetime.date):
+        raise ValueError("reference_date is required")
+    if not isinstance(scope, AccessScope):
+        raise TypeError("an AccessScope is required")
+    if scope.allowed_source_ids is None:
+        cur.execute("SELECT 1 FROM hashs WHERE id = %s", (hash_id,))
+    elif not scope.allowed_source_ids:
+        raise LookupError(hash_id)
+    else:
+        cur.execute("SELECT 1 FROM hash_contexts WHERE hash_id = %s"
+                    " AND source_id = ANY(%s) LIMIT 1",
+                    (hash_id, list(scope.allowed_source_ids)))
+    if cur.fetchone() is None:
+        raise LookupError(hash_id)
+    from services.detection import detectors as registry
+
+    wanted = registry.validate(list(detectors) if detectors else None)
+    cur.execute("SELECT detector, detector_ver, status, anchor_date, chars_total, chars_scanned,"
+                " signal_count, trigger, job_id, error, ran_at FROM content_signal_runs"
+                " WHERE hash_id = %s AND detector = ANY(%s)", (hash_id, list(wanted)))
+    runs: Dict[str, Optional[Dict[str, Any]]] = {name: None for name in wanted}
+    for r in cur.fetchall():
+        current = registry.get(r[0]).version(cur)
+        runs[r[0]] = {"detector": r[0], "detector_ver": r[1], "status": r[2],
+                      "anchor_date": r[3].isoformat() if r[3] else None,
+                      "chars_total": r[4], "chars_scanned": r[5], "signal_count": r[6],
+                      "trigger": r[7], "job_id": r[8], "error": r[9],
+                      "ran_at": r[10].isoformat() if r[10] else None,
+                      "current_version": r[1] == current}
+    cur.execute(f"SELECT {SIGNAL_COLUMNS} FROM content_signals s"
+                " WHERE s.hash_id = %s AND s.detector = ANY(%s)"
+                " ORDER BY s.char_start, s.char_end, s.detector, s.signal_type, s.value",
+                (hash_id, list(wanted)))
+    signals = signal_rows_to_dicts(cur, cur.fetchall(), reference_date)
     temporal_run = runs.get(temporal_intel.DETECTOR_NAME)
     return {"hash_id": hash_id,
             "status": temporal_run["status"] if temporal_run else "not_analysed",

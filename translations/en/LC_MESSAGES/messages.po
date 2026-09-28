@@ -10928,3 +10928,274 @@ msgstr ""
 #: templates/Settings/translation_manager.html:157
 msgid "matching strings"
 msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Horizon & Signal Explorer"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Dates, places and other signals detected in stored documents, with the evidence for each."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "What you are looking at"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Signals are detected once, when a document is stored or re-analysed. This page reads the stored results; it does not re-read documents."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Horizon groups dated references by where their date falls relative to the reference date: overdue, next 7 days, next 30 days, next 90 days, later."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Overdue means the sentence spoke of the future and the date has passed. Other past dates are listed under Past."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "References whose date could not be decided (for example 03/04/2026) are counted as undated, never guessed."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Place matches come from a gazetteer; a name shared by several places stays ambiguous and lists every candidate."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Reference date"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Empty: today (UTC)"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "None"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Replaces the source, side, category and keyword filters"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Category IDs"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Keyword IDs"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Evidence contains"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Event dates"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Event dates from"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Event dates to"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Confidence"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Calendar"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Detector"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Explorer only; Horizon shows dates"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Horizon"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Signal Explorer"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "When"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Group"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Reference"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Evidence"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Document"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Counts"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Signal"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Value"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Overdue"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Next 7 days"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Next 30 days"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Next 90 days"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Later"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Past"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "signals"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "No signals match these filters."
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s references have no single date (ambiguous: %(a)s, unresolved: %(u)s) and are not placed on the horizon."
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s of %(t)s matching documents have not been analysed by the current date detector (never analysed: %(never)s, older version: %(stale)s, failed: %(failed)s). They contribute nothing here until re-analysed; this is not the same as having no dates."
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "All %(t)s matching documents were analysed by the current date detector."
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(from)s-%(to)s of %(total)s"
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(total)s signals in %(contents)s documents"
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s occurrences"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Ambiguous between:"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Detector version"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "current"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "outdated - re-analysis pending"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Basis"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Resolution"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Sentence orientation"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Analysis run"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Structured evidence"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Open file"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Detected"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "not recorded"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "not specified"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Event date"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Recently detected"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Document order"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "The request failed"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Query fingerprint"
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "The source and side lists could not be loaded. Other filters still work."
+msgstr ""

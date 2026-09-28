@@ -93,6 +93,18 @@ the search is *unowned* (legacy entries saved before per-user accounts). A
 Previously any authenticated user could read, rename or delete any saved
 search by id (`tests/integration/test_saved_searches_pg.py`).
 
+**Signals, Horizon and Signal Explorer** (`/api/signals*`, `/signals`,
+[implementation/HORIZON.md](implementation/HORIZON.md)) are readable by any
+authenticated role.
+* The caller's `AccessScope` is compiled into the SQL before any row is read.
+  A signal is visible only through a visible file occurrence of its content.
+* An absent signal and one the caller may not see get the same `404`. A
+  saved search the caller does not own is also a `404`.
+* Each response is read inside one `REPEATABLE READ, READ ONLY` transaction
+  with a 15 s statement timeout, so PostgreSQL itself rejects writes on that
+  path.
+* Re-detection (`POST /api/signals/redetect`) is admin-only.
+
 The **setup wizard** is public only until installation: after that `/setup`
 redirects home, `/api/setup/install` answers 409, and the system check and
 database probe require an administrator (AUDIT-SETUP-01).
@@ -107,6 +119,16 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
   vary (sort columns, directions, table names) are chosen from whitelists
   (`core/sql_safety.py`); a client value never reaches the SQL text
   (AUDIT-SQLI-01 fixed the one place that did).
+* **Query parameters of read APIs** are parsed strictly
+  (`services/detection/signal_query.py`).
+  * Unknown enum values, malformed identifiers and inverted date windows get
+    `400`. They are never ignored, which would widen the result.
+  * Identifiers must be positive ASCII decimal integers. `str.isdigit()` had
+    accepted superscripts, whose `int()` error leaked into the response, and
+    other scripts' digits.
+  * Free-text filters are length-limited and matched literally: `%` and `_`
+    are escaped for `ILIKE`.
+  * Every list is bounded (100 values; pages of at most 200 rows).
 * **Server paths.** Ingestion of server-side folders is confined to the
   `INGESTION_ROOTS` allow-list (`core/path_safety.py`, SEC-06), resolved after
   symlinks, with native Windows drive and UNC paths handled. With no roots

@@ -46,8 +46,8 @@ document with what it writes.
 
 | Measurement | Count |
 | --- | --- |
-| Interfaces | 26 |
-| Navigable interfaces | 24 |
+| Interfaces | 27 |
+| Navigable interfaces | 25 |
 | Interfaces with a described screen | 5 |
 | Interfaces declaring no help topic | 2 |
 | Interfaces declaring no keyboard shortcut | 14 |
@@ -128,6 +128,7 @@ with the evidence.
 | `email_words` | DISCOVER | `email_words` | discover/email-words | Not declared | 0 |
 | `analyst_categorization` | CLASSIFY | `analyst_categorization_page` | classify/analyst-categories | Not declared | 0 |
 | `notifications` | DISCOVER | `notifications_page` | discover/notifications | g n | 0 |
+| `signal_horizon` | DISCOVER | `signals_page` | discover/signals | g h | 0 |
 | `input_ingestion` | INGEST | `operations_input_page` | ingest/input | g i | 0 |
 | `import_center` | INGEST | `operations_import_page` | ingest/import-center | Not declared | 0 |
 | `archives` | ANALYZE | `archives_page` | analyze/archives | g a | 0 |
@@ -152,8 +153,8 @@ with the evidence.
 | binding | 6 | 34 |
 | component | 20 | 20 |
 | execution | 29 | 34 |
-| help | 24 | 26 |
-| interface | 26 | 26 |
+| help | 25 | 27 |
+| interface | 27 | 27 |
 | permission | 34 | 34 |
 | scope | 34 | 34 |
 | state | 34 | 34 |

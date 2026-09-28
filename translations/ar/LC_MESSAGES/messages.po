@@ -10318,3 +10318,278 @@ msgstr "أدخل كلمة المرور الحالية."
 
 msgid "The new password must be different from the current one."
 msgstr "يجب أن تختلف كلمة المرور الجديدة عن الحالية."
+
+#: templates/Signals/signals.html
+msgid "Horizon & Signal Explorer"
+msgstr "الأفق ومستكشف الإشارات"
+
+#: templates/Signals/signals.html
+msgid "Dates, places and other signals detected in stored documents, with the evidence for each."
+msgstr "التواريخ والأماكن والإشارات الأخرى المكتشفة في المستندات المخزنة، مع الدليل على كل منها."
+
+#: templates/Signals/signals.html
+msgid "What you are looking at"
+msgstr "ما الذي تنظر إليه"
+
+#: templates/Signals/signals.html
+msgid "Signals are detected once, when a document is stored or re-analysed. This page reads the stored results; it does not re-read documents."
+msgstr "تُكتشف الإشارات مرة واحدة، عند تخزين المستند أو إعادة تحليله. تقرأ هذه الصفحة النتائج المخزنة ولا تعيد قراءة المستندات."
+
+#: templates/Signals/signals.html
+msgid "Horizon groups dated references by where their date falls relative to the reference date: overdue, next 7 days, next 30 days, next 90 days, later."
+msgstr "يجمع الأفق الإشارات المؤرخة حسب موقع تاريخها بالنسبة إلى التاريخ المرجعي: متأخرة، الأيام السبعة القادمة، الثلاثون يومًا القادمة، التسعون يومًا القادمة، لاحقًا."
+
+#: templates/Signals/signals.html
+msgid "Overdue means the sentence spoke of the future and the date has passed. Other past dates are listed under Past."
+msgstr "تعني «متأخرة» أن الجملة تحدثت عن المستقبل وأن التاريخ قد مضى. تُدرج التواريخ الماضية الأخرى تحت «الماضي»."
+
+#: templates/Signals/signals.html
+msgid "References whose date could not be decided (for example 03/04/2026) are counted as undated, never guessed."
+msgstr "الإشارات التي تعذّر تحديد تاريخها (مثل 03/04/2026) تُحسب غير مؤرخة، ولا يُخمَّن تاريخها أبدًا."
+
+#: templates/Signals/signals.html
+msgid "Place matches come from a gazetteer; a name shared by several places stays ambiguous and lists every candidate."
+msgstr "تأتي مطابقات الأماكن من معجم جغرافي؛ ويبقى الاسم المشترك بين عدة أماكن ملتبسًا وتُدرج جميع الاحتمالات."
+
+#: templates/Signals/signals.html
+msgid "Reference date"
+msgstr "التاريخ المرجعي"
+
+#: templates/Signals/signals.html
+msgid "Empty: today (UTC)"
+msgstr "فارغ: اليوم (UTC)"
+
+#: templates/Signals/signals.html
+msgid "None"
+msgstr "لا شيء"
+
+#: templates/Signals/signals.html
+msgid "Replaces the source, side, category and keyword filters"
+msgstr "يحل محل مرشحات المصدر والجهة والفئة والكلمة المفتاحية"
+
+#: templates/Signals/signals.html
+msgid "Category IDs"
+msgstr "معرّفات الفئات"
+
+#: templates/Signals/signals.html
+msgid "Keyword IDs"
+msgstr "معرّفات الكلمات المفتاحية"
+
+#: templates/Signals/signals.html
+msgid "Evidence contains"
+msgstr "الدليل يحتوي على"
+
+#: templates/Signals/signals.html
+msgid "Event dates"
+msgstr "تواريخ الأحداث"
+
+#: templates/Signals/signals.html
+msgid "Event dates from"
+msgstr "تواريخ الأحداث من"
+
+#: templates/Signals/signals.html
+msgid "Event dates to"
+msgstr "تواريخ الأحداث حتى"
+
+#: templates/Signals/signals.html
+msgid "Confidence"
+msgstr "الثقة"
+
+#: templates/Signals/signals.html
+msgid "Calendar"
+msgstr "التقويم"
+
+#: templates/Signals/signals.html
+msgid "Detector"
+msgstr "الكاشف"
+
+#: templates/Signals/signals.html
+msgid "Explorer only; Horizon shows dates"
+msgstr "للمستكشف فقط؛ يعرض الأفق التواريخ"
+
+#: templates/Signals/signals.html
+msgid "Horizon"
+msgstr "الأفق"
+
+#: templates/Signals/signals.html
+msgid "Signal Explorer"
+msgstr "مستكشف الإشارات"
+
+#: templates/Signals/signals.html
+msgid "When"
+msgstr "متى"
+
+#: templates/Signals/signals.html
+msgid "Group"
+msgstr "المجموعة"
+
+#: templates/Signals/signals.html
+msgid "Reference"
+msgstr "الإشارة"
+
+#: templates/Signals/signals.html
+msgid "Evidence"
+msgstr "الدليل"
+
+#: templates/Signals/signals.html
+msgid "Document"
+msgstr "المستند"
+
+#: templates/Signals/signals.html
+msgid "Counts"
+msgstr "الأعداد"
+
+#: templates/Signals/signals.html
+msgid "Signal"
+msgstr "الإشارة"
+
+#: templates/Signals/signals.html
+msgid "Value"
+msgstr "القيمة"
+
+#: templates/Signals/signals.html
+msgid "Overdue"
+msgstr "متأخرة"
+
+#: templates/Signals/signals.html
+msgid "Next 7 days"
+msgstr "الأيام السبعة القادمة"
+
+#: templates/Signals/signals.html
+msgid "Next 30 days"
+msgstr "الثلاثون يومًا القادمة"
+
+#: templates/Signals/signals.html
+msgid "Next 90 days"
+msgstr "التسعون يومًا القادمة"
+
+#: templates/Signals/signals.html
+msgid "Later"
+msgstr "لاحقًا"
+
+#: templates/Signals/signals.html
+msgid "Past"
+msgstr "الماضي"
+
+#: templates/Signals/signals.html
+msgid "signals"
+msgstr "إشارات"
+
+#: templates/Signals/signals.html
+msgid "documents"
+msgstr "مستندات"
+
+#: templates/Signals/signals.html
+msgid "No signals match these filters."
+msgstr "لا توجد إشارات تطابق هذه المرشحات."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s references have no single date (ambiguous: %(a)s, unresolved: %(u)s) and are not placed on the horizon."
+msgstr "%(n)s إشارة ليس لها تاريخ واحد (ملتبسة: %(a)s، غير محسومة: %(u)s) ولا توضع على الأفق."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s of %(t)s matching documents have not been analysed by the current date detector (never analysed: %(never)s, older version: %(stale)s, failed: %(failed)s). They contribute nothing here until re-analysed; this is not the same as having no dates."
+msgstr "%(n)s من %(t)s مستندًا مطابقًا لم يحللها كاشف التواريخ الحالي (لم تُحلل قط: %(never)s، إصدار أقدم: %(stale)s، فشل: %(failed)s). لا تسهم بشيء هنا حتى يُعاد تحليلها؛ وهذا ليس كخلوّها من التواريخ."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "All %(t)s matching documents were analysed by the current date detector."
+msgstr "حلّل كاشف التواريخ الحالي جميع المستندات المطابقة وعددها %(t)s."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(from)s-%(to)s of %(total)s"
+msgstr "%(from)s-%(to)s من %(total)s"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(total)s signals in %(contents)s documents"
+msgstr "%(total)s إشارة في %(contents)s مستند"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s occurrences"
+msgstr "%(n)s ورود"
+
+#: templates/Signals/signals.html
+msgid "Ambiguous between:"
+msgstr "ملتبس بين:"
+
+#: templates/Signals/signals.html
+msgid "Detector version"
+msgstr "إصدار الكاشف"
+
+#: templates/Signals/signals.html
+msgid "current"
+msgstr "الحالي"
+
+#: templates/Signals/signals.html
+msgid "outdated - re-analysis pending"
+msgstr "قديم - إعادة التحليل معلّقة"
+
+#: templates/Signals/signals.html
+msgid "Basis"
+msgstr "الأساس"
+
+#: templates/Signals/signals.html
+msgid "Resolution"
+msgstr "الحسم"
+
+#: templates/Signals/signals.html
+msgid "Sentence orientation"
+msgstr "اتجاه الجملة الزمني"
+
+#: templates/Signals/signals.html
+msgid "Analysis run"
+msgstr "عملية التحليل"
+
+#: templates/Signals/signals.html
+msgid "Structured evidence"
+msgstr "الدليل المنظّم"
+
+#: templates/Signals/signals.html
+msgid "Open file"
+msgstr "فتح الملف"
+
+#: templates/Signals/signals.html
+msgid "Detected"
+msgstr "اكتُشف"
+
+#: templates/Signals/signals.html
+msgid "not recorded"
+msgstr "غير مسجل"
+
+#: templates/Signals/signals.html
+msgid "not specified"
+msgstr "غير محدد"
+
+#: templates/Signals/signals.html
+msgid "Event date"
+msgstr "تاريخ الحدث"
+
+#: templates/Signals/signals.html
+msgid "Recently detected"
+msgstr "المكتشفة حديثًا"
+
+#: templates/Signals/signals.html
+msgid "Document order"
+msgstr "ترتيب المستند"
+
+#: templates/Signals/signals.html
+msgid "The request failed"
+msgstr "فشل الطلب"
+
+#: templates/Signals/signals.html
+msgid "Query fingerprint"
+msgstr "بصمة الاستعلام"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
+msgstr "لا تُدرج إلا أول %(n)s من المصادر والجهات حسب الاسم. استخدم بحثًا محفوظًا للتصفية حسب غيرها."
+
+#: templates/Signals/signals.html
+msgid "The source and side lists could not be loaded. Other filters still work."
+msgstr "تعذّر تحميل قائمتي المصادر والجهات. المرشحات الأخرى لا تزال تعمل."

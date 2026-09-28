@@ -36,10 +36,10 @@ This is a measurement of the product as it is, not a target.
 
 | Measure | Value |
 | --- | --- |
-| Registered interfaces | 26 |
-| Navigable screens | 24 |
+| Registered interfaces | 27 |
+| Navigable screens | 25 |
 | Screens with a described experience | 5 |
-| Screens nobody has described yet | 19 |
+| Screens nobody has described yet | 20 |
 | Registered actions | 34 |
 | - page / record / selection / bulk | 13 / 10 / 2 / 9 |
 | - destructive | 6 |

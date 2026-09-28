@@ -36,7 +36,7 @@ python -m pytest -p no:cacheprovider -o addopts="" -q -rf tests
 | 8 | Ingestion / re-detection | POSTGRESQL-VERIFIED | `test_signal_ingestion.py` (20): ingest step 10, contained failure, redetect scopes, signals API authz; stored sentence equals the stored text slice | `services/detection/`, `contents_db_service.py` step 10, `Api/routes/signals.py` | not runtime-verified against a live server and real files | runtime check in step 24 |
 | 8a | Future-date notifications from stored signals | POSTGRESQL-VERIFIED | `test_signal_notifications.py` (6) + notification accuracy/volume guards (16): metadata carries method, confidence and sentence | `notification_service.py`, `Api/routes/notifications.py` | stats/upcoming use the local date while the scan uses UTC. No rule engine yet: every future date is notified, subject only to the existing toggles | replaced by the step 11 rule engine |
 | 9 | Phase 2 DB gazetteer + place signals | POSTGRESQL-VERIFIED | `test_place_intel.py` (47): normalisation, scripts, exact/uppercase/possessive, Hebrew prefixes, Arabic proclitics, Croatian inflection, ambiguity kept (Tripoli, Georgia, الجزائر, عمان), homographs low, offsets into the original, all 119 legacy names still detected, `build_seed.py --check`. `test_places_pg.py` (20): seed load + fingerprint from stored rows, idempotent sync, retire-not-delete, gazetteer change -> new detector version -> stale re-detection converges, named CHECKs, ingestion offsets, place failure recorded without blocking temporal, `path_geo_mentions` view (legacy rows until superseded; ambiguous/low excluded), signals/redetect/places APIs incl. 400/401/404, scan no longer overwrites `paths.coordinates`. `test_migration_upgrade_path.py` (5): 0015->0019 with legacy geo rows, downgrade restores the table and CHECK | `database/migrations/m0019_gazetteer.py`, `data/gazetteer/` (Wikidata CC0, [SOURCES.md](../../data/gazetteer/SOURCES.md)), `core/geo/names.py`, `core/detection/place_intel.py`, `services/geo/gazetteer.py`, `services/detection/detectors.py`, `Api/routes/places.py`; `Api/services/geo_gazetteer.py` deleted | 223 places only; gazetteer matching, not NER; no context disambiguation (homographs curated); small Croatian paradigm; multi-word possessives missed; romanised endonyms classified exonym; 17 places `unclassified`; scan endpoint contract changed (job, no coordinates). [PLACE_SIGNALS.md](PLACE_SIGNALS.md) | runtime check in step 24; Signal Explorer (step 10) |
-| 10 | Horizon + Signal Explorer | NOT STARTED | the read API exists (`GET /api/content/<id>/signals`) | - | - | after 9 |
+| 10 | Horizon + Signal Explorer | RUNTIME-VERIFIED (API and page module on a live production-mode server; not ACCEPTED: no real browser, acceptance is step 28) | `test_signal_explorer_pg.py` (22): buckets, undated and coverage counts, facets, NULL values, literal `%`, paging, saved-search isolation, scope in SQL, timeout, detail, 400/401/404, capped/unloadable menus, one REPEATABLE READ snapshot per response, READ ONLY enforced. `test_signal_query_parsing.py` (54). `test_translation_coverage.py` (+3, `/signals` in ar/he/fa; the template is on the audited list). Live server: `tools/verify/runtime_check_signals.py` (25 checks, 0 failures) and `tools/verify/signals_page_runtime.mjs` (the shipped page module against the live server, 21 checks, 0 failures). Perf: `tools/perf/signal_query_perf.py`, 240 000 signals, 111-570 ms median | `services/detection/signal_query.py`, `signal_store.py` (row mapping), `Api/routes/signals.py` (3 APIs + page), `templates/Signals/signals.html`, `static/js/pages/signals-page.js`, registry `signal_horizon` (`g h`), catalogs ar/he/fa/hr/en + pot; no migration | No real-browser rendering (Playwright download blocked). Translations not reviewed by native speakers. Horizon is temporal-only. `evidence_text` is an unindexed `ILIKE` on the evidence sentence. 10x corpus not measured. Notification stats use the local date vs UTC here (step 11). [HORIZON.md](HORIZON.md) | step 11 rule engine consumes the same filter model |
 | 11 | Rule engine | NOT STARTED | - | - | - | - |
 | 12 | Scenarios + dry-run | NOT STARTED | - | - | - | - |
 | 13 | Report registry | NOT STARTED | - | - | - | - |
@@ -62,6 +62,7 @@ python -m pytest -p no:cacheprovider -o addopts="" -q -rf tests
 | Phase 1 (`2a50e24`) | 2 848 | 30 | 97 | 29 OCR (no Tesseract) + select2 licensing |
 | Disclosure + provenance (`294104e`) | 2 863 | 30 | 97 | identical to Phase 1 (compared with `comm`) |
 | Phase 2 gazetteer / place signals | 2 931 | 30 | 97 | identical to Phase 1 (compared with `comm`) |
+| Step 10 Horizon + Signal Explorer | 3 010 | 30 | 97 | identical to Phase 1 (compared with `comm`) |
 
 On the `294104e` run a 31st failure first appeared:
 `test_screen_inspector.py::...test_the_document_is_what_the_product_now_says`.
@@ -83,6 +84,16 @@ asserts that the second pass re-runs no place detection and fails nothing,
 and that the next pass processes 0 - stricter than before, and independent of
 test order.
 
+The first step-10 run had 33 failures. All 3 extra failures came from the new
+page's template.
+* `test_the_audit_counts_the_hand_written_markup` failed because the page
+  hand-wrote two tables and an error box. The pinned count was **not**
+  raised: the page was moved onto the shared `data_table` and `state_panel`
+  components, and the pin holds at 15.
+* The component-library and action-surface documents were stale. They were
+  regenerated with their own commands. Their diffs show only adoption rising
+  (tables 1 -> 2, states 2 -> 3) and one more registered, undescribed screen.
+
 ## Pre-existing defects fixed
 
 | Defect | Fix | Test |
@@ -94,6 +105,9 @@ test order.
 | Notification settings were read through a non-existent `get_setting()`; the error was swallowed | `settings.get(category, key, default)` | `test_signal_notifications.py` |
 | Future dates were estimated from the wall clock, English only | removed; stored signals | `test_signal_notifications.py` |
 | 12 export routes wrote `DATA_EXPORTED` without scope, format or row count; `/api/settings/export` wrote none | per-route `note_disclosure`, `force` for the JSON body | `test_every_export_route_writes_a_complete_record` |
+| Signal read APIs parsed ids with `str.isdigit()`: `²` leaked Python's `int()` message in a 400, `٣` was read as 3, `saved_search_id=0` returned 404 | `_positive_int` (ASCII, > 0) with a message naming the parameter | `test_signal_query_parsing.py`, runtime check |
+| One Horizon/Explorer response ran as several READ COMMITTED statements: the pool's `SELECT 1` health check leaves pooled connections inside a transaction, so totals, facets and page could disagree during ingestion | the route ends that transaction; `REPEATABLE READ, READ ONLY` snapshot, reported as `read_consistency` | `test_every_api_response_is_read_from_one_snapshot`, `test_the_snapshot_excludes_rows_committed_during_the_read` |
+| `/signals` swallowed a failure to load the source/side menus (shown empty) and capped them at 1 000 silently | explicit `options_status` with a visible notice | `test_capped_filter_lists_say_they_are_capped`, `test_unloadable_filter_lists_are_reported_not_left_empty` |
 
 ## Open questions for the owner
 

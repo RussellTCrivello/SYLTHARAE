@@ -209,6 +209,14 @@ REGISTRY: Tuple[Interface, ...] = (
                   "notifications.auto_analyze_files"),
         help_topic="discover/notifications", keyboard_shortcut="g n",
     ),
+    _if(
+        "signal_horizon", "Horizon & Signal Explorer",
+        "Dated references on a forward-looking horizon (overdue, next 7/30/90 "
+        "days, later) and every stored signal - dates and places - with its "
+        "evidence sentence, confidence, method and detector version.",
+        Domain.DISCOVER, "signals_page", "bi-calendar-range",
+        help_topic="discover/signals", keyboard_shortcut="g h",
+    ),
 
     # -- INGEST -----------------------------------------------------------
     _if(

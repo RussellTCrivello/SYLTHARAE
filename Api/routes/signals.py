@@ -9,6 +9,16 @@
   ``reference_date`` (YYYY-MM-DD) sets the clock used for past/future
   orientation. When omitted, the server's current UTC date is used and the
   response says so (``reference_date_source``) - the clock is never implicit.
+* ``GET  /api/signals`` - Signal Explorer: every stored signal, filtered by
+  signal dimensions and document criteria (or ``saved_search_id``), exact
+  totals and facets, paginated (``services/detection/signal_query.py``).
+* ``GET  /api/signals/<signal_id>`` - one signal: evidence, run, detector
+  version, visible occurrences. 404 when absent or not visible.
+* ``GET  /api/signals/horizon`` - resolved temporal signals grouped into
+  overdue / week / month / quarter / later (and ``past`` on request) against
+  ``reference_date``; undated references and unmeasured content are counted
+  separately.
+* ``GET  /signals`` - the Horizon & Signal Explorer page (reads the APIs above).
 * ``POST /api/signals/redetect`` - administrators. Queues a
   ``signal_redetection`` job on the existing JobManager (no second job
   framework). Body: ``{"scope": "stale"|"all"|"hash_ids", "hash_ids": [...],
@@ -28,6 +38,9 @@ from services.detection import detectors as detector_registry
 from services.detection import redetection, signal_store
 
 logger = logging.getLogger(__name__)
+
+#: Sources and sides listed in the page's filter menus (the API accepts any id).
+FILTER_OPTION_LIMIT = 1000
 
 #: Upper bound for an explicit hash_ids re-detection request.
 MAX_REDETECT_IDS = 10_000
@@ -130,3 +143,136 @@ def register_signal_routes(app):
             job = manager.get(job["job_id"])
             return jsonify({"success": True, "job": job_to_api(job)})
         return jsonify({"success": True, "job": job_to_api(job)}), 202
+
+    # ------------------------------------------------------------------
+    # Signal Explorer and Horizon
+    # ------------------------------------------------------------------
+
+    def _load_saved_search(search_id):
+        """Stored criteria of a saved search the caller may read, else None."""
+        from Api.services.saved_searches_repository import can_read
+        from Api.services.search_history import SavedSearchesService
+        from core.criteria.model import from_dict
+
+        row = SavedSearchesService._repo().get(search_id)
+        user = current_user()
+        user_id = getattr(user, "id", None)
+        is_admin = bool(user_id is not None and user.has_role("admin"))
+        if not can_read(row, user_id, is_admin):
+            return None
+        return from_dict(row["criteria"])
+
+    def _signal_read(fn):
+        """Parse the shared parameters, run ``fn(cur, filter, criteria,
+        saved_search_id, reference_date)`` in a read-only transaction and map
+        failures to the API error shape. Nothing is swallowed: an unexpected
+        error is logged and returned as 500."""
+        from services.detection import signal_query
+
+        try:
+            reference_date, source = _parse_reference_date(request.args.get("reference_date"))
+            sig_filter = signal_query.parse_filter(request.args)
+            criteria, saved_id = signal_query.parse_document_criteria(
+                request.args, load_saved_search=_load_saved_search)
+        except LookupError:
+            return _error("NOT_FOUND", "Saved search not found", 404)
+        except ValueError as exc:
+            return _error("VALIDATION_FAILED", str(exc), 400)
+        from Api.utils.utils import get_connection
+
+        try:
+            with get_connection() as conn:
+                # The pool's health check (SELECT 1, autocommit off) leaves the
+                # connection inside a transaction; end it so the read starts
+                # its own REPEATABLE READ snapshot (signal_query._begin_read).
+                conn.rollback()
+                try:
+                    with conn.cursor() as cur:
+                        body = fn(cur, sig_filter, criteria, saved_id, reference_date)
+                finally:
+                    conn.rollback()  # read-only; never leave a transaction open
+        except signal_query.SignalQueryError as exc:
+            return _error("VALIDATION_FAILED", str(exc), 400)
+        except LookupError:
+            return _error("NOT_FOUND", "Signal not found", 404)
+        except Exception as exc:
+            if type(exc).__name__ == "QueryCanceled":
+                logger.warning("signal read exceeded the statement timeout")
+                return _error("QUERY_TIMEOUT", "The request took too long; narrow the filters",
+                              503)
+            logger.exception("signal read failed")
+            return _error("SIGNALS_UNAVAILABLE", "Signals could not be read", 500)
+        body["reference_date_source"] = source
+        body["success"] = True
+        return jsonify(body)
+
+    @app.route("/api/signals", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_signal_explorer():
+        from services.detection import signal_query
+
+        return _signal_read(lambda cur, f, criteria, saved_id, ref: signal_query.explore(
+            cur, f, criteria, scope_for(current_user()), ref,
+            sort=request.args.get("sort") or "event_date", limit=request.args.get("limit"),
+            offset=request.args.get("offset"), saved_search_id=saved_id))
+
+    @app.route("/api/signals/horizon", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_signal_horizon():
+        from services.detection import signal_query
+
+        return _signal_read(lambda cur, f, criteria, saved_id, ref: signal_query.horizon(
+            cur, f, criteria, scope_for(current_user()), ref,
+            buckets=[b for b in request.args.getlist("bucket") if b],
+            limit=request.args.get("limit"), offset=request.args.get("offset"),
+            saved_search_id=saved_id))
+
+    @app.route("/api/signals/<int:signal_id>", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_signal_detail(signal_id):
+        from services.detection import signal_query
+
+        return _signal_read(lambda cur, f, criteria, saved_id, ref: signal_query.signal_detail(
+            cur, signal_id, scope_for(current_user()), ref))
+
+    @app.route("/signals", methods=["GET"])
+    @login_required
+    def signals_page():
+        from flask import render_template
+
+        from database.queries import list_sides, list_sources
+        from services.detection import signal_query
+
+        # The filter lists are a convenience: the API accepts any id. They are
+        # capped, so one row more than the cap is read to *know* whether the
+        # list is complete, and the page says so either way - an empty or cut
+        # list must not look like "there are no other sources".
+        options_status = "complete"
+        try:
+            source_rows = list_sources(limit=FILTER_OPTION_LIMIT + 1)
+            side_rows = list_sides(limit=FILTER_OPTION_LIMIT + 1)
+        except Exception:
+            logger.exception("signals page: sources/sides unavailable")
+            source_rows, side_rows, options_status = [], [], "unavailable"
+        if len(source_rows) > FILTER_OPTION_LIMIT or len(side_rows) > FILTER_OPTION_LIMIT:
+            options_status = "truncated"
+        sources = {r["id"]: r["name"] for r in source_rows[:FILTER_OPTION_LIMIT]}
+        sides = {r["id"]: r["name"] for r in side_rows[:FILTER_OPTION_LIMIT]}
+        return render_template(
+            "Signals/signals.html",
+            page_data={
+                "sources": sources, "sides": sides, "options_status": options_status,
+                "option_limit": FILTER_OPTION_LIMIT,
+                "buckets": list(signal_query.DEFAULT_BUCKETS) + ["past"],
+                "confidence": list(signal_query.CONFIDENCE_FILTER),
+                "languages": list(signal_query.LANGUAGE_FILTER),
+                "calendars": list(signal_query.CALENDARS),
+                "detectors": list(detector_registry.NAMES),
+                "signal_types": list(signal_query.SIGNAL_TYPES),
+                "orientations": list(signal_query.ORIENTATION_FILTER),
+                "sorts": list(signal_query.EXPLORER_SORTS),
+                "max_page_size": signal_query.MAX_PAGE_SIZE,
+            })

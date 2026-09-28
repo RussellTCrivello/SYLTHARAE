@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% from 'components/table.html' import data_table %}
+{% from 'components/states.html' import state_panel %}
+
+{% block title %}{{ _('Horizon & Signal Explorer') }}{% endblock %}
+
+{% block content %}
+<div class="page-container" id="signalsPage">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="bi bi-calendar-range me-2"></i>
+                {{ _('Horizon & Signal Explorer') }}
+            </h1>
+            <p class="text-muted mb-0">{{ _('Dates, places and other signals detected in stored documents, with the evidence for each.') }}</p>
+        </div>
+    </div>
+
+    {% from 'components/page_tips.html' import page_tips %}
+    {% call page_tips() %}
+    <div class="tips-section">
+        <div class="tips-section-title"><i class="bi bi-info-circle"></i> {{ _('What you are looking at') }}</div>
+        <ul class="tips-list">
+            <li>{{ _('Signals are detected once, when a document is stored or re-analysed. This page reads the stored results; it does not re-read documents.') }}</li>
+            <li>{{ _('Horizon groups dated references by where their date falls relative to the reference date: overdue, next 7 days, next 30 days, next 90 days, later.') }}</li>
+            <li>{{ _('Overdue means the sentence spoke of the future and the date has passed. Other past dates are listed under Past.') }}</li>
+            <li>{{ _('References whose date could not be decided (for example 03/04/2026) are counted as undated, never guessed.') }}</li>
+            <li>{{ _('Place matches come from a gazetteer; a name shared by several places stays ambiguous and lists every candidate.') }}</li>
+        </ul>
+    </div>
+    {% endcall %}
+
+    <form id="signalFilters" class="card mb-3" autocomplete="off">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <label class="form-label" for="fReferenceDate">{{ _('Reference date') }}</label>
+                    <input type="date" class="form-control form-control-sm" id="fReferenceDate" name="reference_date">
+                    <div class="form-text">{{ _('Empty: today (UTC)') }}</div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="fSource">{{ _('Source') }}</label>
+                    <select class="form-select form-select-sm" id="fSource" name="source_id" multiple size="3"></select>
+                    {% if page_data.options_status == 'truncated' %}
+                    <div class="form-text text-warning" id="optionsNotice">{{ _('Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others.', n=page_data.option_limit) }}</div>
+                    {% elif page_data.options_status == 'unavailable' %}
+                    <div class="form-text text-danger" id="optionsNotice">{{ _('The source and side lists could not be loaded. Other filters still work.') }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="fSide">{{ _('Side') }}</label>
+                    <select class="form-select form-select-sm" id="fSide" name="side_id" multiple size="3"></select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="fSavedSearch">{{ _('Saved search') }}</label>
+                    <select class="form-select form-select-sm" id="fSavedSearch" name="saved_search_id">
+                        <option value="">{{ _('None') }}</option>
+                    </select>
+                    <div class="form-text">{{ _('Replaces the source, side, category and keyword filters') }}</div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="fCategory">{{ _('Category IDs') }}</label>
+                    <input type="text" class="form-control form-control-sm" id="fCategory" name="category_id" inputmode="numeric" placeholder="12, 40">
+                    <label class="form-label mt-1" for="fKeyword">{{ _('Keyword IDs') }}</label>
+                    <input type="text" class="form-control form-control-sm" id="fKeyword" name="keyword_id" inputmode="numeric" placeholder="3">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="fEvidence">{{ _('Evidence contains') }}</label>
+                    <input type="text" class="form-control form-control-sm" id="fEvidence" name="evidence_text" maxlength="200" dir="auto">
+                    <label class="form-label mt-1">{{ _('Event dates') }}</label>
+                    <div class="d-flex gap-1">
+                        <input type="date" class="form-control form-control-sm" name="event_from" aria-label="{{ _('Event dates from') }}">
+                        <input type="date" class="form-control form-control-sm" name="event_to" aria-label="{{ _('Event dates to') }}">
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 mt-1">
+                <div class="col-md-3"><fieldset><legend class="form-label fs-6">{{ _('Confidence') }}</legend><div id="fConfidence" class="d-flex flex-wrap gap-2"></div></fieldset></div>
+                <div class="col-md-3"><fieldset><legend class="form-label fs-6">{{ _('Language') }}</legend><div id="fLanguage" class="d-flex flex-wrap gap-2"></div></fieldset></div>
+                <div class="col-md-3"><fieldset><legend class="form-label fs-6">{{ _('Calendar') }}</legend><div id="fCalendar" class="d-flex flex-wrap gap-2"></div></fieldset></div>
+                <div class="col-md-3"><fieldset><legend class="form-label fs-6">{{ _('Detector') }}</legend><div id="fDetector" class="d-flex flex-wrap gap-2"></div>
+                    <div class="form-text">{{ _('Explorer only; Horizon shows dates') }}</div></fieldset></div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>{{ _('Apply') }}</button>
+                <button type="reset" class="btn btn-outline-secondary btn-sm">{{ _('Clear') }}</button>
+            </div>
+        </div>
+    </form>
+
+    {# Filled with the server's message by signals-page.js (showError). #}
+    <div id="signalError" class="d-none">
+        {{ state_panel('error', 'bi-exclamation-octagon', title=_('The request failed'), message=' ',
+                       tone='text-danger', role='alert') }}
+    </div>
+
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tabHorizon" type="button" role="tab" aria-selected="true" aria-controls="panelHorizon">
+                <i class="bi bi-calendar-range me-1"></i>{{ _('Horizon') }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tabExplorer" type="button" role="tab" aria-selected="false" aria-controls="panelExplorer">
+                <i class="bi bi-list-ul me-1"></i>{{ _('Signal Explorer') }}</button>
+        </li>
+    </ul>
+
+    <section id="panelHorizon" role="tabpanel" aria-labelledby="tabHorizon">
+        <div id="horizonBuckets" class="row g-2 mb-3"></div>
+        <div id="horizonNotices" class="mb-3"></div>
+        {% call data_table(id='horizonTable', variant='sm table-hover align-middle') %}
+            <thead><tr>
+                <th>{{ _('When') }}</th><th>{{ _('Group') }}</th><th>{{ _('Reference') }}</th>
+                <th>{{ _('Evidence') }}</th><th>{{ _('Confidence') }}</th><th>{{ _('Document') }}</th>
+            </tr></thead>
+            <tbody id="horizonRows"></tbody>
+        {% endcall %}
+        <nav id="horizonPager" class="d-flex justify-content-between align-items-center"></nav>
+    </section>
+
+    <section id="panelExplorer" role="tabpanel" aria-labelledby="tabExplorer" class="d-none">
+        <div class="row">
+            <aside class="col-md-3" id="explorerFacets" aria-label="{{ _('Counts') }}"></aside>
+            <div class="col-md-9">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div id="explorerSummary" class="text-muted small"></div>
+                    <label class="small">{{ _('Sort') }}
+                        <select id="explorerSort" class="form-select form-select-sm d-inline-block w-auto ms-1"></select>
+                    </label>
+                </div>
+                {% call data_table(id='explorerTable', variant='sm table-hover align-middle') %}
+                    <thead><tr>
+                        <th>{{ _('Signal') }}</th><th>{{ _('Value') }}</th><th>{{ _('Evidence') }}</th>
+                        <th>{{ _('Confidence') }}</th><th>{{ _('Method') }}</th><th>{{ _('Document') }}</th>
+                    </tr></thead>
+                    <tbody id="explorerRows"></tbody>
+                {% endcall %}
+                <nav id="explorerPager" class="d-flex justify-content-between align-items-center"></nav>
+            </div>
+        </div>
+    </section>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="signalDetail" aria-labelledby="signalDetailTitle">
+        <div class="offcanvas-header">
+            <h2 class="offcanvas-title fs-5" id="signalDetailTitle">{{ _('Signal') }}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ _('Close') }}"></button>
+        </div>
+        <div class="offcanvas-body" id="signalDetailBody"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="application/json" id="signals-page-data">{{ page_data|tojson }}</script>
+<script type="application/json" id="signals-page-labels">{{ {
+    "bucket_overdue": _('Overdue'), "bucket_week": _('Next 7 days'), "bucket_month": _('Next 30 days'),
+    "bucket_quarter": _('Next 90 days'), "bucket_later": _('Later'), "bucket_past": _('Past'),
+    "signals": _('signals'), "documents": _('documents'), "no_signals": _('No signals match these filters.'),
+    "undated": _('%(n)s references have no single date (ambiguous: %(a)s, unresolved: %(u)s) and are not placed on the horizon.'),
+    "not_measured": _('%(n)s of %(t)s matching documents have not been analysed by the current date detector (never analysed: %(never)s, older version: %(stale)s, failed: %(failed)s). They contribute nothing here until re-analysed; this is not the same as having no dates.'),
+    "all_measured": _('All %(t)s matching documents were analysed by the current date detector.'),
+    "page": _('%(from)s-%(to)s of %(total)s'), "previous": _('Previous'), "next": _('Next'),
+    "total": _('%(total)s signals in %(contents)s documents'),
+    "occurrences": _('%(n)s occurrences'), "ambiguous_places": _('Ambiguous between:'),
+    "detector_version": _('Detector version'), "current": _('current'), "outdated": _('outdated - re-analysis pending'),
+    "method": _('Method'), "confidence": _('Confidence'), "basis": _('Basis'), "language": _('Language'),
+    "calendar": _('Calendar'), "resolution": _('Resolution'), "orientation": _('Sentence orientation'),
+    "offsets": _('Characters'), "evidence": _('Evidence'), "document": _('Document'), "run": _('Analysis run'),
+    "structured_evidence": _('Structured evidence'), "open_file": _('Open file'), "detected_at": _('Detected'),
+    "facet_detector": _('Detector'), "facet_signal_type": _('Type'), "facet_confidence": _('Confidence'),
+    "facet_language": _('Language'), "facet_calendar": _('Calendar'), "facet_resolution": _('Resolution'),
+    "facet_method": _('Method'), "unrecorded": _('not recorded'), "unspecified": _('not specified'),
+    "sort_event_date": _('Event date'), "sort_detected": _('Recently detected'), "sort_document": _('Document order'),
+    "request_failed": _('The request failed'), "fingerprint": _('Query fingerprint')
+}|tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/signals-page.js') }}"></script>
+{% endblock %}

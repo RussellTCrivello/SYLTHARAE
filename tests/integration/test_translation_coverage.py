@@ -60,6 +60,7 @@ INTERFACE_TEMPLATES = (
     "templates/Search/search_advanced.html",
     "templates/Search/search_enhanced.html",
     "templates/email_words/email_words.html",
+    "templates/Signals/signals.html",
 )
 
 #: The page modules whose strings reach the user through window.t().
@@ -398,3 +399,32 @@ def test_the_sidebar_offers_one_way_into_ingestion(admin_client, lang):
         "the retired upload page's shortcut must not come back")
     assert "bi-cloud-upload" not in html.split('class="sidebar-nav"', 1)[1].split("</ul>", 1)[0], (
         "the retired 'Upload Files' sidebar entry is back")
+
+
+@pytest.mark.parametrize("lang", ("ar", "he", "fa"))
+def test_signal_horizon_page_renders_in_the_selected_language(admin_client, lang):
+    """/signals: server text and the labels its script renders are translated."""
+    _set_language(admin_client, lang)
+    response = admin_client.get("/signals")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+
+    assert f'<html lang="{lang}"' in html
+    assert 'dir="rtl"' in html
+    rendered = re.sub(r"<!--.*?-->", "", html, flags=re.S)
+    catalog = _catalog(lang)
+    for english in ("What you are looking at", "Reference date", "Evidence contains"):
+        translated = catalog.get(english).string
+        assert translated in rendered, f"[{lang}] {english!r} not rendered as {translated!r}"
+        assert english not in rendered, f"[{lang}] English source {english!r} still rendered"
+    labels_match = re.search(
+        r'<script type="application/json" id="signals-page-labels">(.*?)</script>', html, re.S
+    )
+    assert labels_match
+    labels = json.loads(labels_match.group(1))
+    # What the script shows for buckets, notices and paging comes from here.
+    for english in ("Next 7 days", "Overdue", "Ambiguous between:",
+                    "%(total)s signals in %(contents)s documents"):
+        translated = catalog.get(english).string
+        assert translated in labels.values(), f"[{lang}] label {english!r} not translated"
+        assert english not in labels.values(), f"[{lang}] label {english!r} left in English"

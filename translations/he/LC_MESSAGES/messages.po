@@ -10156,3 +10156,278 @@ msgstr "הזינו את הסיסמה הנוכחית."
 
 msgid "The new password must be different from the current one."
 msgstr "הסיסמה החדשה חייבת להיות שונה מהנוכחית."
+
+#: templates/Signals/signals.html
+msgid "Horizon & Signal Explorer"
+msgstr "אופק וסייר האותות"
+
+#: templates/Signals/signals.html
+msgid "Dates, places and other signals detected in stored documents, with the evidence for each."
+msgstr "תאריכים, מקומות ואותות אחרים שזוהו במסמכים השמורים, עם הראיה לכל אחד מהם."
+
+#: templates/Signals/signals.html
+msgid "What you are looking at"
+msgstr "במה אתם צופים"
+
+#: templates/Signals/signals.html
+msgid "Signals are detected once, when a document is stored or re-analysed. This page reads the stored results; it does not re-read documents."
+msgstr "האותות מזוהים פעם אחת, כאשר מסמך נשמר או מנותח מחדש. דף זה קורא את התוצאות השמורות ואינו קורא מחדש את המסמכים."
+
+#: templates/Signals/signals.html
+msgid "Horizon groups dated references by where their date falls relative to the reference date: overdue, next 7 days, next 30 days, next 90 days, later."
+msgstr "האופק מקבץ אזכורים מתוארכים לפי מיקום התאריך שלהם ביחס לתאריך הייחוס: באיחור, 7 הימים הבאים, 30 הימים הבאים, 90 הימים הבאים, מאוחר יותר."
+
+#: templates/Signals/signals.html
+msgid "Overdue means the sentence spoke of the future and the date has passed. Other past dates are listed under Past."
+msgstr "«באיחור» פירושו שהמשפט דיבר על העתיד והתאריך כבר עבר. תאריכי עבר אחרים מופיעים תחת «עבר»."
+
+#: templates/Signals/signals.html
+msgid "References whose date could not be decided (for example 03/04/2026) are counted as undated, never guessed."
+msgstr "אזכורים שלא ניתן היה להכריע את תאריכם (למשל 03/04/2026) נספרים כלא מתוארכים, ולעולם אינם מנוחשים."
+
+#: templates/Signals/signals.html
+msgid "Place matches come from a gazetteer; a name shared by several places stays ambiguous and lists every candidate."
+msgstr "התאמות מקומות מגיעות ממילון גאוגרפי; שם המשותף לכמה מקומות נשאר דו-משמעי וכל המועמדים מוצגים."
+
+#: templates/Signals/signals.html
+msgid "Reference date"
+msgstr "תאריך ייחוס"
+
+#: templates/Signals/signals.html
+msgid "Empty: today (UTC)"
+msgstr "ריק: היום (UTC)"
+
+#: templates/Signals/signals.html
+msgid "None"
+msgstr "ללא"
+
+#: templates/Signals/signals.html
+msgid "Replaces the source, side, category and keyword filters"
+msgstr "מחליף את המסננים של מקור, צד, קטגוריה ומילת מפתח"
+
+#: templates/Signals/signals.html
+msgid "Category IDs"
+msgstr "מזהי קטגוריות"
+
+#: templates/Signals/signals.html
+msgid "Keyword IDs"
+msgstr "מזהי מילות מפתח"
+
+#: templates/Signals/signals.html
+msgid "Evidence contains"
+msgstr "הראיה מכילה"
+
+#: templates/Signals/signals.html
+msgid "Event dates"
+msgstr "תאריכי אירועים"
+
+#: templates/Signals/signals.html
+msgid "Event dates from"
+msgstr "תאריכי אירועים מ-"
+
+#: templates/Signals/signals.html
+msgid "Event dates to"
+msgstr "תאריכי אירועים עד"
+
+#: templates/Signals/signals.html
+msgid "Confidence"
+msgstr "ודאות"
+
+#: templates/Signals/signals.html
+msgid "Calendar"
+msgstr "לוח שנה"
+
+#: templates/Signals/signals.html
+msgid "Detector"
+msgstr "גלאי"
+
+#: templates/Signals/signals.html
+msgid "Explorer only; Horizon shows dates"
+msgstr "לסייר בלבד; האופק מציג תאריכים"
+
+#: templates/Signals/signals.html
+msgid "Horizon"
+msgstr "אופק"
+
+#: templates/Signals/signals.html
+msgid "Signal Explorer"
+msgstr "סייר האותות"
+
+#: templates/Signals/signals.html
+msgid "When"
+msgstr "מתי"
+
+#: templates/Signals/signals.html
+msgid "Group"
+msgstr "קבוצה"
+
+#: templates/Signals/signals.html
+msgid "Reference"
+msgstr "אזכור"
+
+#: templates/Signals/signals.html
+msgid "Evidence"
+msgstr "ראיה"
+
+#: templates/Signals/signals.html
+msgid "Document"
+msgstr "מסמך"
+
+#: templates/Signals/signals.html
+msgid "Counts"
+msgstr "ספירות"
+
+#: templates/Signals/signals.html
+msgid "Signal"
+msgstr "אות"
+
+#: templates/Signals/signals.html
+msgid "Value"
+msgstr "ערך"
+
+#: templates/Signals/signals.html
+msgid "Overdue"
+msgstr "באיחור"
+
+#: templates/Signals/signals.html
+msgid "Next 7 days"
+msgstr "7 הימים הבאים"
+
+#: templates/Signals/signals.html
+msgid "Next 30 days"
+msgstr "30 הימים הבאים"
+
+#: templates/Signals/signals.html
+msgid "Next 90 days"
+msgstr "90 הימים הבאים"
+
+#: templates/Signals/signals.html
+msgid "Later"
+msgstr "מאוחר יותר"
+
+#: templates/Signals/signals.html
+msgid "Past"
+msgstr "עבר"
+
+#: templates/Signals/signals.html
+msgid "signals"
+msgstr "אותות"
+
+#: templates/Signals/signals.html
+msgid "documents"
+msgstr "מסמכים"
+
+#: templates/Signals/signals.html
+msgid "No signals match these filters."
+msgstr "אין אותות התואמים למסננים אלה."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s references have no single date (ambiguous: %(a)s, unresolved: %(u)s) and are not placed on the horizon."
+msgstr "ל-%(n)s אזכורים אין תאריך יחיד (דו-משמעיים: %(a)s, לא מוכרעים: %(u)s) והם אינם ממוקמים על האופק."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s of %(t)s matching documents have not been analysed by the current date detector (never analysed: %(never)s, older version: %(stale)s, failed: %(failed)s). They contribute nothing here until re-analysed; this is not the same as having no dates."
+msgstr "%(n)s מתוך %(t)s מסמכים תואמים לא נותחו על ידי גלאי התאריכים הנוכחי (מעולם לא נותחו: %(never)s, גרסה ישנה: %(stale)s, נכשלו: %(failed)s). הם אינם תורמים דבר כאן עד שינותחו מחדש; אין זה כמו היעדר תאריכים."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "All %(t)s matching documents were analysed by the current date detector."
+msgstr "כל %(t)s המסמכים התואמים נותחו על ידי גלאי התאריכים הנוכחי."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(from)s-%(to)s of %(total)s"
+msgstr "%(from)s-%(to)s מתוך %(total)s"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(total)s signals in %(contents)s documents"
+msgstr "%(total)s אותות ב-%(contents)s מסמכים"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s occurrences"
+msgstr "%(n)s מופעים"
+
+#: templates/Signals/signals.html
+msgid "Ambiguous between:"
+msgstr "דו-משמעי בין:"
+
+#: templates/Signals/signals.html
+msgid "Detector version"
+msgstr "גרסת הגלאי"
+
+#: templates/Signals/signals.html
+msgid "current"
+msgstr "נוכחית"
+
+#: templates/Signals/signals.html
+msgid "outdated - re-analysis pending"
+msgstr "מיושנת - ניתוח מחדש ממתין"
+
+#: templates/Signals/signals.html
+msgid "Basis"
+msgstr "בסיס"
+
+#: templates/Signals/signals.html
+msgid "Resolution"
+msgstr "הכרעה"
+
+#: templates/Signals/signals.html
+msgid "Sentence orientation"
+msgstr "כיוון המשפט בזמן"
+
+#: templates/Signals/signals.html
+msgid "Analysis run"
+msgstr "הרצת ניתוח"
+
+#: templates/Signals/signals.html
+msgid "Structured evidence"
+msgstr "ראיה מובנית"
+
+#: templates/Signals/signals.html
+msgid "Open file"
+msgstr "פתח קובץ"
+
+#: templates/Signals/signals.html
+msgid "Detected"
+msgstr "זוהה"
+
+#: templates/Signals/signals.html
+msgid "not recorded"
+msgstr "לא נרשם"
+
+#: templates/Signals/signals.html
+msgid "not specified"
+msgstr "לא צוין"
+
+#: templates/Signals/signals.html
+msgid "Event date"
+msgstr "תאריך אירוע"
+
+#: templates/Signals/signals.html
+msgid "Recently detected"
+msgstr "זוהו לאחרונה"
+
+#: templates/Signals/signals.html
+msgid "Document order"
+msgstr "סדר המסמך"
+
+#: templates/Signals/signals.html
+msgid "The request failed"
+msgstr "הבקשה נכשלה"
+
+#: templates/Signals/signals.html
+msgid "Query fingerprint"
+msgstr "טביעת האצבע של השאילתה"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
+msgstr "רק %(n)s המקורות והצדדים הראשונים לפי שם מוצגים. השתמשו בחיפוש שמור כדי לסנן לפי אחרים."
+
+#: templates/Signals/signals.html
+msgid "The source and side lists could not be loaded. Other filters still work."
+msgstr "לא ניתן היה לטעון את רשימות המקורות והצדדים. שאר המסננים עדיין פועלים."

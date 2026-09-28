@@ -990,6 +990,42 @@
     "internal": true
   },
   {
+    "endpoint": "api_signal_detail",
+    "rule": "/api/signals/<int:signal_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_signal_explorer",
+    "rule": "/api/signals",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_signal_horizon",
+    "rule": "/api/signals/horizon",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_signals_redetect",
     "rule": "/api/signals/redetect",
     "methods": [
@@ -3963,6 +3999,18 @@
     "module": "sides",
     "classification": "USER_INTERFACE",
     "owned_by": "sides",
+    "internal": false
+  },
+  {
+    "endpoint": "signals_page",
+    "rule": "/signals",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
+    "classification": "USER_INTERFACE",
+    "owned_by": "signal_horizon",
     "internal": false
   },
   {
