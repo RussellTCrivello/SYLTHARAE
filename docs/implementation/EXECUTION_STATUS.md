@@ -31,7 +31,7 @@ python -m pytest -p no:cacheprovider -o addopts="" -q -rf tests
 | 3 | Criteria model + compiler | POSTGRESQL-VERIFIED for search, saved searches and search export | `test_criteria_spine.py` (36), `test_criteria_spine_pg.py` (14) | `core/criteria/` | `include_child_categories` is refused because `categorys` has no hierarchy (**open question**). Monitor/report/dashboard do not use it yet because they are not built | rules and reports must compile through it |
 | 4 | Saved searches in PostgreSQL | POSTGRESQL-VERIFIED | `test_saved_searches_pg.py` (14), including owner isolation (IDOR fix) and the page's Run URL | m0016, `saved_searches_repository.py` | the legacy JSON file is imported idempotently once per process (`ON CONFLICT (legacy_source, legacy_id) DO NOTHING`); unmappable entries are kept with `import_notes`, not dropped | - |
 | 5 | `DATA_EXPORTED` on every export | POSTGRESQL-VERIFIED (report artifact and manifest downloads RUNTIME-VERIFIED in step 15) | `test_disclosure_audit.py` (7): every export route's record, actor and SHA-256 are checked; fail-closed 503; `test_report_artifacts_api.py`: artifact downloads carry report, run, snapshot, criteria/query fingerprints and the measured digest; `test_original_file_view.py` (19) | `core/security/disclosure.py`; 13 routes declare kind/scope/format/row_count | backup `row_count` is null with a reason (the service does not count). An inline preview is not a disclosure (documented in `SECURITY.md`) | - |
-| 6 | PG migration verification | POSTGRESQL-VERIFIED for m0016-m0023 (bootstrap and tests); **server start-up upgrade path fixed after step 12** (it never ran without the marker file) - `test_startup_upgrade_path.py` (6) and a `run_web.py` control run | constraints fire by name; duplicate, NULL, ON CONFLICT, rollback, cascade and downgrade tests in the step 2/4/8 files | - | - | repeat for every new migration |
+| 6 | PG migration verification | POSTGRESQL-VERIFIED for m0016-m0024 (bootstrap and tests; m0024 also applied by a live server start-up); **server start-up upgrade path fixed after step 12** (it never ran without the marker file) - `test_startup_upgrade_path.py` (6) and a `run_web.py` control run | constraints fire by name; duplicate, NULL, ON CONFLICT, rollback, cascade and downgrade tests in the step 2/4/8 files | - | - | repeat for every new migration |
 | 7 | Phase 1 detection | UNIT-TESTED + POSTGRESQL-VERIFIED (storage) | `test_temporal_intel.py` (84): en/ar/he/fa/hr, three calendars, digits, orientation, relative expressions, Croatian ordinals, per-call clock, confidence rules, verbatim sentence, truncation. Storage: `test_signal_ingestion.py` (20) | `core/detection/`, detector `temporal-1.1.0`, m0017 + m0018 | confidence is ordinal and uncalibrated. Pre-1.1 rows have NULL provenance until re-detected. The day-first convention is per document script. More in [TEMPORAL_SIGNALS.md](TEMPORAL_SIGNALS.md) | - |
 | 8 | Ingestion / re-detection | POSTGRESQL-VERIFIED | `test_signal_ingestion.py` (20): ingest step 10, contained failure, redetect scopes, signals API authz; stored sentence equals the stored text slice | `services/detection/`, `contents_db_service.py` step 10, `Api/routes/signals.py` | not runtime-verified against a live server and real files | runtime check in step 24 |
 | 8a | Future-date notifications from stored signals | POSTGRESQL-VERIFIED | `test_signal_notifications.py` (6) + notification accuracy/volume guards (16): metadata carries method, confidence and sentence | `notification_service.py`, `Api/routes/notifications.py` | stats/upcoming use the local date while the scan uses UTC. No rule engine yet: every future date is notified, subject only to the existing toggles | replaced by the step 11 rule engine |
@@ -50,8 +50,22 @@ python -m pytest -p no:cacheprovider -o addopts="" -q -rf tests
 | 21 | Retention | NOT STARTED | - | - | - | - |
 | 22 | Reports dashboard | NOT STARTED | - | - | - | - |
 | 23 | Comprehensive report | NOT STARTED | - | - | - | - |
-| 24 | Full regression | Run for each commit (table below); the final run is pending | - | - | 30 pre-existing failures | - |
+| 24 | Full regression | Run for each commit (table below); the final run is pending | - | - | 29 pre-existing failures (OCR; list in REGRESSION_FAILURES.txt) | - |
 | 25-28 | Security, performance, packaging/offline, acceptance audits | NOT STARTED | - | - | - | - |
+
+## Manageability wave (owner request: manage stored records from the interface)
+
+Out of the mandated sequence at the owner's request. Each item reads or
+changes existing tables through the existing services; none adds a second
+store. Statuses use the same evidence ladder.
+
+| # | Item | Status | Evidence (re-runnable) | Code / migration | Known limitations | Next action |
+| --- | --- | --- | --- | --- | --- | --- |
+| M1 | Audit Log viewer (admin, read-only) | RUNTIME-VERIFIED (API and page module on a live server that applied m0024 at start-up; not ACCEPTED: no real browser) | `test_audit_log_viewer.py` (23: keyset completeness, `has_more` at exactly `limit`, literal `%`/`_`, window bounds, 400 messages, timeout = 503 not empty, READ ONLY, loose-scan menu = DISTINCT, admin only); `test_migration_upgrade_path.py::test_m0024_*`; `audit_page_smoke.mjs` (19; 2 mutations killed). Live: `runtime_check_audit.py` 37/0 (audited download digests = SHA-256 of the saved files), `audit_page_runtime.mjs` 19/0. Perf at 1,000,000 entries: every filter 0.5-1.4 ms after m0024 (rare user 172 ms before) | `core/security/audit_query.py`, `Api/routes/audit.py`, `/admin/audit`, m0024 (3 lookup indexes) | no export of the log (needs a retention/redaction decision, step 21); no search inside `detail`; log rows not hash-chained. [AUDIT_LOG_VIEWER.md](AUDIT_LOG_VIEWER.md) | M2 |
+| M2 | Signal re-detection and `content_signal_runs` from the interface | NOT STARTED | - | - | - | - |
+| M3 | Gazetteer browse (editing needs a versioning design: open question) | NOT STARTED | - | - | - | - |
+| M4 | Signals of one document (file view) | NOT STARTED | - | - | - | - |
+| M5 | Rule and scenario version history | NOT STARTED | - | - | - | - |
 
 ## Regression record
 
@@ -71,6 +85,7 @@ python -m pytest -p no:cacheprovider -o addopts="" -q -rf tests
 | Third field fixes: Select2, worker budget, duplicate summary | 3 410 | 29 | 97 | 29 OCR (no Tesseract) only. `test_licensing.py::test_every_vendored_file_is_in_the_notices`, failing since the baseline, passes now that Select2 is committed; it was removed from REGRESSION_FAILURES.txt (the list equals this run, checked with `diff`). No new failures |
 | Step 14 Report runs + `/reports` | 3 433 | 29 | 97 | identical to the recorded list (`comm` against REGRESSION_FAILURES.txt: 0 new, 0 gone); generated docs regenerated with their own commands before the run |
 | Step 15 Report artifacts + manifests | 3 445 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone). The first run had 30: `test_reports_page_js.py` pins the page smoke test's check count (16) and this step added 15 checks; the pin was raised to 31 (stricter, not weaker) and the full suite rerun |
+| M1 Audit Log viewer + m0024 | 3 471 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone); +26 tests (23 PG/API, 1 migration, 1 page wrapper, 1 translation template) |
 
 On the `294104e` run a 31st failure first appeared:
 `test_screen_inspector.py::...test_the_document_is_what_the_product_now_says`.
