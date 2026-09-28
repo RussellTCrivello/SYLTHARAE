@@ -61,6 +61,7 @@ INTERFACE_TEMPLATES = (
     "templates/Search/search_enhanced.html",
     "templates/email_words/email_words.html",
     "templates/Signals/signals.html",
+    "templates/Monitoring/monitoring.html",
 )
 
 #: The page modules whose strings reach the user through window.t().

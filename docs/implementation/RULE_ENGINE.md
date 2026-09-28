@@ -173,10 +173,10 @@ See the table in `Api/routes/rules.py`. Errors use the step-10 envelope
 
 ## Limitations (not hidden)
 
-- **No rule-management page.** Rules are managed through the API. Rule
-  notifications appear on the existing Notifications page (own icons). A UI
-  belongs with the dry-run of step 12, which it needs.
-- **No dry-run.** Match and notification counts before activation are step 12.
+- **Management page and dry-run: added in step 12.** Rules are managed on
+  `/monitoring` (Rules tab: list, JSON editor, evaluate, suppress, pause,
+  resume, archive, evaluation log) - see [SCENARIOS.md](SCENARIOS.md). Rules
+  still have no dry-run of their own; the scenario dry-run is step 12's.
 - **Cost scales with matches, not with what is new.** Each evaluation re-reads
   every signal the rule matches and anti-joins the ledger: 1.7 s for a rule
   matching 201 000 signals, evaluated rule by rule. An id watermark would be
@@ -189,10 +189,14 @@ See the table in `Api/routes/rules.py`. Errors use the step-10 envelope
   paused or disabled are delivered on resume, bounded by the 50-notification
   cap and the overflow summary.
 - **The ledger grows with every match** (retention: step 21).
-- **Notification display strings are not in the gettext catalogs.** This
-  pre-existing gap covers all types (duplicates, similarity, future dates,
-  rules): titles and messages show in English in every language. The
-  translation-coverage test does not scan `translate(...)` calls in Python.
+- **Notification display strings: gap closed in step 12.** The step-11
+  entry said every type was untranslated; the step-12 audit found the
+  missing ones were the duplicate-file and rule strings (similar-file,
+  future-date, processing and error strings were translated). All
+  `translate(...)` strings of `notification_display.py` are now in the
+  ar/he/fa/hr catalogs, pinned by
+  `tests/unit/test_notification_display.py::test_every_display_string_is_in_every_catalog`
+  (the translation-coverage audit does not scan Python).
 - **Legacy getters.** `database/database/repository/alerts_repo.py` and
   `ContentDBService.get_alerts_*` read `alerts` without the recipient filter.
   No route calls them (checked with grep); they are legacy code that must not

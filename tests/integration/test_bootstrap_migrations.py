@@ -47,6 +47,10 @@ class TestBootstrap:
             "saved_searches", "saved_search_imports",
             # m0017: Phase 1 temporal signals, keyed on content (hash_id)
             "content_signals", "content_signal_runs",
+            # m0020 / m0021: monitoring rules and scenarios
+            "monitoring_rules", "monitoring_rule_versions", "rule_evaluations",
+            "rule_subject_ledger", "scenarios", "scenario_versions",
+            "scenario_evaluations", "scenario_outcomes",
         }
         with db_conn.cursor() as cur:
             cur.execute(
@@ -106,6 +110,13 @@ class TestBootstrap:
             "idx_rule_ledger_pending",
             "idx_rule_ledger_alert",
             "idx_alerts_recipient_dismissed_created",
+            # m0021
+            "uq_scenarios_owner_name",
+            "idx_scenarios_active",
+            "scenario_versions_pkey",
+            "idx_scenario_evaluations_scenario",
+            "idx_scenario_outcomes_latest",
+            "idx_scenario_outcomes_evaluation",
         }
         with db_conn.cursor() as cur:
             cur.execute("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")

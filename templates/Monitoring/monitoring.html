@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% from 'components/table.html' import data_table %}
+{% from 'components/states.html' import state_panel %}
+
+{% block title %}{{ _('Monitoring') }}{% endblock %}
+
+{% block content %}
+<div class="page-container" id="monitoringPage">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="bi bi-diagram-3 me-2"></i>
+                {{ _('Monitoring') }}
+            </h1>
+            <p class="text-muted mb-0">{{ _('Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner.') }}</p>
+        </div>
+    </div>
+
+    {% from 'components/page_tips.html' import page_tips %}
+    {% call page_tips() %}
+    <div class="tips-section">
+        <div class="tips-section-title"><i class="bi bi-info-circle"></i> {{ _('How monitoring works') }}</div>
+        <ul class="tips-list">
+            <li>{{ _('A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome.') }}</li>
+            <li>{{ _('A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen.') }}</li>
+            <li>{{ _('When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing.') }}</li>
+            <li>{{ _('Outcome history is never overwritten: each change is a new entry with the previous outcome.') }}</li>
+            <li>{{ _('Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand.') }}</li>
+            <li>{{ _('Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled.') }}</li>
+        </ul>
+    </div>
+    {% endcall %}
+
+    {# Filled with the server's message by monitoring-page.js (showError). #}
+    <div id="monitoringError" class="d-none">
+        {{ state_panel('error', 'bi-exclamation-octagon', title=_('The request failed'), message=' ',
+                       tone='text-danger', role='alert') }}
+    </div>
+    <div id="monitoringNotice" class="d-none" role="status"></div>
+
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tabScenarios" type="button" role="tab" aria-selected="true" aria-controls="panelScenarios">
+                <i class="bi bi-signpost-split me-1"></i>{{ _('Scenarios') }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tabRules" type="button" role="tab" aria-selected="false" aria-controls="panelRules">
+                <i class="bi bi-bell me-1"></i>{{ _('Rules') }}</button>
+        </li>
+    </ul>
+
+    {# ------------------------------------------------------------ Scenarios #}
+    <section id="panelScenarios" role="tabpanel" aria-labelledby="tabScenarios">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div id="scenarioSummary" class="text-muted small"></div>
+            <div class="d-flex gap-2 align-items-center">
+                {% if page_data.is_admin %}
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="scenarioAllUsers">
+                    <label class="form-check-label small" for="scenarioAllUsers">{{ _('All users') }}</label>
+                </div>
+                {% endif %}
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="scenarioArchived">
+                    <label class="form-check-label small" for="scenarioArchived">{{ _('Show archived') }}</label>
+                </div>
+                {% if page_data.can_write %}
+                <button type="button" class="btn btn-primary btn-sm" id="scenarioNew"><i class="bi bi-plus-lg me-1"></i>{{ _('New scenario') }}</button>
+                {% endif %}
+            </div>
+        </div>
+        {% call data_table(id='scenarioTable', variant='sm table-hover align-middle') %}
+            <thead><tr>
+                <th>{{ _('Name') }}</th><th>{{ _('Status') }}</th><th>{{ _('Version') }}</th>
+                <th>{{ _('Strategy') }}</th><th>{{ _('Last evaluated') }}</th><th>{{ _('Owner') }}</th>
+            </tr></thead>
+            <tbody id="scenarioRows"></tbody>
+        {% endcall %}
+
+        <form id="scenarioEditor" class="card mb-3 d-none" autocomplete="off">
+            <div class="card-body">
+                <h2 class="fs-5" id="scenarioEditorTitle">{{ _('New scenario') }}</h2>
+                <label class="form-label" for="scenarioName">{{ _('Name') }}</label>
+                <input type="text" class="form-control form-control-sm mb-2" id="scenarioName" maxlength="120" dir="auto" required>
+                <label class="form-label" for="scenarioDefinition">{{ _('Definition (JSON)') }}</label>
+                <textarea class="form-control form-control-sm font-monospace" id="scenarioDefinition" rows="18" dir="ltr" spellcheck="false"></textarea>
+                <div class="form-text">{{ _('Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md.') }}</div>
+                <div id="scenarioValidation" class="mt-2" aria-live="polite"></div>
+                <div class="d-flex gap-2 mt-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="scenarioValidate"><i class="bi bi-check2-square me-1"></i>{{ _('Validate') }}</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="scenarioSave"><i class="bi bi-save me-1"></i>{{ _('Save') }}</button>
+                    <button type="button" class="btn btn-link btn-sm" id="scenarioCancel">{{ _('Cancel') }}</button>
+                </div>
+            </div>
+        </form>
+
+        <section id="scenarioDetail" class="card mb-3 d-none" aria-labelledby="scenarioDetailTitle">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div>
+                        <h2 class="fs-5 mb-1" id="scenarioDetailTitle"></h2>
+                        <div id="scenarioDetailMeta" class="small text-muted"></div>
+                    </div>
+                    <div id="scenarioActions" class="d-flex flex-wrap gap-1"></div>
+                </div>
+                <div id="scenarioJob" class="small mt-2" aria-live="polite"></div>
+
+                <h3 class="fs-6 mt-3">{{ _('Latest dry-run') }}</h3>
+                <div id="dryRunReport"></div>
+
+                <h3 class="fs-6 mt-3">{{ _('Outcome history') }}</h3>
+                {% call data_table(id='outcomeTable', variant='sm align-middle') %}
+                    <thead><tr>
+                        <th>{{ _('Document') }}</th><th>{{ _('Outcome') }}</th><th>{{ _('Previous outcome') }}</th>
+                        <th>{{ _('Cases') }}</th><th>{{ _('Delivery') }}</th><th>{{ _('Priority') }}</th><th>{{ _('Recorded') }}</th>
+                    </tr></thead>
+                    <tbody id="outcomeRows"></tbody>
+                {% endcall %}
+                <nav id="outcomePager" class="d-flex justify-content-between align-items-center"></nav>
+
+                <h3 class="fs-6 mt-3">{{ _('Evaluations') }}</h3>
+                {% call data_table(id='scenarioEvalTable', variant='sm align-middle') %}
+                    <thead><tr>
+                        <th>{{ _('When') }}</th><th>{{ _('Version') }}</th><th>{{ _('Trigger') }}</th>
+                        <th>{{ _('Status') }}</th><th>{{ _('Counts') }}</th>
+                    </tr></thead>
+                    <tbody id="scenarioEvalRows"></tbody>
+                {% endcall %}
+                <nav id="scenarioEvalPager" class="d-flex justify-content-between align-items-center"></nav>
+
+                <details class="mt-3">
+                    <summary>{{ _('Current definition') }}</summary>
+                    <pre id="scenarioDefinitionView" class="small mb-0" dir="ltr"></pre>
+                </details>
+            </div>
+        </section>
+    </section>
+
+    {# ---------------------------------------------------------------- Rules #}
+    <section id="panelRules" role="tabpanel" aria-labelledby="tabRules" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div id="ruleSummary" class="text-muted small"></div>
+            <div class="d-flex gap-2 align-items-center">
+                {% if page_data.is_admin %}
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="ruleAllUsers">
+                    <label class="form-check-label small" for="ruleAllUsers">{{ _('All users') }}</label>
+                </div>
+                {% endif %}
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="ruleArchived">
+                    <label class="form-check-label small" for="ruleArchived">{{ _('Show archived') }}</label>
+                </div>
+                {% if page_data.can_write %}
+                <button type="button" class="btn btn-primary btn-sm" id="ruleNew"><i class="bi bi-plus-lg me-1"></i>{{ _('New rule') }}</button>
+                {% endif %}
+            </div>
+        </div>
+        {% call data_table(id='ruleTable', variant='sm table-hover align-middle') %}
+            <thead><tr>
+                <th>{{ _('Name') }}</th><th>{{ _('Status') }}</th><th>{{ _('Version') }}</th>
+                <th>{{ _('Baseline') }}</th><th>{{ _('Last evaluated') }}</th><th>{{ _('Owner') }}</th>
+            </tr></thead>
+            <tbody id="ruleRows"></tbody>
+        {% endcall %}
+
+        <form id="ruleEditor" class="card mb-3 d-none" autocomplete="off">
+            <div class="card-body">
+                <h2 class="fs-5" id="ruleEditorTitle">{{ _('New rule') }}</h2>
+                <label class="form-label" for="ruleName">{{ _('Name') }}</label>
+                <input type="text" class="form-control form-control-sm mb-2" id="ruleName" maxlength="120" dir="auto" required>
+                <label class="form-label" for="ruleDefinition">{{ _('Definition (JSON)') }}</label>
+                <textarea class="form-control form-control-sm font-monospace" id="ruleDefinition" rows="14" dir="ltr" spellcheck="false"></textarea>
+                <div class="form-text">{{ _('Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md.') }}</div>
+                <div id="ruleValidation" class="mt-2" aria-live="polite"></div>
+                <div class="d-flex gap-2 mt-2">
+                    <button type="submit" class="btn btn-primary btn-sm" id="ruleSave"><i class="bi bi-save me-1"></i>{{ _('Save') }}</button>
+                    <button type="button" class="btn btn-link btn-sm" id="ruleCancel">{{ _('Cancel') }}</button>
+                </div>
+            </div>
+        </form>
+
+        <section id="ruleDetail" class="card mb-3 d-none" aria-labelledby="ruleDetailTitle">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div>
+                        <h2 class="fs-5 mb-1" id="ruleDetailTitle"></h2>
+                        <div id="ruleDetailMeta" class="small text-muted"></div>
+                    </div>
+                    <div id="ruleActions" class="d-flex flex-wrap gap-1"></div>
+                </div>
+                <div id="ruleJob" class="small mt-2" aria-live="polite"></div>
+                <h3 class="fs-6 mt-3">{{ _('Evaluations') }}</h3>
+                {% call data_table(id='ruleEvalTable', variant='sm align-middle') %}
+                    <thead><tr>
+                        <th>{{ _('When') }}</th><th>{{ _('Version') }}</th><th>{{ _('Trigger') }}</th>
+                        <th>{{ _('Status') }}</th><th>{{ _('Counts') }}</th>
+                    </tr></thead>
+                    <tbody id="ruleEvalRows"></tbody>
+                {% endcall %}
+                <nav id="ruleEvalPager" class="d-flex justify-content-between align-items-center"></nav>
+                <details class="mt-3">
+                    <summary>{{ _('Current definition') }}</summary>
+                    <pre id="ruleDefinitionView" class="small mb-0" dir="ltr"></pre>
+                </details>
+            </div>
+        </section>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="application/json" id="monitoring-page-data">{{ page_data|tojson }}</script>
+<script type="application/json" id="monitoring-page-labels">{{ {
+    "status_draft": _('Draft'), "status_active": _('Active'), "status_paused": _('Paused'),
+    "status_disabled": _('Disabled'), "status_archived": _('Archived'),
+    "strategy_first_match": _('First match'), "strategy_all_matching": _('All matching'),
+    "strategy_highest_priority": _('Highest priority'),
+    "never": _('never'), "yes": _('yes'), "no": _('no'), "none": _('none'),
+    "count_scenarios": _('%(n)s scenarios'), "count_rules": _('%(n)s rules'),
+    "list_truncated": _('Only the first %(n)s are listed.'),
+    "no_scenarios": _('No scenarios yet.'), "no_rules": _('No rules yet.'),
+    "no_outcomes": _('No outcomes recorded yet.'), "no_evaluations": _('No evaluations yet.'),
+    "no_dry_run": _('This scenario has not been dry-run yet.'),
+    "new_scenario": _('New scenario'), "edit_scenario": _('Edit scenario'),
+    "new_rule": _('New rule'), "edit_rule": _('Edit rule'),
+    "action_edit": _('Edit'), "action_dry_run": _('Dry-run'), "action_activate": _('Activate'),
+    "action_pause": _('Pause'), "action_resume": _('Resume'), "action_archive": _('Archive'),
+    "action_evaluate": _('Evaluate now'), "action_suppress": _('Suppress 1 hour'),
+    "confirm_archive": _('Archive this? It stops for good; its history is kept.'),
+    "invalid_json": _('The definition is not valid JSON: %(error)s'),
+    "valid": _('Valid. Fingerprint %(fp)s'), "warnings": _('Warnings'), "errors": _('Errors'),
+    "saved": _('Saved.'), "saved_draft": _('Saved as version %(v)s. It is a draft again: dry-run it before activating.'),
+    "job_running": _('Job %(id)s: %(status)s'), "job_done": _('Job %(id)s finished: %(status)s'),
+    "job_timeout": _('Job %(id)s is still running. Refresh later to see the result.'),
+    "owner": _('Owner'), "version": _('Version'), "fingerprint": _('Definition fingerprint'),
+    "disabled_reason": _('Disabled because: %(reason)s'),
+    "reason_owner_inactive": _("the owner's account is inactive"),
+    "reason_owner_role": _("the owner's role no longer allows it"),
+    "baselined": _('baseline recorded'), "not_baselined": _('baseline pending'),
+    "suppressed_until": _('Suppressed until %(t)s'),
+    "dry_status_passed": _('Passed'), "dry_status_invalid": _('Invalid'), "dry_status_failed": _('Failed'),
+    "dry_status_owner_revoked": _('Owner not eligible'),
+    "dry_stale": _('This dry-run was of version %(v)s; the current version needs its own dry-run.'),
+    "dry_population": _('Population: %(n)s documents'),
+    "dry_snapshot": _('Measured on one consistent snapshot at %(t)s, reference date %(d)s.'),
+    "dry_on_activation": _('Notifications on activation: %(n)s'),
+    "dry_basis_baseline": _('existing matches become the baseline'),
+    "dry_basis_nothing_entering": _('nothing would enter a notified outcome'),
+    "dry_basis_notify_existing": _('notify_existing is set'),
+    "dry_overflow": _('%(n)s more would be summarised in one overflow notification.'),
+    "dry_volume": _('Estimated %(per_day)s notified documents per day'),
+    "dry_case": _('Case'), "dry_matches": _('Matches'), "dry_decides": _('Decides'),
+    "dry_outcome": _('Outcome'), "dry_documents": _('Documents'),
+    "dry_breakdown": _('Documents with an outcome other than the default, by:'),
+    "dry_sources": _('Source'), "dry_categories": _('Category'), "dry_analyst_categories": _('Analyst category'),
+    "dry_top": _('Top %(n)s of %(t)s'), "dry_non_default": _('%(n)s documents have an outcome other than the default.'),
+    "delivery_baseline": _('baseline'), "delivery_recorded": _('recorded'),
+    "delivery_notified": _('notified'), "delivery_overflow": _('in overflow summary'),
+    "left_population": _('left the population'),
+    "eval_completed": _('Completed'), "eval_failed": _('Failed'), "eval_owner_revoked": _('Owner not eligible'),
+    "eval_skipped_busy": _('Skipped (already running)'), "eval_not_active": _('Not active'),
+    "page": _('%(from)s-%(to)s of %(total)s'), "previous": _('Previous'), "next": _('Next'),
+    "document": _('Document %(id)s'), "request_failed": _('The request failed'),
+    "read_only": _('Your role can view monitoring but not change it.')
+}|tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/monitoring-page.js') }}"></script>
+{% endblock %}

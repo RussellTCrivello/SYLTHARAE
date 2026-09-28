@@ -17,7 +17,7 @@ Design rules (accuracy first):
 * Future-date messages recompute ``days_until`` LIVE from ``event_date``;
   the value frozen into ``metadata.days_until`` at creation time goes stale
   the day after the scan.
-* Rule notifications (``rule_match``, ``rule_status``) are rendered from
+* Rule and scenario notifications (``rule_*``, ``scenario_*``) are rendered from
   their structured metadata (rule name, subject counts, overflow, the reason a
   rule was disabled), so they are translated at display time.
 * Types without special rendering pass through the stored title/message
@@ -207,6 +207,33 @@ def format_title_message(notification: Notification, translate) -> Tuple[str, st
         else:
             message = n.message
 
+    elif n.type == NotificationType.SCENARIO_OUTCOME:
+        name = metadata.get("scenario_name") or n.title
+        title = translate("Scenario: %(name)s", name=name)
+        if metadata.get("delivery") == "overflow":
+            message = translate(
+                "%(count)s further contents entered notified outcomes (notification limit"
+                " per evaluation reached)", count=metadata.get("content_count", 0))
+        else:
+            labels = metadata.get("outcome_labels") or {}
+            entered = [labels.get(o, o) for o in metadata.get("entered_outcomes") or []]
+            target = n.file_name or translate("Content %(id)s", id=metadata.get("hash_id"))
+            message = translate("Outcome %(outcome)s: %(target)s",
+                                outcome=", ".join(entered) or n.message, target=target)
+
+    elif n.type == NotificationType.SCENARIO_STATUS:
+        name = metadata.get("scenario_name") or n.title
+        title = translate("Scenario disabled: %(name)s", name=name)
+        reason = metadata.get("disabled_reason")
+        if reason == "owner_inactive":
+            message = translate("The scenario was disabled because its owner's account is"
+                                " inactive.")
+        elif reason == "owner_role":
+            message = translate("The scenario was disabled because its owner's role no longer"
+                                " allows scenarios.")
+        else:
+            message = n.message
+
     return title, message
 
 
@@ -231,4 +258,5 @@ def display_payload(notification: Notification, translate) -> dict:
         # True when the notification is addressed to the viewer alone.
         "addressed": n.recipient_user_id is not None,
         "rule_id": n.rule_id,
+        "scenario_id": n.scenario_id,
     }

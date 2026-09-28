@@ -217,6 +217,15 @@ REGISTRY: Tuple[Interface, ...] = (
         Domain.DISCOVER, "signals_page", "bi-calendar-range",
         help_topic="discover/signals", keyboard_shortcut="g h",
     ),
+    _if(
+        "monitoring", "Monitoring",
+        "Scenarios (cases over signal and document conditions, one outcome per "
+        "document, mandatory dry-run before activation, append-only outcome "
+        "history) and monitoring rules. Notifications reach the owner only.",
+        Domain.DISCOVER, "monitoring_page", "bi-diagram-3",
+        dependencies=("signal_horizon", "notifications"),
+        help_topic="discover/monitoring", keyboard_shortcut="g m",
+    ),
 
     # -- INGEST -----------------------------------------------------------
     _if(

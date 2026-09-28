@@ -11199,3 +11199,483 @@ msgstr ""
 #: templates/Signals/signals.html
 msgid "The source and side lists could not be loaded. Other filters still work."
 msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr ""

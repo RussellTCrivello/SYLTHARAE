@@ -67,12 +67,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 ## Generated reference
 
 <!-- BEGIN GENERATED REGISTRY TABLE -->
-- Interfaces: **27** (features declared separately: **1**)
-- Endpoints owned: **68**
-- With a keyboard shortcut: **13**; with a help topic: **25**
-- By domain: ADMINISTRATION 1, ANALYZE 3, CLASSIFY 2, DISCOVER 10, INGEST 2, INTERNAL 1, OPERATE 2, REPORT 2, SETTINGS 3, WORK 1
-- By status: ACTIVE 26, DEPRECATED 1
-- By kind: INTERNAL 1, PAGE 25, SECTION 1
+- Interfaces: **28** (features declared separately: **1**)
+- Endpoints owned: **69**
+- With a keyboard shortcut: **14**; with a help topic: **26**
+- By domain: ADMINISTRATION 1, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 2, REPORT 2, SETTINGS 3, WORK 1
+- By status: ACTIVE 27, DEPRECATED 1
+- By kind: INTERNAL 1, PAGE 26, SECTION 1
 
 
 ### WORK (1)
@@ -81,7 +81,7 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `dashboard` | Dashboard | WORK | `index` | — | any | on | — | work/dashboard | g w | ACTIVE |
 
-### DISCOVER (10)
+### DISCOVER (11)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -95,6 +95,7 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `email_words` | Email Words | DISCOVER | `email_words` | — | any | on | — | discover/email-words | — | ACTIVE |
 | `notifications` | Notifications | DISCOVER | `notifications_page` | — | any | on | — | discover/notifications | g n | ACTIVE |
 | `signal_horizon` | Horizon & Signal Explorer | DISCOVER | `signals_page` | — | any | on | — | discover/signals | g h | ACTIVE |
+| `monitoring` | Monitoring | DISCOVER | `monitoring_page` | — | any | on | `signal_horizon`, `notifications` | discover/monitoring | g m | ACTIVE |
 
 ### INGEST (2)
 

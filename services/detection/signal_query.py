@@ -265,8 +265,13 @@ def _compile(criteria: Criteria, scope: AccessScope) -> CompiledQuery:
         raise SignalQueryError(f"document criteria: {exc}")
 
 
-def _where(f: SignalFilter, compiled: CompiledQuery, *, include_event_window: bool = True
-           ) -> Tuple[List[str], List[Any]]:
+def _where(f: SignalFilter, compiled: Optional[CompiledQuery], *,
+           include_event_window: bool = True) -> Tuple[List[str], List[Any]]:
+    """Signal predicates on alias ``s``. With ``compiled``, a signal also
+    needs a visible file occurrence matching those criteria. Without it
+    (scenario conditions, services/monitoring/scenario_engine.py) the caller
+    has already restricted the contents to a population compiled under the
+    owner's scope."""
     conds: List[str] = []
     params: List[Any] = []
 
@@ -310,9 +315,10 @@ def _where(f: SignalFilter, compiled: CompiledQuery, *, include_event_window: bo
         if f.event_to:
             conds.append("s.date_from <= %s")
             params.append(f.event_to)
-    conds.append(f"EXISTS (SELECT 1 FROM {CANONICAL_FROM}"
-                 f" WHERE hc.hash_id = s.hash_id AND ({compiled.where_sql}))")
-    params.extend(compiled.params)
+    if compiled is not None:
+        conds.append(f"EXISTS (SELECT 1 FROM {CANONICAL_FROM}"
+                     f" WHERE hc.hash_id = s.hash_id AND ({compiled.where_sql}))")
+        params.extend(compiled.params)
     return conds, params
 
 

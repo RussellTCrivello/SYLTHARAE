@@ -10727,3 +10727,487 @@ msgstr "فقط %(n)s منبع و طرف نخست به ترتیب نام فهرس
 #: templates/Signals/signals.html
 msgid "The source and side lists could not be loaded. Other filters still work."
 msgstr "فهرست منابع و طرف‌ها بارگیری نشد. دیگر پالایه‌ها همچنان کار می‌کنند."
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr "فایل‌های تکراری شناسایی شد: %(file_name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr "فایل‌های تکراری شناسایی شد"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr "%(count)s فایل تکراری با هش یکسان یافت شد. فایل‌ها: %(files)s"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr "%(count)s فایل تکراری با هش یکسان یافت شد"
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr "خلاصهٔ قاعده: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr "%(count)s تطابق جدید از آخرین خلاصه"
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr "قاعده غیرفعال شد: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr "قاعده: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr "%(count)s تطابق دیگر در %(groups)s گروه (سقف اعلان‌ها برای هر ارزیابی پر شد)"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr "قاعده غیرفعال شد زیرا حساب مالک آن غیرفعال است."
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr "سناریو: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr "%(count)s تطابق جدید: %(label)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr "%(count)s تطابق جدید"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr "قاعده غیرفعال شد زیرا نقش مالک آن دیگر اجازهٔ قواعد پایش را نمی‌دهد."
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr "%(count)s محتوای دیگر وارد پیامدهای دارای اعلان شد (سقف اعلان‌ها برای هر ارزیابی پر شد)"
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr "سناریو غیرفعال شد: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr "محتوای %(id)s"
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr "سناریو غیرفعال شد زیرا حساب مالک آن غیرفعال است."
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr "سناریو غیرفعال شد زیرا نقش مالک آن دیگر اجازهٔ سناریو را نمی‌دهد."
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr "پیامد %(outcome)s: %(target)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr "سناریوها اسناد را در پیامدها دسته‌بندی می‌کنند؛ قواعد سیگنال‌های منطبق جدید را پایش می‌کنند. هر دو فقط به مالک خود اعلان می‌دهند."
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr "پایش چگونه کار می‌کند"
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr "سناریو بر اساس سیگنال‌های ذخیره‌شده ارزیابی می‌شود. هر سند در جامعهٔ آن دقیقاً یک تصمیم می‌گیرد: پیامد حالت منطبق، یا پیامد پیش‌فرض."
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr "سناریو تا زمانی که اجرای آزمایشی همان تعریف فعلی‌اش موفق نشده باشد فعال نمی‌شود. اجرای آزمایشی چیزی را تغییر نمی‌دهد: فقط گزارش می‌دهد چه رخ خواهد داد."
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr "وقتی سناریو یا قاعده‌ای شروع می‌شود، آنچه از قبل منطبق است به‌عنوان خط مبنا ثبت و اعلان نمی‌شود، مگر اینکه تعریف notify_existing را تعیین کند."
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr "تاریخچهٔ پیامدها هرگز بازنویسی نمی‌شود: هر تغییر یک مدخل جدید همراه با پیامد قبلی است."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr "اولویت اعلان از شواهد (میزان اطمینان و نزدیکی رویداد) به دست می‌آید، نه با انتخاب دستی."
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr "فقط اسنادی ارزیابی می‌شوند که مالک اجازهٔ خواندنشان را دارد. اگر مالک این دسترسی را از دست بدهد، سناریو یا قاعده غیرفعال می‌شود."
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr "سناریوها"
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr "قواعد"
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr "همهٔ کاربران"
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr "نمایش بایگانی‌شده‌ها"
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr "سناریوی جدید"
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr "راهبرد"
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr "آخرین ارزیابی"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr "مالک"
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr "تعریف (JSON)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr "شرط‌ها، حالت‌ها، پیامدها، پیامد پیش‌فرض الزامی و راهبرد (first_match، all_matching یا highest_priority). به docs/implementation/SCENARIOS.md مراجعه کنید."
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr "آخرین اجرای آزمایشی"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr "تاریخچهٔ پیامدها"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr "پیامد"
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr "پیامد قبلی"
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr "حالت‌ها"
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr "تحویل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr "ثبت‌شده"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr "ارزیابی‌ها"
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr "عامل اجرا"
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr "تعریف فعلی"
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr "قاعدهٔ جدید"
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr "خط مبنا"
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr "معیارها، فیلتر سیگنال، حداقل اطمینان، بازهٔ رویداد، آستانه، دورهٔ انتظار، گروه‌بندی و تحویل. به docs/implementation/RULE_ENGINE.md مراجعه کنید."
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr "پیش‌نویس"
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr "متوقف‌شده"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr "غیرفعال"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr "بایگانی‌شده"
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr "نخستین تطابق"
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr "همهٔ تطابق‌ها"
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr "بالاترین اولویت"
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr "هرگز"
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr "بله"
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr "خیر"
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr "هیچ"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr "%(n)s سناریو"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr "%(n)s قاعده"
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr "فقط %(n)s مورد نخست فهرست شده‌اند."
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr "هنوز سناریویی وجود ندارد."
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr "هنوز قاعده‌ای وجود ندارد."
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr "هنوز پیامدی ثبت نشده است."
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr "هنوز ارزیابی‌ای انجام نشده است."
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr "این سناریو هنوز اجرای آزمایشی نشده است."
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr "ویرایش سناریو"
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr "ویرایش قاعده"
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr "اجرای آزمایشی"
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr "فعال‌سازی"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr "بایگانی"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr "ارزیابی اکنون"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr "توقف اعلان به مدت ۱ ساعت"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr "بایگانی شود؟ برای همیشه متوقف می‌شود؛ تاریخچه‌اش حفظ می‌شود."
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr "تعریف یک JSON معتبر نیست: %(error)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr "معتبر. اثر انگشت %(fp)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr "هشدارها"
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr "ذخیره شد."
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr "به‌عنوان نسخهٔ %(v)s ذخیره شد. دوباره پیش‌نویس است: پیش از فعال‌سازی آن را آزمایشی اجرا کنید."
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr "کار %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr "کار %(id)s پایان یافت: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr "کار %(id)s هنوز در حال اجراست. بعداً صفحه را تازه کنید تا نتیجه را ببینید."
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr "اثر انگشت تعریف"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr "غیرفعال به این دلیل: %(reason)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr "حساب مالک غیرفعال است"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr "نقش مالک دیگر اجازهٔ آن را نمی‌دهد"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr "خط مبنا ثبت شد"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr "خط مبنا در انتظار"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr "اعلان‌ها تا %(t)s متوقف است"
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr "موفق"
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr "نامعتبر"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr "مالک واجد شرایط نیست"
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr "این اجرای آزمایشی مربوط به نسخهٔ %(v)s بود؛ نسخهٔ فعلی به اجرای آزمایشی خودش نیاز دارد."
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr "جامعه: %(n)s سند"
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr "روی یک تصویر لحظه‌ای سازگار در %(t)s با تاریخ مرجع %(d)s اندازه‌گیری شد."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr "اعلان‌ها هنگام فعال‌سازی: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr "تطابق‌های موجود خط مبنا می‌شوند"
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr "هیچ چیز وارد پیامد دارای اعلان نمی‌شود"
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr "notify_existing تنظیم شده است"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr "%(n)s مورد دیگر در یک اعلان سرریز خلاصه می‌شود."
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr "برآورد: %(per_day)s سند دارای اعلان در روز"
+
+#: templates/Monitoring/monitoring.html
+msgid "Case"
+msgstr "حالت"
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr "تطابق‌ها"
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr "تعیین‌کننده"
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr "اسناد دارای پیامدی غیر از پیش‌فرض، بر اساس:"
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr "دستهٔ تحلیلگر"
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr "%(n)s مورد برتر از %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr "%(n)s سند پیامدی غیر از پیش‌فرض دارند."
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr "خط مبنا"
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr "ثبت‌شده"
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr "اعلان‌شده"
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr "در خلاصهٔ سرریز"
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr "از جامعه خارج شد"
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr "رد شد (از قبل در حال اجرا)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr "غیرفعال"
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr "سند %(id)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr "نقش شما اجازهٔ مشاهدهٔ پایش را می‌دهد، نه تغییر آن."

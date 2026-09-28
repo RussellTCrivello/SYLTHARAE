@@ -10836,3 +10836,487 @@ msgstr "Navedeno je samo prvih %(n)s izvora i strana po imenu. Za filtriranje po
 #: templates/Signals/signals.html
 msgid "The source and side lists could not be loaded. Other filters still work."
 msgstr "Popisi izvora i strana nisu se mogli učitati. Ostali filtri i dalje rade."
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr "Otkrivene duplicirane datoteke: %(file_name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr "Otkrivene duplicirane datoteke"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr "Pronađeno duplikata s istim sažetkom: %(count)s. Datoteke: %(files)s"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr "Pronađeno duplikata s istim sažetkom: %(count)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr "Sažetak pravila: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr "Novih podudaranja od posljednjeg sažetka: %(count)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr "Pravilo onemogućeno: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr "Pravilo: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr "Dodatnih podudaranja: %(count)s u skupinama: %(groups)s (dosegnuto ograničenje obavijesti po procjeni)"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr "Pravilo je onemogućeno jer je račun njegova vlasnika neaktivan."
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr "Scenarij: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr "Novih podudaranja: %(count)s: %(label)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr "Novih podudaranja: %(count)s"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr "Pravilo je onemogućeno jer uloga njegova vlasnika više ne dopušta pravila praćenja."
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr "Dodatnih sadržaja s ishodom koji se javlja: %(count)s (dosegnuto ograničenje obavijesti po procjeni)"
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr "Scenarij onemogućen: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr "Sadržaj %(id)s"
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr "Scenarij je onemogućen jer je račun njegova vlasnika neaktivan."
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr "Scenarij je onemogućen jer uloga njegova vlasnika više ne dopušta scenarije."
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr "Ishod %(outcome)s: %(target)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr "Scenariji razvrstavaju dokumente u ishode; pravila prate nove odgovarajuće signale. Oboje obavještavaju samo svog vlasnika."
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr "Kako praćenje funkcionira"
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr "Scenarij se procjenjuje nad pohranjenim signalima. Svaki dokument u njegovoj populaciji dobiva točno jednu odluku: ishod odgovarajućeg slučaja ili zadani ishod."
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr "Scenarij se ne može aktivirati dok ne prođe probno pokretanje njegove točne trenutne definicije. Probno pokretanje ništa ne mijenja: izvještava što bi se dogodilo."
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr "Kad scenarij ili pravilo započne, ono što se već podudara bilježi se kao polazište i ne javlja se, osim ako definicija navodi notify_existing."
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr "Povijest ishoda nikad se ne prepisuje: svaka promjena novi je zapis s prethodnim ishodom."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr "Prioritet obavijesti izvodi se iz dokaza (pouzdanost i koliko je događaj blizu), ne bira se ručno."
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr "Procjenjuju se samo dokumenti koje vlasnik smije čitati. Ako vlasnik izgubi ovlast, scenarij ili pravilo se onemogućuje."
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr "Scenariji"
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr "Pravila"
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr "Svi korisnici"
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr "Prikaži arhivirane"
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr "Novi scenarij"
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr "Strategija"
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr "Posljednja procjena"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr "Vlasnik"
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr "Definicija (JSON)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr "Uvjeti, slučajevi, ishodi, obvezni zadani ishod i strategija (first_match, all_matching ili highest_priority). Vidi docs/implementation/SCENARIOS.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr "Posljednje probno pokretanje"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr "Povijest ishoda"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr "Ishod"
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr "Prethodni ishod"
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr "Slučajevi"
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr "Isporuka"
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr "Zabilježeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr "Procjene"
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr "Okidač"
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr "Trenutna definicija"
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr "Novo pravilo"
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr "Polazište"
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr "Kriteriji, filtar signala, minimalna pouzdanost, vremenski okvir događaja, prag, stanka, grupiranje i isporuka. Vidi docs/implementation/RULE_ENGINE.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr "Nacrt"
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr "Pauzirano"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr "Onemogućeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr "Arhivirano"
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr "Prvo podudaranje"
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr "Sva podudaranja"
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr "Najviši prioritet"
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr "nikad"
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr "da"
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr "ne"
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr "nema"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr "Scenarija: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr "Pravila: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr "Prikazano je samo prvih %(n)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr "Još nema scenarija."
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr "Još nema pravila."
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr "Još nije zabilježen nijedan ishod."
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr "Još nema procjena."
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr "Ovaj scenarij još nije probno pokrenut."
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr "Uredi scenarij"
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr "Uredi pravilo"
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr "Probno pokretanje"
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr "Aktiviraj"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr "Arhiviraj"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr "Procijeni sada"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr "Utišaj 1 sat"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr "Arhivirati? Trajno se zaustavlja; povijest se čuva."
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr "Definicija nije ispravan JSON: %(error)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr "Ispravno. Otisak %(fp)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr "Upozorenja"
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr "Spremljeno."
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr "Spremljeno kao inačica %(v)s. Ponovno je nacrt: probno ga pokrenite prije aktivacije."
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr "Posao %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr "Posao %(id)s završen: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr "Posao %(id)s još traje. Osvježite kasnije da biste vidjeli rezultat."
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr "Otisak definicije"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr "Onemogućeno jer: %(reason)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr "račun vlasnika je neaktivan"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr "uloga vlasnika to više ne dopušta"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr "polazište zabilježeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr "polazište na čekanju"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr "Utišano do %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr "Prošlo"
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr "Neispravno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr "Vlasnik nije ovlašten"
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr "Ovo probno pokretanje bilo je za inačicu %(v)s; trenutna inačica treba vlastito probno pokretanje."
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr "Populacija: %(n)s dokumenata"
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr "Izmjereno na jednoj dosljednoj snimci u %(t)s, referentni datum %(d)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr "Obavijesti pri aktivaciji: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr "postojeća podudaranja postaju polazište"
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr "ništa ne bi ušlo u ishod koji se javlja"
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr "notify_existing je postavljen"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr "Još %(n)s bilo bi sažeto u jednoj obavijesti o prekoračenju."
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr "Procjena: %(per_day)s dokumenata s obaviješću dnevno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Case"
+msgstr "Slučaj"
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr "Podudaranja"
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr "Odlučuje"
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr "Dokumenti s ishodom različitim od zadanog, prema:"
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr "Kategorija analitičara"
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr "Prvih %(n)s od %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr "Dokumenata s ishodom različitim od zadanog: %(n)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr "polazište"
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr "zabilježeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr "javljeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr "u sažetku prekoračenja"
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr "napustio populaciju"
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr "Preskočeno (već se izvodi)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr "Nije aktivno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr "Dokument %(id)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr "Vaša uloga može pregledavati praćenje, ali ga ne može mijenjati."

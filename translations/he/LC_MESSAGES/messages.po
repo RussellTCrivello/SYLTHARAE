@@ -10431,3 +10431,487 @@ msgstr "רק %(n)s המקורות והצדדים הראשונים לפי שם מ
 #: templates/Signals/signals.html
 msgid "The source and side lists could not be loaded. Other filters still work."
 msgstr "לא ניתן היה לטעון את רשימות המקורות והצדדים. שאר המסננים עדיין פועלים."
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr "זוהו קבצים כפולים: %(file_name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr "זוהו קבצים כפולים"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr "נמצאו %(count)s קבצים כפולים עם אותו גיבוב. קבצים: %(files)s"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr "נמצאו %(count)s קבצים כפולים עם אותו גיבוב"
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr "תקציר כלל: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr "%(count)s התאמות חדשות מאז התקציר האחרון"
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr "הכלל הושבת: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr "כלל: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr "%(count)s התאמות נוספות ב-%(groups)s קבוצות (הושגה מגבלת ההתראות להערכה)"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr "הכלל הושבת כי חשבון הבעלים שלו אינו פעיל."
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr "תרחיש: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr "%(count)s התאמות חדשות: %(label)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr "%(count)s התאמות חדשות"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr "הכלל הושבת כי תפקיד הבעלים שלו אינו מאפשר עוד כללי ניטור."
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr "%(count)s תכנים נוספים נכנסו לתוצאות עם התראה (הושגה מגבלת ההתראות להערכה)"
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr "התרחיש הושבת: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr "תוכן %(id)s"
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr "התרחיש הושבת כי חשבון הבעלים שלו אינו פעיל."
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr "התרחיש הושבת כי תפקיד הבעלים שלו אינו מאפשר עוד תרחישים."
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr "תוצאה %(outcome)s: %(target)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr "תרחישים מסווגים מסמכים לתוצאות; כללים עוקבים אחר אותות תואמים חדשים. שניהם מודיעים לבעלים שלהם בלבד."
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr "כיצד פועל הניטור"
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr "תרחיש מוערך מול האותות השמורים. כל מסמך באוכלוסייה שלו מקבל החלטה אחת בדיוק: התוצאה של המקרה התואם, או תוצאת ברירת המחדל."
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr "לא ניתן להפעיל תרחיש עד שהרצת ניסיון של ההגדרה הנוכחית המדויקת שלו עברה בהצלחה. הרצת הניסיון אינה משנה דבר: היא מדווחת מה יקרה."
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr "כאשר תרחיש או כלל מתחילים, מה שכבר תואם נרשם כבסיס ואינו מדווח, אלא אם ההגדרה קובעת notify_existing."
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr "היסטוריית התוצאות לעולם אינה נדרסת: כל שינוי הוא רשומה חדשה עם התוצאה הקודמת."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr "עדיפות ההתראה נגזרת מהראיות (רמת הביטחון ועד כמה האירוע קרוב), ואינה נבחרת ידנית."
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr "רק מסמכים שהבעלים רשאי לקרוא מוערכים. אם הבעלים מאבד את ההרשאה, התרחיש או הכלל מושבתים."
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr "תרחישים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr "כללים"
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr "כל המשתמשים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr "הצג בארכיון"
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr "תרחיש חדש"
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr "אסטרטגיה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr "הערכה אחרונה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr "בעלים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr "הגדרה (JSON)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr "תנאים, מקרים, תוצאות, תוצאת ברירת המחדל החובה והאסטרטגיה (first_match, all_matching או highest_priority). ראו docs/implementation/SCENARIOS.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr "הרצת הניסיון האחרונה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr "היסטוריית תוצאות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr "תוצאה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr "תוצאה קודמת"
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr "מקרים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr "מסירה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr "נרשם"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr "הערכות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr "גורם הפעלה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr "ההגדרה הנוכחית"
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr "כלל חדש"
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr "בסיס"
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr "קריטריונים, מסנן אותות, ביטחון מינימלי, חלון אירוע, סף, זמן צינון, קיבוץ ומסירה. ראו docs/implementation/RULE_ENGINE.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr "טיוטה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr "מושהה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr "מושבת"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr "בארכיון"
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr "התאמה ראשונה"
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr "כל ההתאמות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr "העדיפות הגבוהה ביותר"
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr "אף פעם"
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr "כן"
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr "לא"
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr "אין"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr "%(n)s תרחישים"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr "%(n)s כללים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr "מוצגים רק %(n)s הראשונים."
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr "אין עדיין תרחישים."
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr "אין עדיין כללים."
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr "עדיין לא נרשמו תוצאות."
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr "אין עדיין הערכות."
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr "תרחיש זה עדיין לא הורץ בניסיון."
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr "עריכת תרחיש"
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr "עריכת כלל"
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr "הרצת ניסיון"
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr "הפעלה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr "העברה לארכיון"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr "הערכה עכשיו"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr "השתקה לשעה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr "להעביר לארכיון? הפעולה תיפסק לצמיתות; ההיסטוריה נשמרת."
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr "ההגדרה אינה JSON תקין: %(error)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr "תקין. טביעת אצבע %(fp)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr "אזהרות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr "נשמר."
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr "נשמר כגרסה %(v)s. הוא שוב טיוטה: יש להריץ ניסיון לפני ההפעלה."
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr "משימה %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr "משימה %(id)s הסתיימה: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr "משימה %(id)s עדיין פועלת. רעננו מאוחר יותר כדי לראות את התוצאה."
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr "טביעת אצבע של ההגדרה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr "הושבת מפני ש: %(reason)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr "חשבון הבעלים אינו פעיל"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr "תפקיד הבעלים אינו מאפשר זאת עוד"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr "הבסיס נרשם"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr "הבסיס ממתין"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr "מושתק עד %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr "עבר"
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr "לא תקין"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr "הבעלים אינו זכאי"
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr "הרצת ניסיון זו הייתה של גרסה %(v)s; הגרסה הנוכחית זקוקה להרצת ניסיון משלה."
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr "אוכלוסייה: %(n)s מסמכים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr "נמדד על תמונת מצב עקבית אחת ב-%(t)s, תאריך ייחוס %(d)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr "התראות בעת ההפעלה: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr "ההתאמות הקיימות הופכות לבסיס"
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr "שום דבר לא ייכנס לתוצאה עם התראה"
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr "notify_existing מוגדר"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr "עוד %(n)s יסוכמו בהתראת גלישה אחת."
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr "הערכה: %(per_day)s מסמכים עם התראה ביום"
+
+#: templates/Monitoring/monitoring.html
+msgid "Case"
+msgstr "מקרה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr "התאמות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr "מכריע"
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr "מסמכים עם תוצאה שאינה ברירת המחדל, לפי:"
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr "קטגוריית אנליסט"
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr "%(n)s המובילים מתוך %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr "ל-%(n)s מסמכים יש תוצאה שאינה ברירת המחדל."
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr "בסיס"
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr "נרשם"
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr "נשלחה התראה"
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr "בסיכום הגלישה"
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr "יצא מהאוכלוסייה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr "דולג (כבר פועל)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr "לא פעיל"
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr "מסמך %(id)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr "התפקיד שלך מאפשר לצפות בניטור אך לא לשנות אותו."

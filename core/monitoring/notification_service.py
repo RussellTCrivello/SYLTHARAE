@@ -36,6 +36,15 @@ class NotificationType(Enum):
     # owner (``recipient_user_id``), never system-wide.
     RULE_MATCH = "rule_match"
     RULE_STATUS = "rule_status"
+    # Scenarios (services/monitoring/scenario_engine.py): addressed likewise.
+    SCENARIO_OUTCOME = "scenario_outcome"
+    SCENARIO_STATUS = "scenario_status"
+
+
+#: Types that must always be addressed to one user.
+ADDRESSED_TYPES = frozenset({NotificationType.RULE_MATCH, NotificationType.RULE_STATUS,
+                             NotificationType.SCENARIO_OUTCOME,
+                             NotificationType.SCENARIO_STATUS})
 
 
 class NotificationPriority(Enum):
@@ -70,13 +79,15 @@ class Notification:
     recipient_user_id: Optional[int] = None
     #: The monitoring rule that produced it, if any.
     rule_id: Optional[int] = None
+    #: The scenario that produced it, if any.
+    scenario_id: Optional[int] = None
 
 
 #: Column order shared by every ``SELECT ... FROM alerts`` in this service.
 ALERT_COLUMNS = (
     "id, type, priority, title, message, file_id, file_name, "
     "file_path, event_date, metadata, created_at, read, dismissed, "
-    "recipient_user_id, rule_id"
+    "recipient_user_id, rule_id, scenario_id"
 )
 
 
@@ -112,18 +123,25 @@ def insert_alerts(cur, notifications: List["Notification"]) -> List[int]:
     """
     ids: List[int] = []
     for n in notifications:
-        if n.type in (NotificationType.RULE_MATCH, NotificationType.RULE_STATUS) \
-                and n.recipient_user_id is None:
-            raise ValueError("rule notifications must be addressed to a user")
+        if n.type in ADDRESSED_TYPES and n.recipient_user_id is None:
+            raise ValueError("rule and scenario notifications must be addressed to a user")
+        if n.rule_id is not None and n.scenario_id is not None:
+            raise ValueError("a notification comes from a rule or a scenario, not both")
+        # Each evaluation id is linked only to its own kind of producer.
+        rule_eval = n.metadata.get("evaluation_id") if n.rule_id is not None else None
+        scenario_eval = (n.metadata.get("scenario_evaluation_id")
+                         if n.scenario_id is not None else None)
         cur.execute(
             "INSERT INTO alerts (type, priority, title, message, file_id, file_name,"
             " file_path, event_date, metadata, created_at, read, dismissed,"
-            " recipient_user_id, rule_id, rule_evaluation_id)"
-            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            " recipient_user_id, rule_id, rule_evaluation_id, scenario_id,"
+            " scenario_evaluation_id)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            " RETURNING id",
             (n.type.value, n.priority.value, n.title, n.message, n.file_id, n.file_name,
              n.file_path, n.event_date, json.dumps(n.metadata, ensure_ascii=False),
              n.created_at, n.read, n.dismissed, n.recipient_user_id, n.rule_id,
-             n.metadata.get("evaluation_id")))
+             rule_eval, n.scenario_id, scenario_eval))
         row = cur.fetchone()
         n.id = row["id"] if isinstance(row, dict) else row[0]
         ids.append(n.id)
@@ -158,6 +176,7 @@ def notification_from_row(row) -> Notification:
         dismissed=bool(row[12]),
         recipient_user_id=row[13] if len(row) > 13 else None,
         rule_id=row[14] if len(row) > 14 else None,
+        scenario_id=row[15] if len(row) > 15 else None,
     )
 
 

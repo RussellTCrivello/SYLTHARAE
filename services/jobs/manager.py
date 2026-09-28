@@ -544,6 +544,29 @@ class JobManager:
                 get_connection, rule_ids=options.get("rule_ids"),
                 trigger=options.get("trigger", "all_rules"), job_id=job_id,
                 progress_cb=progress_cb, cancel_cb=rules_cancelled)
+        if job_type in ("scenario_evaluation", "scenario_dry_run"):
+            # Scenarios (services/monitoring/scenario_engine.py). A dry-run
+            # writes only its own record; an evaluation records outcomes and
+            # notifications, each scenario in its own transaction.
+            from Api.utils.utils import get_connection
+            from services.monitoring.scenario_engine import (run_scenario_dry_run,
+                                                             run_scenario_evaluation)
+
+            job_id = record["job_id"]
+            if job_type == "scenario_dry_run":
+                return run_scenario_dry_run(
+                    get_connection, scenario_id=options["scenario_id"],
+                    requested_by=options.get("requested_by"), job_id=job_id,
+                    progress_cb=progress_cb)
+
+            def scenarios_cancelled():
+                current = self.repo.get(job_id)
+                return bool(current and current.get("cancellation_requested"))
+
+            return run_scenario_evaluation(
+                get_connection, scenario_ids=options.get("scenario_ids"),
+                trigger=options.get("trigger", "all_scenarios"), job_id=job_id,
+                progress_cb=progress_cb, cancel_cb=scenarios_cancelled)
         raise ValueError(f"Unknown job type: {job_type}")
 
     #: Jobs that change stored content or signals, and the rule-evaluation
@@ -559,6 +582,7 @@ class JobManager:
         trigger = self._RULE_TRIGGERS.get(record.get("job_type"))
         if trigger is None or result is None or getattr(result, "cancelled", False):
             return
+        self._enqueue_scenario_evaluation(record, result, trigger)
         try:
             from Api.utils.utils import get_connection
             from services.monitoring.rule_engine import active_rule_ids
@@ -574,6 +598,26 @@ class JobManager:
             warnings = getattr(result, "warnings", None)
             if isinstance(warnings, list):
                 warnings.append("Monitoring rules were not evaluated after this job"
+                                " (see server logs)")
+
+    def _enqueue_scenario_evaluation(self, record, result, trigger) -> None:
+        """Same contract as ``_enqueue_rule_evaluation``, for active scenarios."""
+        try:
+            from Api.utils.utils import get_connection
+            from services.monitoring.scenario_engine import active_scenario_ids
+
+            with get_connection() as conn:
+                if not active_scenario_ids(conn):
+                    return
+            self.create_job("scenario_evaluation",
+                            source=f"scenarios:{trigger}:{record['job_id']}",
+                            options={"trigger": trigger}, created_by="system")
+        except Exception:
+            logger.exception("job %s: scenario evaluation could not be enqueued",
+                             record.get("job_id"))
+            warnings = getattr(result, "warnings", None)
+            if isinstance(warnings, list):
+                warnings.append("Scenarios were not evaluated after this job"
                                 " (see server logs)")
 
     def _run_batch_import(self, record, progress_cb):

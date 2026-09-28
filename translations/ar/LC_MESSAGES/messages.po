@@ -28,7 +28,7 @@ msgstr "هذا القسم معطَّل حاليًا. يُرجى تمكينه م�
 
 #, python-format
 msgid "Similar Files Detected: %(file_name)s"
-msgstr "تصفية الملفات المشابهة"
+msgstr "تم اكتشاف ملفات مشابهة: %(file_name)s"
 
 msgid "Similar Files Detected"
 msgstr "تصفية الملفات المشابهة"
@@ -40,7 +40,7 @@ msgstr ""
 
 #, python-format
 msgid "Future Event Detected: %(date)s"
-msgstr "اكتشاف الأحداث المستقبلية"
+msgstr "تم اكتشاف حدث مستقبلي: %(date)s"
 
 msgid "Future Event Detected"
 msgstr "اكتشاف الأحداث المستقبلية"
@@ -54,7 +54,7 @@ msgstr "تم العثور على محتوى يركز على المستقبل"
 
 #, python-format
 msgid "Future Date Detected: %(date)s"
-msgstr "اكتشاف التواريخ المستقبلية"
+msgstr "تم اكتشاف تاريخ مستقبلي: %(date)s"
 
 #, python-format
 msgid "Future date found in %(file_name)s (%(days)s days away)"
@@ -62,7 +62,7 @@ msgstr "تم العثور على تاريخ مستقبلي في %(file_name)s (�
 
 #, python-format
 msgid "Future date found in %(file_name)s"
-msgstr "اكتشاف والتنبيه على التواريخ المستقبلية الموجودة في الملفات"
+msgstr "تم العثور على تاريخ مستقبلي في %(file_name)s"
 
 #, python-format
 msgid "Future date found (%(days)s days away)"
@@ -79,7 +79,7 @@ msgstr "المعالجة"
 
 #, python-format
 msgid "File processing completed: %(file_name)s"
-msgstr "المعالجة"
+msgstr "اكتملت معالجة الملف: %(file_name)s"
 
 msgid "File processing completed"
 msgstr "المعالجة"
@@ -10593,3 +10593,487 @@ msgstr "لا تُدرج إلا أول %(n)s من المصادر والجهات �
 #: templates/Signals/signals.html
 msgid "The source and side lists could not be loaded. Other filters still work."
 msgstr "تعذّر تحميل قائمتي المصادر والجهات. المرشحات الأخرى لا تزال تعمل."
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr "تم اكتشاف ملفات مكررة: %(file_name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr "تم اكتشاف ملفات مكررة"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr "عُثر على %(count)s ملف(ات) مكررة بنفس البصمة. الملفات: %(files)s"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr "عُثر على %(count)s ملف(ات) مكررة بنفس البصمة"
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr "ملخص القاعدة: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr "%(count)s تطابقات جديدة منذ الملخص الأخير"
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr "تم تعطيل القاعدة: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr "القاعدة: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr "%(count)s تطابقات إضافية في %(groups)s مجموعات (تم بلوغ حد الإشعارات لكل تقييم)"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr "تم تعطيل القاعدة لأن حساب مالكها غير نشط."
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr "السيناريو: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr "%(count)s تطابقات جديدة: %(label)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr "%(count)s تطابقات جديدة"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr "تم تعطيل القاعدة لأن دور مالكها لم يعد يسمح بقواعد المراقبة."
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr "%(count)s محتويات إضافية دخلت نتائج تستوجب الإشعار (تم بلوغ حد الإشعارات لكل تقييم)"
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr "تم تعطيل السيناريو: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr "المحتوى %(id)s"
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr "تم تعطيل السيناريو لأن حساب مالكه غير نشط."
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr "تم تعطيل السيناريو لأن دور مالكه لم يعد يسمح بالسيناريوهات."
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr "النتيجة %(outcome)s: %(target)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr "تصنّف السيناريوهات المستندات إلى نتائج؛ وتراقب القواعد الإشارات المطابقة الجديدة. وكلاهما يُشعر مالكه فقط."
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr "كيف تعمل المراقبة"
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr "يُقيَّم السيناريو على الإشارات المخزّنة. يحصل كل مستند في نطاقه على قرار واحد بالضبط: نتيجة الحالة المطابقة، أو النتيجة الافتراضية."
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr "لا يمكن تفعيل السيناريو قبل نجاح تشغيل تجريبي لتعريفه الحالي نفسه. التشغيل التجريبي لا يغيّر شيئاً: إنه يبيّن ما سيحدث."
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr "عند بدء سيناريو أو قاعدة، يُسجَّل ما يطابق مسبقاً كخط أساس ولا يُرسل عنه إشعار، ما لم ينص التعريف على notify_existing."
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr "لا يُستبدل سجل النتائج أبداً: كل تغيير هو إدخال جديد مع النتيجة السابقة."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr "تُستنتج أولوية الإشعار من الدليل (درجة الثقة ومدى قرب الحدث)، ولا تُختار يدوياً."
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr "لا تُقيَّم إلا المستندات التي يحق للمالك قراءتها. وإذا فقد المالك الصلاحية، يُعطَّل السيناريو أو القاعدة."
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr "السيناريوهات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr "القواعد"
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr "كل المستخدمين"
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr "إظهار المؤرشف"
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr "سيناريو جديد"
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr "الاستراتيجية"
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr "آخر تقييم"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr "المالك"
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr "التعريف (JSON)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr "الشروط والحالات والنتائج والنتيجة الافتراضية الإلزامية والاستراتيجية (first_match أو all_matching أو highest_priority). راجع docs/implementation/SCENARIOS.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr "آخر تشغيل تجريبي"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr "سجل النتائج"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr "النتيجة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr "النتيجة السابقة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr "الحالات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr "التسليم"
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr "تاريخ التسجيل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr "التقييمات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr "المُشغِّل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr "التعريف الحالي"
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr "قاعدة جديدة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr "خط الأساس"
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr "المعايير ومرشّح الإشارات والحد الأدنى للثقة ونافذة الحدث والعتبة وفترة التهدئة والتجميع والتسليم. راجع docs/implementation/RULE_ENGINE.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr "مسودة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr "متوقف مؤقتاً"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr "معطَّل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr "مؤرشف"
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr "أول تطابق"
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr "كل المطابقات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr "الأولوية الأعلى"
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr "أبداً"
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr "نعم"
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr "لا"
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr "لا شيء"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr "%(n)s سيناريوهات"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr "%(n)s قواعد"
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr "تُعرض أول %(n)s فقط."
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr "لا توجد سيناريوهات بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr "لا توجد قواعد بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr "لم تُسجَّل نتائج بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr "لا توجد تقييمات بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr "لم يُجرَ لهذا السيناريو تشغيل تجريبي بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr "تحرير السيناريو"
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr "تحرير القاعدة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr "تشغيل تجريبي"
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr "تفعيل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr "أرشفة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr "التقييم الآن"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr "كتم لمدة ساعة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr "أرشفة هذا العنصر؟ سيتوقف نهائياً مع الاحتفاظ بسجله."
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr "التعريف ليس JSON صالحاً: %(error)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr "صالح. البصمة %(fp)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr "تحذيرات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr "تم الحفظ."
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr "حُفظ كإصدار %(v)s. أصبح مسودة مجدداً: شغّله تجريبياً قبل التفعيل."
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr "المهمة %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr "انتهت المهمة %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr "المهمة %(id)s ما زالت قيد التشغيل. حدّث الصفحة لاحقاً لرؤية النتيجة."
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr "بصمة التعريف"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr "معطَّل بسبب: %(reason)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr "حساب المالك غير نشط"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr "دور المالك لم يعد يسمح بذلك"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr "سُجّل خط الأساس"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr "خط الأساس قيد الانتظار"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr "مكتوم حتى %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr "نجح"
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr "غير صالح"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr "المالك غير مؤهل"
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr "كان هذا التشغيل التجريبي للإصدار %(v)s؛ يحتاج الإصدار الحالي إلى تشغيل تجريبي خاص به."
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr "النطاق: %(n)s مستندات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr "قيس على لقطة متسقة واحدة في %(t)s، بتاريخ مرجعي %(d)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr "الإشعارات عند التفعيل: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr "تصبح المطابقات الحالية خط الأساس"
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr "لن يدخل شيء نتيجة تستوجب الإشعار"
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr "الخيار notify_existing مفعَّل"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr "سيُلخَّص %(n)s إضافية في إشعار تجاوز واحد."
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr "المتوقع %(per_day)s مستندات مُشعَر بها يومياً"
+
+#: templates/Monitoring/monitoring.html
+msgid "Case"
+msgstr "الحالة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr "المطابقات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr "يحسم"
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr "المستندات ذات نتيجة غير الافتراضية، حسب:"
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr "فئة المحلل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr "أعلى %(n)s من %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr "لدى %(n)s مستندات نتيجة غير الافتراضية."
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr "خط أساس"
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr "مسجَّل"
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr "مُشعَر به"
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr "في ملخص التجاوز"
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr "خرج من النطاق"
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr "تم التخطي (قيد التشغيل بالفعل)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr "غير نشط"
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr "المستند %(id)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr "يتيح لك دورك عرض المراقبة دون تغييرها."

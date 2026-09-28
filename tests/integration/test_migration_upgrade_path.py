@@ -376,3 +376,97 @@ def test_m0020_addresses_alerts_and_downgrade_never_widens_them(legacy_db):
         assert cur.fetchone()[0] == 0
     conn.rollback()
     assert run_migrations(conn)[0] == "0020"
+
+
+def test_m0021_scenarios_constraints_append_only_and_downgrade_alone(legacy_db):
+    """0021: an active scenario needs its dry-run; dry-run and evaluation
+    statuses cannot be mixed; outcomes are append-only; a scenario alert has
+    a recipient; downgrading 0021 alone removes scenario alerts only."""
+    conn, seeded = legacy_db
+    assert run_migrations(conn)[-1] >= "0021"
+    uid, hid = seeded["user_id"], seeded["hash_id"]
+    fp = "b" * 64
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO scenarios (owner_user_id, name, definition,"
+                    " definition_fingerprint) VALUES (%s, 's', '{}', %s) RETURNING id", (uid, fp))
+        sid = cur.fetchone()[0]
+        cur.execute("INSERT INTO scenario_evaluations (scenario_id, scenario_version, kind,"
+                    " trigger, status, definition_fingerprint, reference_date, evaluated_at,"
+                    " report) VALUES (%s, 1, 'dry_run', 'manual', 'passed', %s, CURRENT_DATE,"
+                    " NOW(), '{}') RETURNING id", (sid, fp))
+        dry = cur.fetchone()[0]
+        conn.commit()
+        eval_sql = ("INSERT INTO scenario_evaluations (scenario_id, scenario_version, kind,"
+                    " trigger, status, definition_fingerprint, reference_date, evaluated_at,"
+                    " report, error) VALUES (%s, 1, %s, 'manual', %s, %s, CURRENT_DATE, NOW(),"
+                    " %s, %s)")
+        checks = [
+            ("UPDATE scenarios SET status = 'active' WHERE id = %s", (sid,),
+             "ck_scenarios_active_dry_run"),
+            ("UPDATE scenarios SET status = 'disabled' WHERE id = %s", (sid,),
+             "ck_scenarios_disabled_reason"),
+            ("UPDATE scenarios SET status = 'bogus' WHERE id = %s", (sid,), "ck_scenarios_status"),
+            (eval_sql, (sid, "evaluation", "passed", fp, None, None),
+             "ck_scenario_evaluations_kind_status"),
+            (eval_sql, (sid, "dry_run", "completed", fp, "{}", None),
+             "ck_scenario_evaluations_kind_status"),
+            (eval_sql, (sid, "dry_run", "passed", fp, None, None),
+             "ck_scenario_evaluations_report"),
+            (eval_sql, (sid, "evaluation", "failed", fp, None, None),
+             "ck_scenario_evaluations_error"),
+            ("INSERT INTO alerts (type, priority, title, message, scenario_id)"
+             " VALUES ('scenario_outcome', 'low', 't', 'm', %s)", (sid,),
+             "ck_alerts_scenario_addressed"),
+            ("INSERT INTO scenario_outcomes (scenario_id, evaluation_id, scenario_version,"
+             " hash_id, outcomes, matched_cases, delivery, recorded_at)"
+             " VALUES (%s, %s, 1, %s, '{}', '{}', 'recorded', NOW())", (sid, dry, hid),
+             "ck_scenario_outcomes_nonempty"),
+            ("INSERT INTO scenario_outcomes (scenario_id, evaluation_id, scenario_version,"
+             " hash_id, outcomes, matched_cases, delivery, recorded_at)"
+             " VALUES (%s, %s, 1, %s, '{a}', '{}', 'notified', NOW())", (sid, dry, hid),
+             "ck_scenario_outcomes_notified_priority"),
+        ]
+        for sql, params, constraint in checks:
+            with pytest.raises(psycopg2.errors.CheckViolation) as info:
+                cur.execute(sql, params)
+            assert info.value.diag.constraint_name == constraint
+            conn.rollback()
+        cur.execute("UPDATE scenarios SET status = 'active', activated_dry_run_id = %s"
+                    " WHERE id = %s", (dry, sid))
+        cur.execute("INSERT INTO scenario_outcomes (scenario_id, evaluation_id, scenario_version,"
+                    " hash_id, outcomes, matched_cases, delivery, recorded_at)"
+                    " VALUES (%s, %s, 1, %s, '{a}', '{}', 'recorded', NOW()) RETURNING id",
+                    (sid, dry, hid))
+        oid = cur.fetchone()[0]
+        conn.commit()
+        for sql in ("UPDATE scenario_outcomes SET delivery = 'baseline' WHERE id = %s",
+                    "DELETE FROM scenario_outcomes WHERE id = %s"):
+            with pytest.raises(psycopg2.errors.IntegrityConstraintViolation):
+                cur.execute(sql, (oid,))
+            conn.rollback()
+        cur.execute("INSERT INTO monitoring_rules (owner_user_id, name, definition,"
+                    " definition_fingerprint) VALUES (%s, 'r21', '{}', %s) RETURNING id", (uid, fp))
+        rule_id = cur.fetchone()[0]
+        cur.execute("INSERT INTO alerts (type, priority, title, message, recipient_user_id,"
+                    " rule_id) VALUES ('rule_match', 'low', 't', 'm', %s, %s) RETURNING id",
+                    (uid, rule_id))
+        rule_alert = cur.fetchone()[0]
+        cur.execute("INSERT INTO alerts (type, priority, title, message, recipient_user_id,"
+                    " scenario_id, scenario_evaluation_id) VALUES ('scenario_outcome', 'low',"
+                    " 't', 'm', %s, %s, %s)", (uid, sid, dry))
+    conn.commit()
+    [m21] = [m for m in discover_migrations() if m.version == "0021"]
+    m21.module.downgrade(conn)
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM schema_migrations WHERE version = '0021'")
+    conn.commit()
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM alerts WHERE recipient_user_id = %s", (uid,))
+        assert cur.fetchall() == [(rule_alert,)]       # only the scenario alert is gone
+        cur.execute("SELECT to_regclass('scenarios'), to_regclass('scenario_outcomes'),"
+                    " to_regclass('monitoring_rules') IS NOT NULL")
+        assert cur.fetchone() == (None, None, True)
+        cur.execute("SELECT count(*) FROM pg_proc WHERE proname = 'scenario_outcomes_append_only'")
+        assert cur.fetchone()[0] == 0
+    conn.rollback()
+    assert run_migrations(conn)[0] == "0021"

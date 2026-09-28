@@ -120,6 +120,17 @@ authenticated role.
 * Priority is derived and cannot be supplied by a caller (400).
 * Rule changes are written to `audit_log`.
 
+**Scenarios** (`/api/scenarios*`, page `/monitoring`,
+[implementation/SCENARIOS.md](implementation/SCENARIOS.md)) follow the same
+model: owner-addressed notifications only; own definitions only (admins may
+dry-run, activate, pause, resume, archive and evaluate any scenario, not edit
+it - 403); others' scenarios are a `404`; the owner is re-read on every
+evaluation and an ineligible owner's scenario is disabled before anything is
+evaluated; population and document conditions are compiled under the owner's
+`AccessScope`. Activation is refused (409) without a passed dry-run of the
+current definition. Outcome history is append-only (trigger). Every change,
+dry-run and activation is written to `audit_log`.
+
 The **setup wizard** is public only until installation: after that `/setup`
 redirects home, `/api/setup/install` answers 409, and the system check and
 database probe require an administrator (AUDIT-SETUP-01).

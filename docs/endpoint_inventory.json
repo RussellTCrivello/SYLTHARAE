@@ -1057,6 +1057,198 @@
     "internal": true
   },
   {
+    "endpoint": "api_scenario_activate",
+    "rule": "/api/scenarios/<int:scenario_id>/activate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_archive",
+    "rule": "/api/scenarios/<int:scenario_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_dry_run",
+    "rule": "/api/scenarios/<int:scenario_id>/dry-run",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_dry_runs",
+    "rule": "/api/scenarios/<int:scenario_id>/dry-runs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_evaluate",
+    "rule": "/api/scenarios/<int:scenario_id>/evaluate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_evaluation",
+    "rule": "/api/scenarios/<int:scenario_id>/evaluations/<int:evaluation_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_evaluations",
+    "rule": "/api/scenarios/<int:scenario_id>/evaluations",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_get",
+    "rule": "/api/scenarios/<int:scenario_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_outcomes",
+    "rule": "/api/scenarios/<int:scenario_id>/outcomes",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_pause",
+    "rule": "/api/scenarios/<int:scenario_id>/pause",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_resume",
+    "rule": "/api/scenarios/<int:scenario_id>/resume",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_update",
+    "rule": "/api/scenarios/<int:scenario_id>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenario_versions",
+    "rule": "/api/scenarios/<int:scenario_id>/versions",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenarios_create",
+    "rule": "/api/scenarios",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenarios_list",
+    "rule": "/api/scenarios",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_scenarios_validate",
+    "rule": "/api/scenarios/validate",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_search",
     "rule": "/api/search",
     "methods": [
@@ -3011,6 +3203,18 @@
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
+  },
+  {
+    "endpoint": "monitoring_page",
+    "rule": "/monitoring",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "scenarios",
+    "classification": "USER_INTERFACE",
+    "owned_by": "monitoring",
+    "internal": false
   },
   {
     "endpoint": "notifications_page",
