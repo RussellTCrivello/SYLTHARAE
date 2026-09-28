@@ -492,6 +492,42 @@
     "internal": true
   },
   {
+    "endpoint": "api_audit_actions",
+    "rule": "/api/audit/actions",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "audit",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_audit_entries",
+    "rule": "/api/audit",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "audit",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_audit_entry",
+    "rule": "/api/audit/<int:entry_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "audit",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_autocomplete",
     "rule": "/api/search/autocomplete",
     "methods": [
@@ -1770,6 +1806,18 @@
     "module": "archives",
     "classification": "USER_INTERFACE",
     "owned_by": "archives",
+    "internal": false
+  },
+  {
+    "endpoint": "audit_page",
+    "rule": "/admin/audit",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "audit",
+    "classification": "USER_INTERFACE",
+    "owned_by": "audit_log",
     "internal": false
   },
   {

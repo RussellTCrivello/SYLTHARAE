@@ -30,10 +30,10 @@ The reference below is generated. Every count in it comes from the code:
 <!-- BEGIN GENERATED EXPERIENCE CONTRACT -->
 ### What this build declares
 
-- Contracts: **29** (described: **5**, derived from the registry only: **24**)
+- Contracts: **30** (described: **5**, derived from the registry only: **25**)
 - Definitions: **34** actions, **14** columns, **6** filters, **0** fields, **5** states
-- Translation keys the screens need: **212**
-- With help: **27**; with a shortcut: **15**; with a navigation entry: **29**
+- Translation keys the screens need: **217**
+- With help: **28**; with a shortcut: **16**; with a navigation entry: **30**
 
 ### Every screen
 
@@ -64,6 +64,7 @@ The reference below is generated. Every count in it comes from the code:
 | `jobs` | OPERATE | derived | `screen.jobs.title` | — | — | 1 | — | yes |
 | `import_export_console` | OPERATE | derived | `screen.import_export_console.title` | — | — | — | — | — |
 | `users` | ADMINISTRATION | derived | `screen.users.title` | — | — | — | — | yes |
+| `audit_log` | ADMINISTRATION | derived | `screen.audit_log.title` | — | — | — | — | yes |
 | `settings` | SETTINGS | derived | `screen.settings.title` | — | — | — | — | yes |
 | `interface_manager` | SETTINGS | derived | `screen.interface_manager.title` | — | — | — | — | yes |
 | `translation_manager` | SETTINGS | derived | `screen.translation_manager.title` | — | — | — | — | yes |
@@ -75,10 +76,10 @@ Counted from the catalogs the build ships - the Babel catalogs under `translatio
 
 | Language | Catalog entries | Source strings | Translated | Fallback | Missing | Coverage | Of which translated |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ar` | 3389 | 3028 | 3019 | 9 | 0 | 100.0% | 99.7% |
-| `fa` | 3389 | 3028 | 3021 | 7 | 0 | 100.0% | 99.8% |
-| `he` | 3389 | 3028 | 3015 | 13 | 0 | 100.0% | 99.6% |
-| `hr` | 3144 | 3028 | 2944 | 23 | 61 | 98.0% | 97.2% |
+| `ar` | 3417 | 3056 | 3047 | 9 | 0 | 100.0% | 99.7% |
+| `fa` | 3417 | 3056 | 3049 | 7 | 0 | 100.0% | 99.8% |
+| `he` | 3417 | 3056 | 3043 | 13 | 0 | 100.0% | 99.6% |
+| `hr` | 3173 | 3056 | 2973 | 23 | 60 | 98.0% | 97.3% |
 
 ### Coverage per screen
 
@@ -111,6 +112,7 @@ The strings a screen's contract asks for, and how many of them a language actual
 | `jobs` | 7 | 71.4% (0 by key) | 71.4% (0 by key) | 71.4% (0 by key) | 71.4% (0 by key) |
 | `import_export_console` | 3 | 66.7% (0 by key) | 66.7% (0 by key) | 66.7% (0 by key) | 66.7% (0 by key) |
 | `users` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
+| `audit_log` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
 | `settings` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
 | `interface_manager` | 5 | 0.0% (0 by key) | 0.0% (0 by key) | 0.0% (0 by key) | 0.0% (0 by key) |
 | `translation_manager` | 5 | 100.0% (0 by key) | 100.0% (0 by key) | 100.0% (0 by key) | 100.0% (0 by key) |
@@ -120,11 +122,11 @@ The strings a screen's contract asks for, and how many of them a language actual
 
 These have a contract derived from the registry, so they work: they have an identity, a navigation entry, a lifecycle and a help topic. What they do not have is a description of what they offer - columns, filters, actions, states - because nobody has decided it. The list is the remaining work, not a defect.
 
-`dashboard`, `search`, `categories`, `email_words`, `analyst_categorization`, `notifications`, `signal_horizon`, `monitoring`, `input_ingestion`, `import_center`, `archives`, `path_analysis`, `batch_analysis`, `classification`, `comprehensive_dashboard`, `reports`, `charts_dashboard`, `jobs`, `import_export_console`, `users`, `settings`, `translation_manager`
+`dashboard`, `search`, `categories`, `email_words`, `analyst_categorization`, `notifications`, `signal_horizon`, `monitoring`, `input_ingestion`, `import_center`, `archives`, `path_analysis`, `batch_analysis`, `classification`, `comprehensive_dashboard`, `reports`, `charts_dashboard`, `jobs`, `import_export_console`, `users`, `audit_log`, `settings`, `translation_manager`
 
 ### Contract validation
 
 Every contract passes the declarative checks: no SQL, no imports, no calls, no authorisation decisions, destructive actions carry a confirmation, bulk actions require a selection, and no key holds two different source strings.
 
-_Generated from 29 contracts, 3028 source strings and 5 catalogs._
+_Generated from 30 contracts, 3056 source strings and 5 catalogs._
 <!-- END GENERATED EXPERIENCE CONTRACT -->

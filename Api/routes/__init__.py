@@ -15,6 +15,7 @@ def register_all_routes(app, babel_instance=None):
     from . import rules
     from . import scenarios
     from . import reports
+    from . import audit
     # Import new settings routes (replaces old settings.py) - optional
     try:
         from settings.routes import register_settings_routes
@@ -63,6 +64,8 @@ def register_all_routes(app, babel_instance=None):
     # Step 14 report runs (report_run job, one snapshot per run)
     reports.register_report_routes(app)
     reports.register_report_artifact_routes(app)
+    # Audit log viewer (administrators, read-only)
+    audit.register_audit_routes(app)
     # Unified operations API + pages (Input / Import Center / Job Center)
     app.register_blueprint(operations_api.operations_bp)
     operations_pages.register_operations_pages(app)

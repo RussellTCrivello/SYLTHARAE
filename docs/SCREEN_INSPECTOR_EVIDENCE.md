@@ -46,8 +46,8 @@ document with what it writes.
 
 | Measurement | Count |
 | --- | --- |
-| Interfaces | 29 |
-| Navigable interfaces | 27 |
+| Interfaces | 30 |
+| Navigable interfaces | 28 |
 | Interfaces with a described screen | 5 |
 | Interfaces declaring no help topic | 2 |
 | Interfaces declaring no keyboard shortcut | 14 |
@@ -142,6 +142,7 @@ with the evidence.
 | `jobs` | OPERATE | `operations_jobs_page` | operate/jobs | g j | 0 |
 | `import_export_console` | OPERATE | `import_export_page` | Not declared | Not declared | 0 |
 | `users` | ADMINISTRATION | `users_page` | administration/users | g u | 0 |
+| `audit_log` | ADMINISTRATION | `audit_page` | administration/audit | g l | 0 |
 | `settings` | SETTINGS | `settings_page_direct` | settings/overview | g , | 0 |
 | `interface_manager` | SETTINGS | `None` | settings/interfaces | Not declared | 0 |
 | `translation_manager` | SETTINGS | `translations.translation_management_page` | settings/translations | g t | 0 |
@@ -155,8 +156,8 @@ with the evidence.
 | binding | 6 | 34 |
 | component | 20 | 20 |
 | execution | 29 | 34 |
-| help | 27 | 29 |
-| interface | 29 | 29 |
+| help | 28 | 30 |
+| interface | 30 | 30 |
 | permission | 34 | 34 |
 | scope | 34 | 34 |
 | state | 34 | 34 |

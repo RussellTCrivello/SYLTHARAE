@@ -11532,3 +11532,115 @@ msgstr "راستی‌آزمایی شد: فایل ذخیره‌شده با چک�
 #, python-format
 msgid "Verification failed: %(checks)s. The file will not be sent."
 msgstr "راستی‌آزمایی ناموفق بود: %(checks)s. فایل ارسال نخواهد شد."
+
+#: templates/auth/audit.html
+msgid "Who did what, to what, when and from where. This page only reads the log; nothing here changes it."
+msgstr "چه کسی چه کاری، روی چه چیزی، کی و از کجا انجام داد. این صفحه فقط گزارش را می‌خواند؛ هیچ چیز اینجا آن را تغییر نمی‌دهد."
+
+#: templates/auth/audit.html
+msgid "Reading the audit log"
+msgstr "خواندن گزارش حسابرسی"
+
+#: templates/auth/audit.html
+msgid "DATA_EXPORTED entries record every file that left the system: who took it, which report, search or record it came from, how many rows, and its SHA-256 checksum."
+msgstr "ورودی‌های DATA_EXPORTED هر پرونده‌ای را که از سامانه خارج شده ثبت می‌کنند: چه کسی آن را برداشت، از کدام گزارش، جستجو یا رکورد آمد، چند ردیف دارد و چک‌سام SHA-256 آن."
+
+#: templates/auth/audit.html
+msgid "Newest entries come first. Use Older and Newer to move through the log; the total is not counted because the log grows without limit."
+msgstr "جدیدترین ورودی‌ها اول می‌آیند. برای حرکت در گزارش از «قدیمی‌تر» و «جدیدتر» استفاده کنید؛ مجموع شمرده نمی‌شود چون گزارش بی‌حد رشد می‌کند."
+
+#: templates/auth/audit.html
+msgid "Select a user or a resource in the list to show only its entries."
+msgstr "یک کاربر یا منبع را در فهرست انتخاب کنید تا فقط ورودی‌های آن نمایش داده شود."
+
+#: templates/auth/audit.html
+msgid "Any action"
+msgstr "هر کنشی"
+
+#: templates/auth/audit.html
+msgid "User name"
+msgstr "نام کاربری"
+
+#: templates/auth/audit.html
+msgid "Resource starts with"
+msgstr "منبع با این آغاز می‌شود"
+
+#: templates/auth/audit.html
+msgid "From (inclusive)"
+msgstr "از (شامل)"
+
+#: templates/auth/audit.html
+msgid "Until (exclusive)"
+msgstr "تا (بدون شمول)"
+
+#: templates/auth/audit.html
+msgid "Show entries"
+msgstr "نمایش ورودی‌ها"
+
+#: templates/auth/audit.html
+msgid "Resource"
+msgstr "منبع"
+
+#: templates/auth/audit.html
+msgid "IP address"
+msgstr "نشانی IP"
+
+#: templates/auth/audit.html
+msgid "no user (system or anonymous)"
+msgstr "بدون کاربر (سامانه یا ناشناس)"
+
+#: templates/auth/audit.html
+msgid "Older"
+msgstr "قدیمی‌تر"
+
+#: templates/auth/audit.html
+msgid "Newer"
+msgstr "جدیدتر"
+
+#: templates/auth/audit.html
+msgid "No entries match these filters."
+msgstr "هیچ ورودی‌ای با این پالایه‌ها مطابقت ندارد."
+
+#: templates/auth/audit.html
+msgid "The audit log is empty."
+msgstr "گزارش حسابرسی خالی است."
+
+#: templates/auth/audit.html
+msgid "Showing %(count)s entries, newest first."
+msgstr "نمایش %(count)s ورودی، جدیدترین اول."
+
+#: templates/auth/audit.html
+msgid "More entries exist; use Older to continue."
+msgstr "ورودی‌های بیشتری وجود دارد؛ برای ادامه از «قدیمی‌تر» استفاده کنید."
+
+#: templates/auth/audit.html
+msgid "These are the oldest matching entries."
+msgstr "این‌ها قدیمی‌ترین ورودی‌های مطابق هستند."
+
+#: templates/auth/audit.html
+msgid "The total is not counted."
+msgstr "مجموع شمرده نمی‌شود."
+
+#: templates/auth/audit.html
+msgid "Only the first %(cap)s action names are listed."
+msgstr "فقط %(cap)s نام کنش نخست فهرست شده است."
+
+#: templates/auth/audit.html
+msgid "Audit entry %(id)s"
+msgstr "ورودی حسابرسی %(id)s"
+
+#: templates/auth/audit.html
+msgid "Show only this user's entries"
+msgstr "فقط ورودی‌های این کاربر را نشان بده"
+
+#: templates/auth/audit.html
+msgid "Show only entries for resources starting with this"
+msgstr "فقط ورودی‌های منابعی که با این آغاز می‌شوند را نشان بده"
+
+#: templates/auth/audit.html
+msgid "Entry"
+msgstr "ورودی"
+
+#: templates/auth/audit.html
+msgid "User id"
+msgstr "شناسه کاربر"

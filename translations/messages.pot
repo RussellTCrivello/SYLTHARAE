@@ -13742,3 +13742,115 @@ msgstr ""
 #, python-format
 msgid "Verification failed: %(checks)s. The file will not be sent."
 msgstr ""
+
+#: templates/auth/audit.html
+msgid "Who did what, to what, when and from where. This page only reads the log; nothing here changes it."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Reading the audit log"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "DATA_EXPORTED entries record every file that left the system: who took it, which report, search or record it came from, how many rows, and its SHA-256 checksum."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Newest entries come first. Use Older and Newer to move through the log; the total is not counted because the log grows without limit."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Select a user or a resource in the list to show only its entries."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Any action"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "User name"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Resource starts with"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "From (inclusive)"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Until (exclusive)"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Show entries"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Resource"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "IP address"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "no user (system or anonymous)"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Older"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Newer"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "No entries match these filters."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "The audit log is empty."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Showing %(count)s entries, newest first."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "More entries exist; use Older to continue."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "These are the oldest matching entries."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "The total is not counted."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Only the first %(cap)s action names are listed."
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Audit entry %(id)s"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Show only this user's entries"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Show only entries for resources starting with this"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "Entry"
+msgstr ""
+
+#: templates/auth/audit.html
+msgid "User id"
+msgstr ""

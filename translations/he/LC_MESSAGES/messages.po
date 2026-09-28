@@ -11236,3 +11236,115 @@ msgstr "אומת: הקובץ השמור תואם לסכום הביקורת SHA-2
 #, python-format
 msgid "Verification failed: %(checks)s. The file will not be sent."
 msgstr "האימות נכשל: %(checks)s. הקובץ לא יישלח."
+
+#: templates/auth/audit.html
+msgid "Who did what, to what, when and from where. This page only reads the log; nothing here changes it."
+msgstr "מי עשה מה, למה, מתי ומאיפה. דף זה רק קורא את היומן; דבר כאן אינו משנה אותו."
+
+#: templates/auth/audit.html
+msgid "Reading the audit log"
+msgstr "קריאת יומן הביקורת"
+
+#: templates/auth/audit.html
+msgid "DATA_EXPORTED entries record every file that left the system: who took it, which report, search or record it came from, how many rows, and its SHA-256 checksum."
+msgstr "רשומות DATA_EXPORTED מתעדות כל קובץ שיצא מהמערכת: מי לקח אותו, מאיזה דוח, חיפוש או רשומה הגיע, כמה שורות, ואת סכום הביקורת SHA-256 שלו."
+
+#: templates/auth/audit.html
+msgid "Newest entries come first. Use Older and Newer to move through the log; the total is not counted because the log grows without limit."
+msgstr "הרשומות החדשות ביותר מופיעות ראשונות. השתמשו ב«ישנות יותר» וב«חדשות יותר» כדי לנוע ביומן; הסך הכול אינו נספר כי היומן גדל ללא הגבלה."
+
+#: templates/auth/audit.html
+msgid "Select a user or a resource in the list to show only its entries."
+msgstr "בחרו משתמש או משאב ברשימה כדי להציג רק את הרשומות שלו."
+
+#: templates/auth/audit.html
+msgid "Any action"
+msgstr "כל פעולה"
+
+#: templates/auth/audit.html
+msgid "User name"
+msgstr "שם משתמש"
+
+#: templates/auth/audit.html
+msgid "Resource starts with"
+msgstr "המשאב מתחיל ב־"
+
+#: templates/auth/audit.html
+msgid "From (inclusive)"
+msgstr "מ־ (כולל)"
+
+#: templates/auth/audit.html
+msgid "Until (exclusive)"
+msgstr "עד (לא כולל)"
+
+#: templates/auth/audit.html
+msgid "Show entries"
+msgstr "הצג רשומות"
+
+#: templates/auth/audit.html
+msgid "Resource"
+msgstr "משאב"
+
+#: templates/auth/audit.html
+msgid "IP address"
+msgstr "כתובת IP"
+
+#: templates/auth/audit.html
+msgid "no user (system or anonymous)"
+msgstr "אין משתמש (מערכת או אנונימי)"
+
+#: templates/auth/audit.html
+msgid "Older"
+msgstr "ישנות יותר"
+
+#: templates/auth/audit.html
+msgid "Newer"
+msgstr "חדשות יותר"
+
+#: templates/auth/audit.html
+msgid "No entries match these filters."
+msgstr "אין רשומות התואמות למסננים אלה."
+
+#: templates/auth/audit.html
+msgid "The audit log is empty."
+msgstr "יומן הביקורת ריק."
+
+#: templates/auth/audit.html
+msgid "Showing %(count)s entries, newest first."
+msgstr "מוצגות %(count)s רשומות, החדשות ראשונות."
+
+#: templates/auth/audit.html
+msgid "More entries exist; use Older to continue."
+msgstr "קיימות רשומות נוספות; השתמשו ב«ישנות יותר» כדי להמשיך."
+
+#: templates/auth/audit.html
+msgid "These are the oldest matching entries."
+msgstr "אלה הרשומות התואמות הישנות ביותר."
+
+#: templates/auth/audit.html
+msgid "The total is not counted."
+msgstr "הסך הכול אינו נספר."
+
+#: templates/auth/audit.html
+msgid "Only the first %(cap)s action names are listed."
+msgstr "רק %(cap)s שמות הפעולות הראשונים מוצגים."
+
+#: templates/auth/audit.html
+msgid "Audit entry %(id)s"
+msgstr "רשומת ביקורת %(id)s"
+
+#: templates/auth/audit.html
+msgid "Show only this user's entries"
+msgstr "הצג רק את הרשומות של משתמש זה"
+
+#: templates/auth/audit.html
+msgid "Show only entries for resources starting with this"
+msgstr "הצג רק רשומות של משאבים המתחילים בזה"
+
+#: templates/auth/audit.html
+msgid "Entry"
+msgstr "רשומה"
+
+#: templates/auth/audit.html
+msgid "User id"
+msgstr "מזהה משתמש"

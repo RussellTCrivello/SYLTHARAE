@@ -11641,3 +11641,119 @@ msgstr "Provjereno: pohranjena datoteka odgovara svom SHA-256 kontrolnom zbroju 
 #, python-format
 msgid "Verification failed: %(checks)s. The file will not be sent."
 msgstr "Provjera nije uspjela: %(checks)s. Datoteka neće biti poslana."
+
+#: templates/auth/audit.html
+msgid "Who did what, to what, when and from where. This page only reads the log; nothing here changes it."
+msgstr "Tko je što učinio, čemu, kada i odakle. Ova stranica samo čita zapisnik; ništa ovdje ga ne mijenja."
+
+#: templates/auth/audit.html
+msgid "Reading the audit log"
+msgstr "Čitanje revizijskog zapisnika"
+
+#: templates/auth/audit.html
+msgid "DATA_EXPORTED entries record every file that left the system: who took it, which report, search or record it came from, how many rows, and its SHA-256 checksum."
+msgstr "Unosi DATA_EXPORTED bilježe svaku datoteku koja je napustila sustav: tko ju je preuzeo, iz kojeg izvještaja, pretrage ili zapisa potječe, koliko redaka ima i njezin SHA-256 kontrolni zbroj."
+
+#: templates/auth/audit.html
+msgid "Newest entries come first. Use Older and Newer to move through the log; the total is not counted because the log grows without limit."
+msgstr "Najnoviji unosi dolaze prvi. Za kretanje kroz zapisnik koristite Starije i Novije; ukupan broj se ne broji jer zapisnik raste bez ograničenja."
+
+#: templates/auth/audit.html
+msgid "Select a user or a resource in the list to show only its entries."
+msgstr "Odaberite korisnika ili resurs na popisu za prikaz samo njegovih unosa."
+
+#: templates/auth/audit.html
+msgid "Any action"
+msgstr "Bilo koja radnja"
+
+#: templates/auth/audit.html
+msgid "User name"
+msgstr "Korisničko ime"
+
+#: templates/auth/audit.html
+msgid "Resource starts with"
+msgstr "Resurs počinje s"
+
+#: templates/auth/audit.html
+msgid "From (inclusive)"
+msgstr "Od (uključivo)"
+
+#: templates/auth/audit.html
+msgid "Until (exclusive)"
+msgstr "Do (isključivo)"
+
+#: templates/auth/audit.html
+msgid "Show entries"
+msgstr "Prikaži unose"
+
+#: templates/auth/audit.html
+msgid "Resource"
+msgstr "Resurs"
+
+#: templates/auth/audit.html
+msgid "IP address"
+msgstr "IP adresa"
+
+#: templates/auth/audit.html
+msgid "Detail"
+msgstr "Pojedinosti"
+
+#: templates/auth/audit.html
+msgid "no user (system or anonymous)"
+msgstr "nema korisnika (sustav ili anonimno)"
+
+#: templates/auth/audit.html
+msgid "Older"
+msgstr "Starije"
+
+#: templates/auth/audit.html
+msgid "Newer"
+msgstr "Novije"
+
+#: templates/auth/audit.html
+msgid "No entries match these filters."
+msgstr "Nijedan unos ne odgovara ovim filtrima."
+
+#: templates/auth/audit.html
+msgid "The audit log is empty."
+msgstr "Revizijski zapisnik je prazan."
+
+#: templates/auth/audit.html
+msgid "Showing %(count)s entries, newest first."
+msgstr "Prikazano unosa: %(count)s, najnoviji prvi."
+
+#: templates/auth/audit.html
+msgid "More entries exist; use Older to continue."
+msgstr "Postoji još unosa; za nastavak koristite Starije."
+
+#: templates/auth/audit.html
+msgid "These are the oldest matching entries."
+msgstr "Ovo su najstariji odgovarajući unosi."
+
+#: templates/auth/audit.html
+msgid "The total is not counted."
+msgstr "Ukupan broj se ne broji."
+
+#: templates/auth/audit.html
+msgid "Only the first %(cap)s action names are listed."
+msgstr "Navedeno je samo prvih %(cap)s naziva radnji."
+
+#: templates/auth/audit.html
+msgid "Audit entry %(id)s"
+msgstr "Revizijski unos %(id)s"
+
+#: templates/auth/audit.html
+msgid "Show only this user's entries"
+msgstr "Prikaži samo unose ovog korisnika"
+
+#: templates/auth/audit.html
+msgid "Show only entries for resources starting with this"
+msgstr "Prikaži samo unose resursa koji počinju ovim"
+
+#: templates/auth/audit.html
+msgid "Entry"
+msgstr "Unos"
+
+#: templates/auth/audit.html
+msgid "User id"
+msgstr "ID korisnika"

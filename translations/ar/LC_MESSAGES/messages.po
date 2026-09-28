@@ -11398,3 +11398,115 @@ msgstr "تم التحقق: الملف المخزَّن يطابق مجموع ا�
 #, python-format
 msgid "Verification failed: %(checks)s. The file will not be sent."
 msgstr "فشل التحقق: %(checks)s. لن يُرسَل الملف."
+
+#: templates/auth/audit.html
+msgid "Who did what, to what, when and from where. This page only reads the log; nothing here changes it."
+msgstr "من فعل ماذا، وبأي شيء، ومتى، ومن أين. هذه الصفحة تقرأ السجل فقط؛ لا شيء هنا يغيّره."
+
+#: templates/auth/audit.html
+msgid "Reading the audit log"
+msgstr "قراءة سجل التدقيق"
+
+#: templates/auth/audit.html
+msgid "DATA_EXPORTED entries record every file that left the system: who took it, which report, search or record it came from, how many rows, and its SHA-256 checksum."
+msgstr "تسجّل إدخالات DATA_EXPORTED كل ملف غادر النظام: من أخذه، ومن أي تقرير أو بحث أو سجل جاء، وعدد صفوفه، ومجموع SHA-256 الخاص به."
+
+#: templates/auth/audit.html
+msgid "Newest entries come first. Use Older and Newer to move through the log; the total is not counted because the log grows without limit."
+msgstr "تظهر أحدث الإدخالات أولاً. استخدم «أقدم» و«أحدث» للتنقل في السجل؛ لا يُحسب المجموع لأن السجل ينمو بلا حد."
+
+#: templates/auth/audit.html
+msgid "Select a user or a resource in the list to show only its entries."
+msgstr "اختر مستخدماً أو مورداً في القائمة لعرض إدخالاته فقط."
+
+#: templates/auth/audit.html
+msgid "Any action"
+msgstr "أي إجراء"
+
+#: templates/auth/audit.html
+msgid "User name"
+msgstr "اسم المستخدم"
+
+#: templates/auth/audit.html
+msgid "Resource starts with"
+msgstr "يبدأ المورد بـ"
+
+#: templates/auth/audit.html
+msgid "From (inclusive)"
+msgstr "من (شاملاً)"
+
+#: templates/auth/audit.html
+msgid "Until (exclusive)"
+msgstr "حتى (غير شامل)"
+
+#: templates/auth/audit.html
+msgid "Show entries"
+msgstr "عرض الإدخالات"
+
+#: templates/auth/audit.html
+msgid "Resource"
+msgstr "المورد"
+
+#: templates/auth/audit.html
+msgid "IP address"
+msgstr "عنوان IP"
+
+#: templates/auth/audit.html
+msgid "no user (system or anonymous)"
+msgstr "لا مستخدم (النظام أو مجهول)"
+
+#: templates/auth/audit.html
+msgid "Older"
+msgstr "أقدم"
+
+#: templates/auth/audit.html
+msgid "Newer"
+msgstr "أحدث"
+
+#: templates/auth/audit.html
+msgid "No entries match these filters."
+msgstr "لا توجد إدخالات تطابق عوامل التصفية هذه."
+
+#: templates/auth/audit.html
+msgid "The audit log is empty."
+msgstr "سجل التدقيق فارغ."
+
+#: templates/auth/audit.html
+msgid "Showing %(count)s entries, newest first."
+msgstr "عرض %(count)s إدخالات، الأحدث أولاً."
+
+#: templates/auth/audit.html
+msgid "More entries exist; use Older to continue."
+msgstr "توجد إدخالات أخرى؛ استخدم «أقدم» للمتابعة."
+
+#: templates/auth/audit.html
+msgid "These are the oldest matching entries."
+msgstr "هذه أقدم الإدخالات المطابقة."
+
+#: templates/auth/audit.html
+msgid "The total is not counted."
+msgstr "المجموع غير محسوب."
+
+#: templates/auth/audit.html
+msgid "Only the first %(cap)s action names are listed."
+msgstr "تُدرج أسماء الإجراءات الـ %(cap)s الأولى فقط."
+
+#: templates/auth/audit.html
+msgid "Audit entry %(id)s"
+msgstr "إدخال التدقيق %(id)s"
+
+#: templates/auth/audit.html
+msgid "Show only this user's entries"
+msgstr "عرض إدخالات هذا المستخدم فقط"
+
+#: templates/auth/audit.html
+msgid "Show only entries for resources starting with this"
+msgstr "عرض إدخالات الموارد التي تبدأ بهذا فقط"
+
+#: templates/auth/audit.html
+msgid "Entry"
+msgstr "الإدخال"
+
+#: templates/auth/audit.html
+msgid "User id"
+msgstr "معرّف المستخدم"

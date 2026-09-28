@@ -336,6 +336,15 @@ REGISTRY: Tuple[Interface, ...] = (
         required_role="admin",
         help_topic="administration/users", keyboard_shortcut="g u",
     ),
+    _if(
+        "audit_log", "Audit Log",
+        "Who did what, to what, when and from where: every file that left the "
+        "system (DATA_EXPORTED, with its checksum), report runs and files, rule "
+        "and scenario changes, sign-ins and user administration. Read-only.",
+        Domain.ADMINISTRATION, "audit_page", "bi-journal-check",
+        required_role="admin",
+        help_topic="administration/audit", keyboard_shortcut="g l",
+    ),
 
     # -- SETTINGS ---------------------------------------------------------
     _if(

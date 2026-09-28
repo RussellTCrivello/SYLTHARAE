@@ -118,8 +118,8 @@ How much of the repeated markup has moved onto its component. Standardized count
 
 | Markup | Standardized | Hand-written | Adoption |
 | --- | --- | --- | --- |
-| Hand-written empty state | 5 | 4 | 56% |
-| Hand-written table | 4 | 15 | 21% |
+| Hand-written empty state | 6 | 4 | 60% |
+| Hand-written table | 5 | 15 | 25% |
 | Hand-written pagination markup | 10 | 0 | 100% |
 | Hand-written search input | 8 | 7 | 53% |
 | Hand-written filter control | 1 | 14 | 7% |

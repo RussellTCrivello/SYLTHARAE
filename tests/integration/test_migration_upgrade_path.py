@@ -674,3 +674,37 @@ def test_m0023_report_artifacts_digest_checks_immutability_and_downgrade(legacy_
         assert cur.fetchone()[0] == 0
     conn.rollback()
     assert run_migrations(conn)[0] == "0023"
+
+
+def test_m0024_audit_log_lookup_indexes_and_downgrade(legacy_db):
+    """0024: the viewer's lookup indexes exist with the declared definitions
+    (text_pattern_ops for the resource prefix), released m0003 indexes and
+    the legacy entry survive, and downgrade drops exactly the three."""
+    conn, seeded = legacy_db
+    assert run_migrations(conn)[-1] >= "0024"
+
+    def indexes():
+        with conn.cursor() as cur:
+            cur.execute("SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'audit_log'")
+            return dict(cur.fetchall())
+
+    got = indexes()
+    assert "(username, id DESC)" in got["idx_audit_log_username_id"]
+    assert "(user_id, id DESC)" in got["idx_audit_log_user_id_id"]
+    assert "resource text_pattern_ops" in got["idx_audit_log_resource_prefix"]
+    released = {"audit_log_pkey", "idx_audit_log_user_id", "idx_audit_log_created_at",
+                "idx_audit_log_action"}
+    assert released <= set(got)
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM audit_log WHERE user_id = %s", (seeded["user_id"],))
+        assert cur.fetchone()[0] == 1
+
+    m0024 = next(m for m in discover_migrations() if m.version == "0024")
+    for migration in reversed([m for m in discover_migrations() if m.version >= "0024"]):
+        migration.module.downgrade(conn)
+    conn.commit()
+    assert set(indexes()) == released
+    m0024.module.upgrade(conn)
+    m0024.module.upgrade(conn)          # idempotent
+    conn.commit()
+    assert set(indexes()) == set(got)
