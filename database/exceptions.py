@@ -32,3 +32,15 @@ class TransactionAbortedError(QueryError):
     sites keep working.
     """
     pass
+
+
+class ContainedStatementError(QueryError):
+    """A statement failed inside a savepoint that was rolled back successfully.
+
+    The surrounding transaction is healthy again. Raised in place of
+    :class:`TransactionAbortedError` once ``ROLLBACK TO SAVEPOINT`` has
+    succeeded: reporting "the transaction is aborted" at that point was
+    false, and made every "contained" optional step (display text, keywords,
+    title, signals) roll back the whole document on a real driver error.
+    """
+

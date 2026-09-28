@@ -45,6 +45,8 @@ class TestBootstrap:
             "translation_overrides",
             # m0016: saved searches moved from data/saved_searches.json
             "saved_searches", "saved_search_imports",
+            # m0017: Phase 1 temporal signals, keyed on content (hash_id)
+            "content_signals", "content_signal_runs",
         }
         with db_conn.cursor() as cur:
             cur.execute(
@@ -78,6 +80,12 @@ class TestBootstrap:
             "idx_saved_searches_monitor",
             "uq_saved_searches_legacy",
             "uq_saved_search_imports_sha",
+            # m0017
+            "uq_content_signals_dedup",
+            "idx_content_signals_hash",
+            "idx_content_signals_dates",
+            "idx_content_signals_type",
+            "idx_content_signal_runs_version",
         }
         with db_conn.cursor() as cur:
             cur.execute("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")

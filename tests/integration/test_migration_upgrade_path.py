@@ -95,6 +95,7 @@ def test_upgrade_from_last_release_preserves_data_and_reverses(legacy_db):
     assert applied == new_versions and applied, "upgrade applied the new chain in order"
     after_tables = _tables(conn)
     assert {"saved_searches", "saved_search_imports"} <= after_tables
+    assert {"content_signals", "content_signal_runs"} <= after_tables
 
     with conn.cursor() as cur:
         cur.execute("SELECT username FROM users WHERE id = %s", (seeded["user_id"],))
@@ -139,3 +140,43 @@ def test_a_failing_migration_rolls_back_and_names_itself(legacy_db, monkeypatch)
     assert first_new.version in str(info.value)
     assert current_version(conn) == LAST_RELEASED
     assert "saved_searches" not in _tables(conn), "partial DDL was not rolled back"
+
+
+def test_m0017_attaches_to_released_content_and_reverses_alone(legacy_db):
+    """Signals key on pre-existing hashs rows; 0017 downgrades without 0016."""
+    conn, seeded = legacy_db
+    run_migrations(conn)
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO content_signals (hash_id, detector, detector_ver, signal_type,"
+            " value, surface, char_start, char_end, resolution, date_from, date_to,"
+            " evidence, dedup_key) VALUES (%s, 'temporal', 'temporal-1.0.0', 'date',"
+            " 'gregorian:2026-10-05', '5 October 2026', 0, 14, 'absolute',"
+            " '2026-10-05', '2026-10-05', '{}', %s)", (seeded["hash_id"], "a" * 64))
+        cur.execute(
+            "INSERT INTO content_signal_runs (hash_id, detector, detector_ver, status,"
+            " signal_count, trigger) VALUES (%s, 'temporal', 'temporal-1.0.0',"
+            " 'complete', 1, 'redetection')", (seeded["hash_id"],))
+    conn.commit()
+    with conn.cursor() as cur:  # content deletion cascades to its signals
+        cur.execute("SAVEPOINT s")
+        cur.execute("DELETE FROM hashs WHERE id = %s", (seeded["hash_id"],))
+        cur.execute("SELECT count(*) FROM content_signals")
+        assert cur.fetchone()[0] == 0
+        cur.execute("ROLLBACK TO SAVEPOINT s")
+    conn.commit()
+
+    m17 = next(m for m in discover_migrations() if m.version == "0017")
+    m17.module.downgrade(conn)
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM schema_migrations WHERE version = '0017'")
+    conn.commit()
+    tables = _tables(conn)
+    assert "content_signals" not in tables and "content_signal_runs" not in tables
+    assert "saved_searches" in tables
+    assert current_version(conn) == "0016"
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM hashs WHERE id = %s", (seeded["hash_id"],))
+        assert cur.fetchone()[0] == 1
+    assert run_migrations(conn) == ["0017"]
+

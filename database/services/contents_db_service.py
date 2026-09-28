@@ -1375,10 +1375,12 @@ class ContentDBService:
                 # never diverge, but contained in a savepoint: the word-join
                 # reconstruction still displays the document if the raw text
                 # is rejected (e.g. payload too large).
+                raw_stored = False
                 if raw_text:
                     try:
                         with self.savepoint():
                             self.contents_repo.store_raw_content(hash_id, raw_text)
+                        raw_stored = True
                     except TransactionAbortedError:
                         raise
                     except Exception as raw_err:
@@ -1432,6 +1434,14 @@ class ContentDBService:
                             result, 'title', title_err, file_name, path_id
                         )
 
+                # 10. Temporal signals (derived) ------------------------------
+                # Detected on the *stored* display text so every signal's
+                # offsets address contents_raw. Contained like keywords and
+                # title; a failure is recorded as a failed run (never as
+                # "nothing found") and marks the document partial.
+                self._detect_signals(result, hash_id, raw_text, raw_stored,
+                                     file_name, path_id)
+
                 result['success'] = True
                 logger.info(
                     "Document processed successfully: path_id=%s, hash_id=%s, context_id=%s",
@@ -1449,6 +1459,48 @@ class ContentDBService:
                 file_name, type(e).__name__, e, exc_info=True,
             )
             raise
+
+    def _detect_signals(self, result, hash_id, raw_text, raw_stored, file_name, path_id):
+        """Step 10: temporal signals for new content (see services/detection)."""
+        from database.database.repository.contents_repo import _sanitise_pg_text
+        from services.detection import signal_store
+
+        trigger = signal_store.TRIGGER_INGESTION
+        try:
+            with self.savepoint():
+                with self.contents_repo.get_cursor(commit=False) as cur:
+                    if raw_text and not raw_stored:
+                        # Offsets must address stored text; without it the
+                        # run is a recorded failure the re-detection job
+                        # will retry once display text exists.
+                        signal_store.record_run(
+                            cur, hash_id, status="failed", trigger=trigger,
+                            error="display text was not stored; signals need "
+                                  "stored text for their offsets")
+                        result['signals'] = {"status": "failed"}
+                        return
+                    text = _sanitise_pg_text(raw_text)[0] if raw_text else raw_text
+                    anchor, _ = signal_store.anchor_for(cur, hash_id)
+                    result['signals'] = signal_store.detect_and_store(
+                        cur, hash_id, text, anchor, trigger=trigger)
+        except TransactionAbortedError:
+            raise
+        except Exception as sig_err:
+            self._note_optional_failure(result, 'signals', sig_err, file_name, path_id)
+            try:
+                with self.savepoint():
+                    with self.contents_repo.get_cursor(commit=False) as cur:
+                        root = sig_err
+                        while root.__cause__ is not None:  # name the driver error,
+                            root = root.__cause__         # not its wrappers
+                        signal_store.record_run(
+                            cur, hash_id, status="failed", trigger=trigger,
+                            error=f"{type(root).__name__}: {str(root).strip()}")
+            except TransactionAbortedError:
+                raise
+            except Exception:
+                logger.exception("Could not record the failed signal run for hash_id=%s",
+                                 hash_id)
 
     def _note_optional_failure(self, result, step, error, file_name, path_id):
         """Record a contained failure of a derived-data step.

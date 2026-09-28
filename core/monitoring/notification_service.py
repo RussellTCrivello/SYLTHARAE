@@ -11,9 +11,15 @@ from enum import Enum
 import json
 import threading
 
-from .future_events import FutureEvent, FutureEventsAnalyzer
 
 logger = logging.getLogger(__name__)
+
+# Signal types that can carry a resolved date (a relative expression only
+# when resolved against the document's own date). From the detector, so the
+# notification layer never hard-codes its vocabulary.
+from core.detection.temporal_intel import SIGNAL_DATE, SIGNAL_RELATIVE  # noqa: E402
+
+_DATED_SIGNAL_TYPES = (SIGNAL_DATE, SIGNAL_RELATIVE)
 
 
 class NotificationType(Enum):
@@ -104,7 +110,6 @@ class NotificationService:
     
     def __init__(self):
         self.logger = logger
-        self.future_analyzer = FutureEventsAnalyzer()
         self._notifications: List[Notification] = []
         #  OPTIMIZATION: Pending notifications queue for batch writes (no DB queries during processing)
         self._pending_notifications: List[Notification] = []
@@ -181,102 +186,98 @@ class NotificationService:
         
         return self._save_notification(notification)
     
-    def create_future_date_notification(
-        self,
-        future_event: FutureEvent
-    ) -> Notification:
-        """Create notification for future date detected"""
-        days_until = (future_event.event_date - date.today()).days
-        
+    # Legacy priority bands (days until the date). Product defaults carried
+    # over unchanged from the previous implementation; they are not derived
+    # from a published source. Phase 3 replaces them with computed priority.
+    _FUTURE_DATE_BANDS = ((7, NotificationPriority.CRITICAL), (30, NotificationPriority.HIGH),
+                          (90, NotificationPriority.MEDIUM))
+
+    def create_future_date_notification(self, *, file_id: int, file_name: str, file_path: str,
+                                        signal: Dict[str, Any],
+                                        reference_date: date) -> Notification:
+        """Queue a FUTURE_DATE notification for one stored temporal signal.
+
+        ``signal`` is a row from ``signal_store.signals_for`` (content_signals);
+        ``reference_date`` is the explicit clock the orientation was computed
+        against. Approximate dates (Hijri) keep their whole range.
+        """
+        event_date = date.fromisoformat(signal["date_from"])
+        days_until = (event_date - reference_date).days
         priority = NotificationPriority.HIGH
-        if days_until <= 7:
-            priority = NotificationPriority.CRITICAL
-        elif days_until <= 30:
-            priority = NotificationPriority.HIGH
-        elif days_until <= 90:
-            priority = NotificationPriority.MEDIUM
-        
+        for limit, band in self._FUTURE_DATE_BANDS:
+            if days_until <= limit:
+                priority = band
+                break
         notification = Notification(
             id=None,
             type=NotificationType.FUTURE_DATE,
             priority=priority,
-            title=f"Future Date Detected: {future_event.event_date.strftime('%Y-%m-%d')}",
-            message=f"Future date found in {future_event.file_name} ({days_until} days away)",
-            file_id=future_event.file_id,
-            file_name=future_event.file_name,
-            file_path=future_event.file_path,
-            event_date=future_event.event_date,
+            title=f"Future Date Detected: {event_date.isoformat()}",
+            message=f"Future date found in {file_name} ({days_until} days away)",
+            file_id=file_id,
+            file_name=file_name,
+            file_path=file_path,
+            event_date=event_date,
             metadata={
-                'event_text': future_event.event_text,
-                'context': future_event.context,
-                'confidence': future_event.confidence,
-                'event_type': future_event.event_type,
-                'days_until': days_until
+                "event_text": signal["surface"],
+                "value": signal["value"],
+                "language": signal.get("language"),
+                "calendar": signal.get("calendar"),
+                "resolution": signal["resolution"],
+                "date_to": signal["date_to"],
+                "char_start": signal["char_start"],
+                "char_end": signal["char_end"],
+                "text_orientation": signal.get("text_orientation"),
+                "context": (signal.get("evidence") or {}).get("context"),
+                "detector_ver": signal["detector_ver"],
+                "reference_date": reference_date.isoformat(),
+                "days_until": days_until,
+                "event_type": "explicit_date",
             },
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
-        
         return self._save_notification(notification)
-    
-    def create_future_event_notification(
-        self,
-        future_event: FutureEvent
-    ) -> Notification:
-        """Create notification for future event (verb tense analysis)"""
-        days_until = (future_event.event_date - date.today()).days
-        
-        notification = Notification(
-            id=None,
-            type=NotificationType.FUTURE_EVENT,
-            priority=NotificationPriority.MEDIUM,
-            title=f"Future Event Detected: {future_event.event_date.strftime('%Y-%m-%d')}",
-            message=f"Future-focused content found in {future_event.file_name}",
-            file_id=future_event.file_id,
-            file_name=future_event.file_name,
-            file_path=future_event.file_path,
-            event_date=future_event.event_date,
-            metadata={
-                'event_text': future_event.event_text,
-                'context': future_event.context,
-                'confidence': future_event.confidence,
-                'event_type': future_event.event_type,
-                'days_until': days_until
-            },
-            created_at=datetime.now()
-        )
-        
-        return self._save_notification(notification)
-    
-    def analyze_file_for_future_events(
-        self,
-        file_id: int,
-        file_name: str,
-        file_path: str,
-        content: str
-    ) -> List[Notification]:
-        """Analyze file content and create notifications for future events"""
-        notifications = []
-        
-        try:
-            # Analyze content for future events
-            future_events = self.future_analyzer.analyze_content_for_future_events(
-                content, file_id, file_name, file_path
-            )
-            
-            # Create notifications for each future event
-            for event in future_events:
-                if event.event_type == 'explicit_date':
-                    notification = self.create_future_date_notification(event)
-                else:
-                    notification = self.create_future_event_notification(event)
-                
-                notifications.append(notification)
-        
-        except Exception as e:
-            self.logger.error(f"Error analyzing file {file_id} for future events: {e}")
-        
-        return notifications
-    
+
+    @staticmethod
+    def future_date_signals(signals: List[Dict[str, Any]],
+                            reference_date: date) -> List[Dict[str, Any]]:
+        """The earliest-first, one-per-date subset of ``signals`` that are
+        resolved dates lying wholly after ``reference_date``.
+
+        Ambiguous and unresolved signals are excluded - their date is unknown,
+        and unknown is never treated as "in the future".
+        """
+        chosen: Dict[str, Dict[str, Any]] = {}
+        for sig in signals:
+            if sig["signal_type"] not in _DATED_SIGNAL_TYPES or not sig.get("date_from"):
+                continue
+            # Same rule as TemporalSignal.clock_orientation: the whole range
+            # must lie after the reference date.
+            if date.fromisoformat(sig["date_from"]) <= reference_date:
+                continue
+            chosen.setdefault(sig["date_from"], sig)
+        return [chosen[k] for k in sorted(chosen)]
+
+    def analyze_file_for_future_events(self, *, file_id: int, file_name: str, file_path: str,
+                                       signals: List[Dict[str, Any]], reference_date: date,
+                                       skip_dates: Optional[set] = None) -> List[Notification]:
+        """Queue one FUTURE_DATE notification per future date in ``signals``.
+
+        Detection is not performed here: signals come from ``content_signals``
+        (core.detection.temporal_intel, stored at ingestion/re-detection).
+        ``skip_dates`` holds event dates already notified for this file.
+        Errors propagate to the caller - they are never swallowed.
+        """
+        skip = skip_dates or set()
+        created = []
+        for sig in self.future_date_signals(signals, reference_date):
+            if date.fromisoformat(sig["date_from"]) in skip:
+                continue
+            created.append(self.create_future_date_notification(
+                file_id=file_id, file_name=file_name, file_path=file_path,
+                signal=sig, reference_date=reference_date))
+        return created
+
     def _save_notification(self, notification: Notification) -> Notification:
         """
         Save notification to memory queue (no database query during processing).

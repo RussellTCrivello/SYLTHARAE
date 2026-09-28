@@ -552,6 +552,18 @@
     "internal": true
   },
   {
+    "endpoint": "api_content_signals",
+    "rule": "/api/content/<int:hash_id>/signals",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_dashboard_categories_filtered",
     "rule": "/api/dashboard/categories-filtered",
     "methods": [
@@ -937,6 +949,18 @@
     ],
     "blueprint": "(app)",
     "module": "api",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_signals_redetect",
+    "rule": "/api/signals/redetect",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true

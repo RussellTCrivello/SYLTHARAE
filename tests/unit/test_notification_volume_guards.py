@@ -101,7 +101,14 @@ def test_scan_candidate_query_returns_one_row_per_path():
     source = NOTIFICATIONS.read_text(encoding="utf-8")
     # DISTINCT + c.id fanned out over content chunks.
     assert "c.id as content_id" not in source
-    assert "EXISTS (SELECT 1 FROM contents c WHERE c.hash_id = hc.hash_id)" in source
+    # Future dates come from stored signals (Phase 1): exactly one - the
+    # earliest - future signal per path via LATERAL ... LIMIT 1; contents
+    # chunks are not joined at all.
+    scan_body = source.split("def scan_for_notifications()", 1)[1]
+    future = scan_body.split("# 2. Find files with future dates", 1)[1]
+    query = future.split("future_rows = execute_query(", 1)[1].split('fetch="all"', 1)[0]
+    assert "JOIN LATERAL (" in query and "LIMIT 1\n                    ) s ON TRUE" in query
+    assert "JOIN contents" not in query and "FROM contents" not in query
 
 
 def test_scan_response_is_built_after_flush():

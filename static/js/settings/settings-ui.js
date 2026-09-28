@@ -1268,7 +1268,6 @@ class SettingsUI {
             'errorsOnly': 'notifications.errors_only',
             'similarFilesEnabled': 'notifications.similar_files_enabled',
             'futureDatesEnabled': 'notifications.future_dates_enabled',
-            'futureEventsEnabled': 'notifications.future_events_enabled',
             'autoAnalyzeFiles': 'notifications.auto_analyze_files',
             'upcomingEventsDays': 'notifications.upcoming_events_days',
         };

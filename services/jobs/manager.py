@@ -500,6 +500,31 @@ class JobManager:
             return BackupImportService().run(request, progress_cb=progress_cb)
         if job_type == "batch_import":
             return self._run_batch_import(record, progress_cb)
+        if job_type == "signal_redetection":
+            # Apply the current detector version to stored content
+            # (services/detection/redetection.py). One transaction per
+            # content; failures are recorded per content, not swallowed.
+            from Api.utils.utils import get_connection
+            from services.detection.redetection import run_redetection
+
+            job_id = record["job_id"]
+
+            def cancelled():
+                try:
+                    current = self.repo.get(job_id)
+                    return bool(current and current.get("cancellation_requested"))
+                except Exception:
+                    # Same policy as ingestion's control flags: an unreadable
+                    # flag means "keep going" - but it is never silent.
+                    logger.warning("job %s: cancellation flag unreadable", job_id,
+                                   exc_info=True)
+                    return False
+
+            return run_redetection(
+                get_connection, scope=options.get("scope", "stale"),
+                hash_ids=options.get("hash_ids"), job_id=job_id,
+                progress_cb=progress_cb, cancel_cb=cancelled,
+            )
         raise ValueError(f"Unknown job type: {job_type}")
 
     def _run_batch_import(self, record, progress_cb):
