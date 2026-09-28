@@ -63,6 +63,35 @@ path is implemented and tested (`test_relative_expression_resolves_only_against_
 records an authored date (for example an e-mail `Date:` header) and
 `anchor_for` reads it.
 
+## Provenance on every signal (temporal-1.1.0, m0018)
+
+* `method` - the pattern that matched (e.g. `day_month_year`, `numeric_dmy`,
+  `en.fixed`, `fa.cue`).
+* `confidence` - **ordinal** `high` / `medium` / `low`, with
+  `confidence_basis` naming the rule. There is no calibration corpus, so no
+  probability is claimed; rules and notifications compare levels.
+
+  | Basis | Level | Rule |
+  | --- | --- | --- |
+  | `month_name` | high | month name from the lexicon with day and/or year |
+  | `year_first_numeric` | high | four-digit year first (ISO-like) or a calendar marker |
+  | `relative_lexicon` | high | relative expression from the per-language lexicon |
+  | `single_valid_reading` | medium | numeric date; only one day/month order is valid |
+  | `convention` | medium | numeric date resolved by a stated convention (dot separator, script) |
+  | `no_year` | medium | day and month name without a year (value unresolved) |
+  | `ambiguous` | low | several valid readings kept, none chosen |
+  | `lexical_cue` | low | orientation cue, not a parsed tense |
+
+* `evidence_sentence`, `sentence_start`, `sentence_end` - the sentence that
+  contains the signal, quoted verbatim from the stored text. A sentence over
+  1 000 characters is cut around the signal and flagged
+  `evidence.sentence_truncated`.
+
+m0018 adds these columns. Signals written by `temporal-1.0.0` keep NULL in
+all six ("not recorded by that version" - not "low"); the schema makes the
+columns all-or-nothing and requires the sentence to contain the signal.
+`POST /api/signals/redetect` with scope `stale` replaces them.
+
 ## Database (m0017)
 
 `content_signals` - one row per signal, keyed on `hash_id` (content, not
@@ -119,7 +148,9 @@ signals whose resolved range lies wholly after the reference date. Ambiguous
 and unresolved signals create nothing. The scan reports
 `contents_without_current_signals` - content not evaluated because it has no
 run by the current detector version (fix with `POST /api/signals/redetect`).
-`analyze-file` analyses such content on demand. Both honour
+`analyze-file` analyses such content on demand. Each notification's metadata
+carries the signal's method, confidence and evidence sentence, so "why was
+I notified" is answered from the record itself. Both honour
 `notifications.future_dates_enabled`; the obsolete
 `notifications.future_events_enabled` toggle (verb-tense analyzer) was
 removed from the settings page and is ignored if present in a settings file.
@@ -131,7 +162,7 @@ and are replaced by computed priority in Phase 3.
 ## Verification
 
 ```
-python -m pytest tests/unit/test_temporal_intel.py              # 73 detector tests, no DB
+python -m pytest tests/unit/test_temporal_intel.py              # detector tests, no DB
 python -m pytest tests/integration/test_signal_ingestion.py     # ingestion, m0017 constraints, re-detection job, API
 python -m pytest tests/integration/test_signal_notifications.py # notifications from stored signals
 python -m pytest tests/integration/test_migration_upgrade_path.py tests/integration/test_bootstrap_migrations.py
@@ -149,5 +180,7 @@ python -m pytest tests/integration/test_migration_upgrade_path.py tests/integrat
 * Relative expressions are never resolved in production (no authored-date
   metadata, see above).
 * No UI yet; the Signal Explorer/Horizon views are directive step 10.
+* The notifications page's stats/upcoming views use the server's local
+  date; the future-date scan uses the UTC date. Phase 3 unifies them.
 * `core/monitoring/notification_integration.py` has no callers (dead code);
   its settings reads were corrected, removal is left to Phase 3.

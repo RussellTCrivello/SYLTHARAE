@@ -41,7 +41,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from core.detection import calendars as cal
 
 DETECTOR_NAME = "temporal"
-DETECTOR_VERSION = "temporal-1.0.0"
+DETECTOR_VERSION = "temporal-1.1.0"
 LANGUAGES = ("en", "ar", "he", "fa", "hr")
 
 SIGNAL_DATE = "date_reference"
@@ -50,6 +50,26 @@ SIGNAL_ORIENTATION = "orientation"
 SIGNAL_TYPES = (SIGNAL_DATE, SIGNAL_RELATIVE, SIGNAL_ORIENTATION)
 
 RESOLUTIONS = ("absolute", "approximate", "document_relative", "ambiguous", "unresolved")
+CONFIDENCE_LEVELS = ("high", "medium", "low")
+
+#: Ordinal detection confidence: how sure the detector is that the span is
+#: the temporal reference it reports. Assigned by rule from what matched -
+#: there is no calibration corpus, so no numeric probability is claimed.
+#: (basis id -> (level, description)); documented in TEMPORAL_SIGNALS.md.
+CONFIDENCE_RULES = {
+    "month_name": ("high", "a month name from the lexicon with day and/or year"),
+    "year_first_numeric": ("high", "four-digit year first (ISO-like) or a calendar marker"),
+    "relative_lexicon": ("high", "a relative expression from the per-language lexicon"),
+    "single_valid_reading": ("medium", "numeric date; only one day/month order is a valid date"),
+    "convention": ("medium", "numeric date resolved by a stated convention, not by the text"),
+    "no_year": ("medium", "day and month name without a year; value is unresolved"),
+    "ambiguous": ("low", "several valid readings are kept; none is chosen"),
+    "lexical_cue": ("low", "a lexical orientation cue, not a parsed tense"),
+}
+
+#: Longest evidence sentence stored; longer ones are cut around the signal
+#: and flagged ``evidence["sentence_truncated"]`` - never silently.
+MAX_SENTENCE_CHARS = 1000
 ORIENTATIONS = ("future", "present", "past")
 
 #: Texts longer than this are scanned up to the limit and the run is recorded
@@ -334,6 +354,17 @@ class TemporalSignal:
     anchor_date: Optional[datetime.date] = None
     evidence: Dict = field(default_factory=dict, compare=False, hash=False)
     detector_ver: str = DETECTOR_VERSION
+    #: The pattern that matched (``evidence["pattern"]``), as a column.
+    method: Optional[str] = None
+    #: Ordinal detection confidence ``high``/``medium``/``low`` and the rule
+    #: that assigned it (see CONFIDENCE_RULES). Not a calibrated probability.
+    confidence: Optional[str] = None
+    confidence_basis: Optional[str] = None
+    #: The sentence containing the signal, quoted from the original text,
+    #: with its offsets (``sentence_start <= char_start < char_end <= sentence_end``).
+    sentence: Optional[str] = None
+    sentence_start: Optional[int] = None
+    sentence_end: Optional[int] = None
 
     def clock_orientation(self, reference_date: datetime.date) -> Optional[str]:
         """future/present/past relative to ``reference_date`` - or ``None``.
@@ -374,6 +405,9 @@ class TemporalSignal:
             "text_orientation": self.text_orientation,
             "anchor_date": self.anchor_date.isoformat() if self.anchor_date else None,
             "evidence": self.evidence, "detector_ver": self.detector_ver,
+            "method": self.method, "confidence": self.confidence,
+            "confidence_basis": self.confidence_basis, "sentence": self.sentence,
+            "sentence_start": self.sentence_start, "sentence_end": self.sentence_end,
         }
 
 
@@ -797,6 +831,54 @@ _SENTENCE_END = re.compile(
     r"(?:[!?؟۔]+|\n\s*\n|(?<![\d\s])\.(?=\s+\S)|(?<=(?<!\d)\d{4})\.(?=\s+\S)|\n)")
 
 
+def _confidence_basis(sig: "TemporalSignal") -> str:
+    pattern = sig.evidence.get("pattern") or ""
+    if sig.signal_type == SIGNAL_ORIENTATION:
+        return "lexical_cue"
+    if sig.signal_type == SIGNAL_RELATIVE:
+        return "relative_lexicon"
+    if sig.resolution == "ambiguous":
+        return "ambiguous"
+    if pattern == "day_month":
+        return "no_year"
+    if pattern in ("day_month_year", "month_day_year", "month_year"):
+        return "month_name"
+    if pattern == "ymd" or sig.evidence.get("calendar_marker"):
+        return "year_first_numeric"
+    if sig.evidence.get("convention"):
+        return "convention"
+    return "single_valid_reading"
+
+
+def _with_provenance(ctx, sig: "TemporalSignal", sentences, reverse) -> "TemporalSignal":
+    """Add method, ordinal confidence and the quoted evidence sentence."""
+    basis = _confidence_basis(sig)
+    level = CONFIDENCE_RULES[basis][0]
+    evidence = sig.evidence
+    s_start, s_end = sig.char_start, sig.char_end
+    pos = reverse.get(sig.char_start)
+    for ns, ne in sentences:
+        if pos is not None and ns <= pos < ne:
+            s_start, s_end = ctx.span(ns, ne)
+            break
+    # Trim surrounding whitespace, keeping the signal inside.
+    while s_start < sig.char_start and ctx.original[s_start].isspace():
+        s_start += 1
+    while s_end > sig.char_end and ctx.original[s_end - 1].isspace():
+        s_end -= 1
+    s_start, s_end = min(s_start, sig.char_start), max(s_end, sig.char_end)
+    if s_end - s_start > MAX_SENTENCE_CHARS:
+        half = max(0, (MAX_SENTENCE_CHARS - (sig.char_end - sig.char_start)) // 2)
+        s_start = max(s_start, sig.char_start - half)
+        s_end = min(s_end, max(sig.char_end + half, s_start + MAX_SENTENCE_CHARS))
+        evidence = dict(evidence, sentence_truncated=True)
+    return TemporalSignal(**{**sig.__dict__, "evidence": evidence,
+                             "method": evidence.get("pattern"), "confidence": level,
+                             "confidence_basis": basis,
+                             "sentence": ctx.original[s_start:s_end],
+                             "sentence_start": s_start, "sentence_end": s_end})
+
+
 def _sentences(norm: str) -> List[Tuple[int, int]]:
     spans, start = [], 0
     for m in _SENTENCE_END.finditer(norm):
@@ -911,7 +993,8 @@ def detect(text: Optional[str], *, anchor_date: Optional[datetime.date] = None,
             sig = TemporalSignal(**{**sig.__dict__, "text_orientation": orientation, "evidence": ev})
         finished.append(sig)
 
-    everything = sorted(finished + orientation_signals,
+    everything = sorted((_with_provenance(ctx, sig, sentences, reverse)
+                         for sig in finished + orientation_signals),
                         key=lambda s: (s.char_start, s.char_end, s.signal_type, s.value))
     return DetectionResult(signals=tuple(everything), detector_ver=DETECTOR_VERSION,
                            anchor_date=anchor_date, chars_total=total,

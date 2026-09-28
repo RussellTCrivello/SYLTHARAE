@@ -86,6 +86,8 @@ class TestBootstrap:
             "idx_content_signals_dates",
             "idx_content_signals_type",
             "idx_content_signal_runs_version",
+            # m0018
+            "idx_content_signals_confidence",
         }
         with db_conn.cursor() as cur:
             cur.execute("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")

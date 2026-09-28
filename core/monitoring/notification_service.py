@@ -230,6 +230,11 @@ class NotificationService:
                 "text_orientation": signal.get("text_orientation"),
                 "context": (signal.get("evidence") or {}).get("context"),
                 "detector_ver": signal["detector_ver"],
+                # Why: what matched, how sure the detector is, and the sentence.
+                "method": signal.get("method"),
+                "confidence": signal.get("confidence"),
+                "confidence_basis": signal.get("confidence_basis"),
+                "evidence_sentence": signal.get("sentence"),
                 "reference_date": reference_date.isoformat(),
                 "days_until": days_until,
                 "event_type": "explicit_date",

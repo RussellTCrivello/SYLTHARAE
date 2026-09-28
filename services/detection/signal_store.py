@@ -34,7 +34,8 @@ TRIGGER_REDETECTION = "redetection"
 _INSERT = (
     "INSERT INTO content_signals (hash_id, detector, detector_ver, signal_type, value, surface,"
     " char_start, char_end, language, calendar, resolution, date_from, date_to,"
-    " text_orientation, anchor_date, evidence, dedup_key) VALUES %s"
+    " text_orientation, anchor_date, evidence, dedup_key, method, confidence,"
+    " confidence_basis, evidence_sentence, sentence_start, sentence_end) VALUES %s"
     " ON CONFLICT (dedup_key) DO NOTHING RETURNING id"
 )
 
@@ -54,7 +55,9 @@ def _row(hash_id: int, sig: temporal_intel.TemporalSignal) -> Tuple:
     return (hash_id, temporal_intel.DETECTOR_NAME, sig.detector_ver, sig.signal_type, sig.value,
             sig.surface, sig.char_start, sig.char_end, sig.language, sig.calendar,
             sig.resolution, sig.date_from, sig.date_to, sig.text_orientation, sig.anchor_date,
-            psycopg2.extras.Json(sig.evidence), sig.dedup_key(hash_id))
+            psycopg2.extras.Json(sig.evidence), sig.dedup_key(hash_id), sig.method,
+            sig.confidence, sig.confidence_basis, sig.sentence, sig.sentence_start,
+            sig.sentence_end)
 
 
 def store_detection(cur, hash_id: int, result: temporal_intel.DetectionResult, *,
@@ -167,7 +170,8 @@ def signals_for(cur, hash_id: int, reference_date: datetime.date, *,
     run = cur.fetchone()
     cur.execute("SELECT signal_type, value, surface, char_start, char_end, language, calendar,"
                 " resolution, date_from, date_to, text_orientation, anchor_date, evidence,"
-                " detector_ver FROM content_signals WHERE hash_id = %s AND detector = %s"
+                " detector_ver, method, confidence, confidence_basis, evidence_sentence,"
+                " sentence_start, sentence_end FROM content_signals WHERE hash_id = %s AND detector = %s"
                 " ORDER BY char_start, char_end, signal_type, value",
                 (hash_id, temporal_intel.DETECTOR_NAME))
     signals: List[Dict[str, Any]] = []
@@ -176,7 +180,9 @@ def signals_for(cur, hash_id: int, reference_date: datetime.date, *,
             signal_type=row[0], value=row[1], surface=row[2], char_start=row[3],
             char_end=row[4], language=row[5], calendar=row[6], resolution=row[7],
             date_from=row[8], date_to=row[9], text_orientation=row[10], anchor_date=row[11],
-            evidence=row[12] or {}, detector_ver=row[13])
+            evidence=row[12] or {}, detector_ver=row[13], method=row[14],
+            confidence=row[15], confidence_basis=row[16], sentence=row[17],
+            sentence_start=row[18], sentence_end=row[19])
         item = sig.to_dict()
         item["clock_orientation"] = (sig.clock_orientation(reference_date)
                                      if sig.signal_type != temporal_intel.SIGNAL_ORIENTATION

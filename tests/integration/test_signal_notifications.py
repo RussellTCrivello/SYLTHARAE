@@ -13,6 +13,8 @@ import pytest
 
 from _seed import connect
 
+from core.detection.temporal_intel import DETECTOR_VERSION
+
 pytestmark = pytest.mark.integration
 
 _U = uuid.uuid4().hex[:8]
@@ -104,8 +106,10 @@ def test_analyze_file_uses_stored_multilingual_signals_and_dedups(pg_db, tenant,
     assert [r[0] for r in rows] == [date(2026, 10, 5), date(2026, 10, 7)]
     jalali = rows[1][1]
     assert jalali["calendar"] == "jalali" and jalali["language"] == "fa"
-    assert jalali["detector_ver"] == "temporal-1.0.0" and jalali["reference_date"] == "2026-09-28"
+    assert jalali["detector_ver"] == DETECTOR_VERSION and jalali["reference_date"] == "2026-09-28"
     assert jalali["days_until"] == 9
+    assert (jalali["confidence"], jalali["confidence_basis"]) == ("high", "month_name")
+    assert jalali["evidence_sentence"] == "نشست در ۱۵ مهر ۱۴۰۵ برگزار خواهد شد."
 
     again = _post(analyst, f"/api/notifications/analyze-file/{path_id}?reference_date=2026-09-28")
     assert again.get_json()["notifications_created"] == 0, "dedup by (file, event_date)"
@@ -156,7 +160,10 @@ def test_scan_reads_stored_signals_and_reports_unanalysed_content(pg_db, tenant,
     body = _post(admin_client, "/api/notifications/scan").get_json()
     assert body["success"] is True, body
     assert body["contents_without_current_signals"] >= 1, "unknown is reported, not zero"
-    assert [r[0] for r in _alerts(pg_db, far_path)] == [date(2099, 1, 1)]
+    far = _alerts(pg_db, far_path)
+    assert [r[0] for r in far] == [date(2099, 1, 1)]
+    assert far[0][1]["evidence_sentence"] == "The treaty expires on 1 January 2099."
+    assert far[0][1]["confidence"] == "high" and far[0][1]["method"] == "day_month_year"
     assert _alerts(pg_db, unanalysed_path) == [], "no signal -> no guessed notification"
     first = [n for n in body["notifications_created"] if n.get("date") == "2099-01-01"]
     assert first and first[0]["id"] > 0

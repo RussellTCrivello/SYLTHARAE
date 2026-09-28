@@ -233,6 +233,33 @@ disk are recorded with `"sha256": null` and the reason, never a guessed
 value. Inline previews (`as_attachment=False`) are not disclosures and are
 not recorded. Tests: `tests/integration/test_disclosure_audit.py`.
 
+Every record states `kind`, `scope`, `format` and `row_count`. Each export
+route declares what it knows; a count a route cannot know is `null` with
+`row_count_reason` (never `0`), and a route that declares nothing still gets
+`format` from the file and `row_count: null` with the reason "not declared by
+the route".
+
+| Route | kind | scope | row_count (unit) |
+| --- | --- | --- | --- |
+| `POST /api/search/export` | `search_export` | criteria scope | rows (+ total, truncated, fingerprints) |
+| `GET /api/analyst/export` | `analyst_categorizations` | `all` / `filtered` (+ filters) | assignments |
+| `GET /api/sources/<id>/export` | `source_record` | `source:<id>` | 1 (source) |
+| `GET /api/keywords/export` | `keywords_export` | `all` / `selection` | keywords |
+| `POST /files/export` | `bulk_text_export` / `bulk_originals_export` | `selection` (+ file ids) | files included (+ requested, skipped) |
+| `POST /api/files/names/export` | `file_names_export` | `all` / `selected` / `type:<t>` | files |
+| `POST /api/files/excerpt/export` | `excerpt_<kind>` | `file:<id>` | 1 (excerpt) |
+| `POST /api/files/extract-contacts/export` | `contacts_export` | `selection` (+ file ids) | occurrences |
+| `POST /api/files/first-pages/export` | `first_pages_export` | `selection` (+ file ids) | files |
+| `GET /api/files/<id>/export` | `file_text_export` | `file:<id>` | 1 (file) |
+| `GET /api/file/<id>/original/content?download=1` | `original_file` | `file:<id>` | 1 (file) |
+| `GET /api/import-export/backup/export` | `database_backup` | `tables:<list or evidence>` | `null` - the backup service does not count rows |
+| `GET /api/import-export/settings/export` | `settings_export` | `settings:search,display,system` | 1 |
+| `GET /api/settings/export` | `settings_export` | `settings:all` | 1 - JSON body, recorded explicitly (`force`) because it has no attachment header |
+
+`test_every_export_route_writes_a_complete_record` calls each of these
+against PostgreSQL and checks the record, the actor and the SHA-256 of the
+bytes received.
+
 ## 8. Dependencies
 
 `requirements.txt` pins minimum versions that include known security fixes

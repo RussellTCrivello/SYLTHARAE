@@ -14,6 +14,8 @@ import pytest
 
 from _seed import connect
 
+from core.detection.temporal_intel import DETECTOR_VERSION
+
 pytestmark = pytest.mark.integration
 
 _U = uuid.uuid4().hex[:8]
@@ -83,7 +85,7 @@ def test_ingestion_stores_multilingual_signals_with_offsets_into_stored_text(pg_
     assert signals
     for sig in signals:
         assert stored[sig[3]:sig[4]] == sig[2], f"offsets do not address stored text: {sig}"
-        assert sig[9] == "temporal-1.0.0"
+        assert sig[9] == DETECTOR_VERSION
     values = {s[1] for s in signals}
     assert "gregorian:2026-10-05" in values
     assert "hijri:1447-09-15" in values
@@ -95,9 +97,18 @@ def test_ingestion_stores_multilingual_signals_with_offsets_into_stored_text(pg_
     assert tomorrow and tomorrow[0][6] == "unresolved"
     assert tomorrow[0][7] is None and tomorrow[0][10] is None
 
+    stored = _rows(pg_db, "SELECT char_start, char_end, method, confidence, confidence_basis,"
+                          " evidence_sentence, sentence_start, sentence_end"
+                          " FROM content_signals WHERE hash_id = %s", (hash_id,))
+    raw = "".join(r[0] for r in _rows(pg_db, "SELECT content FROM contents_raw WHERE hash_id = %s"
+                                          " ORDER BY chunk_seq", (hash_id,)))
+    for cs, ce, method, level, basis, sentence, ss, se in stored:
+        assert method and level in ("high", "medium", "low") and basis
+        assert raw[ss:se] == sentence and ss <= cs < ce <= se, "sentence quotes stored text"
+
     run = _rows(pg_db, "SELECT status, signal_count, trigger, detector_ver, error"
                        " FROM content_signal_runs WHERE hash_id = %s", (hash_id,))
-    assert run == [("complete", len(signals), "ingestion", "temporal-1.0.0", None)]
+    assert run == [("complete", len(signals), "ingestion", DETECTOR_VERSION, None)]
 
 
 def test_same_content_in_a_new_context_is_not_detected_twice(pg_db, tenant):
@@ -204,7 +215,7 @@ def test_redetection_job_applies_the_current_version_and_is_idempotent(pg_db, te
     assert job["stats"]["processed"] == 1 and job["stats"]["complete"] == 1
     versions = _rows(pg_db, "SELECT DISTINCT detector_ver FROM content_signals WHERE hash_id = %s",
                      (hash_id,))
-    assert versions == [("temporal-1.0.0",)], "old-version signals must be replaced, not kept"
+    assert versions == [(DETECTOR_VERSION,)], "old-version signals must be replaced, not kept"
     after = _rows(pg_db, "SELECT count(*) FROM content_signals WHERE hash_id = %s", (hash_id,))[0][0]
     assert after == before
     run = _rows(pg_db, "SELECT trigger, job_id FROM content_signal_runs WHERE hash_id = %s",
@@ -216,7 +227,7 @@ def test_redetection_job_applies_the_current_version_and_is_idempotent(pg_db, te
     from services.detection.redetection import run_redetection
     again = run_redetection(get_connection, scope="stale")
     stale_ids = _rows(pg_db, "SELECT count(*) FROM content_signal_runs WHERE hash_id = %s"
-                             " AND detector_ver <> 'temporal-1.0.0'", (hash_id,))[0][0]
+                             " AND detector_ver <> %s", (hash_id, DETECTOR_VERSION))[0][0]
     assert stale_ids == 0
     second = run_redetection(get_connection, scope="stale")
     assert second.stats["processed"] == 0, "stale selection must converge"

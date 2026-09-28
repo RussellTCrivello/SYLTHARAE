@@ -507,6 +507,7 @@ def register_notification_routes(app):
                            s.date_from, s.date_to, s.surface, s.value, s.language,
                            s.calendar, s.resolution, s.char_start, s.char_end,
                            s.text_orientation, s.evidence, s.detector_ver,
+                           s.method, s.confidence, s.confidence_basis, s.evidence_sentence,
                            (SELECT array_agg(DISTINCT f.date_from ORDER BY f.date_from)
                               FROM content_signals f
                              WHERE f.hash_id = hc.hash_id AND f.signal_type = ANY(%s)
@@ -562,7 +563,8 @@ def register_notification_routes(app):
                 for row in future_rows:
                     (file_id, file_name, file_path, signal_type, date_from, date_to, surface, value,
                      language, calendar, resolution, char_start, char_end,
-                     text_orientation, evidence, detector_ver, future_dates) = row
+                     text_orientation, evidence, detector_ver, method, confidence,
+                     confidence_basis, evidence_sentence, future_dates) = row
                     # Skip (file, date) pairs that already produced a
                     # notification (in any state, dismissed included).
                     if (file_id, date_from) in existing_future_pairs:
@@ -576,6 +578,9 @@ def register_notification_routes(app):
                             'resolution': resolution, 'char_start': char_start,
                             'char_end': char_end, 'text_orientation': text_orientation,
                             'evidence': evidence or {}, 'detector_ver': detector_ver,
+                            'method': method, 'confidence': confidence,
+                            'confidence_basis': confidence_basis,
+                            'sentence': evidence_sentence,
                         },
                         reference_date=today)
                     notification.metadata['future_dates'] = [

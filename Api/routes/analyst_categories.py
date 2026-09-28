@@ -409,6 +409,13 @@ def register_analyst_category_routes(app):
                     _csv_safe(row["assigned_at"]), _csv_safe(row["source_query"] or ""),
                 ])
 
+            from core.security.disclosure import note_disclosure
+            filters = {k: request.args.get(k) for k in
+                       ("category_id", "analyst_id", "date_from", "date_to", "q")
+                       if request.args.get(k)}
+            note_disclosure(kind="analyst_categorizations",
+                            scope="filtered" if filters else "all", filters=filters,
+                            unit="assignment", row_count=len(rows), format="csv")
             # utf-8-sig prepends the BOM expected by Excel for Unicode CSV.
             payload = output.getvalue().encode("utf-8-sig")
             return Response(

@@ -117,9 +117,13 @@ def test_export_is_refused_when_the_disclosure_cannot_be_recorded(
     assert _audit_rows(pg_db, since_id=before) == []
 
 
-def test_routes_without_enrichment_are_still_recorded(pg_db, admin_client):
+def test_routes_without_enrichment_are_still_recorded(pg_db, admin_client, monkeypatch):
     """Coverage is central: an export route that never calls note_disclosure
-    (here the analyst-categorisation CSV) is recorded all the same."""
+    (simulated by disabling it for the analyst-categorisation CSV) is
+    recorded all the same, with an explicit null count and a reason."""
+    import core.security.disclosure as disclosure
+
+    monkeypatch.setattr(disclosure, "note_disclosure", lambda **_: None)
     before = _max_audit_id(pg_db)
     resp = admin_client.get("/api/analyst/export")
     assert resp.status_code == 200, resp.get_data(as_text=True)[:300]
@@ -128,6 +132,8 @@ def test_routes_without_enrichment_are_still_recorded(pg_db, admin_client):
     assert len(rows) == 1
     detail = rows[0][3]
     assert detail["endpoint"] and detail["kind"] == detail["endpoint"]
+    assert detail["format"] == "csv" and detail["scope"] is None
+    assert detail["row_count"] is None and detail["row_count_reason"]
     assert detail["artifact"]["sha256"] == hashlib.sha256(resp.get_data()).hexdigest()
 
 
@@ -143,3 +149,94 @@ def test_refused_exports_are_not_recorded_as_disclosures(pg_db, admin_client, to
     resp = _export(admin_client, {"query": token, "export_scope": "bogus"})
     assert resp.status_code == 400
     assert _audit_rows(pg_db, since_id=before) == []
+
+
+# --------------------------------------------------------------------------
+# Every export route: one record, with scope, format and count (step 5)
+# --------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def export_data(pg_db, app):
+    from core.serialization import pack_int_list
+
+    tag = uuid.uuid4().hex[:8]
+    conn = connect(pg_db)
+    with conn, conn.cursor() as cur:
+        s, d = source(cur), side(cur)
+        path_id, hash_id, _ = document(cur, source_id=s, side_id=d,
+                                       text=f"routes {tag} write alice@example.org here",
+                                       file_type="txt")
+        cur.execute("INSERT INTO words (word) VALUES (%s), (%s) RETURNING id",
+                    (f"kwcat{tag}", f"kw{tag}"))
+        cat_word, kw_word = [r[0] for r in cur.fetchall()]
+        cur.execute("INSERT INTO categorys (word_id) VALUES (%s) RETURNING id", (cat_word,))
+        category_id = cur.fetchone()[0]
+        cur.execute("INSERT INTO keywords (keyword, category_id) VALUES (%s, %s) RETURNING id",
+                    (pack_int_list([kw_word]), category_id))
+        keyword_id = cur.fetchone()[0]
+    conn.close()
+    return {"source_id": s, "path_id": path_id, "keyword_id": keyword_id}
+
+
+def _exports(data):
+    pid, sid = data["path_id"], data["source_id"]
+    return [
+        # (method, url, json, expected kind, expected scope, expected row_count)
+        ("get", "/api/analyst/export", None, "analyst_categorizations", "all", None),
+        ("get", f"/api/sources/{sid}/export", None, "source_record", f"source:{sid}", 1),
+        ("get", f"/api/keywords/export?ids={data['keyword_id']}", None,
+         "keywords_export", "selection", 1),
+        ("post", "/files/export", {"file_ids": [pid]}, "bulk_text_export", "selection", 1),
+        ("post", "/api/files/names/export", {"scope": "selected", "file_ids": [pid]},
+         "file_names_export", "selected", 1),
+        ("post", "/api/files/excerpt/export", {"file_id": pid, "text": "routes", "format": "txt"},
+         "excerpt_selection", f"file:{pid}", 1),
+        ("post", "/api/files/extract-contacts/export", {"file_ids": [pid]},
+         "contacts_export", "selection", None),
+        ("post", "/api/files/first-pages/export", {"file_ids": [pid]},
+         "first_pages_export", "selection", 1),
+        ("get", f"/api/files/{pid}/export", None, "file_text_export", f"file:{pid}", 1),
+        ("get", "/api/import-export/backup/export", None, "database_backup",
+         "tables:evidence", "unknown"),
+        ("get", "/api/import-export/settings/export", None, "settings_export",
+         "settings:search,display,system", 1),
+        ("get", "/api/settings/export", None, "settings_export", "settings:all", 1),
+    ]
+
+
+def test_every_export_route_writes_a_complete_record(pg_db, admin_client, export_data):
+    problems = []
+    for method, url, body, kind, scope, count in _exports(export_data):
+        before = _max_audit_id(pg_db)
+        kwargs = {"headers": {"X-CSRFToken": _csrf(admin_client)}}
+        if body is not None:
+            kwargs["json"] = body
+        resp = getattr(admin_client, method)(url, **kwargs)
+        if resp.status_code != 200:
+            problems.append((url, "status", resp.status_code, resp.get_data(as_text=True)[:200]))
+            continue
+        rows = _audit_rows(pg_db, since_id=before)
+        if len(rows) != 1:
+            problems.append((url, "records", len(rows)))
+            continue
+        detail = rows[0][3]
+        if detail["kind"] != kind and not detail["kind"].startswith(kind.split("_")[0] + "_"):
+            problems.append((url, "kind", detail["kind"]))
+        if detail.get("scope") != scope:
+            problems.append((url, "scope", detail.get("scope")))
+        if not detail.get("format") or detail["format"] == "unknown":
+            problems.append((url, "format", detail.get("format")))
+        if count == "unknown":
+            if detail.get("row_count") is not None or not detail.get("row_count_reason"):
+                problems.append((url, "unknown count must be null with a reason", detail))
+        elif count is None:
+            if not isinstance(detail.get("row_count"), int):
+                problems.append((url, "row_count", detail.get("row_count")))
+        elif detail.get("row_count") != count:
+            problems.append((url, "row_count", detail.get("row_count")))
+        if detail["artifact"].get("sha256") != hashlib.sha256(resp.get_data()).hexdigest():
+            problems.append((url, "sha256"))
+        if rows[0][1] != "testadmin":
+            problems.append((url, "actor", rows[0][1]))
+    assert not problems, problems

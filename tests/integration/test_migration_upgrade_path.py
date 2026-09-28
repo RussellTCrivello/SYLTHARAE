@@ -10,6 +10,7 @@ reverse cleanly and re-apply. Executed against PostgreSQL - not parsed.
 import uuid
 
 import psycopg2
+import psycopg2.errors
 import pytest
 
 from database.migration_runner import (
@@ -166,11 +167,12 @@ def test_m0017_attaches_to_released_content_and_reverses_alone(legacy_db):
         cur.execute("ROLLBACK TO SAVEPOINT s")
     conn.commit()
 
-    m17 = next(m for m in discover_migrations() if m.version == "0017")
-    m17.module.downgrade(conn)
-    with conn.cursor() as cur:
-        cur.execute("DELETE FROM schema_migrations WHERE version = '0017'")
-    conn.commit()
+    # Reverse newest-first down to (and including) 0017; 0016 stays.
+    for migration in reversed([m for m in discover_migrations() if m.version >= "0017"]):
+        migration.module.downgrade(conn)
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM schema_migrations WHERE version = %s", (migration.version,))
+        conn.commit()
     tables = _tables(conn)
     assert "content_signals" not in tables and "content_signal_runs" not in tables
     assert "saved_searches" in tables
@@ -178,5 +180,62 @@ def test_m0017_attaches_to_released_content_and_reverses_alone(legacy_db):
     with conn.cursor() as cur:
         cur.execute("SELECT count(*) FROM hashs WHERE id = %s", (seeded["hash_id"],))
         assert cur.fetchone()[0] == 1
-    assert run_migrations(conn) == ["0017"]
+    assert run_migrations(conn)[0] == "0017"
+
+
+def test_m0018_keeps_pre_1_1_signals_and_enforces_complete_provenance(legacy_db):
+    """0018 on a database holding temporal-1.0.0 signals: they survive with
+    NULL provenance ("not recorded"); new rows are all-or-nothing and the
+    sentence must contain the signal."""
+    conn, seeded = legacy_db
+    for migration in discover_migrations():
+        if migration.version > "0017":
+            break
+        if migration.version > LAST_RELEASED:
+            migration.module.upgrade(conn)
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO schema_migrations (version, name) VALUES (%s, %s)",
+                            (migration.version, migration.name))
+            conn.commit()
+    insert = ("INSERT INTO content_signals (hash_id, detector, detector_ver, signal_type, value,"
+              " surface, char_start, char_end, resolution, evidence, dedup_key{cols})"
+              " VALUES (%s, 'temporal', %s, 'date_reference', 'v', 'Oct 2026', 10, 18,"
+              " 'unresolved', '{{}}', %s{vals})")
+    with conn.cursor() as cur:
+        cur.execute(insert.format(cols="", vals=""), (seeded["hash_id"], "temporal-1.0.0", "b" * 64))
+    conn.commit()
+
+    assert run_migrations(conn) == ["0018"]
+    with conn.cursor() as cur:
+        cur.execute("SELECT confidence, evidence_sentence FROM content_signals"
+                    " WHERE dedup_key = %s", ("b" * 64,))
+        assert cur.fetchone() == (None, None)
+    cols = ", method, confidence, confidence_basis, evidence_sentence, sentence_start, sentence_end"
+    vals = ", %s, %s, %s, %s, %s, %s"
+    good = ("month_year", "high", "month_name", "Due Oct 2026.", 6, 19)
+    bad_cases = {
+        "ck_content_signals_confidence": ("month_year", "certain", "month_name", "Due Oct 2026.", 6, 19),
+        "ck_content_signals_provenance_complete": ("month_year", "high", None, "Due Oct 2026.", 6, 19),
+        "ck_content_signals_sentence_contains": ("month_year", "high", "month_name", "Due Oct", 12, 19),
+    }
+    for constraint, row in bad_cases.items():
+        with conn.cursor() as cur:
+            with pytest.raises(psycopg2.errors.CheckViolation) as exc:
+                cur.execute(insert.format(cols=cols, vals=vals),
+                            (seeded["hash_id"], "temporal-1.1.0", "c" * 64, *row))
+            assert exc.value.diag.constraint_name == constraint
+        conn.rollback()
+    with conn.cursor() as cur:
+        cur.execute(insert.format(cols=cols, vals=vals),
+                    (seeded["hash_id"], "temporal-1.1.0", "d" * 64, *good))
+    conn.commit()
+
+    m18 = next(m for m in discover_migrations() if m.version == "0018")
+    m18.module.downgrade(conn)
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM schema_migrations WHERE version = '0018'")
+        cur.execute("SELECT count(*) FROM content_signals WHERE hash_id = %s", (seeded["hash_id"],))
+        assert cur.fetchone()[0] == 2, "downgrade drops columns, not signals"
+    conn.commit()
+    assert run_migrations(conn) == ["0018"]
 

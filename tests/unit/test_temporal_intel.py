@@ -347,3 +347,68 @@ def test_language_filter_and_input_validation():
     with pytest.raises(TypeError):
         detect(b"bytes")
     assert detect(None).signals == ()
+
+
+# --------------------------------------------------------------------------
+# Provenance: method, ordinal confidence, evidence sentence (temporal-1.1.0)
+# --------------------------------------------------------------------------
+
+from core.detection.temporal_intel import CONFIDENCE_LEVELS, CONFIDENCE_RULES  # noqa: E402
+
+
+@pytest.mark.parametrize("text, value, level, basis", [
+    ("Held on 5 October 2026.", "gregorian:2026-10-05", "high", "month_name"),
+    ("Held October 5, 2026.", "gregorian:2026-10-05", "high", "month_name"),
+    ("Held 2026-10-05.", "gregorian:2026-10-05", "high", "year_first_numeric"),
+    ("يبدأ في ١٥ رمضان ١٤٤٧ هـ", "hijri:1447-09-15", "high", "month_name"),
+    ("Due 25/12/2026.", "gregorian:2026-12-25", "medium", "single_valid_reading"),
+    ("Rok je 15.3.2026.", "gregorian:2026-03-15", "medium", "convention"),
+    ("Meet on 5 October.", "gregorian:--10-05", "medium", "no_year"),
+    ("Deadline 03/04/2026 for all.", None, "low", "ambiguous"),
+])
+def test_confidence_is_an_ordinal_rule_with_a_stated_basis(text, value, level, basis):
+    sig = one(text)
+    if value:
+        assert sig.value == value
+    assert (sig.confidence, sig.confidence_basis) == (level, basis)
+    assert CONFIDENCE_RULES[basis][0] == level and level in CONFIDENCE_LEVELS
+    assert sig.method == sig.evidence["pattern"]
+
+
+def test_relative_and_cue_confidence():
+    found = {s.signal_type: s for s in detect("The vote will happen tomorrow.").signals}
+    assert (found[SIGNAL_RELATIVE].confidence, found[SIGNAL_RELATIVE].confidence_basis) == (
+        "high", "relative_lexicon")
+    assert (found[SIGNAL_ORIENTATION].confidence,
+            found[SIGNAL_ORIENTATION].confidence_basis) == ("low", "lexical_cue")
+
+
+def test_every_signal_quotes_its_sentence_from_the_original_text():
+    text = ("The summit will be held on 5 October 2026. Tomorrow we decide.\n"
+            "سيعقد المؤتمر في ٥ أكتوبر ٢٠٢٦.\n"
+            "הכנס יתקיים ב-5 באוקטובר 2026.\n"
+            "نشست در ۱۵ مهر ۱۴۰۵ برگزار خواهد شد.\n"
+            "Sastanak će se održati 5. listopada 2026.\n")
+    signals = detect(text).signals
+    assert signals
+    for sig in signals:
+        assert text[sig.sentence_start:sig.sentence_end] == sig.sentence
+        assert sig.sentence_start <= sig.char_start < sig.char_end <= sig.sentence_end
+        assert "\n" not in sig.sentence and sig.sentence == sig.sentence.strip()
+    by_value = {s.value: s.sentence for s in signals if s.signal_type == SIGNAL_DATE
+                and s.language == "fa"}
+    assert by_value["jalali:1405-07-15"] == "نشست در ۱۵ مهر ۱۴۰۵ برگزار خواهد شد."
+    tomorrow = [s for s in signals if s.value == "rel:+1d"][0]
+    assert tomorrow.sentence == "Tomorrow we decide."
+
+
+def test_overlong_sentences_are_cut_around_the_signal_and_flagged(monkeypatch):
+    import core.detection.temporal_intel as ti
+
+    monkeypatch.setattr(ti, "MAX_SENTENCE_CHARS", 40)
+    text = "word " * 30 + "on 5 October 2026 " + "word " * 30
+    sig = [s for s in ti.detect(text).signals if s.signal_type == SIGNAL_DATE][0]
+    assert sig.evidence["sentence_truncated"] is True
+    assert sig.sentence_end - sig.sentence_start <= 40
+    assert sig.sentence_start <= sig.char_start < sig.char_end <= sig.sentence_end
+    assert text[sig.sentence_start:sig.sentence_end] == sig.sentence

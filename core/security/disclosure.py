@@ -118,7 +118,18 @@ def build_record(response) -> Dict[str, Any]:
     }
     detail.pop("artifact_sha256", None)
     detail.pop("artifact_bytes", None)
+    detail.pop("force", None)
     record.update(detail)
+    # Every record states format and count - measured or declared by the
+    # route; a count the route did not declare is null with a reason, never 0.
+    if not record.get("format"):
+        name = record.get("filename") or ""
+        record["format"] = (name.rsplit(".", 1)[1].lower() if "." in name
+                            else (response.mimetype or "unknown"))
+    if "row_count" not in record:
+        record["row_count"] = None
+        record["row_count_reason"] = "not declared by the route"
+    record.setdefault("scope", None)
     return record
 
 

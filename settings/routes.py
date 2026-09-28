@@ -852,6 +852,11 @@ def export_settings():
     from datetime import datetime
     filename = f"settings_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     
+    # Returned as JSON (the page saves it as a file), so there is no
+    # attachment header: force the disclosure record explicitly.
+    from core.security.disclosure import note_disclosure
+    note_disclosure(kind='settings_export', scope='settings:all', unit='settings_document',
+                    row_count=1, format='json', filename=filename, force=True)
     return jsonify({
         'success': True,
         'filename': filename,

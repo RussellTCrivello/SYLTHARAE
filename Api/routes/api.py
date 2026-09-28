@@ -515,6 +515,9 @@ def register_api_routes(app):
                 export_data, indent=2, ensure_ascii=False, default=_json_default
             )
             
+            from core.security.disclosure import note_disclosure
+            note_disclosure(kind='source_record', scope=f'source:{source_id}', unit='source',
+                            row_count=1, format='json')
             # Return as downloadable file
             from flask import Response
             response = Response(

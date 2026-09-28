@@ -284,3 +284,25 @@ def test_deleting_a_user_removes_their_saved_searches(pg_db):
     finally:
         conn.rollback()
         conn.close()
+
+
+def test_saved_searches_page_runs_the_full_definition_and_only_shows_own(analysts):
+    """The page's Run link restores query + filters (run_url), from PostgreSQL,
+    and never lists another user's search."""
+    import html as _html
+
+    (a, _), (b, _) = analysts
+    tag = uuid.uuid4().hex[:8]
+    filters = {"scope": "all", "source_id": [7], "file_type": "pdf"}
+    assert _post(a, "/api/search/saved", {"name": f"mine{tag}", "query": f"q{tag}",
+                                          "filters": filters}).status_code == 201
+    assert _post(b, "/api/search/saved", {"name": f"theirs{tag}", "query": "x"}).status_code == 201
+
+    page = a.get("/search/saved")
+    assert page.status_code == 200
+    body = _html.unescape(page.get_data(as_text=True))
+    assert f"mine{tag}" in body and f"theirs{tag}" not in body
+    runs = [line for line in body.splitlines() if "/search/advanced?" in line and f"q{tag}" in line]
+    assert runs, "Run link missing"
+    # parameter names of the Advanced Search page (SEARCH_URL_PARAMS)
+    assert "src=7" in runs[0] and "ft=pdf" in runs[0] and "scope=all" in runs[0], runs[0]
