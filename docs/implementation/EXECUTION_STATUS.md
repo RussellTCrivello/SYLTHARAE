@@ -66,6 +66,7 @@ store. Statuses use the same evidence ladder.
 | M3 | Gazetteer browse (editing needs a versioning design: open question) | NOT STARTED | - | - | - | - |
 | M4 | Signals of one document (file view) | NOT STARTED | - | - | - | - |
 | M5 | Rule and scenario version history | NOT STARTED | - | - | - | - |
+| M6 | Narrative phrasing variants: per-language wording for existing reviewed statements, same placeholders, draft/approved/retired with a second administrator approving, immutable versions recorded in each run, preview against a stored run (owner's Narrative Intelligence proposal, adapted) | NOT STARTED (design accepted: [NARRATIVE_LAYER_ASSESSMENT.md](NARRATIVE_LAYER_ASSESSMENT.md)) | - | - | Administrators choose wording, not claims: eligibility and thresholds stay in reviewed code. The proposal's cache, global relationship table and free-JSON blueprints are not adopted (reasons in the assessment) | after step 17; depends on NARR-01 |
 
 ## Document operations wave (owner request, 2026-09-28): scheduled AFTER step 28
 
@@ -226,6 +227,7 @@ Start-up is now covered by the control run above. The packaging audit
 | Arabic catalog (baseline `0521aa5`): 4 msgstrs drop `{operation}` / `{category}` / `{word}` (e.g. "Files in "{category}" Category" -> "Files"), 4 are truncated at an escaped quote (end in a literal backslash). he/fa/hr only drop the English plural `{s}`, which is correct for those languages | catalog-wide placeholder scan during step 12 | word-list/category screens, outside step 12; belongs to step 18 (multilingual rendering), where they can be fixed and checked on the screens that use them |
 | Arabic catalog: `Side` is translated `الجوانب` ("sides", plural); it is now also a report column label | step 13 translation check (reuse of an existing msgid) | shared with existing pages; belongs with the other Arabic msgstr defects in step 18 |
 | Non-deterministic full-suite run: once (step 16, run 2, straight after a live `run_web.py` session in the same working tree) 156 tests failed as if content were invisible and interfaces gated; not reproduced by an unchanged rerun (29, the recorded OCR set) or by rerunning the failing files | step 16 regression | not reproducible on demand; state files ruled out. Candidates not yet tested: the suite writes `data/settings.json` in the working tree (it holds the test DB host), and a background thread from an earlier process might outlive it. Watch for recurrence; examine in the step 24 full-regression audit |
+| NARR-01: narrative templates have no plural forms ("1 terms"; wrong for Arabic's 6 and Croatian's 3 plural forms although the catalogs declare them) | review of the owner's narrative proposal | fixing it changes the `term_keyness@1` template meaning, so it needs a new template-set version; scheduled as the first item of step 17 |
 
 ## Open questions for the owner
 
