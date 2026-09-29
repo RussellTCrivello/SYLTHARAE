@@ -67,6 +67,42 @@ store. Statuses use the same evidence ladder.
 | M4 | Signals of one document (file view) | NOT STARTED | - | - | - | - |
 | M5 | Rule and scenario version history | NOT STARTED | - | - | - | - |
 
+## Document operations wave (owner request, 2026-09-28): scheduled AFTER step 28
+
+The owner asked for this and chose to schedule it after the mandated steps
+16-28. Nothing below is started. The requirements are recorded here so that
+they are not lost.
+
+**Owner's decisions** (asked 2026-09-28):
+* **Rename** changes the name in the application only (`paths.file_name`,
+  audited). The original file on disk keeps its name.
+* **Copy** is two separate commands:
+  * "Copy to clipboard": names, paths or content;
+  * "Save a copy as...": the original file, through the save dialog.
+* **Save As** uses the browser's save dialog (the existing
+  `chooseExportDestination`, File System Access API). Chrome and Edge let the
+  user choose the folder and the name. Firefox saves to Downloads under the
+  typed name. No server-side folder writes.
+
+**Requirements** (must work the same on every interface):
+
+| # | Requirement | What exists (inspected 2026-09-28) | Gap |
+| --- | --- | --- | --- |
+| D1 | Three export types, everywhere: **(1)** database columns, the user choosing exactly which; **(2)** content of one or many files; **(3)** original files, one or many | (2) and (3): `POST /files/export` (`mode=text` or `originals`, ZIP, naming template, `_not_included.txt`, DATA_EXPORTED). (1): only `POST /api/files/names/export`, fixed to 2 columns, CSV/XLSX | A column-selectable export over a declared column whitelist (no free SQL). One shared export component, used on every list |
+| D2 | File Library: one continuous list that scrolls through the whole collection | Offset pages (`/files`, `limit` 1-1000); total count per page | Server keyset paging plus windowed rendering. The whole corpus is never loaded into the browser (directive performance rule), yet it reads as one list |
+| D3 | Library: sort by clicking any column header (name, size, type, date, ...) | A `sortBy` dropdown; fixed `ORDER_BY` shared with detail Previous/Next | Header sorting through a whitelisted sort key. Previous/Next on detail pages must follow the chosen order |
+| D4 | Library: a header menu (e.g. Type) listing the values with counts: sort, and hide chosen values or groups | A `file_type` filter; `/api/files/types` statistics | A per-column value menu with include/exclude sets sent to the server |
+| D5 | Show or hide columns from the table header, on every table | none | A shared column-visibility control, remembered per table |
+| D6 | Library: keyword search that highlights matches, with actions on them | A `search` filter that narrows the list | Highlight mode (matches marked, not filtered) plus "select matches" |
+| D7 | Open, export, copy, rename, multi-select, save as: from the library, search results and side panels | Open, select, bulk export and delete exist in the library. No rename. No copy | `PATCH` rename (audited; analyst/admin) and copy commands, in the shared toolbar |
+| D8 | Comprehensive dashboard, file-type table: click a type to open a side panel of its documents with the D7 actions | The type table is display only | Side panel component fed by the library API with a type filter |
+| D9 | Categories and keywords lists: a side panel of the contents and associated documents, D7 actions, search across the collection | Detail pages exist (`/keyword/<id>`, category words) | The same side panel, fed by keyword/category document queries |
+| D10 | Search results: select documents, export, save under a new name, edit their names | Search pages list documents | The shared toolbar on search results |
+
+Constraints that apply: authz before retrieval; DATA_EXPORTED on every
+export; no silent truncation (limits declared and refused, not clipped);
+parameterised SQL; no full-corpus browser loads.
+
 ## Regression record
 
 | Point | Passed | Failed | Skipped | Failure set |
