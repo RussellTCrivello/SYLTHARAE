@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import uuid
 
+import psycopg2.extras
 import pytest
 
 from _seed import connect, document, side, source
@@ -69,6 +70,59 @@ def test_stale_count_is_what_the_job_processes(pg_db, app):
     delta_current = sum(after["at_current_version"].values()) - sum(t["at_current_version"].values())
     delta_older = sum(t["at_older_versions"].values()) - sum(after["at_older_versions"].values())
     assert delta_current == t["never_analysed"] + delta_older
+
+
+@pytest.mark.parametrize("versions", [
+    "current",                                   # the real current versions
+    {"temporal": "temporal-0.0-test-old", "places": "places-x"},  # an arbitrary version
+    {"temporal": None, "places": None},          # version unavailable (no gazetteer)
+])
+def test_coverage_counts_equal_the_jobs_selection_on_every_run_state(pg_db, app, versions):
+    """_coverage_counts computes the job's NOT EXISTS predicate as a LEFT JOIN
+    (valid because of PRIMARY KEY (hash_id, detector)). Each count must equal
+    what the job's own selection SQL returns, over every run state."""
+    from services.detection import detection_admin as da
+    from services.detection import detectors as registry
+    from services.detection import redetection as rd
+
+    docs = _docs(pg_db, 7)
+    conn = connect(pg_db)
+    with conn.cursor() as cur:
+        current = {n: registry.get(n).version(cur) for n in registry.NAMES}
+    conn.rollback()
+    states = [None, ("old", "complete"), ("cur", "complete"), ("cur", "failed"),
+              ("cur", "truncated"), ("cur", "no_text"), ("old", "failed")]
+    for i, ((_, hash_id), state) in enumerate(zip(docs, states)):
+        for j, name in enumerate(registry.NAMES):
+            st = states[(i + j * 3) % len(states)]     # detectors differ per content
+            if st is None or current[name] is None and st[0] == "cur":
+                continue
+            ver = current[name] if st[0] == "cur" else f"{name}-0.0-coverage-old"
+            _run_row(pg_db, hash_id, name, ver, st[1],
+                     error="x" if st[1] == "failed" else None)
+    vers = current if versions == "current" else versions
+
+    with conn.cursor() as cur:
+        def job_selects(v):
+            sql, params = rd._select_sql("stale", v)
+            cur.execute(sql, (0, *params, 10 ** 9))
+            return len(cur.fetchall())
+
+        cur.execute("SELECT count(*) FROM hashs h WHERE " + rd.HAS_TEXT)
+        analysable = cur.fetchone()[0]
+        expected = {"analysable": analysable, "stale_any": job_selects(vers)}
+        for name, v in vers.items():
+            expected[f"stale_{name}"] = job_selects({name: v})
+            cur.execute("SELECT count(*) FROM hashs h WHERE " + rd.HAS_TEXT
+                        + " AND NOT EXISTS (SELECT 1 FROM content_signal_runs r"
+                          " WHERE r.hash_id = h.id AND r.detector = %s)", (name,))
+            expected[f"never_{name}"] = cur.fetchone()[0]
+        got = da._coverage_counts(conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor), vers)
+    conn.rollback()
+    conn.close()
+    assert got == expected
+    if versions == {"temporal": None, "places": None}:
+        assert got["stale_temporal"] == got["stale_places"] == got["stale_any"] == analysable
 
 
 def test_older_and_failed_runs_are_stale_and_listed(pg_db, app):

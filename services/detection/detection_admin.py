@@ -65,18 +65,55 @@ def _timeout():
         "QUERY_TIMEOUT", f"the detection query took longer than {STATEMENT_TIMEOUT_MS // 1000} s", 503)
 
 
+def _coverage_counts(cur, versions):
+    """Every coverage count in ONE pass over the analysable contents.
+
+    Per detector d with current version v, a content is
+    * never analysed  <=> it has no run for d;
+    * stale           <=> it has no run for d, or that run's version is not
+                          v, or that run failed.
+    That is the job's ``redetection._stale_clause`` (NOT EXISTS a run for d
+    at v that did not fail) rewritten as a LEFT JOIN: equivalent because
+    ``content_signal_runs`` has PRIMARY KEY (hash_id, detector), so there is
+    at most one run per (content, detector). The rewrite matters: the six
+    separate NOT EXISTS counts re-scanned every content six times (4.0 s at
+    500,000 contents; one correlated pass 3.3 s; this 1.0 s, see
+    docs/implementation/SIGNAL_DETECTION_ADMIN.md). A v of None (no
+    gazetteer) matches no run, so everything is stale, as in the job.
+    ``tests/integration/test_detection_admin.py`` checks each count against
+    the job's own selection SQL on every run state.
+    """
+    select = ["count(*) AS analysable"]
+    joins, any_stale = [], []
+    select_params, join_params, any_params = [], [], []
+    for i, (name, version) in enumerate(versions.items()):
+        alias = f"r{i}"
+        joins.append(f"LEFT JOIN content_signal_runs {alias}"
+                     f" ON {alias}.hash_id = h.id AND {alias}.detector = %s")
+        join_params.append(name)
+        stale = (f"({alias}.hash_id IS NULL OR {alias}.detector_ver IS DISTINCT FROM %s"
+                 f" OR {alias}.status = 'failed')")
+        select.append(f"count(*) FILTER (WHERE {alias}.hash_id IS NULL) AS \"never_{name}\"")
+        select.append(f"count(*) FILTER (WHERE {stale}) AS \"stale_{name}\"")
+        select_params.append(version or "")
+        any_stale.append(stale)
+        any_params.append(version or "")
+    select.insert(1, "count(*) FILTER (WHERE " + " OR ".join(any_stale) + ") AS stale_any")
+    # Parameter order follows the SQL text: SELECT list, then the JOINs.
+    cur.execute("SELECT " + ", ".join(select) + " FROM hashs h " + " ".join(joins)
+                + " WHERE " + redetection.HAS_TEXT,
+                any_params + select_params + join_params)
+    return dict(cur.fetchone())
+
+
 def detection_status(conn) -> Dict[str, Any]:
     names = registry.validate(None)
     try:
         cur = _snapshot(conn)
         try:
             versions = _versions(conn, names)
-            cur.execute("SELECT count(*) AS n FROM hashs h WHERE " + redetection.HAS_TEXT)
-            analysable = cur.fetchone()["n"]
-            stale_clause, stale_params = redetection._stale_clause(versions)
-            cur.execute("SELECT count(*) AS n FROM hashs h WHERE " + redetection.HAS_TEXT
-                        + " AND " + stale_clause, stale_params)
-            stale_any = cur.fetchone()["n"]
+            counts = _coverage_counts(cur, versions)
+            analysable, stale_any = counts["analysable"], counts["stale_any"]
             cur.execute("SELECT txid_current_snapshot()::text AS snap, NOW() AS at")
             snap = cur.fetchone()
             out = []
@@ -86,14 +123,7 @@ def detection_status(conn) -> Dict[str, Any]:
                             " FROM content_signal_runs WHERE detector = %s"
                             " GROUP BY detector_ver, status ORDER BY detector_ver, status", (name,))
                 groups = [dict(r) for r in cur.fetchall()]
-                clause, params = redetection._stale_clause({name: current})
-                cur.execute("SELECT count(*) AS n FROM hashs h WHERE " + redetection.HAS_TEXT
-                            + " AND " + clause, params)
-                stale = cur.fetchone()["n"]
-                cur.execute("SELECT count(*) AS n FROM hashs h WHERE " + redetection.HAS_TEXT
-                            + " AND NOT EXISTS (SELECT 1 FROM content_signal_runs r"
-                            " WHERE r.hash_id = h.id AND r.detector = %s)", (name,))
-                never = cur.fetchone()["n"]
+                stale, never = counts[f"stale_{name}"], counts[f"never_{name}"]
                 at_current = {s: 0 for s in STATUSES}
                 older = {s: 0 for s in STATUSES}
                 for g in groups:
@@ -193,16 +223,19 @@ def list_runs(conn, filters: Dict[str, Any]) -> Dict[str, Any]:
                 params.append(version)
             clause = (" WHERE " + " AND ".join(where)) if where else ""
             cur.execute(
+                # Page first, then look up one file per paged run: the file
+                # lookup must not run for every matching run.
                 "SELECT r.hash_id, r.detector, r.detector_ver, r.status, r.anchor_date,"
                 " r.chars_total, r.chars_scanned, r.signal_count, r.trigger, r.job_id, r.error,"
                 " r.ran_at, p.path_id, p.file_name, p.path_count"
-                " FROM content_signal_runs r"
+                " FROM (SELECT * FROM content_signal_runs r" + clause
+                + " ORDER BY r.ran_at DESC, r.hash_id DESC, r.detector LIMIT %s OFFSET %s) r"
                 " LEFT JOIN LATERAL (SELECT min(pa.id) AS path_id, count(*) AS path_count,"
                 "   (array_agg(pa.file_name ORDER BY pa.id))[1] AS file_name"
                 "   FROM paths pa JOIN hash_contexts hc ON hc.id = pa.context_id"
                 "   WHERE hc.hash_id = r.hash_id) p ON TRUE"
-                + clause + " ORDER BY r.ran_at DESC, r.hash_id DESC, r.detector"
-                " LIMIT %s OFFSET %s", params + [filters["limit"] + 1, filters["offset"]])
+                " ORDER BY r.ran_at DESC, r.hash_id DESC, r.detector",
+                params + [filters["limit"] + 1, filters["offset"]])
             rows = [dict(r) for r in cur.fetchall()]
         finally:
             cur.close()

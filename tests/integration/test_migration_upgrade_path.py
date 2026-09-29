@@ -708,3 +708,31 @@ def test_m0024_audit_log_lookup_indexes_and_downgrade(legacy_db):
     m0024.module.upgrade(conn)          # idempotent
     conn.commit()
     assert set(indexes()) == set(got)
+
+
+def test_m0025_signal_run_history_index_and_downgrade(legacy_db):
+    """0025: the run history's page-order index exists with the declared
+    definition, m0017's indexes survive, and downgrade drops exactly it."""
+    conn, _ = legacy_db
+    assert run_migrations(conn)[-1] >= "0025"
+
+    def indexes():
+        with conn.cursor() as cur:
+            cur.execute("SELECT indexname, indexdef FROM pg_indexes"
+                        " WHERE tablename = 'content_signal_runs'")
+            return dict(cur.fetchall())
+
+    got = indexes()
+    assert "(ran_at DESC, hash_id DESC, detector)" in got["idx_content_signal_runs_ran_at"]
+    released = {"content_signal_runs_pkey", "idx_content_signal_runs_version"}
+    assert set(got) == released | {"idx_content_signal_runs_ran_at"}
+
+    m0025 = next(m for m in discover_migrations() if m.version == "0025")
+    for migration in reversed([m for m in discover_migrations() if m.version >= "0025"]):
+        migration.module.downgrade(conn)
+    conn.commit()
+    assert set(indexes()) == released
+    m0025.module.upgrade(conn)
+    m0025.module.upgrade(conn)          # idempotent
+    conn.commit()
+    assert set(indexes()) == set(got)
