@@ -31,11 +31,11 @@ from the code, so it cannot claim more than the application does.
 <!-- BEGIN GENERATED REGISTRY EVIDENCE -->
 ### 1. Registry inventory
 
-- Interfaces declared: **26**
+- Interfaces declared: **31**
 - Cross-cutting features (not interfaces): **1**
-- Endpoints owned (canonical routes + aliases): **67**
-- With a keyboard shortcut: **12**
-- With a help topic: **24**
+- Endpoints owned (canonical routes + aliases): **72**
+- With a keyboard shortcut: **17**
+- With a help topic: **29**
 - Declared domain vocabulary: **12**
 - Domains currently containing interfaces: **10**
 - Declared domains holding no interface yet: **2**
@@ -45,14 +45,14 @@ Domains are **declared** in `core/interfaces/domains.py`; a declared domain may 
 | Domain | Interfaces | Status |
 | --- | --- | --- |
 | WORK | 1 | in use |
-| DISCOVER | 9 | in use |
+| DISCOVER | 11 | in use |
 | INGEST | 2 | in use |
 | PROCESS | 0 | declared, empty |
 | ANALYZE | 3 | in use |
 | CLASSIFY | 2 | in use |
-| REPORT | 2 | in use |
-| OPERATE | 2 | in use |
-| ADMINISTRATION | 1 | in use |
+| REPORT | 3 | in use |
+| OPERATE | 3 | in use |
+| ADMINISTRATION | 2 | in use |
 | SETTINGS | 3 | in use |
 | SECURITY | 0 | declared, empty |
 | INTERNAL | 1 | in use |
@@ -77,20 +77,27 @@ Declared aliases: **42**, across **12** interfaces. An alias is an endpoint the 
 ### 3. Dependency validation
 
 - Validation result: **no issues**
-- Interfaces declaring a dependency: **8**
-- Interfaces other interfaces depend on: **3**
+- Interfaces declaring a dependency: **11**
+- Interfaces other interfaces depend on: **7**
 
 | Interface | Requires | Required by |
 | --- | --- | --- |
 | `file_library` | — | `analyst_categorization`, `archives`, `batch_analysis`, `charts_dashboard`, `classification`, `comprehensive_dashboard`, `path_analysis` |
+| `search` | — | `reports` |
 | `words` | — | `classification` |
 | `analyst_categorization` | `file_library` | — |
+| `notifications` | — | `monitoring` |
+| `signal_horizon` | — | `detection`, `monitoring` |
+| `monitoring` | `notifications`, `signal_horizon` | — |
 | `archives` | `file_library` | — |
 | `path_analysis` | `file_library` | — |
 | `batch_analysis` | `file_library` | — |
 | `classification` | `file_library`, `words` | — |
 | `comprehensive_dashboard` | `file_library` | — |
+| `reports` | `jobs`, `search` | — |
 | `charts_dashboard` | `file_library` | — |
+| `detection` | `jobs`, `signal_horizon` | — |
+| `jobs` | — | `detection`, `reports` |
 | `settings` | — | `interface_manager` |
 | `interface_manager` | `settings` | — |
 
@@ -100,8 +107,8 @@ Declared aliases: **42**, across **12** interfaces. An alias is an endpoint the 
 
 ### 5. Lifecycle and migration
 
-- Interfaces by status: **ACTIVE 25, DEPRECATED 1**
-- Interfaces by kind: **INTERNAL 1, PAGE 24, SECTION 1**
+- Interfaces by status: **ACTIVE 30, DEPRECATED 1**
+- Interfaces by kind: **INTERNAL 1, PAGE 29, SECTION 1**
 
 Renames and merges the registry understands (a stored value under an old key reaches the interface that replaced it; the code may not name the old key):
 
@@ -140,11 +147,11 @@ Cross-cutting settings that are **not** features (they belong to an existing int
 <!-- BEGIN GENERATED APPLICATION EVIDENCE -->
 ### 7. Endpoint coverage
 
-- Endpoints in the application's URL map (static excluded): **321**
-- User-facing page endpoints: **49**
-- Owned by an interface: **67**
+- Endpoints in the application's URL map (static excluded): **401**
+- User-facing page endpoints: **54**
+- Owned by an interface: **72**
 - **Unmanaged user-facing endpoints**: **0**
-- Interfaces with a navigable route: **25**
+- Interfaces with a navigable route: **30**
 
 Unmanaged user-facing endpoints: **0** — every page the application serves is owned by exactly one interface.
 
@@ -153,18 +160,18 @@ Unmanaged user-facing endpoints: **0** — every page the application serves is 
 | Classification | Endpoints |
 | --- | --- |
 | ACTION | 9 |
-| API_ENDPOINT | 245 |
+| API_ENDPOINT | 320 |
 | INTERNAL_PAGE | 1 |
 | REDIRECT | 1 |
 | SYSTEM_ENDPOINT | 16 |
 | TEST_ENDPOINT | 1 |
-| USER_INTERFACE | 48 |
+| USER_INTERFACE | 53 |
 
 By blueprint:
 
 | Blueprint | Endpoints |
 | --- | --- |
-| (app) | 144 |
+| (app) | 203 |
 | analytics | 22 |
 | archives_api | 10 |
 | auth | 12 |
@@ -172,7 +179,8 @@ By blueprint:
 | content_analysis | 6 |
 | cursor_api | 3 |
 | error_dashboard | 4 |
-| files | 27 |
+| file_analysis | 20 |
+| files | 28 |
 | health | 1 |
 | import_export | 6 |
 | operations_api | 29 |
@@ -195,11 +203,11 @@ The coverage rule tolerates exactly these, by name — a new page cannot be adde
 
 **TEST_ENDPOINT_PREFIXES** (1): `/_test/`
 
-Endpoints the interface switch does not gate (API, system and infrastructure; authentication and authorization are unchanged): **262**
+Endpoints the interface switch does not gate (API, system and infrastructure; authentication and authorization are unchanged): **337**
 
 ### 10. Rendered navigation
 
-`GET /` as an administrator returned 200; the sidebar renders **9 domains** and **24 entries**, all of them from the registry:
+`GET /` as an administrator returned 200; the sidebar renders **9 domains** and **29 entries**, all of them from the registry:
 
 - Work
 - Discover
@@ -211,7 +219,7 @@ Endpoints the interface switch does not gate (API, system and infrastructure; au
 - Administration
 - Settings
 
-Entries, in render order: `index`, `files.files_list`, `search_page`, `sources_list`, `sides_list`, `keywords_list`, `words_list`, `categories_list`, `email_words`, `notifications_page`, `operations_input_page`, `operations_import_page`, `archives_page`, `path_analysis_page`, `analysis_batch`, `analyst_categorization_page`, `file_classification_page`, `comprehensive_dashboard`, `charts_dashboard`, `operations_jobs_page`, `import_export_page`, `users_page`, `settings_page_direct`, `translations.translation_management_page`
+Entries, in render order: `index`, `files.files_list`, `search_page`, `sources_list`, `sides_list`, `keywords_list`, `words_list`, `categories_list`, `email_words`, `notifications_page`, `signals_page`, `monitoring_page`, `operations_input_page`, `operations_import_page`, `archives_page`, `path_analysis_page`, `analysis_batch`, `analyst_categorization_page`, `file_classification_page`, `comprehensive_dashboard`, `reports_page`, `charts_dashboard`, `detection_page`, `operations_jobs_page`, `import_export_page`, `users_page`, `audit_page`, `settings_page_direct`, `translations.translation_management_page`
 
 Marked active on this page: `index`
 <!-- END GENERATED APPLICATION EVIDENCE -->

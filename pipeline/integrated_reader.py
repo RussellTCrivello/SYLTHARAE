@@ -1072,10 +1072,7 @@ class IntegratedFileReader:
                     f"all were stored)"
                 )
             if self.enable_storage and self.storage_pipeline:
-                storage_stats = self.get_storage_statistics()
-                summary_lines.append(f"   Files stored in database: {storage_stats.get('completed', 0)}")
-                summary_lines.append(f"   Duplicate files: {storage_stats.get('duplicates', 0)}")
-                summary_lines.append(f"   Storage failures: {storage_stats.get('failed', 0)}")
+                summary_lines.extend(storage_summary_lines(self.get_storage_statistics()))
         if summary_lines:
             console.block([""] + summary_lines)
 
@@ -2610,15 +2607,36 @@ class IntegratedFileReader:
             return {
                 'completed': stats.get('files_stored', 0),
                 'duplicates': stats.get('files_duplicates', 0),
+                'content_reused': stats.get('files_content_reused', 0),
                 'failed': stats.get('files_failed', 0),
                 'processed': stats.get('files_processed', 0)
             }
         return {
             'completed': 0,
             'duplicates': 0,
+            'content_reused': 0,
             'failed': 0,
             'processed': 0
         }
+
+
+def storage_summary_lines(storage_stats: Dict[str, Any]) -> List[str]:
+    """The storage part of the end-of-run summary.
+
+    "Duplicate" meant two different things and the summary printed only one:
+    ``duplicates`` counts files whose exact occurrence was already recorded
+    (nothing written), while a *new* file with already-known content is
+    stored as a new occurrence and reuses the extraction (``content_reused``).
+    A run of three identical-content files used to report "Duplicate files: 0".
+    """
+    return [
+        f"   Files stored in database: {storage_stats.get('completed', 0)}",
+        f"      of which new copies of content already stored: "
+        f"{storage_stats.get('content_reused', 0)}",
+        f"   Files already recorded (nothing new written): "
+        f"{storage_stats.get('duplicates', 0)}",
+        f"   Storage failures: {storage_stats.get('failed', 0)}",
+    ]
 
 
 # Standalone worker for multiprocessing (must be at module level)

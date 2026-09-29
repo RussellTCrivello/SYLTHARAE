@@ -147,6 +147,11 @@ def export_database_backup():
             include_data=include_data
         )
         
+        from core.security.disclosure import note_disclosure
+        note_disclosure(kind='database_backup', scope='tables:' + (','.join(tables) if tables else 'evidence'),
+                        unit='table_rows', row_count=None,
+                        row_count_reason='the backup service does not report row counts',
+                        include_data=include_data, format='zip')
         filename = f'database_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip'
         
         return send_file(
@@ -224,6 +229,9 @@ def export_settings():
         # Export settings
         settings_file = ExportService.export_settings(settings_data)
         
+        from core.security.disclosure import note_disclosure
+        note_disclosure(kind='settings_export', scope='settings:search,display,system',
+                        unit='settings_document', row_count=1, format='json')
         filename = f'settings_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
         
         return send_file(

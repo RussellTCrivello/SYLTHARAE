@@ -233,6 +233,8 @@ class NotificationSettings:
     errors_only: bool = False
     similar_files_enabled: bool = True
     future_dates_enabled: bool = True
+    # Deprecated, ignored: the verb-tense analyzer it toggled was replaced by
+    # stored temporal signals (core/detection). Kept so older settings files load.
     future_events_enabled: bool = True
     auto_analyze_files: bool = True
     upcoming_events_days: int = 30

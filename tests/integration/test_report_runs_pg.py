@@ -1,0 +1,290 @@
+"""Step 14 against PostgreSQL: report runs (services/reporting/runs.py).
+
+Executed on the migrated schema with real rows. Properties:
+
+* a run reads every dataset from ONE snapshot - a row committed by another
+  connection between two dataset reads is in neither;
+* the snapshot, isolation level, fingerprints and generator are recorded;
+* identical requests give identical parameter, criteria and query
+  fingerprints and identical rows;
+* ``capped`` overflow keeps row_limit rows and records truncation; ``exact``
+  overflow fails the run and stores no partial result;
+* the requester is re-read inside the snapshot: deactivated or demoted means
+  ``refused`` and nothing read;
+* a definition changed between submit and run fails the run; so do columns
+  that differ from the declaration;
+* a run whose job ended without a result is reconciled to ``failed``.
+"""
+
+from __future__ import annotations
+
+import dataclasses
+import datetime
+import uuid
+from types import SimpleNamespace
+
+import psycopg2
+import pytest
+
+from core.reporting import REGISTRY
+from core.reporting.model import ReportDefinition
+from core.reporting.registry import ReportRegistry
+from services.reporting import runs
+
+from _seed import connect, document, side, source
+
+pytestmark = pytest.mark.integration
+
+_U = uuid.uuid4().hex[:8]
+
+
+def _user(cur, role, name):
+    cur.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, 'x', %s)"
+                " RETURNING id", (f"{name}_{_U}", role))
+    uid = cur.fetchone()[0]
+    return SimpleNamespace(id=uid, role=role, username=f"{name}_{_U}",
+                           has_role=lambda *roles: role in roles)
+
+
+@pytest.fixture(scope="module")
+def world(pg_db, app):
+    word = f"zrun{_U}"
+    conn = connect(pg_db)
+    with conn, conn.cursor() as cur:
+        s1 = source(cur)
+        d1 = side(cur)
+        paths = [document(cur, source_id=s1, side_id=d1, text=f"run {word} item {i}",
+                          file_type="pdf", file_date=datetime.date(2026, 2, 1 + i))[0]
+                 for i in range(5)]
+        analyst = _user(cur, "analyst", "rr_analyst")
+        admin = _user(cur, "admin", "rr_admin")
+    yield {"conn": conn, "word": word, "paths": paths, "source": s1, "side": d1,
+           "analyst": analyst, "admin": admin, "pg_db": pg_db}
+    conn.close()
+
+
+def _params(world):
+    return {"criteria": {"text": world["word"]}}
+
+
+def _run(world, user=None, registry=REGISTRY, report_id="search_results", **kw):
+    conn = world["conn"]
+    run = runs.submit_run(conn, user=user or world["analyst"], report_id=report_id,
+                          parameters=_params(world), registry=registry)
+    out = runs.execute_run(conn, run["id"], job_id=None, registry=registry, **kw)
+    return run, out
+
+
+def _variant(**changes):
+    """A registry whose search_results@1 listing is changed as given."""
+    matches = dataclasses.replace(REGISTRY.dataset("search_results.matches@1"), **changes)
+    datasets = tuple(matches if d.key == matches.key else d for d in REGISTRY.datasets)
+    return ReportRegistry(reports=REGISTRY.reports, datasets=datasets,
+                          help_topics=REGISTRY.help_topics)
+
+
+def test_completed_run_records_snapshot_fingerprints_and_rows(world):
+    run, out = _run(world)
+    assert out["status"] == "completed", out
+    got = runs.get_run(world["conn"], run["id"], user=world["analyst"])
+    assert got["status"] == "completed"
+    assert got["snapshot"] and got["snapshot_at"] and got["finished_at"]
+    assert got["isolation_level"] == "repeatable read, read only"
+    assert got["generator_version"] == runs.GENERATOR_VERSION
+    assert got["definition_fingerprint"] == runs.definition_fingerprint(
+        REGISTRY.report("search_results"))
+    assert got["requester_role"] == "analyst"
+    assert [d["dataset_key"] for d in got["datasets"]] == [
+        "search_results.matches@1", "search_results.count@1"]
+    listing, count = got["datasets"]
+    assert (listing["row_count"], listing["truncated"], listing["semantics"]) == (5, False, "capped")
+    page = runs.dataset_rows(world["conn"], run["id"], "search_results.count@1",
+                             user=world["analyst"])
+    assert page["rows"] == [{"matched": 5}]
+    full = runs.dataset_rows(world["conn"], run["id"], "search_results.matches@1",
+                             user=world["analyst"], limit=500)["rows"]
+    assert sorted(r["path_id"] for r in full) == sorted(world["paths"])
+    page = runs.dataset_rows(world["conn"], run["id"], "search_results.matches@1",
+                             user=world["analyst"], limit=2, offset=1)
+    assert page["rows"] == full[1:3]                  # paged in SQL, stored order kept
+    assert all(isinstance(r["file_date"], str) and len(r["file_date"]) == 10
+               for r in full)                         # ISO 8601, not a date object
+
+
+def test_identical_requests_are_deterministic(world):
+    a, _ = _run(world)
+    b, _ = _run(world)
+    ga = runs.get_run(world["conn"], a["id"], user=world["analyst"])
+    gb = runs.get_run(world["conn"], b["id"], user=world["analyst"])
+    for key in ("definition_fingerprint", "parameters_fingerprint", "criteria_fingerprint",
+                "parameters"):
+        assert ga[key] == gb[key], key
+    assert [d["query_fingerprint"] for d in ga["datasets"]] == \
+           [d["query_fingerprint"] for d in gb["datasets"]]
+    rows = [runs.dataset_rows(world["conn"], r["id"], "search_results.matches@1",
+                              user=world["analyst"], limit=500)["rows"] for r in (a, b)]
+    assert rows[0] == rows[1] and rows[0]
+
+
+def test_every_dataset_reads_the_same_snapshot(world, monkeypatch):
+    """A matching document committed by another connection after the first
+    dataset was read is in neither dataset: count and listing agree."""
+    original = runs._read_dataset
+    other = connect(world["pg_db"])
+    inserted = []
+
+    def read_then_insert(cur, dataset, bound):
+        result = original(cur, dataset, bound)
+        if not inserted:
+            with other, other.cursor() as ocur:
+                inserted.append(document(ocur, source_id=world["source"], side_id=world["side"],
+                                         text=f"late {world['word']}", file_type="pdf",
+                                         file_date=datetime.date(2026, 3, 1))[0])
+        return result
+
+    monkeypatch.setattr(runs, "_read_dataset", read_then_insert)
+    try:
+        run, out = _run(world)
+    finally:
+        other.close()
+    assert out["status"] == "completed" and inserted
+    count = runs.dataset_rows(world["conn"], run["id"], "search_results.count@1",
+                              user=world["analyst"])["rows"][0]["matched"]
+    listing = runs.dataset_rows(world["conn"], run["id"], "search_results.matches@1",
+                                user=world["analyst"], limit=500)["rows"]
+    assert count == len(listing)
+    assert inserted[0] not in [r["path_id"] for r in listing]
+    # The document is committed: a new run sees it.
+    later, _ = _run(world)
+    assert runs.dataset_rows(world["conn"], later["id"], "search_results.count@1",
+                             user=world["analyst"])["rows"][0]["matched"] == count + 1
+
+
+def test_capped_overflow_is_recorded_as_truncation(world):
+    registry = _variant(row_limit=2)
+    run, out = _run(world, registry=registry)
+    assert out["status"] == "completed"
+    got = runs.get_run(world["conn"], run["id"], user=world["analyst"], registry=registry)
+    listing, count = got["datasets"]
+    assert (listing["row_count"], listing["row_limit"], listing["truncated"]) == (2, 2, True)
+    assert count["truncated"] is False
+    total = runs.dataset_rows(world["conn"], run["id"], "search_results.count@1",
+                              user=world["analyst"], registry=registry)["rows"][0]["matched"]
+    assert total > listing["row_count"]       # the exact count says how many were not shown
+
+
+def test_exact_overflow_fails_the_run_without_partial_results(world):
+    registry = _variant(semantics="exact", row_limit=2)
+    run, out = _run(world, registry=registry)
+    assert out["status"] == "failed"
+    assert "exact but returned more than its limit of 2 rows" in out["error"]
+    got = runs.get_run(world["conn"], run["id"], user=world["analyst"], registry=registry)
+    assert got["status"] == "failed" and got["datasets"] == [] and got["snapshot"] is None
+
+
+def test_requester_is_revalidated_inside_the_snapshot(world):
+    conn = world["conn"]
+    with conn, conn.cursor() as cur:
+        user = _user(cur, "analyst", f"rr_gone{uuid.uuid4().hex[:4]}")
+    run = runs.submit_run(conn, user=user, report_id="search_results",
+                          parameters=_params(world))
+    with conn, conn.cursor() as cur:
+        cur.execute("UPDATE users SET is_active = false WHERE id = %s", (user.id,))
+    out = runs.execute_run(conn, run["id"])
+    assert (out["status"], out["refusal_reason"]) == ("refused", "requester_inactive")
+    got = runs.get_run(conn, run["id"], user=world["admin"])
+    assert got["datasets"] == [] and got["refusal_reason"] == "requester_inactive"
+    assert got["snapshot"]       # the refusal is itself a statement about that moment
+
+    # Demoted to a role the report no longer allows.
+    analysts_only = ReportRegistry(
+        reports=tuple(dataclasses.replace(r, roles=("admin", "analyst")) for r in REGISTRY.reports),
+        datasets=REGISTRY.datasets, help_topics=REGISTRY.help_topics)
+    with conn, conn.cursor() as cur:
+        demoted = _user(cur, "analyst", f"rr_demoted{uuid.uuid4().hex[:4]}")
+    run = runs.submit_run(conn, user=demoted, report_id="search_results",
+                          parameters=_params(world), registry=analysts_only)
+    with conn, conn.cursor() as cur:
+        cur.execute("UPDATE users SET role = 'viewer' WHERE id = %s", (demoted.id,))
+    out = runs.execute_run(conn, run["id"], registry=analysts_only)
+    assert (out["status"], out["refusal_reason"]) == ("refused", "requester_role")
+
+
+def test_definition_changed_after_submission_fails(world):
+    conn = world["conn"]
+    run = runs.submit_run(conn, user=world["analyst"], report_id="search_results",
+                          parameters=_params(world))
+    out = runs.execute_run(conn, run["id"], registry=_variant(row_limit=4999))
+    assert out["status"] == "failed" and "definition fingerprint differs" in out["error"]
+
+
+def test_columns_that_differ_from_the_declaration_fail(world):
+    ds = REGISTRY.dataset("search_results.matches@1")
+    registry = _variant(sql=ds.sql.replace("p.file_type,", "p.file_type AS kind,"))
+    run, out = _run(world, registry=registry)
+    assert out["status"] == "failed" and "declared" in out["error"]
+
+
+def test_cancelled_before_reading(world):
+    run, out = _run(world, cancel_cb=lambda: True)
+    assert out["status"] == "cancelled"
+    assert runs.get_run(world["conn"], run["id"], user=world["analyst"])["datasets"] == []
+
+
+def test_invalid_requests_are_refused_at_submission(world):
+    conn = world["conn"]
+    cases = [
+        (dict(report_id="nope"), "NOT_FOUND"),
+        (dict(report_id="search_results", parameters={"criteria": {"text": "x"}, "extra": 1}),
+         "VALIDATION_FAILED"),
+        (dict(report_id="search_results", parameters={}), "VALIDATION_FAILED"),
+        (dict(report_id="search_results", parameters={"criteria": "x"}), "VALIDATION_FAILED"),
+        (dict(report_id="search_results", version=9), "NOT_FOUND"),
+        (dict(report_id="search_results", version="1"), "VALIDATION_FAILED"),
+    ]
+    with conn, conn.cursor() as cur:
+        viewer = _user(cur, "viewer", f"rr_viewer{uuid.uuid4().hex[:4]}")
+    with pytest.raises(runs.ReportRunError) as info:
+        runs.submit_run(conn, user=viewer, report_id="search_results", parameters=_params(world))
+    assert (info.value.code, info.value.status) == ("FORBIDDEN", 403)
+    for kwargs, code in cases:
+        with pytest.raises(runs.ReportRunError) as info:
+            runs.submit_run(conn, user=world["analyst"], **kwargs)
+        assert info.value.code == code, kwargs
+
+
+def test_orphaned_run_is_reconciled_to_failed(world):
+    from services.jobs.manager import JobManager
+
+    conn = world["conn"]
+    run = runs.submit_run(conn, user=world["analyst"], report_id="search_results",
+                          parameters=_params(world))
+    job = JobManager(synchronous=True).repo.create({
+        "job_id": uuid.uuid4().hex[:12].upper(), "job_type": "report_run", "status": "FAILED",
+        "progress": 0, "source": "test", "options": {"run_id": run["id"]}, "created_by": "t"})
+    with conn, conn.cursor() as cur:
+        cur.execute("UPDATE report_runs SET status = 'running', started_at = NOW(), job_id = %s"
+                    " WHERE id = %s", (job["job_id"], run["id"]))
+    got = runs.get_run(conn, run["id"], user=world["analyst"])
+    assert got["status"] == "failed"
+    assert got["error"] == "the report job ended without recording a result"
+
+
+def test_visibility_owner_admin_and_not_others(world):
+    conn = world["conn"]
+    run, _ = _run(world)
+    with conn, conn.cursor() as cur:
+        stranger = _user(cur, "analyst", f"rr_stranger{uuid.uuid4().hex[:4]}")
+    with pytest.raises(runs.ReportRunError) as info:
+        runs.get_run(conn, run["id"], user=stranger)
+    assert info.value.status == 404
+    with pytest.raises(runs.ReportRunError):
+        runs.dataset_rows(conn, run["id"], "search_results.count@1", user=stranger)
+    assert runs.get_run(conn, run["id"], user=world["admin"])["id"] == run["id"]
+    mine = runs.list_runs(conn, user=stranger)
+    assert mine["items"] == [] and mine["total"] == 0
+    with pytest.raises(runs.ReportRunError) as info:
+        runs.list_runs(conn, user=stranger, all_users=True)
+    assert info.value.status == 403
+    everyone = runs.list_runs(conn, user=world["admin"], all_users=True, limit=200)
+    assert run["id"] in [r["id"] for r in everyone["items"]]

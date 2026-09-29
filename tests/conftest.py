@@ -329,7 +329,7 @@ def _prepared_web_app():
 
 
 @pytest.fixture(scope="session")
-def app(pg_db):
+def app(pg_db, tmp_path_factory):
     """The real Flask application against the disposable database."""
     flask_app = prepare_web_app()
 
@@ -341,9 +341,18 @@ def app(pg_db):
     # the gate's table check stays authoritative per database, and unlinking
     # it at teardown raced parallel xdist workers whose sessions outlived
     # ours (their in-flight requests 302'ed to /setup mid-suite).
-    from core.initialization import INIT_MARKER_FILE, mark_system_initialized
+    #
+    # The marker lives in a session temporary directory, NOT in the working
+    # directory: INIT_MARKER_FILE is CWD-relative, so marking it here used to
+    # leave `.system_initialized` in the checkout. `run_web.py` started from
+    # that checkout afterwards took the "marker present" start-up branch, which
+    # hid the defect that installations without the marker never had their
+    # schema upgraded (field report after step 12). Every reader goes through
+    # core.initialization.INIT_MARKER_FILE, so redirecting it is sufficient.
+    import core.initialization as _init
 
-    mark_system_initialized()
+    _init.INIT_MARKER_FILE = tmp_path_factory.mktemp("init_marker") / ".system_initialized"
+    _init.mark_system_initialized()
 
     yield flask_app
 

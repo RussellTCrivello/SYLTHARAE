@@ -209,6 +209,23 @@ REGISTRY: Tuple[Interface, ...] = (
                   "notifications.auto_analyze_files"),
         help_topic="discover/notifications", keyboard_shortcut="g n",
     ),
+    _if(
+        "signal_horizon", "Horizon & Signal Explorer",
+        "Dated references on a forward-looking horizon (overdue, next 7/30/90 "
+        "days, later) and every stored signal - dates and places - with its "
+        "evidence sentence, confidence, method and detector version.",
+        Domain.DISCOVER, "signals_page", "bi-calendar-range",
+        help_topic="discover/signals", keyboard_shortcut="g h",
+    ),
+    _if(
+        "monitoring", "Monitoring",
+        "Scenarios (cases over signal and document conditions, one outcome per "
+        "document, mandatory dry-run before activation, append-only outcome "
+        "history) and monitoring rules. Notifications reach the owner only.",
+        Domain.DISCOVER, "monitoring_page", "bi-diagram-3",
+        dependencies=("signal_horizon", "notifications"),
+        help_topic="discover/monitoring", keyboard_shortcut="g m",
+    ),
 
     # -- INGEST -----------------------------------------------------------
     _if(
@@ -274,6 +291,16 @@ REGISTRY: Tuple[Interface, ...] = (
         help_topic="report/detailed-dashboard",
     ),
     _if(
+        "reports", "Reports",
+        "Registered, versioned reports: choose one, give its parameters (or a "
+        "saved search), run it as a background job and read the result - every "
+        "dataset from one database snapshot, with counts and any shortening "
+        "stated.",
+        Domain.REPORT, "reports_page", "bi-file-earmark-bar-graph",
+        dependencies=("search", "jobs"),
+        help_topic="report/reports", keyboard_shortcut="g r",
+    ),
+    _if(
         "charts_dashboard", "Charts Dashboard",
         "The same stored material presented as charts and timelines.",
         Domain.REPORT, "charts_dashboard", "bi-bar-chart",
@@ -282,6 +309,17 @@ REGISTRY: Tuple[Interface, ...] = (
     ),
 
     # -- OPERATE ----------------------------------------------------------
+    _if(
+        "detection", "Detection",
+        "Which detector version analysed which content, with what outcome: "
+        "coverage per detector, content never analysed or analysed by an older "
+        "version, failed runs with their error, and re-detection as a "
+        "background job.",
+        Domain.OPERATE, "detection_page", "bi-radar",
+        dependencies=("signal_horizon", "jobs"),
+        required_role="admin",
+        help_topic="operate/detection", keyboard_shortcut="g d",
+    ),
     _if(
         "jobs", "Jobs",
         "Every long-running operation: what it is doing, what it did, and the "
@@ -308,6 +346,15 @@ REGISTRY: Tuple[Interface, ...] = (
         Domain.ADMINISTRATION, "users_page", "bi-people",
         required_role="admin",
         help_topic="administration/users", keyboard_shortcut="g u",
+    ),
+    _if(
+        "audit_log", "Audit Log",
+        "Who did what, to what, when and from where: every file that left the "
+        "system (DATA_EXPORTED, with its checksum), report runs and files, rule "
+        "and scenario changes, sign-ins and user administration. Read-only.",
+        Domain.ADMINISTRATION, "audit_page", "bi-journal-check",
+        required_role="admin",
+        help_topic="administration/audit", keyboard_shortcut="g l",
     ),
 
     # -- SETTINGS ---------------------------------------------------------

@@ -445,6 +445,14 @@ from core.security import init_auth
 init_auth(app)
 logger.info("\u2705 Authentication middleware active (all routes default-deny)")
 
+# Disclosure register: every attachment response writes DATA_EXPORTED to the
+# audit log, fail-closed. Registered after Compress so it runs *before* it
+# (Flask runs after_request hooks in reverse order) and digests the bytes the
+# route produced, not their gzip encoding.
+from core.security.disclosure import init_disclosure_audit
+init_disclosure_audit(app)
+logger.info("\u2705 Disclosure register active (DATA_EXPORTED, fail-closed)")
+
 from Api.routes.auth import register_auth_routes
 register_auth_routes(app)
 logger.info("\u2705 Authentication routes registered")

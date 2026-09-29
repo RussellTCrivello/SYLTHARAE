@@ -252,13 +252,15 @@ class ResourceCoordinator:
         #
         # Two independent caps: cores (oversubscribed on purpose, the work is
         # I/O-bound) and memory (never oversubscribed - that is what crashes).
-        max_workers = self._worker_ceiling(total_instances)
+        max_workers = self._instance_budget(total_instances)
 
-        # For web instances, keep a worker's worth of the pool for request work.
-        if self.instance_type == 'web':
-            max_workers = max(1, max_workers - 1)
-
-        max_workers = max(1, max_workers)
+        # A recalculation must not undo a memory-pressure reduction: callers
+        # ask for worker counts at any moment, and raising the pool back while
+        # memory is short is the fatal case the monitor exists to prevent.
+        current = getattr(self, "resource_limits", None)
+        if (getattr(self, "_system_overload", False) and current is not None
+                and current.max_workers < max_workers):
+            max_workers = current.max_workers
         
         # Calculate database pool size
         # Need enough connections for concurrent workers + buffer
@@ -360,6 +362,20 @@ class ResourceCoordinator:
             total += 1
         return max(1, total)
 
+    def _instance_budget(self, total_instances: Optional[int] = None) -> int:
+        """This instance's worker budget: the ceiling, minus the worker a web
+        instance keeps for request work.
+
+        The one definition used by both the limit recalculation and the
+        monitor's restore. They used to differ (restore ignored the web
+        reservation), so every recalculation lowered the pool and the next
+        monitor cycle logged a spurious "Restored workers" raising it again.
+        """
+        budget = self._worker_ceiling(total_instances)
+        if self.instance_type == 'web':
+            budget -= 1
+        return max(1, budget)
+
     def _worker_ceiling(self, total_instances: Optional[int] = None) -> int:
         """How many workers this instance may use, from cores *and* memory.
 
@@ -433,7 +449,7 @@ class ResourceCoordinator:
             action = "restored"
         # Restore toward the ceiling as soon as pressure is gone, at the
         # configured rate rather than "one worker per cycle".
-        ceiling = self._worker_ceiling()
+        ceiling = self._instance_budget()
         if self.resource_limits.max_workers < ceiling:
             step = max(1, ceiling // 4)
             self.resource_limits.max_workers = min(

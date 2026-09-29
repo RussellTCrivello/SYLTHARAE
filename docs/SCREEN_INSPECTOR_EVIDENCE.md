@@ -46,8 +46,8 @@ document with what it writes.
 
 | Measurement | Count |
 | --- | --- |
-| Interfaces | 26 |
-| Navigable interfaces | 24 |
+| Interfaces | 31 |
+| Navigable interfaces | 29 |
 | Interfaces with a described screen | 5 |
 | Interfaces declaring no help topic | 2 |
 | Interfaces declaring no keyboard shortcut | 14 |
@@ -83,7 +83,7 @@ with the evidence.
 
 | Action | Status | Where | Shared surface it uses |
 | --- | --- | --- | --- |
-| `files.reprocess` | declared, not built | Api/blueprints/files.py:122 | the shared record action surface |
+| `files.reprocess` | declared, not built | Api/blueprints/files.py:124 | the shared record action surface |
 | `files.analyze_selected` | presented, nothing binds it | file_library | the shared record action surface |
 | `files.delete_selected` | presented, nothing binds it | file_library | the shared record action surface |
 | `files.export_selected` | presented, nothing binds it | file_library | the shared record action surface |
@@ -128,6 +128,8 @@ with the evidence.
 | `email_words` | DISCOVER | `email_words` | discover/email-words | Not declared | 0 |
 | `analyst_categorization` | CLASSIFY | `analyst_categorization_page` | classify/analyst-categories | Not declared | 0 |
 | `notifications` | DISCOVER | `notifications_page` | discover/notifications | g n | 0 |
+| `signal_horizon` | DISCOVER | `signals_page` | discover/signals | g h | 0 |
+| `monitoring` | DISCOVER | `monitoring_page` | discover/monitoring | g m | 0 |
 | `input_ingestion` | INGEST | `operations_input_page` | ingest/input | g i | 0 |
 | `import_center` | INGEST | `operations_import_page` | ingest/import-center | Not declared | 0 |
 | `archives` | ANALYZE | `archives_page` | analyze/archives | g a | 0 |
@@ -135,10 +137,13 @@ with the evidence.
 | `batch_analysis` | ANALYZE | `analysis_batch` | analyze/batch | g b | 0 |
 | `classification` | CLASSIFY | `file_classification_page` | classify/classification | Not declared | 0 |
 | `comprehensive_dashboard` | REPORT | `comprehensive_dashboard` | report/detailed-dashboard | Not declared | 0 |
+| `reports` | REPORT | `reports_page` | report/reports | g r | 0 |
 | `charts_dashboard` | REPORT | `charts_dashboard` | report/charts | Not declared | 0 |
+| `detection` | OPERATE | `detection_page` | operate/detection | g d | 0 |
 | `jobs` | OPERATE | `operations_jobs_page` | operate/jobs | g j | 0 |
 | `import_export_console` | OPERATE | `import_export_page` | Not declared | Not declared | 0 |
 | `users` | ADMINISTRATION | `users_page` | administration/users | g u | 0 |
+| `audit_log` | ADMINISTRATION | `audit_page` | administration/audit | g l | 0 |
 | `settings` | SETTINGS | `settings_page_direct` | settings/overview | g , | 0 |
 | `interface_manager` | SETTINGS | `None` | settings/interfaces | Not declared | 0 |
 | `translation_manager` | SETTINGS | `translations.translation_management_page` | settings/translations | g t | 0 |
@@ -152,8 +157,8 @@ with the evidence.
 | binding | 6 | 34 |
 | component | 20 | 20 |
 | execution | 29 | 34 |
-| help | 24 | 26 |
-| interface | 26 | 26 |
+| help | 29 | 31 |
+| interface | 31 | 31 |
 | permission | 34 | 34 |
 | scope | 34 | 34 |
 | state | 34 | 34 |

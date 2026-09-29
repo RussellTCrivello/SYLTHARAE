@@ -72,6 +72,15 @@ def _current_user_id():
     return session.get('auth_user_id')
 
 
+def _current_user_is_admin() -> bool:
+    from flask import g
+    user = g.get('user')
+    # has_role() is a method on both User and AnonymousUser; is_admin and
+    # is_authenticated are properties on one and a method on the other.
+    return bool(user is not None and getattr(user, 'id', None) is not None
+                and user.has_role('admin'))
+
+
 def _advanced_search_run_url(query: str, filters: Optional[dict]) -> str:
     """Build a /search/advanced URL that restores a full search definition.
 
@@ -218,7 +227,8 @@ def register_search_routes(app):
         The saved-search CRUD endpoints (``/api/search/saved``) have always
         been live; this renders the management view over the same service.
         """
-        searches = SavedSearchesService.get_saved_searches(user_id=_current_user_id()) or []
+        searches = SavedSearchesService.get_saved_searches(
+            user_id=_current_user_id(), is_admin=_current_user_is_admin()) or []
         # "Run" restores the FULL definition on the Advanced Search page
         # (query + scope + filters + options), not just the query string.
         for entry in searches:
@@ -747,131 +757,135 @@ def register_search_routes(app):
             return client_error(e, subsystem='Api.routes.search', status=500)
     
     # ==================== SAVED SEARCHES ====================
-    
+    #
+    # PostgreSQL-backed since m0016. Every by-id route authorises against the
+    # row: a saved search belongs to its owner; an unowned legacy search
+    # (recorded before API-04) is an administrator's. A row the caller may
+    # not read answers 404 - the same as a row that does not exist - so ids
+    # cannot be probed for existence.
+
+    def _saved_search_repo():
+        from Api.services.saved_searches_repository import SavedSearchRepository
+        # Going through the facade once guarantees the legacy import has run.
+        SavedSearchesService._repo()
+        return SavedSearchRepository()
+
+    def _authorised_saved_search(search_id):
+        from Api.services.saved_searches_repository import can_read
+        repo = _saved_search_repo()
+        row = repo.get(search_id)
+        if not can_read(row, _current_user_id(), _current_user_is_admin()):
+            return repo, None
+        return repo, row
+
     @app.route('/api/search/saved', methods=['GET'])
     def api_get_saved_searches():
-        """Get all saved searches."""
+        """The caller's saved searches (admins also see unowned legacy ones)."""
         try:
-            user_id = _current_user_id()
-            searches = SavedSearchesService.get_saved_searches(user_id=user_id)
-            
-            return jsonify({
-                'searches': searches,
-                'count': len(searches)
-            })
-            
+            searches = SavedSearchesService.get_saved_searches(
+                user_id=_current_user_id(), is_admin=_current_user_is_admin())
+            return jsonify({'searches': searches, 'count': len(searches)})
         except Exception as e:
             logger.error(f"Get saved searches error: {e}", exc_info=True)
             return client_error(e, subsystem='Api.routes.search', status=500)
-    
+
     @app.route('/api/search/saved', methods=['POST'])
     def api_save_search():
         """
         Save a search.
-        
+
         JSON Body:
         - name: Name for the saved search
         - query: Search query string
         - filters: Optional search filters dictionary
+
+        The definition is converted to canonical criteria and fingerprinted;
+        a definition that cannot be represented is refused (400), never
+        stored in a form monitoring could misread.
         """
+        from Api.services.saved_searches_repository import SavedSearchError
         try:
-            data = request.get_json()
-            if not data:
+            data = request.get_json(silent=True)
+            if not data or not isinstance(data, dict):
                 return jsonify({'error': 'No data provided'}), 400
-            
-            name = data.get('name', '').strip()
-            query = data.get('query', '').strip()
-            filters = data.get('filters', {})
-            
+            name = (data.get('name') or '').strip()
+            query = data.get('query') or ''
+            if not isinstance(query, str):
+                return jsonify({'error': 'query must be text'}), 400
+            filters = data.get('filters') or {}
             if not name:
                 return jsonify({'error': 'Name is required'}), 400
-            
-            user_id = _current_user_id()
-            search_id = SavedSearchesService.save_search(
-                name=name,
-                query=query,
-                filters=filters,
-                user_id=user_id
-            )
-            
+            row = _saved_search_repo().create(_current_user_id(), name, query.strip(), filters)
             return jsonify({
                 'success': True,
-                'search_id': search_id,
+                'search_id': row['id'],
+                'criteria_fingerprint': row['criteria_fingerprint'],
                 'message': 'Search saved successfully'
             }), 201
-            
+        except SavedSearchError as refused:
+            return jsonify({'success': False, 'error': str(refused),
+                            'code': 'invalid_saved_search'}), 400
         except Exception as e:
             logger.error(f"Save search error: {e}", exc_info=True)
             return client_error(e, subsystem='Api.routes.search', status=500)
-    
+
     @app.route('/api/search/saved/<int:search_id>', methods=['GET'])
     def api_get_saved_search(search_id):
-        """Get a specific saved search."""
+        """Get a specific saved search (owner, or admin for unowned legacy)."""
         try:
-            search = SavedSearchesService.get_saved_search(search_id)
-            
-            if not search:
+            repo, row = _authorised_saved_search(search_id)
+            if row is None:
                 return jsonify({'error': 'Saved search not found'}), 404
-            
-            # Mark as used
-            SavedSearchesService.mark_used(search_id)
-            
-            return jsonify({'search': search})
-            
+            repo.mark_used(search_id)
+            return jsonify({'search': repo.get(search_id) or row})
         except Exception as e:
             logger.error(f"Get saved search error: {e}", exc_info=True)
             return client_error(e, subsystem='Api.routes.search', status=500)
-    
+
     @app.route('/api/search/saved/<int:search_id>', methods=['PUT'])
     def api_update_saved_search(search_id):
         """
         Update a saved search.
-        
+
         JSON Body (all optional):
         - name: New name
         - query: New query
         - filters: New filters
         """
+        from Api.services.saved_searches_repository import SavedSearchError
         try:
-            data = request.get_json() or {}
-            
-            success = SavedSearchesService.update_saved_search(
-                search_id=search_id,
-                name=data.get('name'),
-                query=data.get('query'),
-                filters=data.get('filters')
-            )
-            
-            if not success:
+            repo, row = _authorised_saved_search(search_id)
+            if row is None:
                 return jsonify({'error': 'Saved search not found'}), 404
-            
-            return jsonify({
-                'success': True,
-                'message': 'Search updated successfully'
-            })
-            
+            data = request.get_json(silent=True) or {}
+            if not isinstance(data, dict):
+                return jsonify({'error': 'JSON object expected'}), 400
+            updated = repo.update(search_id, name=data.get('name'),
+                                  query=data.get('query'), filters=data.get('filters'))
+            if updated is None:
+                return jsonify({'error': 'Saved search not found'}), 404
+            return jsonify({'success': True,
+                            'criteria_fingerprint': updated['criteria_fingerprint'],
+                            'message': 'Search updated successfully'})
+        except SavedSearchError as refused:
+            return jsonify({'success': False, 'error': str(refused),
+                            'code': 'invalid_saved_search'}), 400
         except Exception as e:
             logger.error(f"Update saved search error: {e}", exc_info=True)
             return client_error(e, subsystem='Api.routes.search', status=500)
-    
+
     @app.route('/api/search/saved/<int:search_id>', methods=['DELETE'])
     def api_delete_saved_search(search_id):
-        """Delete a saved search."""
+        """Delete a saved search (owner, or admin for unowned legacy)."""
         try:
-            success = SavedSearchesService.delete_saved_search(search_id)
-            
-            if not success:
+            repo, row = _authorised_saved_search(search_id)
+            if row is None or not repo.delete(search_id):
                 return jsonify({'error': 'Saved search not found'}), 404
-            
-            return jsonify({
-                'success': True,
-                'message': 'Search deleted successfully'
-            })
-            
+            return jsonify({'success': True, 'message': 'Search deleted successfully'})
         except Exception as e:
             logger.error(f"Delete saved search error: {e}", exc_info=True)
             return client_error(e, subsystem='Api.routes.search', status=500)
-    
+
     # ==================== EXPORT SEARCH RESULTS ====================
 
     @app.route('/api/search/export/columns', methods=['GET'])
@@ -929,7 +943,8 @@ def register_search_routes(app):
                             'code': 'invalid_export_request'}), 400
 
         try:
-            result = search_export.resolve(definition, resolve_request_scope())
+            analyst_scope = resolve_request_scope()
+            result = search_export.resolve(definition, analyst_scope)
             if not result.rows:
                 return jsonify({
                     'success': False,
@@ -938,6 +953,8 @@ def register_search_routes(app):
                     'scope': definition.scope,
                     'total': 0,
                 }), 400
+            from core.security.disclosure import note_disclosure
+            note_disclosure(**search_export.disclosure_detail(result, analyst_scope))
             data, mimetype, extension = search_export.export_bytes(result)
             response = send_file(
                 data, mimetype=mimetype, as_attachment=True,
@@ -968,7 +985,8 @@ def register_search_routes(app):
                             'code': 'invalid_export_request'}), 400
 
         try:
-            result = search_export.resolve(definition, resolve_request_scope())
+            analyst_scope = resolve_request_scope()
+            result = search_export.resolve(definition, analyst_scope)
             if not result.rows:
                 return jsonify({
                     'success': False,
@@ -976,6 +994,11 @@ def register_search_routes(app):
                     'scope': definition.scope,
                     'total': 0,
                 }), 400
+            from core.security.disclosure import note_disclosure
+            detail = search_export.disclosure_detail(
+                result, analyst_scope, kind='search_export_filenames')
+            detail['columns'] = ['file_name', 'file_type']
+            note_disclosure(**detail)
 
             values = [
                 (spreadsheet_safe_text(row.get('file_name', '')),

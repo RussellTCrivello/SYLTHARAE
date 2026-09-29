@@ -47,7 +47,8 @@ def register_notification_page_routes(app):
             sides = select_info_sides()
 
             # Exact SQL aggregates - no forced refresh of the in-memory cache.
-            stats = get_notification_service().get_stats()
+            from Api.routes.notifications import _viewer_id
+            stats = get_notification_service().get_stats(for_user_id=_viewer_id())
 
             return render_template(
                 'Notifications/notifications.html',
@@ -84,9 +85,13 @@ def register_notification_page_routes(app):
             sort_by = request.args.get('sort_by', 'created_at')  # created_at, priority, title
             sort_order = request.args.get('sort_order', 'desc')  # asc, desc
 
+            from Api.routes.notifications import _viewer_id
+            from core.monitoring.notification_service import ALERT_COLUMNS, visibility_clause
+
             joins = ""
-            where = ["a.dismissed = FALSE"]
-            params = []
+            # Only what this user may see: system-wide alerts and their own.
+            where = ["a.dismissed = FALSE", visibility_clause("a")]
+            params = [_viewer_id()]
 
             # Filter by type if specified
             if notification_type:
@@ -177,9 +182,7 @@ def register_notification_page_routes(app):
 
             rows = execute_query(
                 f"""
-                SELECT a.id, a.type, a.priority, a.title, a.message, a.file_id,
-                       a.file_name, a.file_path, a.event_date, a.metadata,
-                       a.created_at, a.read, a.dismissed
+                SELECT {', '.join('a.' + c.strip() for c in ALERT_COLUMNS.split(','))}
                 FROM alerts a
                 {joins}
                 WHERE {' AND '.join(row_where)}

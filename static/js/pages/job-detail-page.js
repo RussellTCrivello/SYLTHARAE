@@ -96,8 +96,8 @@ var JOB_DETAIL_PAGE_DATA = JSON.parse(document.getElementById('job-detail-page-d
   function renderErrors() {
     const q = (document.getElementById('errFilter').value || '').toLowerCase();
     const items = [
-      ...errorsCache.filter(e => !q || (e||'').toLowerCase().includes(q)).map(e => `<div class="text-danger mb-1"><i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i>${e}</div>`),
-      ...warningsCache.filter(w => !q || (w||'').toLowerCase().includes(q)).map(w => `<div class="text-warning mb-1"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>${w}</div>`),
+      ...errorsCache.filter(e => !q || (e||'').toLowerCase().includes(q)).map(e => `<div class="text-danger mb-1"><i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i>${escapeHtml(e)}</div>`),
+      ...warningsCache.filter(w => !q || (w||'').toLowerCase().includes(q)).map(w => `<div class="text-warning mb-1"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>${escapeHtml(w)}</div>`),
     ];
     document.getElementById('jErrors').innerHTML =
       items.join('') || '<span class="text-muted"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>No errors or warnings</span>';

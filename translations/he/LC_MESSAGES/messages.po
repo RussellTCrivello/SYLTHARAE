@@ -10156,3 +10156,1625 @@ msgstr "הזינו את הסיסמה הנוכחית."
 
 msgid "The new password must be different from the current one."
 msgstr "הסיסמה החדשה חייבת להיות שונה מהנוכחית."
+
+#: templates/Signals/signals.html
+msgid "Horizon & Signal Explorer"
+msgstr "אופק וסייר האותות"
+
+#: templates/Signals/signals.html
+msgid "Dates, places and other signals detected in stored documents, with the evidence for each."
+msgstr "תאריכים, מקומות ואותות אחרים שזוהו במסמכים השמורים, עם הראיה לכל אחד מהם."
+
+#: templates/Signals/signals.html
+msgid "What you are looking at"
+msgstr "במה אתם צופים"
+
+#: templates/Signals/signals.html
+msgid "Signals are detected once, when a document is stored or re-analysed. This page reads the stored results; it does not re-read documents."
+msgstr "האותות מזוהים פעם אחת, כאשר מסמך נשמר או מנותח מחדש. דף זה קורא את התוצאות השמורות ואינו קורא מחדש את המסמכים."
+
+#: templates/Signals/signals.html
+msgid "Horizon groups dated references by where their date falls relative to the reference date: overdue, next 7 days, next 30 days, next 90 days, later."
+msgstr "האופק מקבץ אזכורים מתוארכים לפי מיקום התאריך שלהם ביחס לתאריך הייחוס: באיחור, 7 הימים הבאים, 30 הימים הבאים, 90 הימים הבאים, מאוחר יותר."
+
+#: templates/Signals/signals.html
+msgid "Overdue means the sentence spoke of the future and the date has passed. Other past dates are listed under Past."
+msgstr "«באיחור» פירושו שהמשפט דיבר על העתיד והתאריך כבר עבר. תאריכי עבר אחרים מופיעים תחת «עבר»."
+
+#: templates/Signals/signals.html
+msgid "References whose date could not be decided (for example 03/04/2026) are counted as undated, never guessed."
+msgstr "אזכורים שלא ניתן היה להכריע את תאריכם (למשל 03/04/2026) נספרים כלא מתוארכים, ולעולם אינם מנוחשים."
+
+#: templates/Signals/signals.html
+msgid "Place matches come from a gazetteer; a name shared by several places stays ambiguous and lists every candidate."
+msgstr "התאמות מקומות מגיעות ממילון גאוגרפי; שם המשותף לכמה מקומות נשאר דו-משמעי וכל המועמדים מוצגים."
+
+#: templates/Signals/signals.html
+msgid "Reference date"
+msgstr "תאריך ייחוס"
+
+#: templates/Signals/signals.html
+msgid "Empty: today (UTC)"
+msgstr "ריק: היום (UTC)"
+
+#: templates/Signals/signals.html
+msgid "None"
+msgstr "ללא"
+
+#: templates/Signals/signals.html
+msgid "Replaces the source, side, category and keyword filters"
+msgstr "מחליף את המסננים של מקור, צד, קטגוריה ומילת מפתח"
+
+#: templates/Signals/signals.html
+msgid "Category IDs"
+msgstr "מזהי קטגוריות"
+
+#: templates/Signals/signals.html
+msgid "Keyword IDs"
+msgstr "מזהי מילות מפתח"
+
+#: templates/Signals/signals.html
+msgid "Evidence contains"
+msgstr "הראיה מכילה"
+
+#: templates/Signals/signals.html
+msgid "Event dates"
+msgstr "תאריכי אירועים"
+
+#: templates/Signals/signals.html
+msgid "Event dates from"
+msgstr "תאריכי אירועים מ-"
+
+#: templates/Signals/signals.html
+msgid "Event dates to"
+msgstr "תאריכי אירועים עד"
+
+#: templates/Signals/signals.html
+msgid "Confidence"
+msgstr "ודאות"
+
+#: templates/Signals/signals.html
+msgid "Calendar"
+msgstr "לוח שנה"
+
+#: templates/Signals/signals.html
+msgid "Detector"
+msgstr "גלאי"
+
+#: templates/Signals/signals.html
+msgid "Explorer only; Horizon shows dates"
+msgstr "לסייר בלבד; האופק מציג תאריכים"
+
+#: templates/Signals/signals.html
+msgid "Horizon"
+msgstr "אופק"
+
+#: templates/Signals/signals.html
+msgid "Signal Explorer"
+msgstr "סייר האותות"
+
+#: templates/Signals/signals.html
+msgid "When"
+msgstr "מתי"
+
+#: templates/Signals/signals.html
+msgid "Group"
+msgstr "קבוצה"
+
+#: templates/Signals/signals.html
+msgid "Reference"
+msgstr "אזכור"
+
+#: templates/Signals/signals.html
+msgid "Evidence"
+msgstr "ראיה"
+
+#: templates/Signals/signals.html
+msgid "Document"
+msgstr "מסמך"
+
+#: templates/Signals/signals.html
+msgid "Counts"
+msgstr "ספירות"
+
+#: templates/Signals/signals.html
+msgid "Signal"
+msgstr "אות"
+
+#: templates/Signals/signals.html
+msgid "Value"
+msgstr "ערך"
+
+#: templates/Signals/signals.html
+msgid "Overdue"
+msgstr "באיחור"
+
+#: templates/Signals/signals.html
+msgid "Next 7 days"
+msgstr "7 הימים הבאים"
+
+#: templates/Signals/signals.html
+msgid "Next 30 days"
+msgstr "30 הימים הבאים"
+
+#: templates/Signals/signals.html
+msgid "Next 90 days"
+msgstr "90 הימים הבאים"
+
+#: templates/Signals/signals.html
+msgid "Later"
+msgstr "מאוחר יותר"
+
+#: templates/Signals/signals.html
+msgid "Past"
+msgstr "עבר"
+
+#: templates/Signals/signals.html
+msgid "signals"
+msgstr "אותות"
+
+#: templates/Signals/signals.html
+msgid "documents"
+msgstr "מסמכים"
+
+#: templates/Signals/signals.html
+msgid "No signals match these filters."
+msgstr "אין אותות התואמים למסננים אלה."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s references have no single date (ambiguous: %(a)s, unresolved: %(u)s) and are not placed on the horizon."
+msgstr "ל-%(n)s אזכורים אין תאריך יחיד (דו-משמעיים: %(a)s, לא מוכרעים: %(u)s) והם אינם ממוקמים על האופק."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s of %(t)s matching documents have not been analysed by the current date detector (never analysed: %(never)s, older version: %(stale)s, failed: %(failed)s). They contribute nothing here until re-analysed; this is not the same as having no dates."
+msgstr "%(n)s מתוך %(t)s מסמכים תואמים לא נותחו על ידי גלאי התאריכים הנוכחי (מעולם לא נותחו: %(never)s, גרסה ישנה: %(stale)s, נכשלו: %(failed)s). הם אינם תורמים דבר כאן עד שינותחו מחדש; אין זה כמו היעדר תאריכים."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "All %(t)s matching documents were analysed by the current date detector."
+msgstr "כל %(t)s המסמכים התואמים נותחו על ידי גלאי התאריכים הנוכחי."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(from)s-%(to)s of %(total)s"
+msgstr "%(from)s-%(to)s מתוך %(total)s"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(total)s signals in %(contents)s documents"
+msgstr "%(total)s אותות ב-%(contents)s מסמכים"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s occurrences"
+msgstr "%(n)s מופעים"
+
+#: templates/Signals/signals.html
+msgid "Ambiguous between:"
+msgstr "דו-משמעי בין:"
+
+#: templates/Signals/signals.html
+msgid "Detector version"
+msgstr "גרסת הגלאי"
+
+#: templates/Signals/signals.html
+msgid "current"
+msgstr "נוכחית"
+
+#: templates/Signals/signals.html
+msgid "outdated - re-analysis pending"
+msgstr "מיושנת - ניתוח מחדש ממתין"
+
+#: templates/Signals/signals.html
+msgid "Basis"
+msgstr "בסיס"
+
+#: templates/Signals/signals.html
+msgid "Resolution"
+msgstr "הכרעה"
+
+#: templates/Signals/signals.html
+msgid "Sentence orientation"
+msgstr "כיוון המשפט בזמן"
+
+#: templates/Signals/signals.html
+msgid "Analysis run"
+msgstr "הרצת ניתוח"
+
+#: templates/Signals/signals.html
+msgid "Structured evidence"
+msgstr "ראיה מובנית"
+
+#: templates/Signals/signals.html
+msgid "Open file"
+msgstr "פתח קובץ"
+
+#: templates/Signals/signals.html
+msgid "Detected"
+msgstr "זוהה"
+
+#: templates/Signals/signals.html
+msgid "not recorded"
+msgstr "לא נרשם"
+
+#: templates/Signals/signals.html
+msgid "not specified"
+msgstr "לא צוין"
+
+#: templates/Signals/signals.html
+msgid "Event date"
+msgstr "תאריך אירוע"
+
+#: templates/Signals/signals.html
+msgid "Recently detected"
+msgstr "זוהו לאחרונה"
+
+#: templates/Signals/signals.html
+msgid "Document order"
+msgstr "סדר המסמך"
+
+#: templates/Signals/signals.html
+msgid "The request failed"
+msgstr "הבקשה נכשלה"
+
+#: templates/Signals/signals.html
+msgid "Query fingerprint"
+msgstr "טביעת האצבע של השאילתה"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
+msgstr "רק %(n)s המקורות והצדדים הראשונים לפי שם מוצגים. השתמשו בחיפוש שמור כדי לסנן לפי אחרים."
+
+#: templates/Signals/signals.html
+msgid "The source and side lists could not be loaded. Other filters still work."
+msgstr "לא ניתן היה לטעון את רשימות המקורות והצדדים. שאר המסננים עדיין פועלים."
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr "זוהו קבצים כפולים: %(file_name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr "זוהו קבצים כפולים"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr "נמצאו %(count)s קבצים כפולים עם אותו גיבוב. קבצים: %(files)s"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr "נמצאו %(count)s קבצים כפולים עם אותו גיבוב"
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr "תקציר כלל: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr "%(count)s התאמות חדשות מאז התקציר האחרון"
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr "הכלל הושבת: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr "כלל: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr "%(count)s התאמות נוספות ב-%(groups)s קבוצות (הושגה מגבלת ההתראות להערכה)"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr "הכלל הושבת כי חשבון הבעלים שלו אינו פעיל."
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr "תרחיש: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr "%(count)s התאמות חדשות: %(label)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr "%(count)s התאמות חדשות"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr "הכלל הושבת כי תפקיד הבעלים שלו אינו מאפשר עוד כללי ניטור."
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr "%(count)s תכנים נוספים נכנסו לתוצאות עם התראה (הושגה מגבלת ההתראות להערכה)"
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr "התרחיש הושבת: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr "תוכן %(id)s"
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr "התרחיש הושבת כי חשבון הבעלים שלו אינו פעיל."
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr "התרחיש הושבת כי תפקיד הבעלים שלו אינו מאפשר עוד תרחישים."
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr "תוצאה %(outcome)s: %(target)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr "תרחישים מסווגים מסמכים לתוצאות; כללים עוקבים אחר אותות תואמים חדשים. שניהם מודיעים לבעלים שלהם בלבד."
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr "כיצד פועל הניטור"
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr "תרחיש מוערך מול האותות השמורים. כל מסמך באוכלוסייה שלו מקבל החלטה אחת בדיוק: התוצאה של המקרה התואם, או תוצאת ברירת המחדל."
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr "לא ניתן להפעיל תרחיש עד שהרצת ניסיון של ההגדרה הנוכחית המדויקת שלו עברה בהצלחה. הרצת הניסיון אינה משנה דבר: היא מדווחת מה יקרה."
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr "כאשר תרחיש או כלל מתחילים, מה שכבר תואם נרשם כבסיס ואינו מדווח, אלא אם ההגדרה קובעת notify_existing."
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr "היסטוריית התוצאות לעולם אינה נדרסת: כל שינוי הוא רשומה חדשה עם התוצאה הקודמת."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr "עדיפות ההתראה נגזרת מהראיות (רמת הביטחון ועד כמה האירוע קרוב), ואינה נבחרת ידנית."
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr "רק מסמכים שהבעלים רשאי לקרוא מוערכים. אם הבעלים מאבד את ההרשאה, התרחיש או הכלל מושבתים."
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr "תרחישים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr "כללים"
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr "כל המשתמשים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr "הצג בארכיון"
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr "תרחיש חדש"
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr "אסטרטגיה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr "הערכה אחרונה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr "בעלים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr "הגדרה (JSON)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr "תנאים, מקרים, תוצאות, תוצאת ברירת המחדל החובה והאסטרטגיה (first_match, all_matching או highest_priority). ראו docs/implementation/SCENARIOS.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr "הרצת הניסיון האחרונה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr "היסטוריית תוצאות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr "תוצאה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr "תוצאה קודמת"
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr "מקרים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr "מסירה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr "נרשם"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr "הערכות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr "גורם הפעלה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr "ההגדרה הנוכחית"
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr "כלל חדש"
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr "בסיס"
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr "קריטריונים, מסנן אותות, ביטחון מינימלי, חלון אירוע, סף, זמן צינון, קיבוץ ומסירה. ראו docs/implementation/RULE_ENGINE.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr "טיוטה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr "מושהה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr "מושבת"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr "בארכיון"
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr "התאמה ראשונה"
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr "כל ההתאמות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr "העדיפות הגבוהה ביותר"
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr "אף פעם"
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr "כן"
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr "לא"
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr "אין"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr "%(n)s תרחישים"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr "%(n)s כללים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr "מוצגים רק %(n)s הראשונים."
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr "אין עדיין תרחישים."
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr "אין עדיין כללים."
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr "עדיין לא נרשמו תוצאות."
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr "אין עדיין הערכות."
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr "תרחיש זה עדיין לא הורץ בניסיון."
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr "עריכת תרחיש"
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr "עריכת כלל"
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr "הרצת ניסיון"
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr "הפעלה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr "העברה לארכיון"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr "הערכה עכשיו"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr "השתקה לשעה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr "להעביר לארכיון? הפעולה תיפסק לצמיתות; ההיסטוריה נשמרת."
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr "ההגדרה אינה JSON תקין: %(error)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr "תקין. טביעת אצבע %(fp)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr "אזהרות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr "נשמר."
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr "נשמר כגרסה %(v)s. הוא שוב טיוטה: יש להריץ ניסיון לפני ההפעלה."
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr "משימה %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr "משימה %(id)s הסתיימה: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr "משימה %(id)s עדיין פועלת. רעננו מאוחר יותר כדי לראות את התוצאה."
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr "טביעת אצבע של ההגדרה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr "הושבת מפני ש: %(reason)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr "חשבון הבעלים אינו פעיל"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr "תפקיד הבעלים אינו מאפשר זאת עוד"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr "הבסיס נרשם"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr "הבסיס ממתין"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr "מושתק עד %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr "עבר"
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr "לא תקין"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr "הבעלים אינו זכאי"
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr "הרצת ניסיון זו הייתה של גרסה %(v)s; הגרסה הנוכחית זקוקה להרצת ניסיון משלה."
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr "אוכלוסייה: %(n)s מסמכים"
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr "נמדד על תמונת מצב עקבית אחת ב-%(t)s, תאריך ייחוס %(d)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr "התראות בעת ההפעלה: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr "ההתאמות הקיימות הופכות לבסיס"
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr "שום דבר לא ייכנס לתוצאה עם התראה"
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr "notify_existing מוגדר"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr "עוד %(n)s יסוכמו בהתראת גלישה אחת."
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr "הערכה: %(per_day)s מסמכים עם התראה ביום"
+
+#: templates/Monitoring/monitoring.html
+msgid "Case"
+msgstr "מקרה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr "התאמות"
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr "מכריע"
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr "מסמכים עם תוצאה שאינה ברירת המחדל, לפי:"
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr "קטגוריית אנליסט"
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr "%(n)s המובילים מתוך %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr "ל-%(n)s מסמכים יש תוצאה שאינה ברירת המחדל."
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr "בסיס"
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr "נרשם"
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr "נשלחה התראה"
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr "בסיכום הגלישה"
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr "יצא מהאוכלוסייה"
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr "דולג (כבר פועל)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr "לא פעיל"
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr "מסמך %(id)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr "התפקיד שלך מאפשר לצפות בניטור אך לא לשנות אותו."
+
+#: core/reporting/definitions.py
+msgid "Search Results Report"
+msgstr "דוח תוצאות חיפוש"
+
+#: core/reporting/definitions.py
+msgid "Every file that matches a saved set of search criteria, with the exact match count."
+msgstr "כל קובץ שתואם קבוצה שמורה של קריטריוני חיפוש, עם המספר המדויק של ההתאמות."
+
+#: core/reporting/definitions.py
+msgid "Search criteria"
+msgstr "קריטריוני חיפוש"
+
+#: core/reporting/definitions.py
+msgid "File ID"
+msgstr "מזהה קובץ"
+
+#: core/reporting/definitions.py
+msgid "File name"
+msgstr "שם קובץ"
+
+#: core/reporting/definitions.py
+msgid "File type"
+msgstr "סוג קובץ"
+
+#: core/reporting/definitions.py
+msgid "File date"
+msgstr "תאריך קובץ"
+
+#: core/reporting/definitions.py
+msgid "Content ID"
+msgstr "מזהה תוכן"
+
+#: core/reporting/definitions.py
+msgid "Matching files"
+msgstr "קבצים תואמים"
+
+#: core/reporting/definitions.py
+msgid "About the Search Results Report"
+msgstr "אודות דוח תוצאות החיפוש"
+
+#: core/reporting/definitions.py
+msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
+msgstr "מציג את הקבצים שתואמים את הקריטריונים שלך ברגע אחד, מציין כמה התאימו בסך הכול ומודיע כאשר הרשימה מקוצרת."
+
+#: templates/Reports/reports.html
+msgid "Reports"
+msgstr "דוחות"
+
+#: templates/Reports/reports.html
+msgid "Run a registered report and read exactly what it computed: every dataset comes from one database snapshot, with its counts and any shortening stated."
+msgstr "הפעילו דוח רשום וקראו בדיוק מה חישב: כל מערך נתונים נלקח מתמונת מצב אחת של מסד הנתונים, עם הספירות שלו וכל קיצור מצוין."
+
+#: templates/Reports/reports.html
+msgid "How reports work"
+msgstr "איך דוחות עובדים"
+
+#: templates/Reports/reports.html
+msgid "A report is a reviewed, versioned definition. Changing what a report means creates a new version; a run always records the version and fingerprint it used."
+msgstr "דוח הוא הגדרה שנבדקה ובעלת גרסאות. שינוי משמעות הדוח יוצר גרסה חדשה; כל הרצה מתעדת תמיד את הגרסה ואת טביעת האצבע שבהן השתמשה."
+
+#: templates/Reports/reports.html
+msgid "A run is a background job. All its datasets are read from the same database snapshot, so the numbers in one run always agree with each other."
+msgstr "הרצה היא משימת רקע. כל מערכי הנתונים שלה נקראים מאותה תמונת מצב של מסד הנתונים, ולכן המספרים בהרצה אחת תמיד מתיישבים זה עם זה."
+
+#: templates/Reports/reports.html
+msgid "Each dataset states its limit: exact results are complete or the run fails; capped and top-N results say when rows were left out."
+msgstr "כל מערך נתונים מציין את המגבלה שלו: תוצאות מדויקות שלמות, אחרת ההרצה נכשלת; תוצאות מוגבלות ותוצאות N המובילות מציינות מתי הושמטו שורות."
+
+#: templates/Reports/reports.html
+msgid "Only documents you may read are included. You see your own runs; administrators can see everyone's."
+msgstr "נכללים רק מסמכים שמותר לכם לקרוא. אתם רואים את ההרצות שלכם; מנהלים יכולים לראות את של כולם."
+
+#: templates/Reports/reports.html
+msgid "Run a report"
+msgstr "הפעלת דוח"
+
+#: templates/Reports/reports.html
+msgid "Report"
+msgstr "דוח"
+
+#: templates/Reports/reports.html
+msgid "Run report"
+msgstr "הפעל דוח"
+
+#: templates/Reports/reports.html
+msgid "Runs"
+msgstr "הרצות"
+
+#: templates/Reports/reports.html
+msgid "Refused"
+msgstr "נדחה"
+
+#: templates/Reports/reports.html
+msgid "Cancelled"
+msgstr "בוטל"
+
+#: templates/Reports/reports.html
+msgid "Running"
+msgstr "רץ"
+
+#: templates/Reports/reports.html
+msgid "Queued"
+msgstr "בתור"
+
+#: templates/Reports/reports.html
+msgid "Requested"
+msgstr "נדרש"
+
+#: templates/Reports/reports.html
+msgid "Rows"
+msgstr "שורות"
+
+#: templates/Reports/reports.html
+msgid "Requested by"
+msgstr "התבקש על ידי"
+
+#: templates/Reports/reports.html
+msgid "Provenance"
+msgstr "מקור ומעקב"
+
+#: templates/Reports/reports.html
+msgid "Dataset"
+msgstr "מערך נתונים"
+
+#: templates/Reports/reports.html
+msgid "Exact: every row, or the run fails."
+msgstr "מדויק: כל השורות, אחרת ההרצה נכשלת."
+
+#: templates/Reports/reports.html
+msgid "Capped: at most %(limit)s rows."
+msgstr "מוגבל: לכל היותר %(limit)s שורות."
+
+#: templates/Reports/reports.html
+msgid "Top %(limit)s: a ranked prefix."
+msgstr "%(limit)s המובילים: קידומת מדורגת."
+
+#: templates/Reports/reports.html
+msgid "Shortened: this list stops at %(limit)s rows and more rows matched. The exact count is in the count dataset."
+msgstr "מקוצר: הרשימה נעצרת ב-%(limit)s שורות ושורות נוספות תאמו. הספירה המדויקת נמצאת במערך נתוני הספירה."
+
+#: templates/Reports/reports.html
+msgid "Only the top %(limit)s rows are kept; more rows existed."
+msgstr "נשמרות רק %(limit)s השורות המובילות; היו שורות נוספות."
+
+#: templates/Reports/reports.html
+msgid "Complete: %(n)s rows."
+msgstr "שלם: %(n)s שורות."
+
+#: templates/Reports/reports.html
+msgid "Counts: %(unit)s"
+msgstr "יחידת ספירה: %(unit)s"
+
+#: templates/Reports/reports.html
+msgid "Datasets"
+msgstr "מערכי נתונים"
+
+#: templates/Reports/reports.html
+msgid "Criteria from"
+msgstr "הקריטריונים מתוך"
+
+#: templates/Reports/reports.html
+msgid "A saved search"
+msgstr "חיפוש שמור"
+
+#: templates/Reports/reports.html
+msgid "Criteria (JSON)"
+msgstr "קריטריונים (JSON)"
+
+#: templates/Reports/reports.html
+msgid "You have no saved searches. Save one on the Search page, or enter criteria as JSON."
+msgstr "אין לכם חיפושים שמורים. שמרו חיפוש בדף החיפוש, או הזינו קריטריונים כ-JSON."
+
+#: templates/Reports/reports.html
+msgid "The criteria are not valid JSON."
+msgstr "הקריטריונים אינם JSON תקין."
+
+#: templates/Reports/reports.html
+msgid "Choose..."
+msgstr "בחרו..."
+
+#: templates/Reports/reports.html
+msgid "No report is available to your role."
+msgstr "אין דוח זמין לתפקיד שלכם."
+
+#: templates/Reports/reports.html
+msgid "No runs yet."
+msgstr "אין הרצות עדיין."
+
+#: templates/Reports/reports.html
+msgid "This dataset has no rows."
+msgstr "אין שורות במערך נתונים זה."
+
+#: templates/Reports/reports.html
+msgid "Viewers can read reports but not run them."
+msgstr "צופים יכולים לקרוא דוחות אך לא להפעיל אותם."
+
+#: templates/Reports/reports.html
+msgid "Refused: %(reason)s. Nothing was read."
+msgstr "נדחה: %(reason)s. לא נקרא דבר."
+
+#: templates/Reports/reports.html
+msgid "the requesting account is inactive"
+msgstr "החשבון המבקש אינו פעיל"
+
+#: templates/Reports/reports.html
+msgid "the requesting account no longer exists"
+msgstr "החשבון המבקש כבר אינו קיים"
+
+#: templates/Reports/reports.html
+msgid "the requester's role may no longer run this report"
+msgstr "תפקיד המבקש כבר אינו מורשה להפעיל דוח זה"
+
+#: templates/Reports/reports.html
+msgid "Failed: %(error)s"
+msgstr "נכשל: %(error)s"
+
+#: templates/Reports/reports.html
+msgid "Cancelled before it finished. Nothing was kept."
+msgstr "בוטל לפני שהסתיים. דבר לא נשמר."
+
+#: templates/Reports/reports.html
+msgid "This run has not finished yet."
+msgstr "הרצה זו טרם הסתיימה."
+
+#: templates/Reports/reports.html
+msgid "Completed. Snapshot taken %(when)s."
+msgstr "הושלם. תמונת המצב נלקחה ב-%(when)s."
+
+#: templates/Reports/reports.html
+msgid "Parameters"
+msgstr "פרמטרים"
+
+#: templates/Reports/reports.html
+msgid "Parameters fingerprint"
+msgstr "טביעת אצבע של הפרמטרים"
+
+#: templates/Reports/reports.html
+msgid "Criteria fingerprint"
+msgstr "טביעת אצבע של הקריטריונים"
+
+#: templates/Reports/reports.html
+msgid "Role at run time"
+msgstr "תפקיד בזמן ההרצה"
+
+#: templates/Reports/reports.html
+msgid "Database snapshot"
+msgstr "תמונת מצב של מסד הנתונים"
+
+#: templates/Reports/reports.html
+msgid "Isolation"
+msgstr "רמת בידוד"
+
+#: templates/Reports/reports.html
+msgid "Generator"
+msgstr "מחולל"
+
+#: templates/Reports/reports.html
+msgid "Finished"
+msgstr "הסתיים"
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s: %(status)s..."
+msgstr "משימה %(id)s: %(status)s..."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s finished: %(status)s."
+msgstr "משימה %(id)s הסתיימה: %(status)s."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s is still running; refresh the runs list later."
+msgstr "משימה %(id)s עדיין רצה; רעננו את רשימת ההרצות מאוחר יותר."
+
+#: templates/Reports/reports.html
+msgid "No runs match this filter."
+msgstr "אין הרצות התואמות למסנן זה."
+
+msgid "Files are made on the server from the rows this run stored. Each has a manifest and a SHA-256 checksum; every download is recorded in the audit log."
+msgstr "הקבצים נוצרים בשרת מהשורות שהריצה הזו שמרה. לכל קובץ יש מניפסט וסכום ביקורת SHA-256, וכל הורדה נרשמת ביומן הביקורת."
+
+msgid "Format"
+msgstr "תבנית"
+
+msgid "Create file"
+msgstr "יצירת קובץ"
+
+msgid "All datasets"
+msgstr "כל מערכי הנתונים"
+
+msgid "No files have been made from this run yet."
+msgstr "עדיין לא נוצרו קבצים מהריצה הזו."
+
+msgid "Files can be made from completed runs only."
+msgstr "ניתן ליצור קבצים רק מריצות שהושלמו."
+
+msgid "This file already exists and is listed below."
+msgstr "הקובץ הזה כבר קיים ומופיע למטה."
+
+msgid "File created."
+msgstr "הקובץ נוצר."
+
+#, python-format
+msgid "Not available yet: %(format)s (%(reason)s)"
+msgstr "עדיין לא זמין: %(format)s (%(reason)s)"
+
+#, python-format
+msgid "%(n)s bytes"
+msgstr "%(n)s בתים"
+
+msgid "Manifest"
+msgstr "מניפסט"
+
+msgid "Verify"
+msgstr "אימות"
+
+msgid "Verified: the stored file matches its SHA-256 checksum and its manifest."
+msgstr "אומת: הקובץ השמור תואם לסכום הביקורת SHA-256 שלו ולמניפסט שלו."
+
+#, python-format
+msgid "Verification failed: %(checks)s. The file will not be sent."
+msgstr "האימות נכשל: %(checks)s. הקובץ לא יישלח."
+
+#: templates/auth/audit.html
+msgid "Who did what, to what, when and from where. This page only reads the log; nothing here changes it."
+msgstr "מי עשה מה, למה, מתי ומאיפה. דף זה רק קורא את היומן; דבר כאן אינו משנה אותו."
+
+#: templates/auth/audit.html
+msgid "Reading the audit log"
+msgstr "קריאת יומן הביקורת"
+
+#: templates/auth/audit.html
+msgid "DATA_EXPORTED entries record every file that left the system: who took it, which report, search or record it came from, how many rows, and its SHA-256 checksum."
+msgstr "רשומות DATA_EXPORTED מתעדות כל קובץ שיצא מהמערכת: מי לקח אותו, מאיזה דוח, חיפוש או רשומה הגיע, כמה שורות, ואת סכום הביקורת SHA-256 שלו."
+
+#: templates/auth/audit.html
+msgid "Newest entries come first. Use Older and Newer to move through the log; the total is not counted because the log grows without limit."
+msgstr "הרשומות החדשות ביותר מופיעות ראשונות. השתמשו ב«ישנות יותר» וב«חדשות יותר» כדי לנוע ביומן; הסך הכול אינו נספר כי היומן גדל ללא הגבלה."
+
+#: templates/auth/audit.html
+msgid "Select a user or a resource in the list to show only its entries."
+msgstr "בחרו משתמש או משאב ברשימה כדי להציג רק את הרשומות שלו."
+
+#: templates/auth/audit.html
+msgid "Any action"
+msgstr "כל פעולה"
+
+#: templates/auth/audit.html
+msgid "User name"
+msgstr "שם משתמש"
+
+#: templates/auth/audit.html
+msgid "Resource starts with"
+msgstr "המשאב מתחיל ב־"
+
+#: templates/auth/audit.html
+msgid "From (inclusive)"
+msgstr "מ־ (כולל)"
+
+#: templates/auth/audit.html
+msgid "Until (exclusive)"
+msgstr "עד (לא כולל)"
+
+#: templates/auth/audit.html
+msgid "Show entries"
+msgstr "הצג רשומות"
+
+#: templates/auth/audit.html
+msgid "Resource"
+msgstr "משאב"
+
+#: templates/auth/audit.html
+msgid "IP address"
+msgstr "כתובת IP"
+
+#: templates/auth/audit.html
+msgid "no user (system or anonymous)"
+msgstr "אין משתמש (מערכת או אנונימי)"
+
+#: templates/auth/audit.html
+msgid "Older"
+msgstr "ישנות יותר"
+
+#: templates/auth/audit.html
+msgid "Newer"
+msgstr "חדשות יותר"
+
+#: templates/auth/audit.html
+msgid "No entries match these filters."
+msgstr "אין רשומות התואמות למסננים אלה."
+
+#: templates/auth/audit.html
+msgid "The audit log is empty."
+msgstr "יומן הביקורת ריק."
+
+#: templates/auth/audit.html
+msgid "Showing %(count)s entries, newest first."
+msgstr "מוצגות %(count)s רשומות, החדשות ראשונות."
+
+#: templates/auth/audit.html
+msgid "More entries exist; use Older to continue."
+msgstr "קיימות רשומות נוספות; השתמשו ב«ישנות יותר» כדי להמשיך."
+
+#: templates/auth/audit.html
+msgid "These are the oldest matching entries."
+msgstr "אלה הרשומות התואמות הישנות ביותר."
+
+#: templates/auth/audit.html
+msgid "The total is not counted."
+msgstr "הסך הכול אינו נספר."
+
+#: templates/auth/audit.html
+msgid "Only the first %(cap)s action names are listed."
+msgstr "רק %(cap)s שמות הפעולות הראשונים מוצגים."
+
+#: templates/auth/audit.html
+msgid "Audit entry %(id)s"
+msgstr "רשומת ביקורת %(id)s"
+
+#: templates/auth/audit.html
+msgid "Show only this user's entries"
+msgstr "הצג רק את הרשומות של משתמש זה"
+
+#: templates/auth/audit.html
+msgid "Show only entries for resources starting with this"
+msgstr "הצג רק רשומות של משאבים המתחילים בזה"
+
+#: templates/auth/audit.html
+msgid "Entry"
+msgstr "רשומה"
+
+#: templates/auth/audit.html
+msgid "User id"
+msgstr "מזהה משתמש"
+
+#: templates/Signals/detection.html
+msgid "Detection"
+msgstr "זיהוי"
+
+#: templates/Signals/detection.html
+msgid "Which detector version analysed which content and with what outcome. Content that was never analysed is counted separately: it is not the same as content in which nothing was found."
+msgstr "איזו גרסת גלאי ניתחה איזה תוכן ובאיזו תוצאה. תוכן שמעולם לא נותח נספר בנפרד: הוא אינו זהה לתוכן שבו לא נמצא דבר."
+
+#: templates/Signals/detection.html
+msgid "How detection is recorded"
+msgstr "כיצד הזיהוי מתועד"
+
+#: templates/Signals/detection.html
+msgid "Each content is analysed once by each detector, at ingestion or by re-detection. The run records the detector version, the outcome and the number of signals found."
+msgstr "כל תוכן מנותח פעם אחת בכל גלאי, בעת הקליטה או בזיהוי מחדש. ההרצה מתעדת את גרסת הגלאי, את התוצאה ואת מספר האותות שנמצאו."
+
+#: templates/Signals/detection.html
+msgid "Stale content was never analysed, was analysed by an older version (for places, an older gazetteer), or its last run failed. Re-detecting stale content analyses exactly these."
+msgstr "תוכן מיושן לא נותח מעולם, נותח בגרסה ישנה יותר (למקומות: מילון גאוגרפי ישן יותר), או שההרצה האחרונה שלו נכשלה. זיהוי מחדש של תוכן מיושן מנתח בדיוק את אלה."
+
+#: templates/Signals/detection.html
+msgid "Re-detection runs as a background job and replaces the stored signals of each content it analyses. It is recorded in the audit log."
+msgstr "זיהוי מחדש רץ כמשימת רקע ומחליף את האותות השמורים של כל תוכן שהוא מנתח. הוא מתועד ביומן הביקורת."
+
+#: templates/Signals/detection.html
+msgid "Coverage"
+msgstr "כיסוי"
+
+#: templates/Signals/detection.html
+msgid "Current version"
+msgstr "הגרסה הנוכחית"
+
+#: templates/Signals/detection.html
+msgid "Complete"
+msgstr "הושלם"
+
+#: templates/Signals/detection.html
+msgid "Truncated"
+msgstr "קוצר"
+
+#: templates/Signals/detection.html
+msgid "No text"
+msgstr "אין טקסט"
+
+#: templates/Signals/detection.html
+msgid "Older version"
+msgstr "גרסה ישנה יותר"
+
+#: templates/Signals/detection.html
+msgid "Never analysed"
+msgstr "מעולם לא נותח"
+
+#: templates/Signals/detection.html
+msgid "Stale"
+msgstr "מיושן"
+
+#: templates/Signals/detection.html
+msgid "Re-detect"
+msgstr "זיהוי מחדש"
+
+#: templates/Signals/detection.html
+msgid "Stale content only"
+msgstr "תוכן מיושן בלבד"
+
+#: templates/Signals/detection.html
+msgid "Listed content ids"
+msgstr "מזהי התוכן הרשומים"
+
+#: templates/Signals/detection.html
+msgid "All content"
+msgstr "כל התוכן"
+
+#: templates/Signals/detection.html
+msgid "Detectors"
+msgstr "גלאים"
+
+#: templates/Signals/detection.html
+msgid "Content ids (hash ids), separated by spaces, commas or new lines"
+msgstr "מזהי תוכן (מזהי גיבוב), מופרדים ברווחים, בפסיקים או בשורות חדשות"
+
+#: templates/Signals/detection.html
+msgid "I understand that this analyses every stored content again and replaces its signals."
+msgstr "אני מבין/ה שפעולה זו מנתחת מחדש כל תוכן שמור ומחליפה את האותות שלו."
+
+#: templates/Signals/detection.html
+msgid "Start re-detection"
+msgstr "התחל זיהוי מחדש"
+
+#: templates/Signals/detection.html
+msgid "Any version"
+msgstr "כל גרסה"
+
+#: templates/Signals/detection.html
+msgid "Any trigger"
+msgstr "כל מקור הפעלה"
+
+#: templates/Signals/detection.html
+msgid "Re-detection"
+msgstr "זיהוי מחדש"
+
+#: templates/Signals/detection.html
+msgid "Content id"
+msgstr "מזהה תוכן"
+
+#: templates/Signals/detection.html
+msgid "Show runs"
+msgstr "הצג הרצות"
+
+#: templates/Signals/detection.html
+msgid "Ran at"
+msgstr "הורץ ב־"
+
+#: templates/Signals/detection.html
+msgid "Signals"
+msgstr "אותות"
+
+#: templates/Signals/detection.html
+msgid "Characters scanned"
+msgstr "תווים שנסרקו"
+
+#: templates/Signals/detection.html
+msgid "Any detector"
+msgstr "כל גלאי"
+
+#: templates/Signals/detection.html
+msgid "Any outcome"
+msgstr "כל תוצאה"
+
+#: templates/Signals/detection.html
+msgid "The current version cannot be determined (for places: no gazetteer is loaded). Every content counts as stale until it can."
+msgstr "לא ניתן לקבוע את הגרסה הנוכחית (למקומות: לא נטען מילון גאוגרפי). כל תוכן נחשב מיושן עד שיהיה אפשר."
+
+#: templates/Signals/detection.html
+msgid "%(analysable)s contents have stored text; %(stale)s are stale for at least one detector. Exact counts from one database snapshot taken %(at)s."
+msgstr "ל־%(analysable)s תכנים יש טקסט שמור; %(stale)s מיושנים לפחות עבור גלאי אחד. ספירות מדויקות מתמונת מצב אחת של מסד הנתונים שנלקחה ב־%(at)s."
+
+#: templates/Signals/detection.html
+msgid "Re-detect stale"
+msgstr "זהה מחדש את המיושנים"
+
+#: templates/Signals/detection.html
+msgid "Nothing is stale."
+msgstr "אין דבר מיושן."
+
+#: templates/Signals/detection.html
+msgid "and %(count)s more"
+msgstr "ועוד %(count)s"
+
+#: templates/Signals/detection.html
+msgid "no file"
+msgstr "אין קובץ"
+
+#: templates/Signals/detection.html
+msgid "Showing %(from)s-%(to)s, newest first."
+msgstr "מוצגים %(from)s-%(to)s, החדשים ראשונים."
+
+#: templates/Signals/detection.html
+msgid "More runs exist."
+msgstr "קיימות הרצות נוספות."
+
+#: templates/Signals/detection.html
+msgid "No more runs."
+msgstr "אין הרצות נוספות."
+
+#: templates/Signals/detection.html
+msgid "No runs match these filters."
+msgstr "אין הרצות התואמות למסננים אלה."
+
+#: templates/Signals/detection.html
+msgid "No content has been analysed yet."
+msgstr "עדיין לא נותח שום תוכן."
+
+#: templates/Signals/detection.html
+msgid "%(scanned)s of %(total)s"
+msgstr "%(scanned)s מתוך %(total)s"
+
+#: templates/Signals/detection.html
+msgid "Re-detection job %(id)s queued."
+msgstr "משימת הזיהוי מחדש %(id)s נכנסה לתור."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s. %(processed)s contents analysed, %(signals)s signals, %(failed)s failed."
+msgstr "משימה %(id)s: %(status)s. נותחו %(processed)s תכנים, %(signals)s אותות, %(failed)s נכשלו."
+
+#: templates/Signals/detection.html
+msgid "Some runs failed; they are listed under Runs with their error."
+msgstr "חלק מההרצות נכשלו; הן מופיעות תחת «הרצות» עם השגיאה שלהן."
+
+#: templates/Signals/detection.html
+msgid "Choose at least one detector."
+msgstr "בחרו לפחות גלאי אחד."
+
+#: templates/Signals/detection.html
+msgid "List at least one content id."
+msgstr "ציינו לפחות מזהה תוכן אחד."
+
+#: templates/Signals/detection.html
+msgid "Content ids must be positive whole numbers: %(bad)s"
+msgstr "מזהי תוכן חייבים להיות מספרים שלמים חיוביים: %(bad)s"
+
+#: templates/Signals/detection.html
+msgid "Confirm that every content should be analysed again."
+msgstr "אשרו שיש לנתח מחדש כל תוכן."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s."
+msgstr "משימה %(id)s: %(status)s."
+
+#: core/reporting/definitions.py
+msgid "Distinctive Terms Report"
+msgstr "דוח מונחים מובחנים"
+
+#: core/reporting/definitions.py
+msgid "Which words the selected documents use more (or less) often than the rest of the collection, with how sure that is."
+msgstr "אילו מילים המסמכים שנבחרו משתמשים בהן יותר (או פחות) משאר האוסף, ועד כמה הדבר ודאי."
+
+#: core/reporting/definitions.py
+msgid "Used more often in the selection"
+msgstr "בשימוש תדיר יותר בבחירה"
+
+#: core/reporting/definitions.py
+msgid "Used less often in the selection"
+msgstr "בשימוש נדיר יותר בבחירה"
+
+#: core/reporting/datasets.py
+msgid "Term"
+msgstr "מונח"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the selection"
+msgstr "מופעים בבחירה"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the rest of the collection"
+msgstr "מופעים בשאר האוסף"
+
+#: core/reporting/datasets.py
+msgid "Log-likelihood (G2)"
+msgstr "לוג-נראות (G2)"
+
+#: core/reporting/datasets.py
+msgid "Log Ratio"
+msgstr "יחס לוגריתמי (Log Ratio)"
+
+#: core/reporting/datasets.py
+msgid "Counted words in the selection"
+msgstr "מילים שנספרו בבחירה"
+
+#: core/reporting/datasets.py
+msgid "Counted words in the rest of the collection"
+msgstr "מילים שנספרו בשאר האוסף"
+
+#: core/reporting/datasets.py
+msgid "Contents in the selection"
+msgstr "תכנים בבחירה"
+
+#: core/reporting/datasets.py
+msgid "Contents in the rest of the collection"
+msgstr "תכנים בשאר האוסף"
+
+#: core/reporting/datasets.py
+msgid "Word records without a count"
+msgstr "רשומות מילים ללא ספירה"
+
+#: core/reporting/datasets.py
+msgid "Significant terms"
+msgstr "מונחים מובהקים"
+
+#: core/reporting/definitions.py
+msgid "About the Distinctive Terms Report"
+msgstr "אודות דוח המונחים המובחנים"
+
+#: core/reporting/definitions.py
+msgid "Compares how often each word occurs in the documents you selected with the rest of the collection you may see, and lists the words whose difference is statistically reliable."
+msgstr "משווה את תדירות הופעתה של כל מילה במסמכים שבחרת לשאר האוסף הגלוי לך, ומפרט את המילים שההבדל בהן מהימן סטטיסטית."
+
+#: core/reporting/definitions.py
+msgid "Distinctive terms"
+msgstr "מונחים מובחנים"
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words. Next step: open the documents that contain the top terms."
+msgstr "מדד הבולטות משווה צורות מילים שמורות. הוא אינו מאחד נטיות, מילים נרדפות או שפות, ולכן בחירה בשפה שונה מזו של האוסף תציג את מילות התפקיד שלה. הצעד הבא: פתח את המסמכים המכילים את המונחים המובילים."
+
+#: core/analytics/kinds.py
+msgid "Next step: widen the criteria, or check that the matching documents were processed."
+msgstr "הצעד הבא: הרחב את הקריטריונים, או ודא שהמסמכים התואמים עובדו."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages. %(unknown_rows)s word records without a count were left out of every total. Next step: open the documents that contain the top terms."
+msgstr "מדד הבולטות משווה צורות מילים שמורות. הוא אינו מאחד נטיות, מילים נרדפות או שפות. %(unknown_rows)s רשומות מילים ללא ספירה הושמטו מכל הסכומים. הצעד הבא: פתח את המסמכים המכילים את המונחים המובילים."
+
+#: core/analytics/kinds.py
+msgid "No statistical test was performed."
+msgstr "לא בוצע מבחן סטטיסטי."
+
+#: core/analytics/kinds.py
+msgid "Only terms with G2 of at least %(critical)s count as findings (p < 0.0001; %(source)s). Every term in the vocabulary is tested, so the weaker significance levels are not treated as findings."
+msgstr "רק מונחים שערך ה-G2 שלהם הוא לפחות %(critical)s נחשבים לממצאים (p < 0.0001; %(source)s). כל מונח באוצר המילים נבדק, ולכן רמות מובהקות חלשות יותר אינן נחשבות לממצאים."
+
+#: core/analytics/kinds.py
+msgid "Any difference between the selection and the collection is not in word frequency at this level; categories, sources or dates may show one."
+msgstr "הבדל כלשהו בין הבחירה לאוסף אינו בתדירות המילים ברמה זו; קטגוריות, מקורות או תאריכים עשויים להראות אותו."
+
+#: core/analytics/kinds.py
+msgid "No conclusion can be drawn from this section."
+msgstr "לא ניתן להסיק מסקנה מחלק זה."
+
+#: core/analytics/kinds.py
+msgid "These terms characterise the selection against the rest of the collection. They show where it differs, not why: read the documents that contain them before drawing conclusions."
+msgstr "מונחים אלה מאפיינים את הבחירה לעומת שאר האוסף. הם מראים היכן היא שונה, לא מדוע: קרא את המסמכים המכילים אותם לפני שתסיק מסקנות."
+
+#: core/analytics/kinds.py
+msgid "The matching contents are the whole visible collection, so there is no reference to compare them with."
+msgstr "התכנים התואמים הם כל האוסף הגלוי, ולכן אין אוסף ייחוס להשוואה."
+
+#: core/analytics/kinds.py
+msgid "No visible content matches the criteria, so there is nothing to compare."
+msgstr "אף תוכן גלוי אינו תואם את הקריטריונים, ולכן אין מה להשוות."
+
+#: core/analytics/kinds.py
+msgid "The matching contents have no counted words, so keyness cannot be measured."
+msgstr "לתכנים התואמים אין מילים שנספרו, ולכן לא ניתן למדוד בולטות."
+
+#: core/analytics/kinds.py
+msgid "No term reaches G2 %(critical)s: at this level the selection's word frequencies do not differ from the rest of the collection."
+msgstr "אף מונח אינו מגיע ל-G2 של %(critical)s: ברמה זו תדירויות המילים בבחירה אינן שונות משאר האוסף."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "%(significant)s מונחים משמשים בבחירה באופן מובהק יותר מאשר בשאר האוסף (G2 של לפחות %(critical)s). החזק ביותר הוא „%(top_term)s”: G2 %(top_g2)s, יחס לוגריתמי %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "%(significant)s מונחים משמשים בבחירה באופן מובהק פחות מאשר בשאר האוסף (G2 של לפחות %(critical)s). החזק ביותר הוא „%(top_term)s”: G2 %(top_g2)s, יחס לוגריתמי %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) compares word frequencies in the selected contents with the other visible contents."
+msgstr "מדד הבולטות לפי לוג-נראות (G2) משווה תדירויות מילים בתכנים שנבחרו לתכנים הגלויים האחרים."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used more often in the selection, highest G2 first."
+msgstr "מדד הבולטות (G2) והיחס הלוגריתמי משווים %(target_tokens)s מילים שנספרו ב-%(target_contents)s תכנים שנבחרו ל-%(reference_tokens)s מילים ב-%(reference_contents)s התכנים הגלויים האחרים. מפורטים: %(shown)s המונחים שבשימוש תדיר יותר בבחירה, מה-G2 הגבוה ביותר."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used less often in the selection, highest G2 first."
+msgstr "מדד הבולטות (G2) והיחס הלוגריתמי משווים %(target_tokens)s מילים שנספרו ב-%(target_contents)s תכנים שנבחרו ל-%(reference_tokens)s מילים ב-%(reference_contents)s התכנים הגלויים האחרים. מפורטים: %(shown)s המונחים שבשימוש נדיר יותר בבחירה, מה-G2 הגבוה ביותר."
+
+#: templates/Reports/reports.html
+msgid "Analyses"
+msgstr "ניתוחים"
+
+#: templates/Reports/reports.html
+msgid "Measure"
+msgstr "מדד"
+
+#: templates/Reports/reports.html
+msgid "Finding"
+msgstr "ממצא"
+
+#: templates/Reports/reports.html
+msgid "Consequence"
+msgstr "משמעות"
+
+#: templates/Reports/reports.html
+msgid "Caveat"
+msgstr "הסתייגות"
+
+#: templates/Reports/reports.html
+msgid "Measured"
+msgstr "נמדד"
+
+#: templates/Reports/reports.html
+msgid "Not measurable"
+msgstr "לא ניתן למדידה"
+
+#: templates/Reports/reports.html
+msgid "Analysis %(key)s, templates %(templates)s"
+msgstr "ניתוח %(key)s, תבניות %(templates)s"
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the selected contents with those of the other visible contents."
+msgstr "מדד הבולטות (G2) והיחס הלוגריתמי משווים את שכיחויות המילים בתכנים שנבחרו לאלה שבתכנים הגלויים האחרים."
+
+#: core/analytics/kinds.py
+msgid "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. Contents in the rest of the collection: %(reference_contents)s; counted words: %(reference_tokens)s."
+msgstr "תכנים בבחירה: %(target_contents)s; מילים שנספרו: %(target_tokens)s. תכנים בשאר האוסף: %(reference_contents)s; מילים שנספרו: %(reference_tokens)s."
+
+#: core/analytics/kinds.py
+msgid "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "החזק ביותר הוא „%(top_term)s”: G2 %(top_g2)s, יחס לוגריתמי %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words."
+msgstr "מדד הבולטות משווה צורות מילים שמורות. הוא אינו מאחד נטיות, מילים נרדפות או שפות, ולכן בחירה בשפה שונה מזו של האוסף תציג את מילות התפקיד שלה."
+
+#: core/analytics/kinds.py
+msgid "Next step: open the documents that contain the top terms."
+msgstr "הצעד הבא: פתח את המסמכים המכילים את המונחים המובילים."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used more often in the selection."
+msgid_plural "Listed: %(shown)s terms used more often in the selection, highest G2 first."
+msgstr[0] "מפורט: מונח אחד שבשימוש תדיר יותר בבחירה."
+msgstr[1] "מפורטים: %(shown)s מונחים שבשימוש תדיר יותר בבחירה, מה-G2 הגבוה ביותר."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used less often in the selection."
+msgid_plural "Listed: %(shown)s terms used less often in the selection, highest G2 first."
+msgstr[0] "מפורט: מונח אחד שבשימוש נדיר יותר בבחירה."
+msgstr[1] "מפורטים: %(shown)s מונחים שבשימוש נדיר יותר בבחירה, מה-G2 הגבוה ביותר."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "מונח אחד משמש בבחירה באופן מובהק יותר מאשר בשאר האוסף (G2 של לפחות %(critical)s)."
+msgstr[1] "%(significant)s מונחים משמשים בבחירה באופן מובהק יותר מאשר בשאר האוסף (G2 של לפחות %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "מונח אחד משמש בבחירה באופן מובהק פחות מאשר בשאר האוסף (G2 של לפחות %(critical)s)."
+msgstr[1] "%(significant)s מונחים משמשים בבחירה באופן מובהק פחות מאשר בשאר האוסף (G2 של לפחות %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(unknown_rows)s word record without a count was left out of every total."
+msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
+msgstr[0] "רשומת מילה אחת ללא ספירה הושמטה מכל הסכומים."
+msgstr[1] "%(unknown_rows)s רשומות מילים ללא ספירה הושמטו מכל הסכומים."

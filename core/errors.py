@@ -24,6 +24,19 @@ from typing import Any, Dict, Optional
 from flask import g, jsonify, request
 from werkzeug.exceptions import HTTPException
 
+
+class ClientSafeError(Exception):
+    """An error whose ``str(exc)`` is written for the end user.
+
+    Raise it (or a subclass) for *rejections* - invalid input, a missing file,
+    a policy refusal - never for internal faults. Code that turns exceptions
+    into user-visible messages (the job worker, ``services.jobs.manager``)
+    shows the text of these as-is and logs them as warnings; every other
+    exception is reported as ``Internal error (<correlation id>)`` with the
+    detail kept server-side. The message must not contain secrets, SQL, paths
+    outside the application or other user input echoed back unescaped.
+    """
+
 logger = logging.getLogger(__name__)
 
 _counter_lock = threading.Lock()

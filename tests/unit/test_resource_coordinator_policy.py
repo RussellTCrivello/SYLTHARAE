@@ -235,5 +235,55 @@ def test_evaluate_pressure_is_the_only_place_that_decides(tmp_path):
     )
 
 
+# ---------------------------------------------------------------------------
+# One budget for recalculation and restore (field report after step 13)
+# ---------------------------------------------------------------------------
+# The owner's Windows log showed "Restored workers to 4" every few seconds at
+# 28 % memory with no "Reduced" line in between. Cause: every
+# get_safe_worker_count()/get_safe_db_pool_size() call recalculated a *web*
+# instance to ceiling - 1 (one worker kept for requests) and the monitor then
+# "restored" it to the full ceiling. The same recalculation also undid a
+# memory-pressure reduction the moment anything asked for a worker count.
+
+def test_the_monitor_does_not_take_back_the_web_request_worker(tmp_path):
+    coordinator = _coordinator(tmp_path, cpu_count=8, instance_type="web")
+    coordinator._update_resource_limits()
+    budget = coordinator.resource_limits.max_workers
+    assert budget == max(1, coordinator._worker_ceiling() - 1)
+
+    actions = []
+    for _ in range(5):
+        coordinator.get_safe_worker_count()
+        actions.append(coordinator._evaluate_pressure(100.0, 28.0))
+
+    assert actions == ["none"] * 5, "no restore without a preceding reduction"
+    assert coordinator.resource_limits.max_workers == budget
+
+
+def test_recalculation_does_not_undo_a_memory_pressure_reduction(tmp_path):
+    coordinator = _coordinator(tmp_path, cpu_count=8, instance_type="web")
+    coordinator._update_resource_limits()
+    budget = coordinator.resource_limits.max_workers
+    assert coordinator._evaluate_pressure(30.0, MEMORY_PRESSURE_PERCENT + 1) == "reduced"
+    reduced = coordinator.resource_limits.max_workers
+    assert reduced < budget
+
+    assert coordinator.get_safe_worker_count() == reduced
+    coordinator.get_safe_db_pool_size()
+    assert coordinator.resource_limits.max_workers == reduced
+
+    # Once the pressure is gone the restore goes back to the same budget,
+    # not past it.
+    for _ in range(10):
+        coordinator._evaluate_pressure(30.0, 20.0)
+    assert coordinator.resource_limits.max_workers == budget
+
+
+def test_a_cli_instance_keeps_the_whole_ceiling(tmp_path):
+    coordinator = _coordinator(tmp_path, cpu_count=8, instance_type="cli")
+    coordinator._update_resource_limits()
+    assert coordinator.resource_limits.max_workers == coordinator._worker_ceiling()
+
+
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-q"]))

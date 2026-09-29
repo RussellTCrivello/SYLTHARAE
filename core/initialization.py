@@ -216,6 +216,85 @@ def initialize_database_config(config: Dict[str, Any], skip_connection_test: boo
         logger.error(f"Error initializing database config: {e}")
 
 
+def _startup_print(message: str) -> None:
+    """Print a start-up line that is visible whatever the logging setup.
+
+    The upgrade runs before logging is configured, so INFO records are
+    dropped: a successful upgrade used to be invisible and a failed one
+    was only visible through Python's last-resort handler.
+    """
+    try:
+        print(message, flush=True)
+    except UnicodeEncodeError:
+        print(message.encode("ascii", "replace").decode("ascii"), flush=True)
+
+
+def _schema_db_config() -> Dict[str, Any]:
+    from settings.config import get_database_config
+
+    db = get_database_config()
+    return {
+        "host": db.host,
+        "port": int(db.port),
+        "user": db.user,
+        "password": db.password,
+        "database": db.database,
+    }
+
+
+def _describe_target(cfg: Dict[str, Any]) -> str:
+    """host:port/database - never the password."""
+    return f"{cfg.get('host')}:{cfg.get('port')}/{cfg.get('database')}"
+
+
+#: Tables whose presence means the application database has been installed
+#: (the authoritative half of the initialisation check, core/installer.py).
+CRITICAL_TABLES = ("users", "words", "paths", "contents")
+
+
+def installed_schema_present(cfg: Dict[str, Any]) -> Optional[bool]:
+    """Whether the application database exists and holds the critical tables.
+
+    ``True``: installed; ``False``: the database is missing or has not been
+    installed (setup pending); ``None``: no connection could be made, so the
+    question cannot be answered. Never creates anything.
+    """
+    return _probe_installed_schema(cfg)[0]
+
+
+def _connection_failure_reason(exc: Exception) -> str:
+    """The server's reason from a libpq connection error, without the preamble.
+
+    ``connection to server at "localhost" (::1), port 5432 failed: fe_sendauth:
+    no password supplied`` -> ``fe_sendauth: no password supplied``. libpq
+    repeats the message per address tried; the first line suffices.
+    """
+    first = (str(exc).strip().splitlines() or [""])[0]
+    return first.rsplit(" failed: ", 1)[-1].strip() or exc.__class__.__name__
+
+
+def _probe_installed_schema(cfg: Dict[str, Any]):
+    """``(installed_schema_present, reason)``; ``reason`` is set when ``None``."""
+    import psycopg2
+
+    try:
+        conn = psycopg2.connect(host=cfg["host"], port=cfg["port"], user=cfg["user"],
+                                password=cfg["password"], dbname=cfg["database"],
+                                connect_timeout=5)
+    except psycopg2.OperationalError as exc:
+        if "does not exist" in str(exc):
+            return False, None
+        return None, _connection_failure_reason(exc)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT count(*) FROM information_schema.tables"
+                        " WHERE table_schema = 'public' AND table_name = ANY(%s)",
+                        (list(CRITICAL_TABLES),))
+            return cur.fetchone()[0] == len(CRITICAL_TABLES), None
+    finally:
+        conn.close()
+
+
 def upgrade_database_schema():
     """Apply pending schema migrations to the configured database.
 
@@ -229,44 +308,82 @@ def upgrade_database_schema():
 
     Uses the single authoritative migration runner: idempotent,
     pending-only, each migration in its own transaction with rollback on
-    failure. An unreachable or unconfigured database only logs a warning -
-    startup continues so the setup gate and health checks can report the
-    problem (same tolerance the rest of startup has).
+    failure. Startup continues on failure (the setup gate and health checks
+    report the problem), but the outcome is printed with the target
+    database and the real cause: an unreachable server and a failing
+    migration are different problems and are reported as such.
 
-    Returns the list of migration versions applied (empty when current).
+    Returns the list of migration versions applied (empty when current or
+    on failure).
     """
     try:
-        from settings.config import get_database_config
+        cfg = _schema_db_config()
+    except Exception as e:
+        _startup_print(f"[WARNING] Schema upgrade skipped - no database configuration: {e}")
+        return []
+    target = _describe_target(cfg)
+    try:
         from database.bootstrap import bootstrap_database
 
-        db = get_database_config()
-        cfg = {
-            "host": db.host,
-            "port": int(db.port),
-            "user": db.user,
-            "password": db.password,
-            "database": db.database,
-        }
         report = bootstrap_database(cfg)
-        applied = report.get("applied_migrations") or []
-        if applied:
-            logger.info(
-                "✅ Applied pending schema migrations: %s (schema now at version %s)",
-                ", ".join(applied), report.get("current_version"),
-            )
-        else:
-            logger.info(
-                "✅ Database schema is up to date (version %s)",
-                report.get("current_version"),
-            )
-        return applied
     except Exception as e:
-        logger.warning(
-            "⚠️ Schema upgrade check skipped - database unreachable or not "
-            "configured yet: %s",
-            e,
-        )
+        cause = e.__cause__
+        detail = f"{e}" + (f" - {cause}" if cause is not None else "")
+        if "Migration " in str(e):
+            logger.error("Schema upgrade failed on %s: %s", target, detail)
+            _startup_print(
+                f"[ERROR] Schema upgrade FAILED on {target}: {detail}. The failing "
+                "migration was rolled back and later migrations were not applied; "
+                "features that need them will fail until this is fixed.")
+        else:
+            logger.warning("Schema upgrade skipped on %s: %s", target, detail)
+            _startup_print(f"[WARNING] Schema upgrade skipped - database {target} "
+                           f"unreachable or not configured yet: {detail}")
         return []
+    applied = report.get("applied_migrations") or []
+    if applied:
+        logger.info("Applied pending schema migrations on %s: %s (now at %s)",
+                    target, ", ".join(applied), report.get("current_version"))
+        _startup_print(f"[OK] Applied schema migrations {', '.join(applied)} on {target} "
+                       f"(schema now at version {report.get('current_version')})")
+    else:
+        logger.info("Database schema on %s is up to date (version %s)",
+                    target, report.get("current_version"))
+        _startup_print(f"[OK] Database schema is up to date (version "
+                       f"{report.get('current_version')}) on {target}")
+    return applied
+
+
+def upgrade_installed_schema():
+    """Apply pending migrations when the application database is installed.
+
+    Used on the start-up path that has no initialisation marker. The marker
+    (``.system_initialized``) is written only when ``config.json`` exists,
+    so an installation configured through ``.env`` - what the installer
+    writes - never gets one, and its schema used to be left stale forever
+    (field report: ``column "recipient_user_id" does not exist`` after
+    pulling m0020). The critical tables are the authoritative installed
+    check; before the setup wizard has created them nothing is created or
+    migrated here.
+    """
+    try:
+        cfg = _schema_db_config()
+    except Exception as e:
+        _startup_print(f"[WARNING] Schema upgrade skipped - no database configuration: {e}")
+        return []
+    present, reason = _probe_installed_schema(cfg)
+    if present is None:
+        # "unreachable" was printed for every failure, including a server that
+        # answered and refused the credentials (field report: fe_sendauth: no
+        # password supplied, before the setup wizard had written .env).
+        _startup_print(f"[WARNING] Schema upgrade skipped - cannot connect to "
+                       f"{_describe_target(cfg)}: {reason}")
+        return []
+    if not present:
+        logger.info("No installed schema in %s yet; setup pending, nothing migrated",
+                    _describe_target(cfg))
+        return []
+    return upgrade_database_schema()
 
 
 def initialize_system(first_startup: bool = False):
@@ -313,6 +430,9 @@ def ensure_system_initialized():
     if not is_system_initialized():
         logger.info("First startup detected, initializing system...")
         initialize_system(first_startup=True)
+        # No marker does not mean no installation: the marker is only written
+        # when config.json exists. Upgrade an installed database either way.
+        upgrade_installed_schema()
     else:
         # Still load config on every startup to apply any changes
         logger.info("System already initialized, loading configuration...")

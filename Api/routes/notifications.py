@@ -5,20 +5,84 @@ System-wide notification management endpoints
 
 from flask import request, jsonify
 from flask_babel import gettext as _
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from core.monitoring.notification_service import (
     get_notification_service,
     NotificationType,
     NotificationPriority,
     notification_from_row,
+    ALERT_COLUMNS,
+    visibility_clause,
+    utc_today,
 )
 from core.monitoring.notification_display import format_title_message, display_payload
 from Api.utils import execute_query
 import logging
 from core.errors import client_error, client_safe_message
 from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
+from core.security.flask_ext import write_access_required
 
 logger = logging.getLogger(__name__)
+
+
+def _future_dates_enabled() -> bool:
+    """``notifications.future_dates_enabled`` (default on). An unreadable
+    setting is logged and treated as the default, as elsewhere."""
+    try:
+        from settings import get_settings
+        return bool(get_settings().get('notifications', 'future_dates_enabled', True))
+    except Exception:
+        logger.warning("could not read notifications.future_dates_enabled", exc_info=True)
+        return True
+
+
+def _reference_date_arg() -> date:
+    raw = request.args.get('reference_date') or (request.get_json(silent=True) or {}).get(
+        'reference_date')
+    if not raw:
+        return datetime.now(timezone.utc).date()
+    try:
+        return date.fromisoformat(str(raw))
+    except ValueError:
+        raise ValueError("reference_date must be an ISO date (YYYY-MM-DD)")
+
+
+def _current_signals(hash_id: int, reference_date: date) -> dict:
+    """Stored signals for ``hash_id``; analyses it first when there is no run
+    by the current detector version."""
+    from Api.utils.utils import get_connection
+    from core.criteria.access import scope_for
+    from core.security.flask_ext import current_user
+    from services.detection import signal_store
+    from services.detection.redetection import redetect_one
+
+    user = current_user()
+    scope = scope_for(user)
+
+    def read():
+        with get_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    return signal_store.signals_for(cur, hash_id, reference_date, scope=scope,
+                                                    detectors=['temporal'])
+            finally:
+                conn.rollback()
+
+    body = read()
+    if body['run'] is None or not body['run']['current_version']:
+        redetect_one(get_connection, hash_id, detectors=['temporal'])
+        body = read()
+    return body
+
+
+def _viewer_id():
+    """Id of the signed-in user. Every alerts read and write is limited to
+    what this user may see: system-wide alerts and alerts addressed to them
+    (a monitoring rule's alerts go to its owner only - administrators
+    included, nobody reads another user's rule alerts)."""
+    from core.security.flask_ext import current_user
+
+    return getattr(current_user(), 'id', None)
 
 
 def register_notification_routes(app):
@@ -67,7 +131,8 @@ def register_notification_routes(app):
                 notification_type=type_enum,
                 priority=priority_enum,
                 unread_only=unread_only,
-                limit=limit
+                limit=limit,
+                for_user_id=_viewer_id(),
             )
             
             # Single shared formatter keeps displayed titles/messages
@@ -92,7 +157,9 @@ def register_notification_routes(app):
             notification_service = get_notification_service()
             days_ahead = request.args.get('days', 30, type=int)
             
-            upcoming = notification_service.get_upcoming_events(days_ahead=days_ahead)
+            upcoming = notification_service.get_upcoming_events(days_ahead=days_ahead,
+                                                                for_user_id=_viewer_id())
+            today = utc_today()
             
             events_data = []
             for n in upcoming:
@@ -105,7 +172,7 @@ def register_notification_routes(app):
                     'file_name': n.file_name,
                     'file_path': n.file_path,
                     'event_date': n.event_date.isoformat() if n.event_date else None,
-                    'days_until': (n.event_date - date.today()).days if n.event_date else None,
+                    'days_until': (n.event_date - today).days if n.event_date else None,
                     'metadata': n.metadata,
                     'created_at': n.created_at.isoformat()
                 })
@@ -127,14 +194,11 @@ def register_notification_routes(app):
             notification_service = get_notification_service()
             # Direct row lookup - no forced refresh, no linear scan of
             # an in-memory list capped at 10 000 entries.
+            viewer = _viewer_id()
             row = execute_query(
-                """
-                SELECT id, type, priority, title, message, file_id, file_name,
-                       file_path, event_date, metadata, created_at, read, dismissed
-                FROM alerts
-                WHERE id = %s AND dismissed = FALSE
-                """,
-                (notification_id,),
+                f"SELECT {ALERT_COLUMNS} FROM alerts"  # nosec B608 # ALERT_COLUMNS and visibility_clause() are constants; values are bound parameters
+                f" WHERE id = %s AND dismissed = FALSE AND {visibility_clause()}",
+                (notification_id, viewer),
                 fetch="one"
             )
             notification = notification_from_row(row) if row else None
@@ -143,7 +207,8 @@ def register_notification_routes(app):
                 # Fallback covers pending (temp-id) notifications in memory.
                 notification = next(
                     (
-                        n for n in notification_service.get_notifications(limit=5000)
+                        n for n in notification_service.get_notifications(
+                            limit=5000, for_user_id=viewer)
                         if n.id == notification_id
                     ),
                     None,
@@ -171,7 +236,8 @@ def register_notification_routes(app):
         """Mark notification as read"""
         try:
             notification_service = get_notification_service()
-            success = notification_service.mark_as_read(notification_id)
+            success = notification_service.mark_as_read(notification_id,
+                                                        for_user_id=_viewer_id())
             
             if success:
                 return jsonify({
@@ -193,7 +259,8 @@ def register_notification_routes(app):
         """Dismiss a notification"""
         try:
             notification_service = get_notification_service()
-            success = notification_service.dismiss_notification(notification_id)
+            success = notification_service.dismiss_notification(notification_id,
+                                                                for_user_id=_viewer_id())
             
             if success:
                 return jsonify({
@@ -211,53 +278,60 @@ def register_notification_routes(app):
             return client_error(e, subsystem='Api.routes.notifications', success_key='success', status=500)
     
     @app.route('/api/notifications/analyze-file/<int:file_id>', methods=['POST'])
+    @write_access_required
     def analyze_file_for_events(file_id):
-        """Analyze a file for future events and create notifications"""
+        """Create FUTURE_DATE notifications for one file from its stored
+        temporal signals (content_signals). Content never analysed by the
+        current detector version is analysed first (recorded as a
+        re-detection run). ``reference_date`` (YYYY-MM-DD, optional) sets the
+        clock; the default is today's UTC date and is echoed back."""
         try:
-            from Api.utils import load_text_content
-            notification_service = get_notification_service()
-            
-            # Get file info
+            if not _future_dates_enabled():
+                return jsonify({'success': True, 'notifications_created': 0,
+                                'notifications': [], 'skipped': 'future_dates_disabled'})
+            try:
+                reference_date = _reference_date_arg()
+            except ValueError as exc:
+                return jsonify({'success': False, 'error': str(exc)}), 400
+
             file_info = execute_query(
                 """
-                SELECT id, file_name, file_path
-                FROM paths
-                WHERE id = %s
+                SELECT p.id, p.file_name, p.file_path, hc.hash_id
+                FROM paths p JOIN hash_contexts hc ON hc.id = p.context_id
+                WHERE p.id = %s
                 """,
                 (file_id,),
                 fetch="one"
             )
-            
             if not file_info:
-                return jsonify({
-                    'success': False,
-                    'error': 'File not found'
-                }), 404
-            
-            file_id_db, file_name, file_path = file_info
-            
-            # Load file content
-            content = load_text_content(file_id)
-            
-            if not content:
-                return jsonify({
-                    'success': False,
-                    'error': 'File content not available'
-                }), 400
-            
-            # Analyze for future events
+                return jsonify({'success': False, 'error': 'File not found'}), 404
+            file_id_db, file_name, file_path, hash_id = file_info
+
+            body = _current_signals(hash_id, reference_date)
+            if body['status'] == 'no_text':
+                return jsonify({'success': False,
+                                'error': 'File content not available'}), 400
+            if body['status'] == 'failed':
+                return jsonify({'success': False, 'error': 'Signal detection failed',
+                                'signal_run': body['run']}), 422
+
+            already = {row[0] for row in execute_query(
+                "SELECT event_date FROM alerts WHERE type = %s AND file_id = %s",
+                (NotificationType.FUTURE_DATE.value, file_id_db), fetch="all") or []}
+            notification_service = get_notification_service()
             notifications = notification_service.analyze_file_for_future_events(
-                file_id=file_id_db,
-                file_name=file_name,
-                file_path=file_path,
-                content=content
-            )
+                file_id=file_id_db, file_name=file_name, file_path=file_path,
+                signals=body['signals'], reference_date=reference_date,
+                skip_dates=already)
 
             # Persist before responding so the payload carries real ids.
             notification_service.flush_pending_notifications()
 
             return jsonify({
                 'success': True,
+                'reference_date': reference_date.isoformat(),
+                'signal_status': body['status'],
+                'truncated': body['status'] == 'truncated',
                 'notifications_created': len(notifications),
                 'notifications': [
                     {
@@ -269,11 +343,11 @@ def register_notification_routes(app):
                     for n in notifications
                 ]
             })
-        
+
         except Exception as e:
             logger.error(f"Error analyzing file for events: {e}")
             return client_error(e, subsystem='Api.routes.notifications', success_key='success', status=500)
-    
+
     @app.route('/api/notifications/refresh', methods=['POST'])
     def refresh_notifications():
         """Refresh notifications from database"""
@@ -305,7 +379,7 @@ def register_notification_routes(app):
             # Exact SQL aggregates (COUNT/GROUP BY).  No forced refresh,
             # no in-memory scan: totals stay correct at any table size and
             # the 30-second stats poll stops racing concurrent refreshes.
-            stats = notification_service.get_stats()
+            stats = notification_service.get_stats(for_user_id=_viewer_id())
 
             return jsonify({
                 'success': True,
@@ -317,6 +391,7 @@ def register_notification_routes(app):
             return client_error(e, subsystem='Api.routes.notifications', success_key='success', status=500)
     
     @app.route('/api/notifications/scan', methods=['POST'])
+    @write_access_required
     def scan_for_notifications():
         """Scan for duplicate files and files with future dates, then create notifications"""
         try:
@@ -427,106 +502,109 @@ def register_notification_routes(app):
                     existing_hashes.add(hash_value)
                     duplicate_count += 1
             
-            # 2. Find files with future dates in content
-            logger.info("Scanning for files with future dates...")
-            from Api.utils import load_text_content
-            from core.monitoring.future_events import FutureEventsAnalyzer
-            
-            future_analyzer = FutureEventsAnalyzer()
-            today = date.today()
-            
-            # One row PER PATH: EXISTS instead of "DISTINCT p.id, ..., c.id".
-            # Paths whose content has several chunks used to be scanned once
-            # per chunk, which inflated "files processed" and wasted content
-            # loads.  (m0011: contents is keyed by hash, reached through the
-            # path's content identity context.)
-            files_query = """
-                SELECT p.id, p.file_name, p.file_path
-                FROM paths p
-                JOIN hash_contexts hc ON hc.id = p.context_id
-                WHERE p.file_status = 'Read'
-                  AND EXISTS (SELECT 1 FROM contents c WHERE c.hash_id = hc.hash_id)
-                ORDER BY p.id DESC
-                LIMIT 5000
-            """
+            # 2. Find files with future dates - from their stored temporal signals.
+            # Reads content_signals (Phase 1 detector) - no text is re-parsed
+            # here and no date is estimated from the wall clock.
+            from core.detection.temporal_intel import (
+                DETECTOR_NAME, DETECTOR_VERSION, SIGNAL_DATE, SIGNAL_RELATIVE,
+            )
 
-            files_with_content = execute_query(files_query, None, fetch="all")
+            dated = [SIGNAL_DATE, SIGNAL_RELATIVE]
 
-            # Single preload of every (file_id, event_date) future-date alert
-            # for the candidate files - replaces a per-file existence query of
-            # up to 5 000 queries per scan.  Dismissed alerts are included so
-            # they are not resurrected either.
-            candidate_ids = [row[0] for row in files_with_content or []]
-            existing_future_pairs = set()
-            if candidate_ids:
-                for pair_row in execute_query(
-                    """
-                    SELECT file_id, event_date
-                    FROM alerts
-                    WHERE type = %s
-                      AND file_id = ANY(%s)
-                    """,
-                    (NotificationType.FUTURE_DATE.value, candidate_ids),
-                    fetch="all"
-                ) or []:
-                    existing_future_pairs.add((pair_row[0], pair_row[1]))
-
+            today = datetime.now(timezone.utc).date()
             future_date_count = 0
             processed_files = 0
-            
-            for row in files_with_content or []:
-                file_id, file_name, file_path = row
-                processed_files += 1
-                
-                # Load content
-                try:
-                    content = load_text_content(file_id)
-                    if not content:
+            contents_without_current_signals = None
+            if _future_dates_enabled():
+                logger.info("Scanning stored signals for future dates...")
+                future_rows = execute_query(
+                    """
+                    SELECT p.id, p.file_name, p.file_path, s.signal_type,
+                           s.date_from, s.date_to, s.surface, s.value, s.language,
+                           s.calendar, s.resolution, s.char_start, s.char_end,
+                           s.text_orientation, s.evidence, s.detector_ver,
+                           s.method, s.confidence, s.confidence_basis, s.evidence_sentence,
+                           (SELECT array_agg(DISTINCT f.date_from ORDER BY f.date_from)
+                              FROM content_signals f
+                             WHERE f.hash_id = hc.hash_id AND f.signal_type = ANY(%s)
+                               AND f.date_from > %s) AS future_dates
+                    FROM paths p
+                    JOIN hash_contexts hc ON hc.id = p.context_id
+                    JOIN LATERAL (
+                        SELECT cs.* FROM content_signals cs
+                        WHERE cs.hash_id = hc.hash_id AND cs.signal_type = ANY(%s)
+                          AND cs.date_from > %s
+                        ORDER BY cs.date_from, cs.char_start, cs.id
+                        LIMIT 1
+                    ) s ON TRUE
+                    WHERE p.file_status = 'Read'
+                    ORDER BY p.id DESC
+                    LIMIT 5000
+                    """,
+                    (dated, today, dated, today),
+                    fetch="all"
+                ) or []
+                counts = execute_query(
+                    """
+                    SELECT
+                      count(*) FILTER (WHERE r.hash_id IS NOT NULL),
+                      count(DISTINCT hc.hash_id) FILTER (WHERE r.hash_id IS NULL)
+                    FROM paths p
+                    JOIN hash_contexts hc ON hc.id = p.context_id
+                    LEFT JOIN content_signal_runs r
+                      ON r.hash_id = hc.hash_id AND r.detector = %s
+                     AND r.detector_ver = %s AND r.status <> 'failed'
+                    WHERE p.file_status = 'Read'
+                    """,
+                    (DETECTOR_NAME, DETECTOR_VERSION),
+                    fetch="one"
+                )
+                processed_files, contents_without_current_signals = counts
+
+                candidate_ids = [row[0] for row in future_rows]
+                existing_future_pairs = set()
+                if candidate_ids:
+                    for pair_row in execute_query(
+                        """
+                        SELECT file_id, event_date
+                        FROM alerts
+                        WHERE type = %s
+                          AND file_id = ANY(%s)
+                        """,
+                        (NotificationType.FUTURE_DATE.value, candidate_ids),
+                        fetch="all"
+                    ) or []:
+                        existing_future_pairs.add((pair_row[0], pair_row[1]))
+
+                for row in future_rows:
+                    (file_id, file_name, file_path, signal_type, date_from, date_to, surface, value,
+                     language, calendar, resolution, char_start, char_end,
+                     text_orientation, evidence, detector_ver, method, confidence,
+                     confidence_basis, evidence_sentence, future_dates) = row
+                    # Skip (file, date) pairs that already produced a
+                    # notification (in any state, dismissed included).
+                    if (file_id, date_from) in existing_future_pairs:
                         continue
-                    
-                    # Extract all dates from content
-                    dates_found = future_analyzer.extract_all_dates(content)
-                    
-                    # Check for future dates
-                    future_dates = [(d, ctx, pos) for d, ctx, pos in dates_found if d > today]
-                    
-                    if future_dates:
-                        # Get the earliest future date
-                        future_dates.sort(key=lambda x: x[0])
-                        earliest_date, context, position = future_dates[0]
-                        days_until = (earliest_date - today).days
-                        
-                        # Skip (file, date) pairs that already produced a
-                        # notification (in any state)
-                        if (file_id, earliest_date) not in existing_future_pairs:
-                            from core.monitoring.notification_service import Notification
-                            notification = Notification(
-                                id=None,
-                                type=NotificationType.FUTURE_DATE,
-                                priority=NotificationPriority.HIGH if days_until <= 30 else NotificationPriority.MEDIUM,
-                                title=f"Future Date Detected: {earliest_date.strftime('%Y-%m-%d')}",
-                                message=f"Future date found in {file_name} ({days_until} days away). Context: {context[:100]}...",
-                                file_id=file_id,
-                                file_name=file_name,
-                                file_path=file_path,
-                                event_date=earliest_date,
-                                metadata={
-                                    'days_until': days_until,
-                                    'future_dates': [d.isoformat() for d, _, _ in future_dates],
-                                    'context': context[:200],
-                                    'position': position
-                                },
-                                created_at=datetime.now()
-                            )
-                            notification = notification_service._save_notification(notification)
-                            created_items.append(('future_date', notification, earliest_date.isoformat()))
-                            existing_future_pairs.add((file_id, earliest_date))
-                            future_date_count += 1
-                
-                except Exception as e:
-                    logger.debug(f"Error processing file {file_id} for future dates: {e}")
-                    continue
-            
+                    notification = notification_service.create_future_date_notification(
+                        file_id=file_id, file_name=file_name, file_path=file_path,
+                        signal={
+                            'signal_type': signal_type, 'date_from': date_from.isoformat(),
+                            'date_to': date_to.isoformat(), 'surface': surface,
+                            'value': value, 'language': language, 'calendar': calendar,
+                            'resolution': resolution, 'char_start': char_start,
+                            'char_end': char_end, 'text_orientation': text_orientation,
+                            'evidence': evidence or {}, 'detector_ver': detector_ver,
+                            'method': method, 'confidence': confidence,
+                            'confidence_basis': confidence_basis,
+                            'sentence': evidence_sentence,
+                        },
+                        reference_date=today)
+                    notification.metadata['future_dates'] = [
+                        d.isoformat() for d in (future_dates or [])]
+                    created_items.append(('future_date', notification, date_from.isoformat()))
+                    existing_future_pairs.add((file_id, date_from))
+                    future_date_count += 1
+
             # Persist, then build the response with real ids.
             notification_service.flush_pending_notifications()
 
@@ -552,6 +630,11 @@ def register_notification_routes(app):
                 'duplicates_found': duplicate_count,
                 'future_dates_found': future_date_count,
                 'files_processed': processed_files,
+                # Content with no current-version signal run was NOT evaluated
+                # for future dates (None = future-date scanning is disabled).
+                # Run POST /api/signals/redetect to analyse it.
+                'contents_without_current_signals': contents_without_current_signals,
+                'reference_date': today.isoformat(),
                 'notifications_created': notifications_created
             })
         

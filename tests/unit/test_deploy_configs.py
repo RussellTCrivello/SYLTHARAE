@@ -137,7 +137,8 @@ def test_systemd_unit_names_every_runtime_file_kept_in_the_install_dir():
     root = Path(__file__).resolve().parents[2]
     written = [
         search_history.HISTORY_FILE,
-        search_history.SAVED_SEARCHES_FILE,
+        # search_history.SAVED_SEARCHES_FILE is no longer written: saved
+        # searches live in PostgreSQL (m0016); the legacy file is read once.
         Path(setup_path()) / ".app_instance.lock",
         root / "data" / "settings.json",      # settings_manager: first store location
         root / "data" / "settings_backups",   # settings_manager: backups beside it

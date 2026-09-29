@@ -175,6 +175,36 @@ def test_display_payload_carries_every_field():
     assert set(payload) == {
         "id", "type", "priority", "title", "message", "file_id", "file_name",
         "file_path", "event_date", "metadata", "created_at", "read", "dismissed",
+        "addressed", "rule_id", "scenario_id",
     }
     assert payload["event_date"] == "2030-05-01"
+    # A system-wide notification: addressed to nobody in particular, no rule.
+    assert payload["addressed"] is False and payload["rule_id"] is None
+    assert payload["scenario_id"] is None
     assert payload["type"] == "info"
+
+
+def test_every_display_string_is_in_every_catalog():
+    """Every translate("...") string of notification_display is translated in
+    ar/he/fa/hr with the same placeholders (the template coverage audit does
+    not scan Python, so a new notification type could ship in English)."""
+    import ast
+    import re
+    from pathlib import Path
+
+    from babel.messages.pofile import read_po
+
+    root = Path(__file__).resolve().parents[2]
+    source = (root / "core/monitoring/notification_display.py").read_text(encoding="utf-8")
+    msgids = {node.args[0].value for node in ast.walk(ast.parse(source))
+              if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "translate"
+              and node.args and isinstance(node.args[0], ast.Constant)}
+    assert len(msgids) > 30
+    placeholders = lambda text: sorted(re.findall(r"%\(\w+\)s", text))   # noqa: E731
+    for lang in ("ar", "he", "fa", "hr"):
+        with open(root / "translations" / lang / "LC_MESSAGES" / "messages.po", "rb") as fh:
+            catalog = read_po(fh, locale=lang)
+        missing = sorted(m for m in msgids if not (catalog.get(m) and catalog.get(m).string))
+        assert not missing, f"[{lang}] untranslated notification strings: {missing}"
+        wrong = sorted(m for m in msgids if placeholders(catalog.get(m).string) != placeholders(m))
+        assert not wrong, f"[{lang}] placeholder mismatch: {wrong}"

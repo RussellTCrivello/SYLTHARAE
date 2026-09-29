@@ -67,12 +67,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 ## Generated reference
 
 <!-- BEGIN GENERATED REGISTRY TABLE -->
-- Interfaces: **26** (features declared separately: **1**)
-- Endpoints owned: **67**
-- With a keyboard shortcut: **12**; with a help topic: **24**
-- By domain: ADMINISTRATION 1, ANALYZE 3, CLASSIFY 2, DISCOVER 9, INGEST 2, INTERNAL 1, OPERATE 2, REPORT 2, SETTINGS 3, WORK 1
-- By status: ACTIVE 25, DEPRECATED 1
-- By kind: INTERNAL 1, PAGE 24, SECTION 1
+- Interfaces: **31** (features declared separately: **1**)
+- Endpoints owned: **72**
+- With a keyboard shortcut: **17**; with a help topic: **29**
+- By domain: ADMINISTRATION 2, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 3, SETTINGS 3, WORK 1
+- By status: ACTIVE 30, DEPRECATED 1
+- By kind: INTERNAL 1, PAGE 29, SECTION 1
 
 
 ### WORK (1)
@@ -81,7 +81,7 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `dashboard` | Dashboard | WORK | `index` | — | any | on | — | work/dashboard | g w | ACTIVE |
 
-### DISCOVER (9)
+### DISCOVER (11)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -94,6 +94,8 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `categories` | Categories | DISCOVER | `categories_list` | `category_words`, `category_add` | any | on | — | discover/categories | — | ACTIVE |
 | `email_words` | Email Words | DISCOVER | `email_words` | — | any | on | — | discover/email-words | — | ACTIVE |
 | `notifications` | Notifications | DISCOVER | `notifications_page` | — | any | on | — | discover/notifications | g n | ACTIVE |
+| `signal_horizon` | Horizon & Signal Explorer | DISCOVER | `signals_page` | — | any | on | — | discover/signals | g h | ACTIVE |
+| `monitoring` | Monitoring | DISCOVER | `monitoring_page` | — | any | on | `signal_horizon`, `notifications` | discover/monitoring | g m | ACTIVE |
 
 ### INGEST (2)
 
@@ -117,25 +119,28 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `analyst_categorization` | Analyst Categories | CLASSIFY | `analyst_categorization_page` | — | any | on | `file_library` | classify/analyst-categories | — | ACTIVE |
 | `classification` | Classification | CLASSIFY | `file_classification_page` | — | any | on | `file_library`, `words` | classify/classification | — | ACTIVE |
 
-### REPORT (2)
+### REPORT (3)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `comprehensive_dashboard` | Comprehensive Dashboard | REPORT | `comprehensive_dashboard` | — | any | on | `file_library` | report/detailed-dashboard | — | ACTIVE |
+| `reports` | Reports | REPORT | `reports_page` | — | any | on | `search`, `jobs` | report/reports | g r | ACTIVE |
 | `charts_dashboard` | Charts Dashboard | REPORT | `charts_dashboard` | — | any | on | `file_library` | report/charts | — | ACTIVE |
 
-### OPERATE (2)
+### OPERATE (3)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `detection` | Detection | OPERATE | `detection_page` | — | admin | on | `signal_horizon`, `jobs` | operate/detection | g d | ACTIVE |
 | `jobs` | Jobs | OPERATE | `operations_jobs_page` | `operations_job_detail_page` | any | on | — | operate/jobs | g j | ACTIVE |
 | `import_export_console` | Import/Export | OPERATE | `import_export_page` | — | admin | on | — | — | — | DEPRECATED |
 
-### ADMINISTRATION (1)
+### ADMINISTRATION (2)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `users` | User Management | ADMINISTRATION | `users_page` | — | admin | on | — | administration/users | g u | ACTIVE |
+| `audit_log` | Audit Log | ADMINISTRATION | `audit_page` | — | admin | on | — | administration/audit | g l | ACTIVE |
 
 ### SETTINGS (3)
 

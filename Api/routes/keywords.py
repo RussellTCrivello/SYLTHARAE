@@ -1489,6 +1489,9 @@ def register_keywords_routes(app):
                 
                 writer.writerow([keyword_id, keyword_text, usage_count])
             
+            from core.security.disclosure import note_disclosure
+            note_disclosure(kind='keywords_export', scope='selection' if keyword_ids else 'all',
+                            unit='keyword', row_count=len(rows), format='csv')
             csv_output = output.getvalue()
             output.close()
             

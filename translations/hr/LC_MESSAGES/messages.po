@@ -10561,3 +10561,1634 @@ msgstr "Unesite trenutnu lozinku."
 
 msgid "The new password must be different from the current one."
 msgstr "Nova lozinka mora se razlikovati od trenutne."
+
+#: templates/Signals/signals.html
+msgid "Horizon & Signal Explorer"
+msgstr "Horizont i preglednik signala"
+
+#: templates/Signals/signals.html
+msgid "Dates, places and other signals detected in stored documents, with the evidence for each."
+msgstr "Datumi, mjesta i drugi signali otkriveni u pohranjenim dokumentima, s dokazom za svaki."
+
+#: templates/Signals/signals.html
+msgid "What you are looking at"
+msgstr "Što gledate"
+
+#: templates/Signals/signals.html
+msgid "Signals are detected once, when a document is stored or re-analysed. This page reads the stored results; it does not re-read documents."
+msgstr "Signali se otkrivaju jednom, kada se dokument pohrani ili ponovno analizira. Ova stranica čita pohranjene rezultate; ne čita dokumente ponovno."
+
+#: templates/Signals/signals.html
+msgid "Horizon groups dated references by where their date falls relative to the reference date: overdue, next 7 days, next 30 days, next 90 days, later."
+msgstr "Horizont grupira datirane reference prema tome gdje im datum pada u odnosu na referentni datum: zakašnjelo, sljedećih 7 dana, sljedećih 30 dana, sljedećih 90 dana, kasnije."
+
+#: templates/Signals/signals.html
+msgid "Overdue means the sentence spoke of the future and the date has passed. Other past dates are listed under Past."
+msgstr "Zakašnjelo znači da je rečenica govorila o budućnosti, a datum je prošao. Ostali prošli datumi navedeni su pod Prošlo."
+
+#: templates/Signals/signals.html
+msgid "References whose date could not be decided (for example 03/04/2026) are counted as undated, never guessed."
+msgstr "Reference čiji se datum nije mogao odrediti (na primjer 03/04/2026) broje se kao nedatirane, nikad se ne pogađaju."
+
+#: templates/Signals/signals.html
+msgid "Place matches come from a gazetteer; a name shared by several places stays ambiguous and lists every candidate."
+msgstr "Podudaranja mjesta dolaze iz gazetira; ime koje dijeli više mjesta ostaje višeznačno i navodi sve kandidate."
+
+#: templates/Signals/signals.html
+msgid "Reference date"
+msgstr "Referentni datum"
+
+#: templates/Signals/signals.html
+msgid "Empty: today (UTC)"
+msgstr "Prazno: danas (UTC)"
+
+#: templates/Signals/signals.html
+msgid "None"
+msgstr "Ništa"
+
+#: templates/Signals/signals.html
+msgid "Replaces the source, side, category and keyword filters"
+msgstr "Zamjenjuje filtre izvora, strane, kategorije i ključne riječi"
+
+#: templates/Signals/signals.html
+msgid "Category IDs"
+msgstr "ID-ovi kategorija"
+
+#: templates/Signals/signals.html
+msgid "Keyword IDs"
+msgstr "ID-ovi ključnih riječi"
+
+#: templates/Signals/signals.html
+msgid "Evidence contains"
+msgstr "Dokaz sadrži"
+
+#: templates/Signals/signals.html
+msgid "Event dates"
+msgstr "Datumi događaja"
+
+#: templates/Signals/signals.html
+msgid "Event dates from"
+msgstr "Datumi događaja od"
+
+#: templates/Signals/signals.html
+msgid "Event dates to"
+msgstr "Datumi događaja do"
+
+#: templates/Signals/signals.html
+msgid "Confidence"
+msgstr "Pouzdanost"
+
+#: templates/Signals/signals.html
+msgid "Calendar"
+msgstr "Kalendar"
+
+#: templates/Signals/signals.html
+msgid "Detector"
+msgstr "Detektor"
+
+#: templates/Signals/signals.html
+msgid "Explorer only; Horizon shows dates"
+msgstr "Samo preglednik; Horizont prikazuje datume"
+
+#: templates/Signals/signals.html
+msgid "Horizon"
+msgstr "Horizont"
+
+#: templates/Signals/signals.html
+msgid "Signal Explorer"
+msgstr "Preglednik signala"
+
+#: templates/Signals/signals.html
+msgid "When"
+msgstr "Kada"
+
+#: templates/Signals/signals.html
+msgid "Group"
+msgstr "Skupina"
+
+#: templates/Signals/signals.html
+msgid "Reference"
+msgstr "Referenca"
+
+#: templates/Signals/signals.html
+msgid "Evidence"
+msgstr "Dokaz"
+
+#: templates/Signals/signals.html
+msgid "Document"
+msgstr "Dokument"
+
+#: templates/Signals/signals.html
+msgid "Counts"
+msgstr "Brojevi"
+
+#: templates/Signals/signals.html
+msgid "Signal"
+msgstr "Otkriveni signal"
+
+#: templates/Signals/signals.html
+msgid "Value"
+msgstr "Vrijednost"
+
+#: templates/Signals/signals.html
+msgid "Overdue"
+msgstr "Zakašnjelo"
+
+#: templates/Signals/signals.html
+msgid "Next 7 days"
+msgstr "Sljedećih 7 dana"
+
+#: templates/Signals/signals.html
+msgid "Next 30 days"
+msgstr "Sljedećih 30 dana"
+
+#: templates/Signals/signals.html
+msgid "Next 90 days"
+msgstr "Sljedećih 90 dana"
+
+#: templates/Signals/signals.html
+msgid "Later"
+msgstr "Kasnije"
+
+#: templates/Signals/signals.html
+msgid "Past"
+msgstr "Prošlo"
+
+#: templates/Signals/signals.html
+msgid "signals"
+msgstr "signala"
+
+#: templates/Signals/signals.html
+msgid "documents"
+msgstr "dokumenata"
+
+#: templates/Signals/signals.html
+msgid "No signals match these filters."
+msgstr "Nijedan signal ne odgovara ovim filtrima."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s references have no single date (ambiguous: %(a)s, unresolved: %(u)s) and are not placed on the horizon."
+msgstr "%(n)s referenci nema jedinstven datum (višeznačne: %(a)s, neriješene: %(u)s) i ne stavljaju se na horizont."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s of %(t)s matching documents have not been analysed by the current date detector (never analysed: %(never)s, older version: %(stale)s, failed: %(failed)s). They contribute nothing here until re-analysed; this is not the same as having no dates."
+msgstr "%(n)s od %(t)s odgovarajućih dokumenata nije analizirao trenutni detektor datuma (nikad analizirano: %(never)s, starija verzija: %(stale)s, neuspjelo: %(failed)s). Ovdje ne pridonose ničim dok se ponovno ne analiziraju; to nije isto kao da nemaju datuma."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "All %(t)s matching documents were analysed by the current date detector."
+msgstr "Svih %(t)s odgovarajućih dokumenata analizirao je trenutni detektor datuma."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(from)s-%(to)s of %(total)s"
+msgstr "%(from)s-%(to)s od %(total)s"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(total)s signals in %(contents)s documents"
+msgstr "%(total)s signala u %(contents)s dokumenata"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s occurrences"
+msgstr "%(n)s pojavljivanja"
+
+#: templates/Signals/signals.html
+msgid "Ambiguous between:"
+msgstr "Višeznačno između:"
+
+#: templates/Signals/signals.html
+msgid "Detector version"
+msgstr "Verzija detektora"
+
+#: templates/Signals/signals.html
+msgid "current"
+msgstr "trenutna"
+
+#: templates/Signals/signals.html
+msgid "outdated - re-analysis pending"
+msgstr "zastarjelo - ponovna analiza na čekanju"
+
+#: templates/Signals/signals.html
+msgid "Basis"
+msgstr "Osnova"
+
+#: templates/Signals/signals.html
+msgid "Resolution"
+msgstr "Razrješenje"
+
+#: templates/Signals/signals.html
+msgid "Sentence orientation"
+msgstr "Vremenska usmjerenost rečenice"
+
+#: templates/Signals/signals.html
+msgid "Analysis run"
+msgstr "Izvođenje analize"
+
+#: templates/Signals/signals.html
+msgid "Structured evidence"
+msgstr "Strukturirani dokaz"
+
+#: templates/Signals/signals.html
+msgid "Open file"
+msgstr "Otvori datoteku"
+
+#: templates/Signals/signals.html
+msgid "Detected"
+msgstr "Otkriveno"
+
+#: templates/Signals/signals.html
+msgid "not recorded"
+msgstr "nije zabilježeno"
+
+#: templates/Signals/signals.html
+msgid "not specified"
+msgstr "nije navedeno"
+
+#: templates/Signals/signals.html
+msgid "Event date"
+msgstr "Datum događaja"
+
+#: templates/Signals/signals.html
+msgid "Recently detected"
+msgstr "Nedavno otkriveno"
+
+#: templates/Signals/signals.html
+msgid "Document order"
+msgstr "Redoslijed dokumenta"
+
+#: templates/Signals/signals.html
+msgid "The request failed"
+msgstr "Zahtjev nije uspio"
+
+#: templates/Signals/signals.html
+msgid "Query fingerprint"
+msgstr "Otisak upita"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
+msgstr "Navedeno je samo prvih %(n)s izvora i strana po imenu. Za filtriranje po ostalima upotrijebite spremljeno pretraživanje."
+
+#: templates/Signals/signals.html
+msgid "The source and side lists could not be loaded. Other filters still work."
+msgstr "Popisi izvora i strana nisu se mogli učitati. Ostali filtri i dalje rade."
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr "Otkrivene duplicirane datoteke: %(file_name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr "Otkrivene duplicirane datoteke"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr "Pronađeno duplikata s istim sažetkom: %(count)s. Datoteke: %(files)s"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr "Pronađeno duplikata s istim sažetkom: %(count)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr "Sažetak pravila: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr "Novih podudaranja od posljednjeg sažetka: %(count)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr "Pravilo onemogućeno: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr "Pravilo: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr "Dodatnih podudaranja: %(count)s u skupinama: %(groups)s (dosegnuto ograničenje obavijesti po procjeni)"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr "Pravilo je onemogućeno jer je račun njegova vlasnika neaktivan."
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr "Scenarij: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr "Novih podudaranja: %(count)s: %(label)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr "Novih podudaranja: %(count)s"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr "Pravilo je onemogućeno jer uloga njegova vlasnika više ne dopušta pravila praćenja."
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr "Dodatnih sadržaja s ishodom koji se javlja: %(count)s (dosegnuto ograničenje obavijesti po procjeni)"
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr "Scenarij onemogućen: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr "Sadržaj %(id)s"
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr "Scenarij je onemogućen jer je račun njegova vlasnika neaktivan."
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr "Scenarij je onemogućen jer uloga njegova vlasnika više ne dopušta scenarije."
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr "Ishod %(outcome)s: %(target)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr "Scenariji razvrstavaju dokumente u ishode; pravila prate nove odgovarajuće signale. Oboje obavještavaju samo svog vlasnika."
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr "Kako praćenje funkcionira"
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr "Scenarij se procjenjuje nad pohranjenim signalima. Svaki dokument u njegovoj populaciji dobiva točno jednu odluku: ishod odgovarajućeg slučaja ili zadani ishod."
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr "Scenarij se ne može aktivirati dok ne prođe probno pokretanje njegove točne trenutne definicije. Probno pokretanje ništa ne mijenja: izvještava što bi se dogodilo."
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr "Kad scenarij ili pravilo započne, ono što se već podudara bilježi se kao polazište i ne javlja se, osim ako definicija navodi notify_existing."
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr "Povijest ishoda nikad se ne prepisuje: svaka promjena novi je zapis s prethodnim ishodom."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr "Prioritet obavijesti izvodi se iz dokaza (pouzdanost i koliko je događaj blizu), ne bira se ručno."
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr "Procjenjuju se samo dokumenti koje vlasnik smije čitati. Ako vlasnik izgubi ovlast, scenarij ili pravilo se onemogućuje."
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr "Scenariji"
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr "Pravila"
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr "Svi korisnici"
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr "Prikaži arhivirane"
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr "Novi scenarij"
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr "Strategija"
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr "Posljednja procjena"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr "Vlasnik"
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr "Definicija (JSON)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr "Uvjeti, slučajevi, ishodi, obvezni zadani ishod i strategija (first_match, all_matching ili highest_priority). Vidi docs/implementation/SCENARIOS.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr "Posljednje probno pokretanje"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr "Povijest ishoda"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr "Ishod"
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr "Prethodni ishod"
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr "Slučajevi"
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr "Isporuka"
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr "Zabilježeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr "Procjene"
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr "Okidač"
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr "Trenutna definicija"
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr "Novo pravilo"
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr "Polazište"
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr "Kriteriji, filtar signala, minimalna pouzdanost, vremenski okvir događaja, prag, stanka, grupiranje i isporuka. Vidi docs/implementation/RULE_ENGINE.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr "Nacrt"
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr "Pauzirano"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr "Onemogućeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr "Arhivirano"
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr "Prvo podudaranje"
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr "Sva podudaranja"
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr "Najviši prioritet"
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr "nikad"
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr "da"
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr "ne"
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr "nema"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr "Scenarija: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr "Pravila: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr "Prikazano je samo prvih %(n)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr "Još nema scenarija."
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr "Još nema pravila."
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr "Još nije zabilježen nijedan ishod."
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr "Još nema procjena."
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr "Ovaj scenarij još nije probno pokrenut."
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr "Uredi scenarij"
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr "Uredi pravilo"
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr "Probno pokretanje"
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr "Aktiviraj"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr "Arhiviraj"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr "Procijeni sada"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr "Utišaj 1 sat"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr "Arhivirati? Trajno se zaustavlja; povijest se čuva."
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr "Definicija nije ispravan JSON: %(error)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr "Ispravno. Otisak %(fp)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr "Upozorenja"
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr "Spremljeno."
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr "Spremljeno kao inačica %(v)s. Ponovno je nacrt: probno ga pokrenite prije aktivacije."
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr "Posao %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr "Posao %(id)s završen: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr "Posao %(id)s još traje. Osvježite kasnije da biste vidjeli rezultat."
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr "Otisak definicije"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr "Onemogućeno jer: %(reason)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr "račun vlasnika je neaktivan"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr "uloga vlasnika to više ne dopušta"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr "polazište zabilježeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr "polazište na čekanju"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr "Utišano do %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr "Prošlo"
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr "Neispravno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr "Vlasnik nije ovlašten"
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr "Ovo probno pokretanje bilo je za inačicu %(v)s; trenutna inačica treba vlastito probno pokretanje."
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr "Populacija: %(n)s dokumenata"
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr "Izmjereno na jednoj dosljednoj snimci u %(t)s, referentni datum %(d)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr "Obavijesti pri aktivaciji: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr "postojeća podudaranja postaju polazište"
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr "ništa ne bi ušlo u ishod koji se javlja"
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr "notify_existing je postavljen"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr "Još %(n)s bilo bi sažeto u jednoj obavijesti o prekoračenju."
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr "Procjena: %(per_day)s dokumenata s obaviješću dnevno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Case"
+msgstr "Slučaj"
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr "Podudaranja"
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr "Odlučuje"
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr "Dokumenti s ishodom različitim od zadanog, prema:"
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr "Kategorija analitičara"
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr "Prvih %(n)s od %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr "Dokumenata s ishodom različitim od zadanog: %(n)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr "polazište"
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr "zabilježeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr "javljeno"
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr "u sažetku prekoračenja"
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr "napustio populaciju"
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr "Preskočeno (već se izvodi)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr "Nije aktivno"
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr "Dokument %(id)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr "Vaša uloga može pregledavati praćenje, ali ga ne može mijenjati."
+
+#: core/reporting/definitions.py
+msgid "Search Results Report"
+msgstr "Izvješće o rezultatima pretraživanja"
+
+#: core/reporting/definitions.py
+msgid "Every file that matches a saved set of search criteria, with the exact match count."
+msgstr "Svaka datoteka koja odgovara spremljenom skupu kriterija pretraživanja, uz točan broj podudaranja."
+
+#: core/reporting/definitions.py
+msgid "Search criteria"
+msgstr "Kriteriji pretraživanja"
+
+#: core/reporting/definitions.py
+msgid "File ID"
+msgstr "ID datoteke"
+
+#: core/reporting/definitions.py
+msgid "File name"
+msgstr "Naziv datoteke"
+
+#: core/reporting/definitions.py
+msgid "File type"
+msgstr "Vrsta datoteke"
+
+#: core/reporting/definitions.py
+msgid "File date"
+msgstr "Datum datoteke"
+
+#: core/reporting/definitions.py
+msgid "Content ID"
+msgstr "ID sadržaja"
+
+#: core/reporting/definitions.py
+msgid "Matching files"
+msgstr "Odgovarajuće datoteke"
+
+#: core/reporting/definitions.py
+msgid "About the Search Results Report"
+msgstr "O izvješću o rezultatima pretraživanja"
+
+#: core/reporting/definitions.py
+msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
+msgstr "Navodi datoteke koje u jednom trenutku odgovaraju vašim kriterijima, navodi ukupan broj podudaranja i upozorava kada je popis skraćen."
+
+#: templates/Reports/reports.html
+msgid "Reports"
+msgstr "Izvješća"
+
+#: templates/Reports/reports.html
+msgid "Run a registered report and read exactly what it computed: every dataset comes from one database snapshot, with its counts and any shortening stated."
+msgstr "Pokrenite registrirano izvješće i pročitajte točno što je izračunalo: svaki skup podataka dolazi iz jedne snimke baze podataka, s brojevima i svakim navedenim skraćivanjem."
+
+#: templates/Reports/reports.html
+msgid "How reports work"
+msgstr "Kako izvješća rade"
+
+#: templates/Reports/reports.html
+msgid "A report is a reviewed, versioned definition. Changing what a report means creates a new version; a run always records the version and fingerprint it used."
+msgstr "Izvješće je pregledana definicija s verzijama. Promjena značenja izvješća stvara novu verziju; svako pokretanje uvijek bilježi verziju i otisak koje je koristilo."
+
+#: templates/Reports/reports.html
+msgid "A run is a background job. All its datasets are read from the same database snapshot, so the numbers in one run always agree with each other."
+msgstr "Pokretanje je pozadinski posao. Svi njegovi skupovi podataka čitaju se iz iste snimke baze podataka, pa se brojevi unutar jednog pokretanja uvijek slažu."
+
+#: templates/Reports/reports.html
+msgid "Each dataset states its limit: exact results are complete or the run fails; capped and top-N results say when rows were left out."
+msgstr "Svaki skup podataka navodi svoje ograničenje: točni rezultati su potpuni ili pokretanje ne uspijeva; ograničeni i top-N rezultati kažu kada su redci izostavljeni."
+
+#: templates/Reports/reports.html
+msgid "Only documents you may read are included. You see your own runs; administrators can see everyone's."
+msgstr "Uključeni su samo dokumenti koje smijete čitati. Vidite svoja pokretanja; administratori vide svačija."
+
+#: templates/Reports/reports.html
+msgid "Run a report"
+msgstr "Pokreni izvješće"
+
+#: templates/Reports/reports.html
+msgid "Report"
+msgstr "Izvješće"
+
+#: templates/Reports/reports.html
+msgid "Run report"
+msgstr "Pokreni"
+
+#: templates/Reports/reports.html
+msgid "Runs"
+msgstr "Pokretanja"
+
+#: templates/Reports/reports.html
+msgid "Refused"
+msgstr "Odbijeno"
+
+#: templates/Reports/reports.html
+msgid "Cancelled"
+msgstr "Otkazano"
+
+#: templates/Reports/reports.html
+msgid "Running"
+msgstr "U tijeku"
+
+#: templates/Reports/reports.html
+msgid "Queued"
+msgstr "U redu čekanja"
+
+#: templates/Reports/reports.html
+msgid "Requested"
+msgstr "Zatraženo"
+
+#: templates/Reports/reports.html
+msgid "Rows"
+msgstr "Redci"
+
+#: templates/Reports/reports.html
+msgid "Requested by"
+msgstr "Zatražio"
+
+#: templates/Reports/reports.html
+msgid "Provenance"
+msgstr "Podrijetlo"
+
+#: templates/Reports/reports.html
+msgid "Dataset"
+msgstr "Skup podataka"
+
+#: templates/Reports/reports.html
+msgid "Exact: every row, or the run fails."
+msgstr "Točno: svi redci ili pokretanje ne uspijeva."
+
+#: templates/Reports/reports.html
+msgid "Capped: at most %(limit)s rows."
+msgstr "Ograničeno: najviše %(limit)s redaka."
+
+#: templates/Reports/reports.html
+msgid "Top %(limit)s: a ranked prefix."
+msgstr "Prvih %(limit)s: rangirani početak."
+
+#: templates/Reports/reports.html
+msgid "Shortened: this list stops at %(limit)s rows and more rows matched. The exact count is in the count dataset."
+msgstr "Skraćeno: popis staje na %(limit)s redaka, a podudaralo se više redaka. Točan broj nalazi se u skupu podataka s brojem."
+
+#: templates/Reports/reports.html
+msgid "Only the top %(limit)s rows are kept; more rows existed."
+msgstr "Zadržano je samo prvih %(limit)s redaka; postojalo ih je više."
+
+#: templates/Reports/reports.html
+msgid "Complete: %(n)s rows."
+msgstr "Potpuno: %(n)s redaka."
+
+#: templates/Reports/reports.html
+msgid "Counts: %(unit)s"
+msgstr "Broji se: %(unit)s"
+
+#: templates/Reports/reports.html
+msgid "Datasets"
+msgstr "Skupovi podataka"
+
+#: templates/Reports/reports.html
+msgid "Criteria from"
+msgstr "Kriteriji iz"
+
+#: templates/Reports/reports.html
+msgid "A saved search"
+msgstr "Spremljena pretraga"
+
+#: templates/Reports/reports.html
+msgid "Criteria (JSON)"
+msgstr "Kriteriji (JSON)"
+
+#: templates/Reports/reports.html
+msgid "You have no saved searches. Save one on the Search page, or enter criteria as JSON."
+msgstr "Nemate spremljenih pretraga. Spremite jednu na stranici Pretraga ili unesite kriterije kao JSON."
+
+#: templates/Reports/reports.html
+msgid "The criteria are not valid JSON."
+msgstr "Kriteriji nisu valjani JSON."
+
+#: templates/Reports/reports.html
+msgid "Choose..."
+msgstr "Odaberite..."
+
+#: templates/Reports/reports.html
+msgid "No report is available to your role."
+msgstr "Za vašu ulogu nije dostupno nijedno izvješće."
+
+#: templates/Reports/reports.html
+msgid "No runs yet."
+msgstr "Još nema pokretanja."
+
+#: templates/Reports/reports.html
+msgid "This dataset has no rows."
+msgstr "Ovaj skup podataka nema redaka."
+
+#: templates/Reports/reports.html
+msgid "Viewers can read reports but not run them."
+msgstr "Promatrači mogu čitati izvješća, ali ih ne mogu pokretati."
+
+#: templates/Reports/reports.html
+msgid "Refused: %(reason)s. Nothing was read."
+msgstr "Odbijeno: %(reason)s. Ništa nije pročitano."
+
+#: templates/Reports/reports.html
+msgid "the requesting account is inactive"
+msgstr "račun koji je zatražio nije aktivan"
+
+#: templates/Reports/reports.html
+msgid "the requesting account no longer exists"
+msgstr "račun koji je zatražio više ne postoji"
+
+#: templates/Reports/reports.html
+msgid "the requester's role may no longer run this report"
+msgstr "uloga podnositelja više ne smije pokretati ovo izvješće"
+
+#: templates/Reports/reports.html
+msgid "Failed: %(error)s"
+msgstr "Neuspjelo: %(error)s"
+
+#: templates/Reports/reports.html
+msgid "Cancelled before it finished. Nothing was kept."
+msgstr "Otkazano prije završetka. Ništa nije zadržano."
+
+#: templates/Reports/reports.html
+msgid "This run has not finished yet."
+msgstr "Ovo pokretanje još nije završilo."
+
+#: templates/Reports/reports.html
+msgid "Completed. Snapshot taken %(when)s."
+msgstr "Dovršeno. Snimka je napravljena %(when)s."
+
+#: templates/Reports/reports.html
+msgid "Parameters"
+msgstr "Parametri"
+
+#: templates/Reports/reports.html
+msgid "Parameters fingerprint"
+msgstr "Otisak parametara"
+
+#: templates/Reports/reports.html
+msgid "Criteria fingerprint"
+msgstr "Otisak kriterija"
+
+#: templates/Reports/reports.html
+msgid "Role at run time"
+msgstr "Uloga u trenutku pokretanja"
+
+#: templates/Reports/reports.html
+msgid "Database snapshot"
+msgstr "Snimka baze podataka"
+
+#: templates/Reports/reports.html
+msgid "Isolation"
+msgstr "Izolacija"
+
+#: templates/Reports/reports.html
+msgid "Generator"
+msgstr "Generator izvješća"
+
+#: templates/Reports/reports.html
+msgid "Finished"
+msgstr "Završeno"
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s: %(status)s..."
+msgstr "Posao %(id)s: %(status)s..."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s finished: %(status)s."
+msgstr "Posao %(id)s je završio: %(status)s."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s is still running; refresh the runs list later."
+msgstr "Posao %(id)s još traje; kasnije osvježite popis pokretanja."
+
+#: templates/Reports/reports.html
+msgid "No runs match this filter."
+msgstr "Nijedno pokretanje ne odgovara ovom filtru."
+
+msgid "Files are made on the server from the rows this run stored. Each has a manifest and a SHA-256 checksum; every download is recorded in the audit log."
+msgstr "Datoteke se izrađuju na poslužitelju iz redaka koje je ovo izvođenje pohranilo. Svaka ima manifest i SHA-256 kontrolni zbroj; svako preuzimanje bilježi se u revizijskom zapisniku."
+
+msgid "Format"
+msgstr "Oblik"
+
+msgid "Create file"
+msgstr "Izradi datoteku"
+
+msgid "All datasets"
+msgstr "Svi skupovi podataka"
+
+msgid "No files have been made from this run yet."
+msgstr "Iz ovog izvođenja još nije izrađena nijedna datoteka."
+
+msgid "Files can be made from completed runs only."
+msgstr "Datoteke se mogu izraditi samo iz dovršenih izvođenja."
+
+msgid "This file already exists and is listed below."
+msgstr "Ova datoteka već postoji i navedena je u nastavku."
+
+msgid "File created."
+msgstr "Datoteka je izrađena."
+
+#, python-format
+msgid "Not available yet: %(format)s (%(reason)s)"
+msgstr "Još nije dostupno: %(format)s (%(reason)s)"
+
+#, python-format
+msgid "%(n)s bytes"
+msgstr "%(n)s bajtova"
+
+msgid "Manifest"
+msgstr "Manifest datoteke"
+
+msgid "Verify"
+msgstr "Provjeri"
+
+msgid "Verified: the stored file matches its SHA-256 checksum and its manifest."
+msgstr "Provjereno: pohranjena datoteka odgovara svom SHA-256 kontrolnom zbroju i svom manifestu."
+
+#, python-format
+msgid "Verification failed: %(checks)s. The file will not be sent."
+msgstr "Provjera nije uspjela: %(checks)s. Datoteka neće biti poslana."
+
+#: templates/auth/audit.html
+msgid "Who did what, to what, when and from where. This page only reads the log; nothing here changes it."
+msgstr "Tko je što učinio, čemu, kada i odakle. Ova stranica samo čita zapisnik; ništa ovdje ga ne mijenja."
+
+#: templates/auth/audit.html
+msgid "Reading the audit log"
+msgstr "Čitanje revizijskog zapisnika"
+
+#: templates/auth/audit.html
+msgid "DATA_EXPORTED entries record every file that left the system: who took it, which report, search or record it came from, how many rows, and its SHA-256 checksum."
+msgstr "Unosi DATA_EXPORTED bilježe svaku datoteku koja je napustila sustav: tko ju je preuzeo, iz kojeg izvještaja, pretrage ili zapisa potječe, koliko redaka ima i njezin SHA-256 kontrolni zbroj."
+
+#: templates/auth/audit.html
+msgid "Newest entries come first. Use Older and Newer to move through the log; the total is not counted because the log grows without limit."
+msgstr "Najnoviji unosi dolaze prvi. Za kretanje kroz zapisnik koristite Starije i Novije; ukupan broj se ne broji jer zapisnik raste bez ograničenja."
+
+#: templates/auth/audit.html
+msgid "Select a user or a resource in the list to show only its entries."
+msgstr "Odaberite korisnika ili resurs na popisu za prikaz samo njegovih unosa."
+
+#: templates/auth/audit.html
+msgid "Any action"
+msgstr "Bilo koja radnja"
+
+#: templates/auth/audit.html
+msgid "User name"
+msgstr "Korisničko ime"
+
+#: templates/auth/audit.html
+msgid "Resource starts with"
+msgstr "Resurs počinje s"
+
+#: templates/auth/audit.html
+msgid "From (inclusive)"
+msgstr "Od (uključivo)"
+
+#: templates/auth/audit.html
+msgid "Until (exclusive)"
+msgstr "Do (isključivo)"
+
+#: templates/auth/audit.html
+msgid "Show entries"
+msgstr "Prikaži unose"
+
+#: templates/auth/audit.html
+msgid "Resource"
+msgstr "Resurs"
+
+#: templates/auth/audit.html
+msgid "IP address"
+msgstr "IP adresa"
+
+#: templates/auth/audit.html
+msgid "Detail"
+msgstr "Pojedinosti"
+
+#: templates/auth/audit.html
+msgid "no user (system or anonymous)"
+msgstr "nema korisnika (sustav ili anonimno)"
+
+#: templates/auth/audit.html
+msgid "Older"
+msgstr "Starije"
+
+#: templates/auth/audit.html
+msgid "Newer"
+msgstr "Novije"
+
+#: templates/auth/audit.html
+msgid "No entries match these filters."
+msgstr "Nijedan unos ne odgovara ovim filtrima."
+
+#: templates/auth/audit.html
+msgid "The audit log is empty."
+msgstr "Revizijski zapisnik je prazan."
+
+#: templates/auth/audit.html
+msgid "Showing %(count)s entries, newest first."
+msgstr "Prikazano unosa: %(count)s, najnoviji prvi."
+
+#: templates/auth/audit.html
+msgid "More entries exist; use Older to continue."
+msgstr "Postoji još unosa; za nastavak koristite Starije."
+
+#: templates/auth/audit.html
+msgid "These are the oldest matching entries."
+msgstr "Ovo su najstariji odgovarajući unosi."
+
+#: templates/auth/audit.html
+msgid "The total is not counted."
+msgstr "Ukupan broj se ne broji."
+
+#: templates/auth/audit.html
+msgid "Only the first %(cap)s action names are listed."
+msgstr "Navedeno je samo prvih %(cap)s naziva radnji."
+
+#: templates/auth/audit.html
+msgid "Audit entry %(id)s"
+msgstr "Revizijski unos %(id)s"
+
+#: templates/auth/audit.html
+msgid "Show only this user's entries"
+msgstr "Prikaži samo unose ovog korisnika"
+
+#: templates/auth/audit.html
+msgid "Show only entries for resources starting with this"
+msgstr "Prikaži samo unose resursa koji počinju ovim"
+
+#: templates/auth/audit.html
+msgid "Entry"
+msgstr "Unos"
+
+#: templates/auth/audit.html
+msgid "User id"
+msgstr "ID korisnika"
+
+#: templates/Signals/detection.html
+msgid "Detection"
+msgstr "Detekcija"
+
+#: templates/Signals/detection.html
+msgid "Which detector version analysed which content and with what outcome. Content that was never analysed is counted separately: it is not the same as content in which nothing was found."
+msgstr "Koja je inačica detektora analizirala koji sadržaj i s kojim ishodom. Sadržaj koji nikad nije analiziran broji se zasebno: to nije isto što i sadržaj u kojem ništa nije pronađeno."
+
+#: templates/Signals/detection.html
+msgid "How detection is recorded"
+msgstr "Kako se bilježi detekcija"
+
+#: templates/Signals/detection.html
+msgid "Each content is analysed once by each detector, at ingestion or by re-detection. The run records the detector version, the outcome and the number of signals found."
+msgstr "Svaki sadržaj svaki detektor analizira jednom, pri unosu ili ponovnom detekcijom. Izvođenje bilježi inačicu detektora, ishod i broj pronađenih signala."
+
+#: templates/Signals/detection.html
+msgid "Stale content was never analysed, was analysed by an older version (for places, an older gazetteer), or its last run failed. Re-detecting stale content analyses exactly these."
+msgstr "Zastarjeli sadržaj nikad nije analiziran, analizirala ga je starija inačica (za mjesta: stariji gazetir) ili mu je zadnje izvođenje propalo. Ponovna detekcija zastarjelog sadržaja analizira upravo njih."
+
+#: templates/Signals/detection.html
+msgid "Re-detection runs as a background job and replaces the stored signals of each content it analyses. It is recorded in the audit log."
+msgstr "Ponovna detekcija izvodi se kao pozadinski posao i zamjenjuje pohranjene signale svakog sadržaja koji analizira. Bilježi se u revizijskom zapisniku."
+
+#: templates/Signals/detection.html
+msgid "Coverage"
+msgstr "Pokrivenost"
+
+#: templates/Signals/detection.html
+msgid "Current version"
+msgstr "Trenutna inačica"
+
+#: templates/Signals/detection.html
+msgid "Complete"
+msgstr "Potpuno"
+
+#: templates/Signals/detection.html
+msgid "Truncated"
+msgstr "Skraćeno"
+
+#: templates/Signals/detection.html
+msgid "No text"
+msgstr "Nema teksta"
+
+#: templates/Signals/detection.html
+msgid "Older version"
+msgstr "Starija inačica"
+
+#: templates/Signals/detection.html
+msgid "Never analysed"
+msgstr "Nikad analizirano"
+
+#: templates/Signals/detection.html
+msgid "Stale"
+msgstr "Zastarjelo"
+
+#: templates/Signals/detection.html
+msgid "Re-detect"
+msgstr "Ponovna detekcija"
+
+#: templates/Signals/detection.html
+msgid "Stale content only"
+msgstr "Samo zastarjeli sadržaj"
+
+#: templates/Signals/detection.html
+msgid "Listed content ids"
+msgstr "Navedeni ID-ovi sadržaja"
+
+#: templates/Signals/detection.html
+msgid "All content"
+msgstr "Sav sadržaj"
+
+#: templates/Signals/detection.html
+msgid "Detectors"
+msgstr "Detektori"
+
+#: templates/Signals/detection.html
+msgid "Content ids (hash ids), separated by spaces, commas or new lines"
+msgstr "ID-ovi sadržaja (hash ID-ovi), odvojeni razmacima, zarezima ili novim redcima"
+
+#: templates/Signals/detection.html
+msgid "I understand that this analyses every stored content again and replaces its signals."
+msgstr "Razumijem da se time svaki pohranjeni sadržaj ponovno analizira i njegovi signali zamjenjuju."
+
+#: templates/Signals/detection.html
+msgid "Start re-detection"
+msgstr "Pokreni ponovnu detekciju"
+
+#: templates/Signals/detection.html
+msgid "Any version"
+msgstr "Bilo koja inačica"
+
+#: templates/Signals/detection.html
+msgid "Any trigger"
+msgstr "Bilo koji okidač"
+
+#: templates/Signals/detection.html
+msgid "Re-detection"
+msgstr "Ponovna detekcija"
+
+#: templates/Signals/detection.html
+msgid "Content id"
+msgstr "ID sadržaja"
+
+#: templates/Signals/detection.html
+msgid "Show runs"
+msgstr "Prikaži izvođenja"
+
+#: templates/Signals/detection.html
+msgid "Ran at"
+msgstr "Izvedeno"
+
+#: templates/Signals/detection.html
+msgid "Signals"
+msgstr "Signali"
+
+#: templates/Signals/detection.html
+msgid "Characters scanned"
+msgstr "Pregledani znakovi"
+
+#: templates/Signals/detection.html
+msgid "Any detector"
+msgstr "Bilo koji detektor"
+
+#: templates/Signals/detection.html
+msgid "Any outcome"
+msgstr "Bilo koji ishod"
+
+#: templates/Signals/detection.html
+msgid "The current version cannot be determined (for places: no gazetteer is loaded). Every content counts as stale until it can."
+msgstr "Trenutnu inačicu nije moguće odrediti (za mjesta: gazetir nije učitan). Svaki se sadržaj smatra zastarjelim dok to ne bude moguće."
+
+#: templates/Signals/detection.html
+msgid "%(analysable)s contents have stored text; %(stale)s are stale for at least one detector. Exact counts from one database snapshot taken %(at)s."
+msgstr "Pohranjeni tekst ima %(analysable)s sadržaja; %(stale)s ih je zastarjelo za barem jedan detektor. Točni brojevi iz jedne snimke baze podataka napravljene %(at)s."
+
+#: templates/Signals/detection.html
+msgid "Re-detect stale"
+msgstr "Ponovno detektiraj zastarjelo"
+
+#: templates/Signals/detection.html
+msgid "Nothing is stale."
+msgstr "Ništa nije zastarjelo."
+
+#: templates/Signals/detection.html
+msgid "and %(count)s more"
+msgstr "i još %(count)s"
+
+#: templates/Signals/detection.html
+msgid "no file"
+msgstr "nema datoteke"
+
+#: templates/Signals/detection.html
+msgid "Showing %(from)s-%(to)s, newest first."
+msgstr "Prikazano %(from)s-%(to)s, najnovije prvo."
+
+#: templates/Signals/detection.html
+msgid "More runs exist."
+msgstr "Postoji još izvođenja."
+
+#: templates/Signals/detection.html
+msgid "No more runs."
+msgstr "Nema više izvođenja."
+
+#: templates/Signals/detection.html
+msgid "No runs match these filters."
+msgstr "Nijedno izvođenje ne odgovara ovim filtrima."
+
+#: templates/Signals/detection.html
+msgid "No content has been analysed yet."
+msgstr "Još nijedan sadržaj nije analiziran."
+
+#: templates/Signals/detection.html
+msgid "%(scanned)s of %(total)s"
+msgstr "%(scanned)s od %(total)s"
+
+#: templates/Signals/detection.html
+msgid "Re-detection job %(id)s queued."
+msgstr "Posao ponovne detekcije %(id)s stavljen je u red."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s. %(processed)s contents analysed, %(signals)s signals, %(failed)s failed."
+msgstr "Posao %(id)s: %(status)s. Analizirano sadržaja: %(processed)s, signala: %(signals)s, neuspjelo: %(failed)s."
+
+#: templates/Signals/detection.html
+msgid "Some runs failed; they are listed under Runs with their error."
+msgstr "Neka izvođenja nisu uspjela; navedena su pod Izvođenja s pogreškom."
+
+#: templates/Signals/detection.html
+msgid "Choose at least one detector."
+msgstr "Odaberite barem jedan detektor."
+
+#: templates/Signals/detection.html
+msgid "List at least one content id."
+msgstr "Navedite barem jedan ID sadržaja."
+
+#: templates/Signals/detection.html
+msgid "Content ids must be positive whole numbers: %(bad)s"
+msgstr "ID-ovi sadržaja moraju biti pozitivni cijeli brojevi: %(bad)s"
+
+#: templates/Signals/detection.html
+msgid "Confirm that every content should be analysed again."
+msgstr "Potvrdite da svaki sadržaj treba ponovno analizirati."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s."
+msgstr "Posao %(id)s: %(status)s."
+
+#: core/reporting/definitions.py
+msgid "Distinctive Terms Report"
+msgstr "Izvješće o razlikovnim pojmovima"
+
+#: core/reporting/definitions.py
+msgid "Which words the selected documents use more (or less) often than the rest of the collection, with how sure that is."
+msgstr "Koje riječi odabrani dokumenti koriste češće (ili rjeđe) od ostatka zbirke i koliko je to pouzdano."
+
+#: core/reporting/definitions.py
+msgid "Used more often in the selection"
+msgstr "Češće korištene u odabiru"
+
+#: core/reporting/definitions.py
+msgid "Used less often in the selection"
+msgstr "Rjeđe korištene u odabiru"
+
+#: core/reporting/datasets.py
+msgid "Term"
+msgstr "Pojam"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the selection"
+msgstr "Pojavljivanja u odabiru"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the rest of the collection"
+msgstr "Pojavljivanja u ostatku zbirke"
+
+#: core/reporting/datasets.py
+msgid "Log-likelihood (G2)"
+msgstr "Log-vjerodostojnost (G2)"
+
+#: core/reporting/datasets.py
+msgid "Log Ratio"
+msgstr "Logaritamski omjer (Log Ratio)"
+
+#: core/reporting/datasets.py
+msgid "Counted words in the selection"
+msgstr "Prebrojene riječi u odabiru"
+
+#: core/reporting/datasets.py
+msgid "Counted words in the rest of the collection"
+msgstr "Prebrojene riječi u ostatku zbirke"
+
+#: core/reporting/datasets.py
+msgid "Contents in the selection"
+msgstr "Sadržaji u odabiru"
+
+#: core/reporting/datasets.py
+msgid "Contents in the rest of the collection"
+msgstr "Sadržaji u ostatku zbirke"
+
+#: core/reporting/datasets.py
+msgid "Word records without a count"
+msgstr "Zapisi riječi bez broja"
+
+#: core/reporting/datasets.py
+msgid "Significant terms"
+msgstr "Značajni pojmovi"
+
+#: core/reporting/definitions.py
+msgid "About the Distinctive Terms Report"
+msgstr "O izvješću o razlikovnim pojmovima"
+
+#: core/reporting/definitions.py
+msgid "Compares how often each word occurs in the documents you selected with the rest of the collection you may see, and lists the words whose difference is statistically reliable."
+msgstr "Uspoređuje koliko se često svaka riječ pojavljuje u dokumentima koje ste odabrali s ostatkom zbirke koji smijete vidjeti i navodi riječi čija je razlika statistički pouzdana."
+
+#: core/reporting/definitions.py
+msgid "Distinctive terms"
+msgstr "Razlikovni pojmovi"
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words. Next step: open the documents that contain the top terms."
+msgstr "Ključnost uspoređuje pohranjene oblike riječi. Ne spaja fleksije, sinonime ni jezike, pa odabir na drugom jeziku od zbirke pokazuje svoje funkcionalne riječi. Sljedeći korak: otvorite dokumente koji sadrže najistaknutije pojmove."
+
+#: core/analytics/kinds.py
+msgid "Next step: widen the criteria, or check that the matching documents were processed."
+msgstr "Sljedeći korak: proširite kriterije ili provjerite jesu li odgovarajući dokumenti obrađeni."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages. %(unknown_rows)s word records without a count were left out of every total. Next step: open the documents that contain the top terms."
+msgstr "Ključnost uspoređuje pohranjene oblike riječi. Ne spaja fleksije, sinonime ni jezike. %(unknown_rows)s zapisa riječi bez broja izostavljeno je iz svih zbrojeva. Sljedeći korak: otvorite dokumente koji sadrže najistaknutije pojmove."
+
+#: core/analytics/kinds.py
+msgid "No statistical test was performed."
+msgstr "Nije proveden nijedan statistički test."
+
+#: core/analytics/kinds.py
+msgid "Only terms with G2 of at least %(critical)s count as findings (p < 0.0001; %(source)s). Every term in the vocabulary is tested, so the weaker significance levels are not treated as findings."
+msgstr "Samo pojmovi s G2 od najmanje %(critical)s smatraju se nalazima (p < 0.0001; %(source)s). Testira se svaki pojam u rječniku, pa se slabije razine značajnosti ne smatraju nalazima."
+
+#: core/analytics/kinds.py
+msgid "Any difference between the selection and the collection is not in word frequency at this level; categories, sources or dates may show one."
+msgstr "Eventualna razlika između odabira i zbirke nije u učestalosti riječi na ovoj razini; mogu je pokazati kategorije, izvori ili datumi."
+
+#: core/analytics/kinds.py
+msgid "No conclusion can be drawn from this section."
+msgstr "Iz ovog odjeljka ne može se izvesti nikakav zaključak."
+
+#: core/analytics/kinds.py
+msgid "These terms characterise the selection against the rest of the collection. They show where it differs, not why: read the documents that contain them before drawing conclusions."
+msgstr "Ovi pojmovi obilježavaju odabir u odnosu na ostatak zbirke. Pokazuju gdje se razlikuje, a ne zašto: pročitajte dokumente koji ih sadrže prije donošenja zaključaka."
+
+#: core/analytics/kinds.py
+msgid "The matching contents are the whole visible collection, so there is no reference to compare them with."
+msgstr "Odgovarajući sadržaji čine cijelu vidljivu zbirku, pa nema referentnog skupa za usporedbu."
+
+#: core/analytics/kinds.py
+msgid "No visible content matches the criteria, so there is nothing to compare."
+msgstr "Nijedan vidljivi sadržaj ne odgovara kriterijima, pa nema što usporediti."
+
+#: core/analytics/kinds.py
+msgid "The matching contents have no counted words, so keyness cannot be measured."
+msgstr "Odgovarajući sadržaji nemaju prebrojenih riječi, pa se ključnost ne može izmjeriti."
+
+#: core/analytics/kinds.py
+msgid "No term reaches G2 %(critical)s: at this level the selection's word frequencies do not differ from the rest of the collection."
+msgstr "Nijedan pojam ne doseže G2 od %(critical)s: na ovoj se razini učestalosti riječi u odabiru ne razlikuju od ostatka zbirke."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "Pojmova koji se u odabiru koriste značajno češće nego u ostatku zbirke: %(significant)s (G2 najmanje %(critical)s). Najjači je „%(top_term)s”: G2 %(top_g2)s, logaritamski omjer %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "Pojmova koji se u odabiru koriste značajno rjeđe nego u ostatku zbirke: %(significant)s (G2 najmanje %(critical)s). Najjači je „%(top_term)s”: G2 %(top_g2)s, logaritamski omjer %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) compares word frequencies in the selected contents with the other visible contents."
+msgstr "Ključnost po log-vjerodostojnosti (G2) uspoređuje učestalosti riječi u odabranim sadržajima s ostalim vidljivim sadržajima."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used more often in the selection, highest G2 first."
+msgstr "Ključnost (G2) i logaritamski omjer uspoređuju %(target_tokens)s prebrojenih riječi u %(target_contents)s odabranih sadržaja s %(reference_tokens)s riječi u ostalih %(reference_contents)s vidljivih sadržaja. Navedeno: %(shown)s pojmova češće korištenih u odabiru, od najvećeg G2."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used less often in the selection, highest G2 first."
+msgstr "Ključnost (G2) i logaritamski omjer uspoređuju %(target_tokens)s prebrojenih riječi u %(target_contents)s odabranih sadržaja s %(reference_tokens)s riječi u ostalih %(reference_contents)s vidljivih sadržaja. Navedeno: %(shown)s pojmova rjeđe korištenih u odabiru, od najvećeg G2."
+
+#: templates/Reports/reports.html
+msgid "Analyses"
+msgstr "Analize"
+
+#: templates/Reports/reports.html
+msgid "Measure"
+msgstr "Mjera"
+
+#: templates/Reports/reports.html
+msgid "Finding"
+msgstr "Nalaz"
+
+#: templates/Reports/reports.html
+msgid "Consequence"
+msgstr "Posljedica"
+
+#: templates/Reports/reports.html
+msgid "Caveat"
+msgstr "Ograda"
+
+#: templates/Reports/reports.html
+msgid "Measured"
+msgstr "Izmjereno"
+
+#: templates/Reports/reports.html
+msgid "Not measurable"
+msgstr "Nije mjerljivo"
+
+#: templates/Reports/reports.html
+msgid "Analysis %(key)s, templates %(templates)s"
+msgstr "Analiza %(key)s, predlošci %(templates)s"
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the selected contents with those of the other visible contents."
+msgstr "Ključnost (G2) i logaritamski omjer uspoređuju učestalosti riječi u odabranim sadržajima s onima u ostalim vidljivim sadržajima."
+
+#: core/analytics/kinds.py
+msgid "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. Contents in the rest of the collection: %(reference_contents)s; counted words: %(reference_tokens)s."
+msgstr "Sadržaji u odabiru: %(target_contents)s; prebrojene riječi: %(target_tokens)s. Sadržaji u ostatku zbirke: %(reference_contents)s; prebrojene riječi: %(reference_tokens)s."
+
+#: core/analytics/kinds.py
+msgid "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "Najjači je „%(top_term)s”: G2 %(top_g2)s, logaritamski omjer %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words."
+msgstr "Ključnost uspoređuje pohranjene oblike riječi. Ne spaja fleksije, sinonime ni jezike, pa odabir na drugom jeziku od zbirke pokazuje svoje funkcionalne riječi."
+
+#: core/analytics/kinds.py
+msgid "Next step: open the documents that contain the top terms."
+msgstr "Sljedeći korak: otvorite dokumente koji sadrže najistaknutije pojmove."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used more often in the selection."
+msgid_plural "Listed: %(shown)s terms used more often in the selection, highest G2 first."
+msgstr[0] "Navedeno: %(shown)s pojam češće korišten u odabiru, poredano od najvećeg G2."
+msgstr[1] "Navedeno: %(shown)s pojma češće korištena u odabiru, poredano od najvećeg G2."
+msgstr[2] "Navedeno: %(shown)s pojmova češće korištenih u odabiru, poredano od najvećeg G2."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used less often in the selection."
+msgid_plural "Listed: %(shown)s terms used less often in the selection, highest G2 first."
+msgstr[0] "Navedeno: %(shown)s pojam rjeđe korišten u odabiru, poredano od najvećeg G2."
+msgstr[1] "Navedeno: %(shown)s pojma rjeđe korištena u odabiru, poredano od najvećeg G2."
+msgstr[2] "Navedeno: %(shown)s pojmova rjeđe korištenih u odabiru, poredano od najvećeg G2."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "%(significant)s pojam koristi se u odabiru značajno češće nego u ostatku zbirke (G2 najmanje %(critical)s)."
+msgstr[1] "%(significant)s pojma koriste se u odabiru značajno češće nego u ostatku zbirke (G2 najmanje %(critical)s)."
+msgstr[2] "%(significant)s pojmova koristi se u odabiru značajno češće nego u ostatku zbirke (G2 najmanje %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "%(significant)s pojam koristi se u odabiru značajno rjeđe nego u ostatku zbirke (G2 najmanje %(critical)s)."
+msgstr[1] "%(significant)s pojma koriste se u odabiru značajno rjeđe nego u ostatku zbirke (G2 najmanje %(critical)s)."
+msgstr[2] "%(significant)s pojmova koristi se u odabiru značajno rjeđe nego u ostatku zbirke (G2 najmanje %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(unknown_rows)s word record without a count was left out of every total."
+msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
+msgstr[0] "%(unknown_rows)s zapis riječi bez broja izostavljen je iz svih zbrojeva."
+msgstr[1] "%(unknown_rows)s zapisa riječi bez broja izostavljena su iz svih zbrojeva."
+msgstr[2] "%(unknown_rows)s zapisa riječi bez broja izostavljeno je iz svih zbrojeva."

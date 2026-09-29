@@ -71,6 +71,26 @@ def _validation_error(exc: Exception):
     return _error("VALIDATION_FAILED", str(exc), 400)
 
 
+def _reject_invalid_domain_import(itype, data):
+    """Validate a domain import before a job row exists (400, not a doomed job).
+
+    The worker validates again (the file can disappear in between); this
+    check only moves the common rejections - a path instead of a file name,
+    a file that is not there - to the request, where the user sees the reason.
+    """
+    if itype != "domain_import":
+        return None
+    from services.importing.domain_import_service import (
+        DomainImportRequest, DomainImportService, DomainImportValidationError,
+    )
+
+    try:
+        DomainImportService().validate(DomainImportRequest(data_file=data.get("data_file")))
+    except DomainImportValidationError as exc:
+        return _validation_error(exc)
+    return None
+
+
 def _username() -> str:
     user = current_user()
     return getattr(user, "username", None) or "system"
@@ -855,6 +875,9 @@ def api_import_preview():
     itype = data.get("type")
     if itype not in IMPORT_TYPES:
         return _error("VALIDATION_FAILED", f"Unknown import type: {itype}", 400)
+    rejected = _reject_invalid_domain_import(itype, data)
+    if rejected is not None:
+        return rejected
     try:
         job = _manager().create_job(
             itype,
@@ -901,6 +924,9 @@ def api_create_import_job():
             return _validation_error(Exception("No backup file provided"))
     if itype == "domain_import" and not data.get("data_file"):
         return _validation_error(Exception("No data_file provided"))
+    rejected = _reject_invalid_domain_import(itype, data)
+    if rejected is not None:
+        return rejected
     if itype == "batch_import":
         # accept staged uploads too
         fs_list = request.files.getlist("files")

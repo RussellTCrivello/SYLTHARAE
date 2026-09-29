@@ -43,6 +43,16 @@ class TestBootstrap:
             "titles_content", "keywords", "words_hashs", "keywords_hashs", "alerts",
             "users", "sessions", "audit_log", "schema_migrations",
             "translation_overrides",
+            # m0016: saved searches moved from data/saved_searches.json
+            "saved_searches", "saved_search_imports",
+            # m0017: Phase 1 temporal signals, keyed on content (hash_id)
+            "content_signals", "content_signal_runs",
+            # m0020 / m0021: monitoring rules and scenarios
+            "monitoring_rules", "monitoring_rule_versions", "rule_evaluations",
+            "rule_subject_ledger", "scenarios", "scenario_versions",
+            "scenario_evaluations", "scenario_outcomes",
+            # m0022: report runs (step 14)
+            "report_runs", "report_run_datasets",
         }
         with db_conn.cursor() as cur:
             cur.execute(
@@ -70,6 +80,52 @@ class TestBootstrap:
             "idx_paths_file_path",
             "idx_paths_parent_path_id",
             "idx_titles_content_hash_id",
+            # m0016
+            "idx_saved_searches_owner_created",
+            "idx_saved_searches_fingerprint",
+            "idx_saved_searches_monitor",
+            "uq_saved_searches_legacy",
+            "uq_saved_search_imports_sha",
+            # m0017
+            "uq_content_signals_dedup",
+            "idx_content_signals_hash",
+            "idx_content_signals_dates",
+            "idx_content_signals_type",
+            "idx_content_signal_runs_version",
+            # m0018
+            "idx_content_signals_confidence",
+            # m0019
+            "uq_geo_places_key",
+            "uq_geo_place_names",
+            "idx_geo_place_names_key",
+            "idx_geo_place_names_place",
+            "content_signal_places_pkey",
+            "idx_content_signal_places_place",
+            "idx_content_signals_detector",
+            # m0020
+            "uq_monitoring_rules_owner_name",
+            "idx_monitoring_rules_active",
+            "idx_monitoring_rules_saved_search",
+            "monitoring_rule_versions_pkey",
+            "idx_rule_evaluations_rule",
+            "rule_subject_ledger_pkey",
+            "idx_rule_ledger_pending",
+            "idx_rule_ledger_alert",
+            "idx_alerts_recipient_dismissed_created",
+            # m0021
+            "uq_scenarios_owner_name",
+            "idx_scenarios_active",
+            "scenario_versions_pkey",
+            "idx_scenario_evaluations_scenario",
+            "idx_scenario_outcomes_latest",
+            "idx_scenario_outcomes_evaluation",
+            # m0022
+            "idx_report_runs_requester",
+            "idx_report_runs_report",
+            "idx_report_runs_job",
+            "idx_report_runs_saved_search",
+            "report_run_datasets_pkey",
+            "uq_report_run_datasets_key",
         }
         with db_conn.cursor() as cur:
             cur.execute("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")

@@ -6,11 +6,13 @@ the CLI compatibility adapter share one implementation.
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Dict, List, Optional
 
+from core.errors import ClientSafeError
 
-class DomainImportValidationError(ValueError):
+
+class DomainImportValidationError(ClientSafeError, ValueError):
     """Invalid import request; ``str(exc)`` is client-safe."""
 
 
@@ -69,22 +71,29 @@ class DomainImportService:
         self._pause = threading.Event()
 
     # -- path policy -----------------------------------------------------
-    def _resolve_data_file(self, data_file: Optional[str]) -> str:
+    def _search_paths(self) -> tuple:
         try:
-            from apps.importing.utils.constants import (
-                DEFAULT_DATA_FILE, DATA_FILE_SEARCH_PATHS,
-            )
-
-            default_name = DEFAULT_DATA_FILE
-            search_paths = tuple(DATA_FILE_SEARCH_PATHS) + self.DEFAULT_SEARCH_PATHS
+            from apps.importing.utils.constants import DATA_FILE_SEARCH_PATHS
         except Exception:
-            default_name = "data.xlsx"
-            search_paths = self.DEFAULT_SEARCH_PATHS
+            return self.DEFAULT_SEARCH_PATHS
+        return tuple(DATA_FILE_SEARCH_PATHS) + self.DEFAULT_SEARCH_PATHS
+
+    @staticmethod
+    def _default_name() -> str:
+        try:
+            from apps.importing.utils.constants import DEFAULT_DATA_FILE
+        except Exception:
+            return "data.xlsx"
+        return DEFAULT_DATA_FILE
+
+    def _resolve_data_file(self, data_file: Optional[str]) -> str:
+        default_name = self._default_name()
+        search_paths = self._search_paths()
 
         if not data_file:
             for sp in search_paths:
                 candidate = Path(sp) / default_name
-                if candidate.exists():
+                if candidate.is_file():
                     return str(candidate)
             raise DomainImportValidationError(
                 f"No domain data file found (looked for '{default_name}' in "
@@ -95,10 +104,11 @@ class DomainImportService:
         name = Path(data_file).name  # filenames only; no traversal
         for sp in search_paths:
             candidate = Path(sp) / name
-            if candidate.exists():
+            if candidate.is_file():
                 return str(candidate)
         raise DomainImportValidationError(
-            f"Data file '{name}' not found in the import data directories"
+            f"Data file not found. It must be in one of: "
+            f"{', '.join(str(sp) for sp in search_paths)}"
         )
 
     # -- validation ------------------------------------------------------
@@ -106,9 +116,16 @@ class DomainImportService:
         if not isinstance(request, DomainImportRequest):
             raise DomainImportValidationError("Invalid request type")
         if request.data_file:
-            if Path(request.data_file).name != request.data_file:
+            # Separators of either platform: a Windows path typed into a
+            # server running on Linux must be refused too. The input is not
+            # echoed back (the page inserts messages as HTML).
+            name = request.data_file
+            if (Path(name).name != name or PureWindowsPath(name).name != name
+                    or name in (".", "..")):
                 raise DomainImportValidationError(
-                    "Provide a file name located in the import data directory"
+                    f"Enter only the file name (for example {self._default_name()}), "
+                    f"not a path. The file must be in one of: "
+                    f"{', '.join(str(sp) for sp in self._search_paths())}"
                 )
         # Always resolve (even for dry runs) so callers learn immediately
         # when no data file is available instead of failing mid-job.

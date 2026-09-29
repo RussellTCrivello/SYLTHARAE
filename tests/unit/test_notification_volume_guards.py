@@ -40,9 +40,9 @@ def test_paginated_route_never_forces_a_refresh():
 
 def test_stats_route_uses_sql_aggregates_not_in_memory_counts():
     source = NOTIFICATIONS.read_text(encoding="utf-8")
-    # /stats body: get_stats() only
+    # /stats body: the SQL aggregates only, limited to what the caller may see
     stats_fn = source.split("def get_notification_stats()", 1)[1].split("@app.route", 1)[0]
-    assert "get_stats()" in stats_fn
+    assert "get_stats(for_user_id=_viewer_id())" in stats_fn
     assert "refresh_notifications()" not in stats_fn
     assert "get_notifications(limit=" not in stats_fn
 
@@ -101,7 +101,14 @@ def test_scan_candidate_query_returns_one_row_per_path():
     source = NOTIFICATIONS.read_text(encoding="utf-8")
     # DISTINCT + c.id fanned out over content chunks.
     assert "c.id as content_id" not in source
-    assert "EXISTS (SELECT 1 FROM contents c WHERE c.hash_id = hc.hash_id)" in source
+    # Future dates come from stored signals (Phase 1): exactly one - the
+    # earliest - future signal per path via LATERAL ... LIMIT 1; contents
+    # chunks are not joined at all.
+    scan_body = source.split("def scan_for_notifications()", 1)[1]
+    future = scan_body.split("# 2. Find files with future dates", 1)[1]
+    query = future.split("future_rows = execute_query(", 1)[1].split('fetch="all"', 1)[0]
+    assert "JOIN LATERAL (" in query and "LIMIT 1\n                    ) s ON TRUE" in query
+    assert "JOIN contents" not in query and "FROM contents" not in query
 
 
 def test_scan_response_is_built_after_flush():

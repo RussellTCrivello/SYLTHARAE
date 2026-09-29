@@ -18,150 +18,19 @@ from Api.services.search_algorithms import (
 logger = logging.getLogger(__name__)
 
 
-def _escape_like(value: str) -> str:
-    """Escape ILIKE/LIKE wildcards in user input.
-
-    AUDIT (SEC-05 / API-05): search patterns were built by string formatting
-    (``f'%{term}%'``) and passed as bound parameters, so a query containing
-    ``%`` or ``_`` acted as a wildcard instead of a literal - ``%%`` returned
-    every row in the corpus. Conversely ``simple_search`` doubled single
-    quotes (``term.replace("'", "''")``) even though the value is already a
-    bound parameter, so searching for ``O'Brien`` could never match.
-
-    Only the wildcard characters need escaping; quotes are handled by the
-    driver. Note the escaping must also be applied where the pattern is
-    compared, i.e. ``LIKE %s ESCAPE '\\'`` is not needed here because the
-    default escape character for LIKE is backslash.
-    """
-    if value is None:
-        return ""
-    text = str(value)
-    text = text.replace("\\", "\\\\")
-    text = text.replace("%", "\\%")
-    text = text.replace("_", "\\_")
-    return text
-
-
-def _escape_postgres_regex(value: str) -> str:
-    """Escape user text for a PostgreSQL ARE regular-expression literal."""
-    special = set(r"\.^$|?*+(){}[]")
-    return "".join(("\\" + char) if char in special else char for char in str(value))
-
-
-def _postgres_word_pattern(value: str) -> str:
-    """Build a literal PostgreSQL regex requiring word boundaries."""
-    parts = [part for part in re.split(r"\s+", str(value).strip()) if part]
-    if not parts:
-        return r"(?!)"
-    phrase = r"[[:space:]]+".join(_escape_postgres_regex(part) for part in parts)
-    return r"(^|[^[:alnum:]_])" + phrase + r"([^[:alnum:]_]|$)"
-
-def _text_match_clause(field: str, value: str, *, case_sensitive: bool = False,
-                       whole_word: bool = False) -> Tuple[str, str]:
-    """Return a safe SQL predicate and bound pattern for a literal text field."""
-    if whole_word:
-        operator = "~" if case_sensitive else "~*"
-        return f"{field} {operator} %s", _postgres_word_pattern(value)
-    operator = "LIKE" if case_sensitive else "ILIKE"
-    return f"{field} {operator} %s", f"%{_escape_like(value)}%"
-
-
-def _parse_boolean_search_expression(query: str):
-    """Parse literals, quotes, parentheses, AND/OR/NOT into a small AST.
-
-    AND binds more tightly than OR; adjacent operands imply AND, and a binary
-    NOT means AND NOT (``alpha NOT beta``). All leaves remain literal user
-    strings and are bound by the SQL builder.
-    """
-    token_re = re.compile(
-        r'"([^"]*)"|(\bAND\b|\bOR\b|\bNOT\b)|([()])|([^\s()"]+)',
-        re.IGNORECASE,
-    )
-    tokens = []
-    for match in token_re.finditer(str(query or '')):
-        if match.group(1) is not None:
-            value = match.group(1).strip()
-            if value:
-                tokens.append(('term', value))
-        elif match.group(2) is not None:
-            tokens.append(match.group(2).upper())
-        elif match.group(3) is not None:
-            tokens.append(match.group(3))
-        elif match.group(4) is not None:
-            tokens.append(('term', match.group(4)))
-    if not tokens:
-        return None
-
-    position = 0
-
-    def peek():
-        return tokens[position] if position < len(tokens) else None
-
-    def parse_primary():
-        nonlocal position
-        token = peek()
-        if token == 'NOT':
-            position += 1
-            operand = parse_primary()
-            return ('not', operand) if operand is not None else None
-        if token == '(':
-            position += 1
-            node = parse_or()
-            if node is None or peek() != ')':
-                return None
-            position += 1
-            return node
-        if isinstance(token, tuple) and token[0] == 'term':
-            position += 1
-            return token
-        return None
-
-    def parse_and():
-        nonlocal position
-        node = parse_primary()
-        if node is None:
-            return None
-        while position < len(tokens):
-            token = peek()
-            if token == 'OR' or token == ')':
-                break
-            if token == 'AND':
-                position += 1
-                right = parse_primary()
-                if right is None:
-                    return None
-                node = ('and', node, right)
-            elif token == 'NOT':
-                position += 1
-                right = parse_primary()
-                if right is None:
-                    return None
-                node = ('and', node, ('not', right))
-            elif isinstance(token, tuple) and token[0] == 'term' or token == '(':
-                # Google-like adjacent terms default to AND.
-                right = parse_primary()
-                if right is None:
-                    return None
-                node = ('and', node, right)
-            else:
-                return None
-        return node
-
-    def parse_or():
-        nonlocal position
-        node = parse_and()
-        if node is None:
-            return None
-        while peek() == 'OR':
-            position += 1
-            right = parse_and()
-            if right is None:
-                return None
-            node = ('or', node, right)
-        return node
-
-    expression = parse_or()
-    return expression if expression is not None and position == len(tokens) else None
+# The predicate vocabulary (literal matching, boolean parsing, structured
+# filters) now lives in core/criteria/sql.py so interactive search, saved
+# searches, monitoring, reports and exports share one definition of "matches".
+# The old private names are kept as aliases for existing callers and tests.
+from core.criteria.sql import (  # noqa: E402
+    escape_like as _escape_like,
+    escape_postgres_regex as _escape_postgres_regex,  # noqa: F401 - compatibility alias of the former private name
+    filter_predicates as _filter_predicates,
+    literal_field_matches as _literal_field_matches,
+    parse_boolean_expression as _parse_boolean_search_expression,
+    postgres_word_pattern as _postgres_word_pattern,  # noqa: F401 - compatibility alias of the former private name
+    text_match_clause as _text_match_clause,  # noqa: F401 - compatibility alias of the former private name
+)
 
 
 # Spreadsheet structure tracking: maps a line of stored spreadsheet text to
@@ -1079,49 +948,9 @@ class SearchService:
 
                 def literal_field_matches(value):
                     """Search indexed text plus searchable file/provenance metadata."""
-                    clauses = []
-                    match_params = []
-                    for field in ('p.file_name', 'p.file_type'):
-                        clause, pattern = _text_match_clause(
-                            field, value, case_sensitive=case_sensitive,
-                            whole_word=whole_word)
-                        clauses.append(clause)
-                        match_params.append(pattern)
-                    for table_alias, source_column, id_column in (
-                        ('_search_source', 'name', 'hc.source_id'),
-                        ('_search_side', 'name', 'hc.side_id'),
-                    ):
-                        clause, pattern = _text_match_clause(
-                            f'{table_alias}.{source_column}', value,
-                            case_sensitive=case_sensitive,
-                            whole_word=whole_word)
-                        table = 'sources' if table_alias == '_search_source' else 'sides'
-                        clauses.append(
-                            f"EXISTS (SELECT 1 FROM {table} {table_alias} "
-                            f"WHERE {table_alias}.id = {id_column} AND {clause})")
-                        match_params.append(pattern)
-                    content_clause, content_pattern = _text_match_clause(
-                        'cr.content', value, case_sensitive=case_sensitive,
-                        whole_word=whole_word)
-                    clauses.append(
-                        "EXISTS (SELECT 1 FROM contents_raw cr "
-                        f"WHERE cr.hash_id = h.id AND {content_clause})")
-                    match_params.append(content_pattern)
-                    # Legacy indexed records may not have the structured raw
-                    # text row. Retain token search when case preservation is
-                    # not requested; token tables cannot prove original case.
-                    if not case_sensitive:
-                        word_clause, word_pattern = _text_match_clause(
-                            'w.word', value, case_sensitive=False,
-                            whole_word=whole_word)
-                        clauses.append(
-                            "EXISTS (SELECT 1 FROM words_hashs _search_wp "
-                            "JOIN words w ON _search_wp.word_id = w.id "
-                            "WHERE _search_wp.hash_id = h.id AND "
-                            f"{word_clause})")
-                        match_params.append(word_pattern)
-                    return clauses, match_params
-                
+                    return _literal_field_matches(
+                        value, case_sensitive=case_sensitive, whole_word=whole_word)
+
                 # Explicit queries, case-sensitive searches, and whole-word
                 # searches use literal predicates against text, filenames and
                 # provenance metadata. Full-text indexes cannot enforce those
@@ -1288,107 +1117,42 @@ class SearchService:
                                 f"({core_condition} OR {literal_condition})")
                             params.extend(core_params + literal_params)
             
-                # Apply filters - optimize query order (source/side first for better performance)
-                # Source and side filters are applied early to reduce dataset size
-                # Handle multiple source_ids
-                if source_ids and len(source_ids) > 0:
-                    if len(source_ids) == 1:
-                        where_conditions.append("hc.source_id = %s")
-                        params.append(source_ids[0])
-                    else:
-                        placeholders = ','.join(['%s'] * len(source_ids))
-                        where_conditions.append(f"hc.source_id IN ({placeholders})")
-                        params.extend(source_ids)
-                elif source_id:
-                    where_conditions.append("hc.source_id = %s")
-                    params.append(source_id)
-                
-                # Handle multiple side_ids
-                if side_ids and len(side_ids) > 0:
-                    if len(side_ids) == 1:
-                        where_conditions.append("hc.side_id = %s")
-                        params.append(side_ids[0])
-                    else:
-                        placeholders = ','.join(['%s'] * len(side_ids))
-                        where_conditions.append(f"hc.side_id IN ({placeholders})")
-                        params.extend(side_ids)
-                elif side_id:
-                    where_conditions.append("hc.side_id = %s")
-                    params.append(side_id)
-                
-                # Handle file_type (can be list or single value)
-                if file_type:
-                    if isinstance(file_type, (list, tuple)):
-                        if len(file_type) > 0:
-                            placeholders = ','.join(['%s'] * len(file_type))
-                            where_conditions.append(f"p.file_type IN ({placeholders})")
-                            params.extend(file_type)
-                    else:
-                        where_conditions.append("p.file_type = %s")
-                        params.append(file_type)
-                
-                if date_from:
-                    where_conditions.append("p.file_date >= %s")
-                    params.append(date_from)
-                
-                if date_to:
-                    where_conditions.append("p.file_date <= %s")
-                    params.append(date_to)
-
-                if file_statuses is not None:
-                    allowed_statuses = {'Read', 'Unread'}
-                    statuses = list(dict.fromkeys(file_statuses))
-                    if any(status not in allowed_statuses for status in statuses):
-                        raise ValueError("file_statuses must contain only 'Read' or 'Unread'")
-                    if not statuses:
-                        where_conditions.append("1=0")
-                    else:
-                        placeholders = ','.join(['%s'] * len(statuses))
-                        where_conditions.append(f"p.file_status IN ({placeholders})")
-                        params.extend(statuses)
-                
-                # Handle multiple category_ids
-                if category_ids and len(category_ids) > 0:
-                    if len(category_ids) == 1:
-                        where_conditions.append("""
-                            EXISTS (
-                                SELECT 1 FROM words_hashs wp2
-                                JOIN words_categorys wc ON wp2.word_id = wc.word_id
-                                WHERE wp2.hash_id = hc.hash_id AND wc.category_id = %s
-                            )
-                        """)
-                        params.append(category_ids[0])
-                    else:
-                        placeholders = ','.join(['%s'] * len(category_ids))
-                        where_conditions.append(f"""
-                            EXISTS (
-                                SELECT 1 FROM words_hashs wp2
-                                JOIN words_categorys wc ON wp2.word_id = wc.word_id
-                                WHERE wp2.hash_id = hc.hash_id AND wc.category_id IN ({placeholders})
-                            )
-                        """)
-                        params.extend(category_ids)
-                elif category_id:
-                    where_conditions.append("""
-                        EXISTS (
-                            SELECT 1 FROM words_hashs wp2
-                            JOIN words_categorys wc ON wp2.word_id = wc.word_id
-                            WHERE wp2.hash_id = hc.hash_id AND wc.category_id = %s
-                        )
-                    """)
-                    params.append(category_id)
+                # Structured filters: the single shared implementation
+                # (core/criteria/sql.py::filter_predicates), identical for
+                # interactive search and every compiled Criteria consumer.
+                # Legacy single-value parameters are folded into the lists.
+                effective_sources = list(source_ids) or ([source_id] if source_id else [])
+                effective_sides = list(side_ids) or ([side_id] if side_id else [])
+                effective_categories = (list(category_ids)
+                                        or ([category_id] if category_id else []))
+                if isinstance(file_type, (list, tuple)):
+                    effective_types = list(file_type)
+                elif file_type:
+                    effective_types = [file_type]
+                else:
+                    effective_types = []
+                filter_sql, filter_params = _filter_predicates(
+                    source_ids=effective_sources,
+                    side_ids=effective_sides,
+                    file_types=effective_types,
+                    date_from=date_from,
+                    date_to=date_to,
+                    file_statuses=file_statuses,
+                    category_ids=effective_categories,
+                )
+                where_conditions.extend(filter_sql)
+                params.extend(filter_params)
 
             # Analyst-category filter (FR-3.1): a separate dimension from the
             # smart category filter above - reads ONLY analyst tables and is
             # never satisfied by a smart category id (FR-1.4).
+            # Same shared predicate as every compiled Criteria consumer
+            # (core/criteria/sql.py::filter_predicates).
             if analyst_category_ids:
-                afc_placeholders = ','.join(['%s'] * len(analyst_category_ids))
-                where_conditions.append(
-                    f"EXISTS (SELECT 1 FROM analyst_file_categories _afc2 "
-                    f"WHERE _afc2.path_id = p.id "
-                    f"AND _afc2.category_id IN ({afc_placeholders}))"
-                )
-                params.extend(analyst_category_ids)
+                afc_sql, afc_params = _filter_predicates(
+                    analyst_category_ids=analyst_category_ids)
+                where_conditions.extend(afc_sql)
+                params.extend(afc_params)
 
             # Analyst-categorization scope filter (FR-2.x). Runs purely on
             # analyst_file_categories; smart categorization status is never

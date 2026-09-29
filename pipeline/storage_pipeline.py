@@ -238,7 +238,8 @@ class StoragePipeline:
             'files_started': 0,
             'files_processed': 0,      # completed processing (any outcome)
             'files_stored': 0,
-            'files_duplicates': 0,
+            'files_duplicates': 0,     # this exact file was already recorded
+            'files_content_reused': 0, # new file, content already stored
             'files_failed': 0,
             'files_skipped': 0,
             'files_unsupported': 0,
@@ -919,6 +920,11 @@ class StoragePipeline:
                             # Update statistics
                             self.stats['files_stored'] += 1
                             self.stats['files_processed'] += 1
+                            if storage_result.get('content_reused'):
+                                # Stored as a new occurrence of content that
+                                # already existed: not a skipped duplicate.
+                                self.stats['files_content_reused'] = (
+                                    self.stats.get('files_content_reused', 0) + 1)
 
                         # PARENT-01: children of a container are stored before
                         # their parent, so the parent's id is only known now.

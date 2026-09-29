@@ -29,6 +29,7 @@ from flask_babel import gettext as _
 from core.serialization import pack_int_list, unpack_int_list
 from core.errors import client_error, client_safe_message
 from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
+from core.security.disclosure import note_disclosure
 from Api.utils import (
     execute_query, select_info_sources, select_info_sides, select_info_file_types,
     load_text_content, select_classification, compute_percentage, get_content_stats,
@@ -1015,6 +1016,8 @@ def file_export(file_id):
         if content is None:
             content = ''
         
+        note_disclosure(kind='file_text_export', scope=f'file:{file_id}', unit='file',
+                        row_count=1, format='txt', file_ids=[file_id])
         # Create response with file download
         from flask import Response
         response = Response(
@@ -1174,6 +1177,9 @@ def bulk_export_files():
                             for fid, name, reason in skipped],
             }), 422
 
+        note_disclosure(kind=f'bulk_{mode}_export', scope='selection', unit='file',
+                        row_count=included, total=len(file_ids), skipped=len(skipped),
+                        format='zip', file_ids=sorted(file_ids))
         stamp = _datetime.now().strftime('%Y%m%d_%H%M%S')
         fallback_name = (f"selected_originals_{stamp}"
                          if mode == 'originals'
@@ -1294,6 +1300,9 @@ def export_file_names():
             }
             for row in rows
         ]
+        note_disclosure(kind='file_names_export',
+                        scope=scope if scope != 'type' else f'type:{file_type}',
+                        unit='file', row_count=len(safe_rows), format=extension)
         stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         scope_name = 'all_indexed' if scope == 'all' else (
             'selected' if scope == 'selected' else _file_type_label(file_type).lower().replace(' ', '_'))
@@ -1398,6 +1407,10 @@ def export_selected_first_pages():
                 'text': text, 'method': method,
             })
 
+        note_disclosure(kind='first_pages_export', scope='selection', unit='file',
+                        row_count=len(sections), format=export_format,
+                        unavailable=sum(s.get('method') == 'unavailable' for s in sections),
+                        file_ids=sorted(file_ids))
         stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         fallback = f'first_pages_{stamp}'
         if export_format == 'txt':
@@ -1532,6 +1545,8 @@ def export_excerpt():
         # Page/section are deliberately never added: this application does
         # not record page or section boundaries for extracted text.
 
+        note_disclosure(kind=f'excerpt_{kind}', scope=f'file:{file_id}', unit='excerpt',
+                        row_count=1, format=export_format, file_ids=[file_id])
         if export_format == 'txt':
             lines = [f'{label} Export', '=' * (len(label) + 7), '']
             lines += [f'{k}: {v}' for k, v in fields]
@@ -1687,6 +1702,10 @@ def export_selected_contacts():
                 }
                 for item in occurrences
             ]
+        note_disclosure(kind='contacts_export', scope='selection', unit='occurrence',
+                        row_count=len(safe_occurrences), documents=len(file_ids),
+                        format=export_format, deduplicated=bool(dedupe),
+                        file_ids=sorted(file_ids))
         stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         fallback = ('unique_emails_and_links_' if dedupe else 'extracted_emails_and_links_') + stamp
         if export_format == 'csv':
@@ -2328,6 +2347,10 @@ def original_file_content(file_id):
 
     download = request.args.get('download') in ('1', 'true', 'yes', 'on')
     try:
+        # Recorded only when the response is an attachment (download=1) -
+        # inline display is a preview, see docs/SECURITY.md.
+        note_disclosure(kind='original_file', scope=f'file:{file_id}', unit='file',
+                        row_count=1, file_ids=[file_id])
         return OriginalFileService.content_response(file_id, download=download)
     except FileNotFoundError as missing:
         reason = str(missing)

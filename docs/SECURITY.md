@@ -86,6 +86,51 @@ in [reference/HTTP_ROUTES.md](reference/HTTP_ROUTES.md).
 Backup export and restore (`/api/import-export/*`) contain or replace every
 evidence table and are therefore admin-only (SEC-02).
 
+**Saved searches are owned.** `/api/search/saved/<id>` (GET/PUT/DELETE)
+answers `404` unless the caller owns the search, or is an administrator and
+the search is *unowned* (legacy entries saved before per-user accounts). A
+`404` rather than `403` avoids confirming that another user's id exists.
+Previously any authenticated user could read, rename or delete any saved
+search by id (`tests/integration/test_saved_searches_pg.py`).
+
+**Signals, Horizon and Signal Explorer** (`/api/signals*`, `/signals`,
+[implementation/HORIZON.md](implementation/HORIZON.md)) are readable by any
+authenticated role.
+* The caller's `AccessScope` is compiled into the SQL before any row is read.
+  A signal is visible only through a visible file occurrence of its content.
+* An absent signal and one the caller may not see get the same `404`. A
+  saved search the caller does not own is also a `404`.
+* Each response is read inside one `REPEATABLE READ, READ ONLY` transaction
+  with a 15 s statement timeout, so PostgreSQL itself rejects writes on that
+  path.
+* Re-detection (`POST /api/signals/redetect`) is admin-only.
+
+**Monitoring rules and notifications** (`/api/rules*`,
+[implementation/RULE_ENGINE.md](implementation/RULE_ENGINE.md)):
+* A notification with a `recipient_user_id` is visible only to that user,
+  administrators included. The filter is part of the SQL of every read and of
+  mark-read/dismiss; a notification addressed to someone else is a `404`.
+  A rule notification without a recipient is refused (code and CHECK).
+* Only an active analyst or admin may create or edit a rule, and only their
+  own. Admins may pause, resume, archive, suppress or evaluate any rule, but
+  not change its definition. Other users' rules are a `404`.
+* Each evaluation re-reads the owner. An inactive or demoted owner's rule is
+  disabled and notifies nothing; the criteria are compiled with the owner's
+  `AccessScope`, stored with the evaluation.
+* Priority is derived and cannot be supplied by a caller (400).
+* Rule changes are written to `audit_log`.
+
+**Scenarios** (`/api/scenarios*`, page `/monitoring`,
+[implementation/SCENARIOS.md](implementation/SCENARIOS.md)) follow the same
+model: owner-addressed notifications only; own definitions only (admins may
+dry-run, activate, pause, resume, archive and evaluate any scenario, not edit
+it - 403); others' scenarios are a `404`; the owner is re-read on every
+evaluation and an ineligible owner's scenario is disabled before anything is
+evaluated; population and document conditions are compiled under the owner's
+`AccessScope`. Activation is refused (409) without a passed dry-run of the
+current definition. Outcome history is append-only (trigger). Every change,
+dry-run and activation is written to `audit_log`.
+
 The **setup wizard** is public only until installation: after that `/setup`
 redirects home, `/api/setup/install` answers 409, and the system check and
 database probe require an administrator (AUDIT-SETUP-01).
@@ -100,6 +145,16 @@ separately, and `tests/security/test_interface_visibility.py` checks both.
   vary (sort columns, directions, table names) are chosen from whitelists
   (`core/sql_safety.py`); a client value never reaches the SQL text
   (AUDIT-SQLI-01 fixed the one place that did).
+* **Query parameters of read APIs** are parsed strictly
+  (`services/detection/signal_query.py`).
+  * Unknown enum values, malformed identifiers and inverted date windows get
+    `400`. They are never ignored, which would widen the result.
+  * Identifiers must be positive ASCII decimal integers. `str.isdigit()` had
+    accepted superscripts, whose `int()` error leaked into the response, and
+    other scripts' digits.
+  * Free-text filters are length-limited and matched literally: `%` and `_`
+    are escaped for `ILIKE`.
+  * Every list is bounded (100 values; pages of at most 200 rows).
 * **Server paths.** Ingestion of server-side folders is confined to the
   `INGESTION_ROOTS` allow-list (`core/path_safety.py`, SEC-06), resolved after
   symlinks, with native Windows drive and UNC paths handled. With no roots
@@ -196,7 +251,7 @@ resource, detail, client address, time): `login.success`, `login.failed`,
 `user.delete`, `user.password_reset`, `user.password_recovery`,
 `user.first_admin_created`, `bootstrap.initial_admin_created`,
 `setup.initial_admin_created`, `jobs.cancel`, `password.change_failed`,
-`password.change_locked`. Behind a reverse proxy set `TRUSTED_PROXY_COUNT` so
+`password.change_locked`, `DATA_EXPORTED`. Behind a reverse proxy set `TRUSTED_PROXY_COUNT` so
 the recorded address is the client's, not the proxy's (AUDIT-PROXY-01).
 
 The address is always the one `TRUSTED_PROXY_COUNT` establishes
@@ -205,6 +260,53 @@ sign-out and password records used to take the first `X-Forwarded-For` value
 themselves, which any client can write (AUDIT-PROXY-02). The live smoke test
 sends a forged `X-Forwarded-For` on every request and checks that it never
 reaches the log.
+
+### Disclosure register (`DATA_EXPORTED`)
+
+Every response that hands the client a file (`Content-Disposition:
+attachment`) - search exports, bulk file exports, keyword and category
+exports, backups, original-file downloads - writes one `DATA_EXPORTED`
+record: actor and role, time, endpoint, filename, format, and the SHA-256
+and size of the bytes actually sent. Routes that know more add it (search
+exports add scope, row count, total, truncation, the criteria fingerprint
+and the full request fingerprint). The response carries
+`X-Disclosure-Audit-Id`.
+
+Coverage is enforced centrally (`core/security/disclosure.py`, an
+`after_request` hook), so a new export route cannot be added unrecorded. The
+hook **fails closed**: if the record cannot be written the export is replaced
+by `503 disclosure_audit_failed` and nothing is sent. The digest is computed
+before gzip compression. Bodies larger than 64 MiB that are streamed from
+disk are recorded with `"sha256": null` and the reason, never a guessed
+value. Inline previews (`as_attachment=False`) are not disclosures and are
+not recorded. Tests: `tests/integration/test_disclosure_audit.py`.
+
+Every record states `kind`, `scope`, `format` and `row_count`. Each export
+route declares what it knows; a count a route cannot know is `null` with
+`row_count_reason` (never `0`), and a route that declares nothing still gets
+`format` from the file and `row_count: null` with the reason "not declared by
+the route".
+
+| Route | kind | scope | row_count (unit) |
+| --- | --- | --- | --- |
+| `POST /api/search/export` | `search_export` | criteria scope | rows (+ total, truncated, fingerprints) |
+| `GET /api/analyst/export` | `analyst_categorizations` | `all` / `filtered` (+ filters) | assignments |
+| `GET /api/sources/<id>/export` | `source_record` | `source:<id>` | 1 (source) |
+| `GET /api/keywords/export` | `keywords_export` | `all` / `selection` | keywords |
+| `POST /files/export` | `bulk_text_export` / `bulk_originals_export` | `selection` (+ file ids) | files included (+ requested, skipped) |
+| `POST /api/files/names/export` | `file_names_export` | `all` / `selected` / `type:<t>` | files |
+| `POST /api/files/excerpt/export` | `excerpt_<kind>` | `file:<id>` | 1 (excerpt) |
+| `POST /api/files/extract-contacts/export` | `contacts_export` | `selection` (+ file ids) | occurrences |
+| `POST /api/files/first-pages/export` | `first_pages_export` | `selection` (+ file ids) | files |
+| `GET /api/files/<id>/export` | `file_text_export` | `file:<id>` | 1 (file) |
+| `GET /api/file/<id>/original/content?download=1` | `original_file` | `file:<id>` | 1 (file) |
+| `GET /api/import-export/backup/export` | `database_backup` | `tables:<list or evidence>` | `null` - the backup service does not count rows |
+| `GET /api/import-export/settings/export` | `settings_export` | `settings:search,display,system` | 1 |
+| `GET /api/settings/export` | `settings_export` | `settings:all` | 1 - JSON body, recorded explicitly (`force`) because it has no attachment header |
+
+`test_every_export_route_writes_a_complete_record` calls each of these
+against PostgreSQL and checks the record, the actor and the SHA-256 of the
+bytes received.
 
 ## 8. Dependencies
 
@@ -220,8 +322,58 @@ CI runs `pip-audit` on every push, and bandit against
 [`tools/security/bandit-baseline.json`](../tools/security/bandit-baseline.json):
 the baseline holds only the documented residuals RES-SQL-01 (B608),
 RES-XML-01 (B314) and RES-BIND-01 (B104)
-([AUDIT_REPORT.md](../AUDIT_REPORT.md#residual-items-at-v220)), so any new
-medium- or high-severity finding fails the build.
+([AUDIT_REPORT.md](../AUDIT_REPORT.md#residual-items-at-v220)). A medium- or
+high-severity finding fails the build when its file has no baseline entry for
+that test.
+
+**Limit of the baseline gate (verified 2026-09-28).** bandit matches baseline
+entries by file, test id, severity, confidence and message, not by line or
+count. A file that already has one B608 entry can gain further B608 sites
+without failing CI: a scratch file with one baselined B608 site and two added
+ones passes `bandit -b` with exit 0. New string-built SQL in the baselined files
+(for example `Api/utils/utils.py`, `Api/services/search_service.py`,
+`core/monitoring/notification_service.py`) must therefore be reviewed by hand,
+as below. A count-aware gate is a follow-up, not built.
+
+### Bandit triage of the intelligence layer (2026-09-28)
+
+The CI bandit step failed on the intelligence-layer branch (PR #3) with 109
+findings: 108 B608 and 1 B108. Main (`b6d80fb`) was already failing with 17
+findings. They are 16 sites in `Api/routes/file_analysis.py` and 1 in
+`Api/services/search_export.py` that are missing from the baseline. The
+baseline was **not** regenerated. Every site was read and handled one by one:
+
+*Defects fixed*
+
+| Finding | Fix | Test |
+| --- | --- | --- |
+| `SearchService` defined `_query_match_patterns`, `_matching_fields`, `_find_matching_lines`, `_build_order_by`, `simple_search` and `advanced_search` twice. This was a broken splice in `a6060b5`: the first `advanced_search` was the start of the Phase 0 edit joined to the tail of `full_text_search`. Python keeps the last definition, so the first copies were ~850 lines of dead code. The live copies are the ones every test and field run executed | dead block removed (behaviour unchanged); the analyst-category filter now also uses the shared `filter_predicates` (identical SQL and parameters) | `test_no_method_is_defined_twice`, `test_search_uses_the_shared_analyst_category_predicate` |
+| Nine validators added by the branch were anchored with `$`, which in Python also matches before a trailing newline: `"abc\n"` passed `scenario_model._ID_RE`, whose value later reaches SQL composition (not exploitable: `_lit()` re-checks, and a newline is only whitespace in an identifier) | `\Z` in `kinds._ID`, `criteria.model._ISO_DATE`, `reporting.model._ID`/`_HELP_TOPIC`, `audit_query._ID`, `signal_query._METHOD_RE`/`_PLACE_KEY_RE`/`_POSITIVE_INT_RE`, `scenario_model._ID_RE` | `test_anchored_validators_match_the_whole_value` (9), `test_scenario_identifiers_reject_a_trailing_newline` |
+| `NotificationService._set_flag` writes `column` into `UPDATE alerts SET {column}` and guarded it with `assert`, which `python -O` removes | explicit check raising `ValueError` | `test_set_flag_rejects_an_unknown_column_without_relying_on_assert` |
+| The horizon wrote the reference date into the SQL text (`DATE '<iso>'`). This was the one value in the branch's SQL that was not a parameter (safe in practice: only a `date` has `isoformat()`) | the bucket expression reads `ref.r` from `CROSS JOIN (SELECT %s::date AS r) ref`; the date is bound | `test_horizon_binds_the_reference_date`; `test_signal_explorer_pg.py` horizon tests unchanged |
+| `_fetch_notifications` interpolated `LIMIT {int(limit)}` | bound parameter | `test_notification_service.py` |
+| B108: `tools/verify/runtime_provision.py` defaulted to the fixed path `/tmp/syltharae_runtime` in the shared temp directory | a fresh private `tempfile.mkdtemp()` when no directory is given | - (developer tool; the documented commands pass a directory) |
+
+*Reviewed and justified inline.* The other 110 sites compose only module
+constants (column lists, `CANONICAL_FROM`), fixed fragments with `%s`
+placeholders, whitelisted identifiers (sort maps, facet tuples, validated
+scenario identifiers) and the shared criteria compiler's output. Every value is
+a bound parameter. Each one carries `# nosec B608 # <reason specific to the
+file>`. The reason follows a second `#` because bandit reads every word after
+`nosec` as a test id: the `- reason` form produced about 1 700 "Test in
+comment" warnings, while this form keeps the id enforced (a wrong id does not
+suppress) and adds none. `bandit --ignore-nosec` confirms that every one of the
+110 comments lies inside a real finding's line range, so none is superfluous.
+This includes the 17 sites that were already failing on main (reviewed: constant
+fragments, `%s` lists and column literals passed by the routes; request values
+are parameters) and 9 sites in the baselined `notification_service.py`.
+
+Result: `bandit -q -c pyproject.toml -r . -ll -b tools/security/bandit-baseline.json`
+exits 0 (0 findings). The whole CI static job was re-run locally with the CI
+install (`pip install -e ".[pdf,office,ocr,ebook,audio,media,server,dev]"`,
+Python 3.11): ruff E9/F63/F7/F82 passes, pip-audit reports "No known
+vulnerabilities found", and the licence check reports 116 compatible, 0
+incompatible, 0 unknown.
 
 Front-end libraries are vendored under `static/` (no CDN), so an offline
 installation loads nothing from the internet.

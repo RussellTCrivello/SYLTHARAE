@@ -33,12 +33,17 @@ class TestJobsAuthorization:
         })
         assert resp.status_code == 403, (resp.status_code,
                                          resp.get_data(as_text=True)[:300])
-        # Create a real job as admin, then viewer tries to cancel it.
-        job_resp = admin_client.post("/api/import/jobs", json={
-            "type": "domain_import", "data_file": "definitely-missing.xlsx",
-        })
-        assert job_resp.status_code == 202
-        job_id = job_resp.get_json()["job"]["job_id"]
+        # Create a real job as admin, then viewer tries to cancel it. The job
+        # is created through the manager: the API now refuses a domain import
+        # of a missing file with 400 before any job row exists (validate
+        # before persist), so it can no longer serve as a job factory.
+        from services.jobs.manager import JobManager
+
+        job = JobManager(synchronous=True).create_job(
+            "domain_import", source="security-test",
+            options={"data_file": "definitely-missing.xlsx"},
+            created_by=admin_credentials[0])
+        job_id = job["job_id"]
         cancel_resp = viewer_client.post(f"/api/jobs/{job_id}/cancel")
         assert cancel_resp.status_code == 403
         delete_resp = viewer_client.delete(f"/api/jobs/{job_id}")

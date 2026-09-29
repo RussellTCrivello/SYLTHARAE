@@ -15,8 +15,10 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
+from core.errors import ClientSafeError
 
-class BackupImportValidationError(ValueError):
+
+class BackupImportValidationError(ClientSafeError, ValueError):
     """Invalid backup import request; ``str(exc)`` is client-safe."""
 
 

@@ -35,7 +35,7 @@ import itertools
 import logging
 import psycopg2
 
-from database.exceptions import QueryError, TransactionAbortedError
+from database.exceptions import ContainedStatementError, QueryError, TransactionAbortedError
 
 logger = logging.getLogger(__name__)
 
@@ -170,6 +170,10 @@ class TransactionScope:
                     f"Savepoint {sp_name} could not be rolled back: {rollback_err}"
                 ) from err
             cur.close()
+            if isinstance(err, TransactionAbortedError):
+                # Restored: the transaction is usable again, so it is no
+                # longer "aborted". Surface a containable error instead.
+                raise ContainedStatementError(str(err)) from err
             raise
         else:
             try:

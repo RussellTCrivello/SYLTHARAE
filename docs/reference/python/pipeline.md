@@ -27,6 +27,7 @@ Integrated File Reader - Complete Implementation
   - `get_storage_statistics(self) -> Dict[str, Any]` - Get storage statistics from storage pipeline
 - `file_timeout_seconds(file_info, base_timeout, observed_bytes_per_s = 0.0, max_timeout = None)` - Time budget for one file: a base cost plus a per-byte cost.
 - `recommended_timeout_seconds(file_info, base_timeout, observed_bytes_per_s = 0.0)` - What this file needs at the rate the run is *achieving*.
+- `storage_summary_lines(storage_stats: Dict[str, Any]) -> List[str]` - The storage part of the end-of-run summary.
 
 ### `pipeline/progress_ledger.py`
 

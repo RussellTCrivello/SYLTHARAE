@@ -10928,3 +10928,1020 @@ msgstr ""
 #: templates/Settings/translation_manager.html:157
 msgid "matching strings"
 msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Horizon & Signal Explorer"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Dates, places and other signals detected in stored documents, with the evidence for each."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "What you are looking at"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Signals are detected once, when a document is stored or re-analysed. This page reads the stored results; it does not re-read documents."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Horizon groups dated references by where their date falls relative to the reference date: overdue, next 7 days, next 30 days, next 90 days, later."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Overdue means the sentence spoke of the future and the date has passed. Other past dates are listed under Past."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "References whose date could not be decided (for example 03/04/2026) are counted as undated, never guessed."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Place matches come from a gazetteer; a name shared by several places stays ambiguous and lists every candidate."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Reference date"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Empty: today (UTC)"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "None"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Replaces the source, side, category and keyword filters"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Category IDs"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Keyword IDs"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Evidence contains"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Event dates"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Event dates from"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Event dates to"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Confidence"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Calendar"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Detector"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Explorer only; Horizon shows dates"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Horizon"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Signal Explorer"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "When"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Group"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Reference"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Evidence"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Document"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Counts"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Signal"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Value"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Overdue"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Next 7 days"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Next 30 days"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Next 90 days"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Later"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Past"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "signals"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "No signals match these filters."
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s references have no single date (ambiguous: %(a)s, unresolved: %(u)s) and are not placed on the horizon."
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s of %(t)s matching documents have not been analysed by the current date detector (never analysed: %(never)s, older version: %(stale)s, failed: %(failed)s). They contribute nothing here until re-analysed; this is not the same as having no dates."
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "All %(t)s matching documents were analysed by the current date detector."
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(from)s-%(to)s of %(total)s"
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(total)s signals in %(contents)s documents"
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s occurrences"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Ambiguous between:"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Detector version"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "current"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "outdated - re-analysis pending"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Basis"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Resolution"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Sentence orientation"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Analysis run"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Structured evidence"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Open file"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Detected"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "not recorded"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "not specified"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Event date"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Recently detected"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Document order"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "The request failed"
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "Query fingerprint"
+msgstr ""
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
+msgstr ""
+
+#: templates/Signals/signals.html
+msgid "The source and side lists could not be loaded. Other filters still work."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr ""
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr ""
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Search Results Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Every file that matches a saved set of search criteria, with the exact match count."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Search criteria"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "File ID"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "File name"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "File type"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "File date"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Content ID"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Matching files"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "About the Search Results Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Distinctive Terms Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Which words the selected documents use more (or less) often than the rest of the collection, with how sure that is."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Used more often in the selection"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Used less often in the selection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Term"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the selection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the rest of the collection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Log-likelihood (G2)"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Log Ratio"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Counted words in the selection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Counted words in the rest of the collection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Contents in the selection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Contents in the rest of the collection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Word records without a count"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Significant terms"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "About the Distinctive Terms Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Compares how often each word occurs in the documents you selected with the rest of the collection you may see, and lists the words whose difference is statistically reliable."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Distinctive terms"
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words. Next step: open the documents that contain the top terms."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Next step: widen the criteria, or check that the matching documents were processed."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages. %(unknown_rows)s word records without a count were left out of every total. Next step: open the documents that contain the top terms."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "No statistical test was performed."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Only terms with G2 of at least %(critical)s count as findings (p < 0.0001; %(source)s). Every term in the vocabulary is tested, so the weaker significance levels are not treated as findings."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Any difference between the selection and the collection is not in word frequency at this level; categories, sources or dates may show one."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "No conclusion can be drawn from this section."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "These terms characterise the selection against the rest of the collection. They show where it differs, not why: read the documents that contain them before drawing conclusions."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "The matching contents are the whole visible collection, so there is no reference to compare them with."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "No visible content matches the criteria, so there is nothing to compare."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "The matching contents have no counted words, so keyness cannot be measured."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "No term reaches G2 %(critical)s: at this level the selection's word frequencies do not differ from the rest of the collection."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) compares word frequencies in the selected contents with the other visible contents."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used more often in the selection, highest G2 first."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used less often in the selection, highest G2 first."
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Analyses"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Measure"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Finding"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Consequence"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Caveat"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Measured"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Not measurable"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Analysis %(key)s, templates %(templates)s"
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the selected contents with those of the other visible contents."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. Contents in the rest of the collection: %(reference_contents)s; counted words: %(reference_tokens)s."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Next step: open the documents that contain the top terms."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used more often in the selection."
+msgid_plural "Listed: %(shown)s terms used more often in the selection, highest G2 first."
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used less often in the selection."
+msgid_plural "Listed: %(shown)s terms used less often in the selection, highest G2 first."
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/analytics/kinds.py
+msgid "%(unknown_rows)s word record without a count was left out of every total."
+msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
+msgstr[0] ""
+msgstr[1] ""

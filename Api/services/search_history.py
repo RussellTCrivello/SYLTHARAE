@@ -1,6 +1,6 @@
 """
 Search History Service
-Manages search history and saved searches using JSON storage (not database)
+Search history (JSON file) and the saved-searches facade (PostgreSQL, m0016)
 """
 
 import json
@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 # Thread-safe storage
 _history_lock = threading.Lock()
-_saved_searches_lock = threading.Lock()
 
 # Storage paths
 STORAGE_DIR = Path(__file__).parent.parent.parent / 'data'
@@ -147,214 +146,57 @@ class SearchHistoryService:
 
 
 class SavedSearchesService:
+    """Saved searches - PostgreSQL-backed since migration 0016.
+
+    This facade keeps the historical call signatures; the storage and the
+    authorisation rules live in ``Api/services/saved_searches_repository.py``.
+    ``data/saved_searches.json`` is no longer read or written except for the
+    one-time, idempotent, ledgered import performed on first use.
     """
-    Service for managing saved searches.
-    
-    Stores saved searches in JSON file (not database) to avoid schema changes.
-    """
-    
+
     @staticmethod
-    def save_search(
-        name: str,
-        query: str,
-        filters: Optional[Dict[str, Any]] = None,
-        user_id: Optional[str] = None
-    ) -> int:
-        """
-        Save a search.
-        
-        Args:
-            name: Name for the saved search
-            query: Search query string
-            filters: Optional search filters
-            user_id: Optional user identifier
-        
-        Returns:
-            ID of the saved search
-        """
+    def _repo():
+        from Api.services.saved_searches_repository import (
+            SavedSearchRepository, ensure_legacy_imported)
+
+        repo = SavedSearchRepository()
         try:
-            with _saved_searches_lock:
-                searches = SavedSearchesService._load_searches()
-                
-                # Generate new ID
-                new_id = max([s.get('id', 0) for s in searches] + [0]) + 1
-                
-                # Add new saved search
-                entry = {
-                    'id': new_id,
-                    'name': name,
-                    'query': query,
-                    'filters': filters or {},
-                    'user_id': user_id,
-                    'created_at': datetime.now().isoformat(),
-                    'last_used': None
-                }
-                
-                searches.append(entry)
-                SavedSearchesService._save_searches(searches)
-                
-                return new_id
-                
-        except Exception as e:
-            logger.error(f"Error saving search: {e}", exc_info=True)
-            raise
-    
+            ensure_legacy_imported(repo, SAVED_SEARCHES_FILE)
+        except Exception as exc:  # the import must never block the feature
+            logger.error("Legacy saved-search import failed (%s); it will be "
+                         "retried on next start", exc.__class__.__name__, exc_info=True)
+            from Api.services import saved_searches_repository as _r
+            _r._reset_import_guard_for_tests()
+        return repo
+
     @staticmethod
-    def get_saved_searches(user_id: Optional[str] = None) -> List[Dict[str, Any]]:
-        """
-        Get all saved searches.
-        
-        Args:
-            user_id: Optional user identifier to filter by
-        
-        Returns:
-            List of saved searches
-        """
-        try:
-            with _saved_searches_lock:
-                searches = SavedSearchesService._load_searches()
-                
-                # Filter by user if provided
-                if user_id:
-                    searches = [s for s in searches if s.get('user_id') == user_id]
-                
-                return searches
-                
-        except Exception as e:
-            logger.error(f"Error getting saved searches: {e}", exc_info=True)
-            return []
-    
+    def save_search(name: str, query: str, filters: Optional[Dict[str, Any]] = None,
+                    user_id: Optional[int] = None) -> int:
+        return SavedSearchesService._repo().create(user_id, name, query, filters)["id"]
+
+    @staticmethod
+    def get_saved_searches(user_id: Optional[int] = None,
+                           is_admin: bool = False) -> List[Dict[str, Any]]:
+        return SavedSearchesService._repo().list_visible(user_id, is_admin)
+
     @staticmethod
     def get_saved_search(search_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Get a specific saved search by ID.
-        
-        Args:
-            search_id: ID of the saved search
-        
-        Returns:
-            Saved search dictionary or None if not found
-        """
-        try:
-            with _saved_searches_lock:
-                searches = SavedSearchesService._load_searches()
-                for search in searches:
-                    if search.get('id') == search_id:
-                        return search
-                return None
-                
-        except Exception as e:
-            logger.error(f"Error getting saved search: {e}", exc_info=True)
-            return None
-    
+        return SavedSearchesService._repo().get(search_id)
+
     @staticmethod
-    def update_saved_search(
-        search_id: int,
-        name: Optional[str] = None,
-        query: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None
-    ) -> bool:
-        """
-        Update a saved search.
-        
-        Args:
-            search_id: ID of the saved search
-            name: New name (optional)
-            query: New query (optional)
-            filters: New filters (optional)
-        
-        Returns:
-            True if updated, False if not found
-        """
-        try:
-            with _saved_searches_lock:
-                searches = SavedSearchesService._load_searches()
-                
-                for search in searches:
-                    if search.get('id') == search_id:
-                        if name is not None:
-                            search['name'] = name
-                        if query is not None:
-                            search['query'] = query
-                        if filters is not None:
-                            search['filters'] = filters
-                        
-                        SavedSearchesService._save_searches(searches)
-                        return True
-                
-                return False
-                
-        except Exception as e:
-            logger.error(f"Error updating saved search: {e}", exc_info=True)
-            return False
-    
+    def update_saved_search(search_id: int, name: Optional[str] = None,
+                            query: Optional[str] = None,
+                            filters: Optional[Dict[str, Any]] = None) -> bool:
+        return SavedSearchesService._repo().update(
+            search_id, name=name, query=query, filters=filters) is not None
+
     @staticmethod
     def delete_saved_search(search_id: int) -> bool:
-        """
-        Delete a saved search.
-        
-        Args:
-            search_id: ID of the saved search to delete
-        
-        Returns:
-            True if deleted, False if not found
-        """
-        try:
-            with _saved_searches_lock:
-                searches = SavedSearchesService._load_searches()
-                
-                original_count = len(searches)
-                searches = [s for s in searches if s.get('id') != search_id]
-                
-                if len(searches) < original_count:
-                    SavedSearchesService._save_searches(searches)
-                    return True
-                
-                return False
-                
-        except Exception as e:
-            logger.error(f"Error deleting saved search: {e}", exc_info=True)
-            return False
-    
+        return SavedSearchesService._repo().delete(search_id)
+
     @staticmethod
     def mark_used(search_id: int) -> None:
-        """
-        Mark a saved search as used (update last_used timestamp).
-        
-        Args:
-            search_id: ID of the saved search
-        """
         try:
-            with _saved_searches_lock:
-                searches = SavedSearchesService._load_searches()
-                
-                for search in searches:
-                    if search.get('id') == search_id:
-                        search['last_used'] = datetime.now().isoformat()
-                        SavedSearchesService._save_searches(searches)
-                        break
-                        
+            SavedSearchesService._repo().mark_used(search_id)
         except Exception as e:
             logger.error(f"Error marking saved search as used: {e}", exc_info=True)
-    
-    @staticmethod
-    def _load_searches() -> List[Dict[str, Any]]:
-        """Load saved searches from JSON file."""
-        try:
-            if SAVED_SEARCHES_FILE.exists():
-                with open(SAVED_SEARCHES_FILE, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            return []
-        except Exception as e:
-            logger.error(f"Error loading saved searches: {e}", exc_info=True)
-            return []
-    
-    @staticmethod
-    def _save_searches(searches: List[Dict[str, Any]]) -> None:
-        """Save saved searches to JSON file."""
-        try:
-            with open(SAVED_SEARCHES_FILE, 'w', encoding='utf-8') as f:
-                json.dump(searches, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            logger.error(f"Error saving saved searches: {e}", exc_info=True)
-

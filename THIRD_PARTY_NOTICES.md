@@ -22,6 +22,13 @@ Python dependencies are installed by pip, not shipped in this repository.
 | `static/js/jspdf.umd.min.js` | [jsPDF](https://github.com/parallax/jsPDF) | 2.5.1 | MIT | 2010-2021 James Hall, yWorks GmbH and contributors |
 | `static/dist/js/select2.min.js`, `static/dist/css/select2.min.css` | [Select2](https://select2.org/) | 4.0.13 | MIT | 2012-2017 Kevin Brown, Igor Vaynberg and Select2 contributors |
 
+Select2 provenance: `dist/` of the upstream tag `4.0.13` (commit
+`45f2b83ceed5231afa7b3d5b12b58ad335edd82e`), copied unmodified. SHA-256:
+`select2.min.js` `c8467b98f112bb1b06a33cde66a70de85c05d22a455f91f592554c804a50a729`,
+`select2.min.css` `15d6ad4dfdb43d0affad683e70029f97a8f8fc8637a28845009ee0542dccdf81`.
+The files were listed here from the start but first committed after the
+owner's Windows run showed the pages receiving 404s for them.
+
 ## Fonts
 
 Fonts are licensed under the SIL Open Font License 1.1. The full licence text,

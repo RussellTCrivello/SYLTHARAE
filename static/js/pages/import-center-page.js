@@ -20,10 +20,11 @@ var IMPORT_CENTER_PAGE_DATA = JSON.parse(document.getElementById('import-center-
     fill('biSource', s.sources || []);
     fill('biSide', d.sides || []);
   }
+  function esc(v) { const d = document.createElement('div'); d.textContent = String(v); return d.innerHTML; }
   function fill(id, rows) {
     document.getElementById(id).innerHTML =
       '<option value="">' + IMPORT_CENTER_PAGE_DATA.select + '</option>' +
-      rows.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+      rows.map(r => `<option value="${esc(r.name)}">${esc(r.name)}</option>`).join('');
   }
   loadSelects();
 
@@ -34,14 +35,17 @@ var IMPORT_CENTER_PAGE_DATA = JSON.parse(document.getElementById('import-center-
     box.innerHTML = Object.entries(preview).map(([k, v]) => {
       if (v === null || v === undefined) return '';
       if (typeof v === 'object') return '';
-      return `<div><strong>${k.replace(/_/g,' ')}:</strong> ${v}</div>`;
+      return `<div><strong>${esc(k.replace(/_/g,' '))}:</strong> ${esc(v)}</div>`;
     }).join('') + '<div class="text-muted mt-2">' + IMPORT_CENTER_PAGE_DATA.reviewCarefullyImportsRunAsJobs + '</div>';
     document.getElementById('confirmRow').classList.remove('d-none');
   }
 
   function showMsg(text, ok) {
-    document.getElementById('importMsg').innerHTML =
-      `<div class="alert ${ok ? 'alert-success' : 'alert-danger'} py-2">${text}</div>`;
+    // Server messages can echo user input (paths, names): text, never HTML.
+    const box = document.createElement('div');
+    box.className = `alert ${ok ? 'alert-success' : 'alert-danger'} py-2`;
+    box.textContent = text;
+    document.getElementById('importMsg').replaceChildren(box);
   }
 
   async function postJson(url, body) {

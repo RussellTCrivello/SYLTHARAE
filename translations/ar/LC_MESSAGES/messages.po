@@ -28,7 +28,7 @@ msgstr "هذا القسم معطَّل حاليًا. يُرجى تمكينه م�
 
 #, python-format
 msgid "Similar Files Detected: %(file_name)s"
-msgstr "تصفية الملفات المشابهة"
+msgstr "تم اكتشاف ملفات مشابهة: %(file_name)s"
 
 msgid "Similar Files Detected"
 msgstr "تصفية الملفات المشابهة"
@@ -40,7 +40,7 @@ msgstr ""
 
 #, python-format
 msgid "Future Event Detected: %(date)s"
-msgstr "اكتشاف الأحداث المستقبلية"
+msgstr "تم اكتشاف حدث مستقبلي: %(date)s"
 
 msgid "Future Event Detected"
 msgstr "اكتشاف الأحداث المستقبلية"
@@ -54,7 +54,7 @@ msgstr "تم العثور على محتوى يركز على المستقبل"
 
 #, python-format
 msgid "Future Date Detected: %(date)s"
-msgstr "اكتشاف التواريخ المستقبلية"
+msgstr "تم اكتشاف تاريخ مستقبلي: %(date)s"
 
 #, python-format
 msgid "Future date found in %(file_name)s (%(days)s days away)"
@@ -62,7 +62,7 @@ msgstr "تم العثور على تاريخ مستقبلي في %(file_name)s (�
 
 #, python-format
 msgid "Future date found in %(file_name)s"
-msgstr "اكتشاف والتنبيه على التواريخ المستقبلية الموجودة في الملفات"
+msgstr "تم العثور على تاريخ مستقبلي في %(file_name)s"
 
 #, python-format
 msgid "Future date found (%(days)s days away)"
@@ -79,7 +79,7 @@ msgstr "المعالجة"
 
 #, python-format
 msgid "File processing completed: %(file_name)s"
-msgstr "المعالجة"
+msgstr "اكتملت معالجة الملف: %(file_name)s"
 
 msgid "File processing completed"
 msgstr "المعالجة"
@@ -10318,3 +10318,1645 @@ msgstr "أدخل كلمة المرور الحالية."
 
 msgid "The new password must be different from the current one."
 msgstr "يجب أن تختلف كلمة المرور الجديدة عن الحالية."
+
+#: templates/Signals/signals.html
+msgid "Horizon & Signal Explorer"
+msgstr "الأفق ومستكشف الإشارات"
+
+#: templates/Signals/signals.html
+msgid "Dates, places and other signals detected in stored documents, with the evidence for each."
+msgstr "التواريخ والأماكن والإشارات الأخرى المكتشفة في المستندات المخزنة، مع الدليل على كل منها."
+
+#: templates/Signals/signals.html
+msgid "What you are looking at"
+msgstr "ما الذي تنظر إليه"
+
+#: templates/Signals/signals.html
+msgid "Signals are detected once, when a document is stored or re-analysed. This page reads the stored results; it does not re-read documents."
+msgstr "تُكتشف الإشارات مرة واحدة، عند تخزين المستند أو إعادة تحليله. تقرأ هذه الصفحة النتائج المخزنة ولا تعيد قراءة المستندات."
+
+#: templates/Signals/signals.html
+msgid "Horizon groups dated references by where their date falls relative to the reference date: overdue, next 7 days, next 30 days, next 90 days, later."
+msgstr "يجمع الأفق الإشارات المؤرخة حسب موقع تاريخها بالنسبة إلى التاريخ المرجعي: متأخرة، الأيام السبعة القادمة، الثلاثون يومًا القادمة، التسعون يومًا القادمة، لاحقًا."
+
+#: templates/Signals/signals.html
+msgid "Overdue means the sentence spoke of the future and the date has passed. Other past dates are listed under Past."
+msgstr "تعني «متأخرة» أن الجملة تحدثت عن المستقبل وأن التاريخ قد مضى. تُدرج التواريخ الماضية الأخرى تحت «الماضي»."
+
+#: templates/Signals/signals.html
+msgid "References whose date could not be decided (for example 03/04/2026) are counted as undated, never guessed."
+msgstr "الإشارات التي تعذّر تحديد تاريخها (مثل 03/04/2026) تُحسب غير مؤرخة، ولا يُخمَّن تاريخها أبدًا."
+
+#: templates/Signals/signals.html
+msgid "Place matches come from a gazetteer; a name shared by several places stays ambiguous and lists every candidate."
+msgstr "تأتي مطابقات الأماكن من معجم جغرافي؛ ويبقى الاسم المشترك بين عدة أماكن ملتبسًا وتُدرج جميع الاحتمالات."
+
+#: templates/Signals/signals.html
+msgid "Reference date"
+msgstr "التاريخ المرجعي"
+
+#: templates/Signals/signals.html
+msgid "Empty: today (UTC)"
+msgstr "فارغ: اليوم (UTC)"
+
+#: templates/Signals/signals.html
+msgid "None"
+msgstr "لا شيء"
+
+#: templates/Signals/signals.html
+msgid "Replaces the source, side, category and keyword filters"
+msgstr "يحل محل مرشحات المصدر والجهة والفئة والكلمة المفتاحية"
+
+#: templates/Signals/signals.html
+msgid "Category IDs"
+msgstr "معرّفات الفئات"
+
+#: templates/Signals/signals.html
+msgid "Keyword IDs"
+msgstr "معرّفات الكلمات المفتاحية"
+
+#: templates/Signals/signals.html
+msgid "Evidence contains"
+msgstr "الدليل يحتوي على"
+
+#: templates/Signals/signals.html
+msgid "Event dates"
+msgstr "تواريخ الأحداث"
+
+#: templates/Signals/signals.html
+msgid "Event dates from"
+msgstr "تواريخ الأحداث من"
+
+#: templates/Signals/signals.html
+msgid "Event dates to"
+msgstr "تواريخ الأحداث حتى"
+
+#: templates/Signals/signals.html
+msgid "Confidence"
+msgstr "الثقة"
+
+#: templates/Signals/signals.html
+msgid "Calendar"
+msgstr "التقويم"
+
+#: templates/Signals/signals.html
+msgid "Detector"
+msgstr "الكاشف"
+
+#: templates/Signals/signals.html
+msgid "Explorer only; Horizon shows dates"
+msgstr "للمستكشف فقط؛ يعرض الأفق التواريخ"
+
+#: templates/Signals/signals.html
+msgid "Horizon"
+msgstr "الأفق"
+
+#: templates/Signals/signals.html
+msgid "Signal Explorer"
+msgstr "مستكشف الإشارات"
+
+#: templates/Signals/signals.html
+msgid "When"
+msgstr "متى"
+
+#: templates/Signals/signals.html
+msgid "Group"
+msgstr "المجموعة"
+
+#: templates/Signals/signals.html
+msgid "Reference"
+msgstr "الإشارة"
+
+#: templates/Signals/signals.html
+msgid "Evidence"
+msgstr "الدليل"
+
+#: templates/Signals/signals.html
+msgid "Document"
+msgstr "المستند"
+
+#: templates/Signals/signals.html
+msgid "Counts"
+msgstr "الأعداد"
+
+#: templates/Signals/signals.html
+msgid "Signal"
+msgstr "الإشارة"
+
+#: templates/Signals/signals.html
+msgid "Value"
+msgstr "القيمة"
+
+#: templates/Signals/signals.html
+msgid "Overdue"
+msgstr "متأخرة"
+
+#: templates/Signals/signals.html
+msgid "Next 7 days"
+msgstr "الأيام السبعة القادمة"
+
+#: templates/Signals/signals.html
+msgid "Next 30 days"
+msgstr "الثلاثون يومًا القادمة"
+
+#: templates/Signals/signals.html
+msgid "Next 90 days"
+msgstr "التسعون يومًا القادمة"
+
+#: templates/Signals/signals.html
+msgid "Later"
+msgstr "لاحقًا"
+
+#: templates/Signals/signals.html
+msgid "Past"
+msgstr "الماضي"
+
+#: templates/Signals/signals.html
+msgid "signals"
+msgstr "إشارات"
+
+#: templates/Signals/signals.html
+msgid "documents"
+msgstr "مستندات"
+
+#: templates/Signals/signals.html
+msgid "No signals match these filters."
+msgstr "لا توجد إشارات تطابق هذه المرشحات."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s references have no single date (ambiguous: %(a)s, unresolved: %(u)s) and are not placed on the horizon."
+msgstr "%(n)s إشارة ليس لها تاريخ واحد (ملتبسة: %(a)s، غير محسومة: %(u)s) ولا توضع على الأفق."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s of %(t)s matching documents have not been analysed by the current date detector (never analysed: %(never)s, older version: %(stale)s, failed: %(failed)s). They contribute nothing here until re-analysed; this is not the same as having no dates."
+msgstr "%(n)s من %(t)s مستندًا مطابقًا لم يحللها كاشف التواريخ الحالي (لم تُحلل قط: %(never)s، إصدار أقدم: %(stale)s، فشل: %(failed)s). لا تسهم بشيء هنا حتى يُعاد تحليلها؛ وهذا ليس كخلوّها من التواريخ."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "All %(t)s matching documents were analysed by the current date detector."
+msgstr "حلّل كاشف التواريخ الحالي جميع المستندات المطابقة وعددها %(t)s."
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(from)s-%(to)s of %(total)s"
+msgstr "%(from)s-%(to)s من %(total)s"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(total)s signals in %(contents)s documents"
+msgstr "%(total)s إشارة في %(contents)s مستند"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "%(n)s occurrences"
+msgstr "%(n)s ورود"
+
+#: templates/Signals/signals.html
+msgid "Ambiguous between:"
+msgstr "ملتبس بين:"
+
+#: templates/Signals/signals.html
+msgid "Detector version"
+msgstr "إصدار الكاشف"
+
+#: templates/Signals/signals.html
+msgid "current"
+msgstr "الحالي"
+
+#: templates/Signals/signals.html
+msgid "outdated - re-analysis pending"
+msgstr "قديم - إعادة التحليل معلّقة"
+
+#: templates/Signals/signals.html
+msgid "Basis"
+msgstr "الأساس"
+
+#: templates/Signals/signals.html
+msgid "Resolution"
+msgstr "الحسم"
+
+#: templates/Signals/signals.html
+msgid "Sentence orientation"
+msgstr "اتجاه الجملة الزمني"
+
+#: templates/Signals/signals.html
+msgid "Analysis run"
+msgstr "عملية التحليل"
+
+#: templates/Signals/signals.html
+msgid "Structured evidence"
+msgstr "الدليل المنظّم"
+
+#: templates/Signals/signals.html
+msgid "Open file"
+msgstr "فتح الملف"
+
+#: templates/Signals/signals.html
+msgid "Detected"
+msgstr "اكتُشف"
+
+#: templates/Signals/signals.html
+msgid "not recorded"
+msgstr "غير مسجل"
+
+#: templates/Signals/signals.html
+msgid "not specified"
+msgstr "غير محدد"
+
+#: templates/Signals/signals.html
+msgid "Event date"
+msgstr "تاريخ الحدث"
+
+#: templates/Signals/signals.html
+msgid "Recently detected"
+msgstr "المكتشفة حديثًا"
+
+#: templates/Signals/signals.html
+msgid "Document order"
+msgstr "ترتيب المستند"
+
+#: templates/Signals/signals.html
+msgid "The request failed"
+msgstr "فشل الطلب"
+
+#: templates/Signals/signals.html
+msgid "Query fingerprint"
+msgstr "بصمة الاستعلام"
+
+#: templates/Signals/signals.html
+#, python-format
+msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
+msgstr "لا تُدرج إلا أول %(n)s من المصادر والجهات حسب الاسم. استخدم بحثًا محفوظًا للتصفية حسب غيرها."
+
+#: templates/Signals/signals.html
+msgid "The source and side lists could not be loaded. Other filters still work."
+msgstr "تعذّر تحميل قائمتي المصادر والجهات. المرشحات الأخرى لا تزال تعمل."
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected: %(file_name)s"
+msgstr "تم اكتشاف ملفات مكررة: %(file_name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Duplicate Files Detected"
+msgstr "تم اكتشاف ملفات مكررة"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash. Files: %(files)s"
+msgstr "عُثر على %(count)s ملف(ات) مكررة بنفس البصمة. الملفات: %(files)s"
+
+#: core/monitoring/notification_display.py
+msgid "Found %(count)s duplicate file(s) with the same hash"
+msgstr "عُثر على %(count)s ملف(ات) مكررة بنفس البصمة"
+
+#: core/monitoring/notification_display.py
+msgid "Rule digest: %(name)s"
+msgstr "ملخص القاعدة: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches since the last digest"
+msgstr "%(count)s تطابقات جديدة منذ الملخص الأخير"
+
+#: core/monitoring/notification_display.py
+msgid "Rule disabled: %(name)s"
+msgstr "تم تعطيل القاعدة: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Rule: %(name)s"
+msgstr "القاعدة: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further matches in %(groups)s groups (notification limit per evaluation reached)"
+msgstr "%(count)s تطابقات إضافية في %(groups)s مجموعات (تم بلوغ حد الإشعارات لكل تقييم)"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's account is inactive."
+msgstr "تم تعطيل القاعدة لأن حساب مالكها غير نشط."
+
+#: core/monitoring/notification_display.py
+msgid "Scenario: %(name)s"
+msgstr "السيناريو: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches: %(label)s"
+msgstr "%(count)s تطابقات جديدة: %(label)s"
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s new matches"
+msgstr "%(count)s تطابقات جديدة"
+
+#: core/monitoring/notification_display.py
+msgid "The rule was disabled because its owner's role no longer allows monitoring rules."
+msgstr "تم تعطيل القاعدة لأن دور مالكها لم يعد يسمح بقواعد المراقبة."
+
+#: core/monitoring/notification_display.py
+msgid "%(count)s further contents entered notified outcomes (notification limit per evaluation reached)"
+msgstr "%(count)s محتويات إضافية دخلت نتائج تستوجب الإشعار (تم بلوغ حد الإشعارات لكل تقييم)"
+
+#: core/monitoring/notification_display.py
+msgid "Scenario disabled: %(name)s"
+msgstr "تم تعطيل السيناريو: %(name)s"
+
+#: core/monitoring/notification_display.py
+msgid "Content %(id)s"
+msgstr "المحتوى %(id)s"
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's account is inactive."
+msgstr "تم تعطيل السيناريو لأن حساب مالكه غير نشط."
+
+#: core/monitoring/notification_display.py
+msgid "The scenario was disabled because its owner's role no longer allows scenarios."
+msgstr "تم تعطيل السيناريو لأن دور مالكه لم يعد يسمح بالسيناريوهات."
+
+#: core/monitoring/notification_display.py
+msgid "Outcome %(outcome)s: %(target)s"
+msgstr "النتيجة %(outcome)s: %(target)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios classify documents into outcomes; rules watch for new matching signals. Both notify only their owner."
+msgstr "تصنّف السيناريوهات المستندات إلى نتائج؛ وتراقب القواعد الإشارات المطابقة الجديدة. وكلاهما يُشعر مالكه فقط."
+
+#: templates/Monitoring/monitoring.html
+msgid "How monitoring works"
+msgstr "كيف تعمل المراقبة"
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario is evaluated against stored signals. Every document in its population gets exactly one decision: the outcome of the matching case, or the default outcome."
+msgstr "يُقيَّم السيناريو على الإشارات المخزّنة. يحصل كل مستند في نطاقه على قرار واحد بالضبط: نتيجة الحالة المطابقة، أو النتيجة الافتراضية."
+
+#: templates/Monitoring/monitoring.html
+msgid "A scenario cannot be activated until a dry-run of its exact current definition has passed. The dry-run changes nothing: it reports what would happen."
+msgstr "لا يمكن تفعيل السيناريو قبل نجاح تشغيل تجريبي لتعريفه الحالي نفسه. التشغيل التجريبي لا يغيّر شيئاً: إنه يبيّن ما سيحدث."
+
+#: templates/Monitoring/monitoring.html
+msgid "When a scenario or rule starts, what already matches is recorded as the baseline and not notified, unless the definition says notify_existing."
+msgstr "عند بدء سيناريو أو قاعدة، يُسجَّل ما يطابق مسبقاً كخط أساس ولا يُرسل عنه إشعار، ما لم ينص التعريف على notify_existing."
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history is never overwritten: each change is a new entry with the previous outcome."
+msgstr "لا يُستبدل سجل النتائج أبداً: كل تغيير هو إدخال جديد مع النتيجة السابقة."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notification priority is derived from the evidence (confidence and how soon the event is), not chosen by hand."
+msgstr "تُستنتج أولوية الإشعار من الدليل (درجة الثقة ومدى قرب الحدث)، ولا تُختار يدوياً."
+
+#: templates/Monitoring/monitoring.html
+msgid "Only documents the owner may read are evaluated. If the owner loses the privilege, the scenario or rule is disabled."
+msgstr "لا تُقيَّم إلا المستندات التي يحق للمالك قراءتها. وإذا فقد المالك الصلاحية، يُعطَّل السيناريو أو القاعدة."
+
+#: templates/Monitoring/monitoring.html
+msgid "Scenarios"
+msgstr "السيناريوهات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Rules"
+msgstr "القواعد"
+
+#: templates/Monitoring/monitoring.html
+msgid "All users"
+msgstr "كل المستخدمين"
+
+#: templates/Monitoring/monitoring.html
+msgid "Show archived"
+msgstr "إظهار المؤرشف"
+
+#: templates/Monitoring/monitoring.html
+msgid "New scenario"
+msgstr "سيناريو جديد"
+
+#: templates/Monitoring/monitoring.html
+msgid "Strategy"
+msgstr "الاستراتيجية"
+
+#: templates/Monitoring/monitoring.html
+msgid "Last evaluated"
+msgstr "آخر تقييم"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner"
+msgstr "المالك"
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition (JSON)"
+msgstr "التعريف (JSON)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md."
+msgstr "الشروط والحالات والنتائج والنتيجة الافتراضية الإلزامية والاستراتيجية (first_match أو all_matching أو highest_priority). راجع docs/implementation/SCENARIOS.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Latest dry-run"
+msgstr "آخر تشغيل تجريبي"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome history"
+msgstr "سجل النتائج"
+
+#: templates/Monitoring/monitoring.html
+msgid "Outcome"
+msgstr "النتيجة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Previous outcome"
+msgstr "النتيجة السابقة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Cases"
+msgstr "الحالات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Delivery"
+msgstr "التسليم"
+
+#: templates/Monitoring/monitoring.html
+msgid "Recorded"
+msgstr "تاريخ التسجيل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluations"
+msgstr "التقييمات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Trigger"
+msgstr "المُشغِّل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Current definition"
+msgstr "التعريف الحالي"
+
+#: templates/Monitoring/monitoring.html
+msgid "New rule"
+msgstr "قاعدة جديدة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Baseline"
+msgstr "خط الأساس"
+
+#: templates/Monitoring/monitoring.html
+msgid "Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md."
+msgstr "المعايير ومرشّح الإشارات والحد الأدنى للثقة ونافذة الحدث والعتبة وفترة التهدئة والتجميع والتسليم. راجع docs/implementation/RULE_ENGINE.md."
+
+#: templates/Monitoring/monitoring.html
+msgid "Draft"
+msgstr "مسودة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Paused"
+msgstr "متوقف مؤقتاً"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled"
+msgstr "معطَّل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archived"
+msgstr "مؤرشف"
+
+#: templates/Monitoring/monitoring.html
+msgid "First match"
+msgstr "أول تطابق"
+
+#: templates/Monitoring/monitoring.html
+msgid "All matching"
+msgstr "كل المطابقات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Highest priority"
+msgstr "الأولوية الأعلى"
+
+#: templates/Monitoring/monitoring.html
+msgid "never"
+msgstr "أبداً"
+
+#: templates/Monitoring/monitoring.html
+msgid "yes"
+msgstr "نعم"
+
+#: templates/Monitoring/monitoring.html
+msgid "no"
+msgstr "لا"
+
+#: templates/Monitoring/monitoring.html
+msgid "none"
+msgstr "لا شيء"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s scenarios"
+msgstr "%(n)s سيناريوهات"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s rules"
+msgstr "%(n)s قواعد"
+
+#: templates/Monitoring/monitoring.html
+msgid "Only the first %(n)s are listed."
+msgstr "تُعرض أول %(n)s فقط."
+
+#: templates/Monitoring/monitoring.html
+msgid "No scenarios yet."
+msgstr "لا توجد سيناريوهات بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "No rules yet."
+msgstr "لا توجد قواعد بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "No outcomes recorded yet."
+msgstr "لم تُسجَّل نتائج بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "No evaluations yet."
+msgstr "لا توجد تقييمات بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "This scenario has not been dry-run yet."
+msgstr "لم يُجرَ لهذا السيناريو تشغيل تجريبي بعد."
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit scenario"
+msgstr "تحرير السيناريو"
+
+#: templates/Monitoring/monitoring.html
+msgid "Edit rule"
+msgstr "تحرير القاعدة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Dry-run"
+msgstr "تشغيل تجريبي"
+
+#: templates/Monitoring/monitoring.html
+msgid "Activate"
+msgstr "تفعيل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive"
+msgstr "أرشفة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Evaluate now"
+msgstr "التقييم الآن"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppress 1 hour"
+msgstr "كتم لمدة ساعة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Archive this? It stops for good; its history is kept."
+msgstr "أرشفة هذا العنصر؟ سيتوقف نهائياً مع الاحتفاظ بسجله."
+
+#: templates/Monitoring/monitoring.html
+msgid "The definition is not valid JSON: %(error)s"
+msgstr "التعريف ليس JSON صالحاً: %(error)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Valid. Fingerprint %(fp)s"
+msgstr "صالح. البصمة %(fp)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Warnings"
+msgstr "تحذيرات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved."
+msgstr "تم الحفظ."
+
+#: templates/Monitoring/monitoring.html
+msgid "Saved as version %(v)s. It is a draft again: dry-run it before activating."
+msgstr "حُفظ كإصدار %(v)s. أصبح مسودة مجدداً: شغّله تجريبياً قبل التفعيل."
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s: %(status)s"
+msgstr "المهمة %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s finished: %(status)s"
+msgstr "انتهت المهمة %(id)s: %(status)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Job %(id)s is still running. Refresh later to see the result."
+msgstr "المهمة %(id)s ما زالت قيد التشغيل. حدّث الصفحة لاحقاً لرؤية النتيجة."
+
+#: templates/Monitoring/monitoring.html
+msgid "Definition fingerprint"
+msgstr "بصمة التعريف"
+
+#: templates/Monitoring/monitoring.html
+msgid "Disabled because: %(reason)s"
+msgstr "معطَّل بسبب: %(reason)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's account is inactive"
+msgstr "حساب المالك غير نشط"
+
+#: templates/Monitoring/monitoring.html
+msgid "the owner's role no longer allows it"
+msgstr "دور المالك لم يعد يسمح بذلك"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline recorded"
+msgstr "سُجّل خط الأساس"
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline pending"
+msgstr "خط الأساس قيد الانتظار"
+
+#: templates/Monitoring/monitoring.html
+msgid "Suppressed until %(t)s"
+msgstr "مكتوم حتى %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Passed"
+msgstr "نجح"
+
+#: templates/Monitoring/monitoring.html
+msgid "Invalid"
+msgstr "غير صالح"
+
+#: templates/Monitoring/monitoring.html
+msgid "Owner not eligible"
+msgstr "المالك غير مؤهل"
+
+#: templates/Monitoring/monitoring.html
+msgid "This dry-run was of version %(v)s; the current version needs its own dry-run."
+msgstr "كان هذا التشغيل التجريبي للإصدار %(v)s؛ يحتاج الإصدار الحالي إلى تشغيل تجريبي خاص به."
+
+#: templates/Monitoring/monitoring.html
+msgid "Population: %(n)s documents"
+msgstr "النطاق: %(n)s مستندات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Measured on one consistent snapshot at %(t)s, reference date %(d)s."
+msgstr "قيس على لقطة متسقة واحدة في %(t)s، بتاريخ مرجعي %(d)s."
+
+#: templates/Monitoring/monitoring.html
+msgid "Notifications on activation: %(n)s"
+msgstr "الإشعارات عند التفعيل: %(n)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "existing matches become the baseline"
+msgstr "تصبح المطابقات الحالية خط الأساس"
+
+#: templates/Monitoring/monitoring.html
+msgid "nothing would enter a notified outcome"
+msgstr "لن يدخل شيء نتيجة تستوجب الإشعار"
+
+#: templates/Monitoring/monitoring.html
+msgid "notify_existing is set"
+msgstr "الخيار notify_existing مفعَّل"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s more would be summarised in one overflow notification."
+msgstr "سيُلخَّص %(n)s إضافية في إشعار تجاوز واحد."
+
+#: templates/Monitoring/monitoring.html
+msgid "Estimated %(per_day)s notified documents per day"
+msgstr "المتوقع %(per_day)s مستندات مُشعَر بها يومياً"
+
+#: templates/Monitoring/monitoring.html
+msgid "Case"
+msgstr "الحالة"
+
+#: templates/Monitoring/monitoring.html
+msgid "Matches"
+msgstr "المطابقات"
+
+#: templates/Monitoring/monitoring.html
+msgid "Decides"
+msgstr "يحسم"
+
+#: templates/Monitoring/monitoring.html
+msgid "Documents with an outcome other than the default, by:"
+msgstr "المستندات ذات نتيجة غير الافتراضية، حسب:"
+
+#: templates/Monitoring/monitoring.html
+msgid "Analyst category"
+msgstr "فئة المحلل"
+
+#: templates/Monitoring/monitoring.html
+msgid "Top %(n)s of %(t)s"
+msgstr "أعلى %(n)s من %(t)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "%(n)s documents have an outcome other than the default."
+msgstr "لدى %(n)s مستندات نتيجة غير الافتراضية."
+
+#: templates/Monitoring/monitoring.html
+msgid "baseline"
+msgstr "خط أساس"
+
+#: templates/Monitoring/monitoring.html
+msgid "recorded"
+msgstr "مسجَّل"
+
+#: templates/Monitoring/monitoring.html
+msgid "notified"
+msgstr "مُشعَر به"
+
+#: templates/Monitoring/monitoring.html
+msgid "in overflow summary"
+msgstr "في ملخص التجاوز"
+
+#: templates/Monitoring/monitoring.html
+msgid "left the population"
+msgstr "خرج من النطاق"
+
+#: templates/Monitoring/monitoring.html
+msgid "Skipped (already running)"
+msgstr "تم التخطي (قيد التشغيل بالفعل)"
+
+#: templates/Monitoring/monitoring.html
+msgid "Not active"
+msgstr "غير نشط"
+
+#: templates/Monitoring/monitoring.html
+msgid "Document %(id)s"
+msgstr "المستند %(id)s"
+
+#: templates/Monitoring/monitoring.html
+msgid "Your role can view monitoring but not change it."
+msgstr "يتيح لك دورك عرض المراقبة دون تغييرها."
+
+#: core/reporting/definitions.py
+msgid "Search Results Report"
+msgstr "تقرير نتائج البحث"
+
+#: core/reporting/definitions.py
+msgid "Every file that matches a saved set of search criteria, with the exact match count."
+msgstr "كل ملف يطابق مجموعة محفوظة من معايير البحث، مع العدد الدقيق للمطابقات."
+
+#: core/reporting/definitions.py
+msgid "Search criteria"
+msgstr "معايير البحث"
+
+#: core/reporting/definitions.py
+msgid "File ID"
+msgstr "معرّف الملف"
+
+#: core/reporting/definitions.py
+msgid "File name"
+msgstr "اسم الملف"
+
+#: core/reporting/definitions.py
+msgid "File type"
+msgstr "نوع الملف"
+
+#: core/reporting/definitions.py
+msgid "File date"
+msgstr "تاريخ الملف"
+
+#: core/reporting/definitions.py
+msgid "Content ID"
+msgstr "معرّف المحتوى"
+
+#: core/reporting/definitions.py
+msgid "Matching files"
+msgstr "الملفات المطابقة"
+
+#: core/reporting/definitions.py
+msgid "About the Search Results Report"
+msgstr "حول تقرير نتائج البحث"
+
+#: core/reporting/definitions.py
+msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
+msgstr "يسرد الملفات التي تطابق معاييرك في لحظة واحدة، ويذكر العدد الإجمالي للمطابقات، وينبّه عندما تكون القائمة مختصرة."
+
+#: templates/Reports/reports.html
+msgid "Reports"
+msgstr "التقارير"
+
+#: templates/Reports/reports.html
+msgid "Run a registered report and read exactly what it computed: every dataset comes from one database snapshot, with its counts and any shortening stated."
+msgstr "شغّل تقريرًا مسجّلًا واقرأ ما حسبه بالضبط: كل مجموعة بيانات تأتي من لقطة واحدة لقاعدة البيانات، مع أعدادها وأي اختصار مذكور."
+
+#: templates/Reports/reports.html
+msgid "How reports work"
+msgstr "كيف تعمل التقارير"
+
+#: templates/Reports/reports.html
+msgid "A report is a reviewed, versioned definition. Changing what a report means creates a new version; a run always records the version and fingerprint it used."
+msgstr "التقرير تعريف مُراجَع وذو إصدارات. تغيير معنى التقرير يُنشئ إصدارًا جديدًا؛ ويسجّل كل تشغيل دائمًا الإصدار والبصمة التي استخدمها."
+
+#: templates/Reports/reports.html
+msgid "A run is a background job. All its datasets are read from the same database snapshot, so the numbers in one run always agree with each other."
+msgstr "التشغيل مهمة في الخلفية. تُقرأ جميع مجموعات بياناته من لقطة قاعدة البيانات نفسها، لذا تتّفق الأرقام في التشغيل الواحد دائمًا فيما بينها."
+
+#: templates/Reports/reports.html
+msgid "Each dataset states its limit: exact results are complete or the run fails; capped and top-N results say when rows were left out."
+msgstr "تذكر كل مجموعة بيانات حدّها: النتائج الدقيقة كاملة وإلا يفشل التشغيل؛ والنتائج المحدودة ونتائج الأعلى-N تذكر متى أُغفلت صفوف."
+
+#: templates/Reports/reports.html
+msgid "Only documents you may read are included. You see your own runs; administrators can see everyone's."
+msgstr "تُضمَّن فقط المستندات التي يحق لك قراءتها. ترى عمليات التشغيل الخاصة بك؛ ويمكن للمسؤولين رؤية عمليات الجميع."
+
+#: templates/Reports/reports.html
+msgid "Run a report"
+msgstr "تشغيل تقرير"
+
+#: templates/Reports/reports.html
+msgid "Report"
+msgstr "التقرير"
+
+#: templates/Reports/reports.html
+msgid "Run report"
+msgstr "شغّل التقرير"
+
+#: templates/Reports/reports.html
+msgid "Runs"
+msgstr "عمليات التشغيل"
+
+#: templates/Reports/reports.html
+msgid "Refused"
+msgstr "مرفوض"
+
+#: templates/Reports/reports.html
+msgid "Cancelled"
+msgstr "ملغى"
+
+#: templates/Reports/reports.html
+msgid "Running"
+msgstr "قيد التشغيل"
+
+#: templates/Reports/reports.html
+msgid "Queued"
+msgstr "في الانتظار"
+
+#: templates/Reports/reports.html
+msgid "Requested"
+msgstr "وقت الطلب"
+
+#: templates/Reports/reports.html
+msgid "Rows"
+msgstr "الصفوف"
+
+#: templates/Reports/reports.html
+msgid "Requested by"
+msgstr "طلبه"
+
+#: templates/Reports/reports.html
+msgid "Provenance"
+msgstr "المصدر والتتبّع"
+
+#: templates/Reports/reports.html
+msgid "Dataset"
+msgstr "مجموعة البيانات"
+
+#: templates/Reports/reports.html
+msgid "Exact: every row, or the run fails."
+msgstr "دقيق: كل الصفوف، وإلا يفشل التشغيل."
+
+#: templates/Reports/reports.html
+msgid "Capped: at most %(limit)s rows."
+msgstr "محدود: %(limit)s صفًا على الأكثر."
+
+#: templates/Reports/reports.html
+msgid "Top %(limit)s: a ranked prefix."
+msgstr "الأعلى %(limit)s: بداية مرتّبة."
+
+#: templates/Reports/reports.html
+msgid "Shortened: this list stops at %(limit)s rows and more rows matched. The exact count is in the count dataset."
+msgstr "مختصرة: تتوقف هذه القائمة عند %(limit)s صفًا وقد طابقت صفوف أخرى. العدد الدقيق في مجموعة بيانات العدّ."
+
+#: templates/Reports/reports.html
+msgid "Only the top %(limit)s rows are kept; more rows existed."
+msgstr "تُحفظ الصفوف الأعلى %(limit)s فقط؛ وكانت هناك صفوف أخرى."
+
+#: templates/Reports/reports.html
+msgid "Complete: %(n)s rows."
+msgstr "كاملة: %(n)s صفًا."
+
+#: templates/Reports/reports.html
+msgid "Counts: %(unit)s"
+msgstr "وحدة العدّ: %(unit)s"
+
+#: templates/Reports/reports.html
+msgid "Datasets"
+msgstr "مجموعات البيانات"
+
+#: templates/Reports/reports.html
+msgid "Criteria from"
+msgstr "المعايير من"
+
+#: templates/Reports/reports.html
+msgid "A saved search"
+msgstr "بحث محفوظ"
+
+#: templates/Reports/reports.html
+msgid "Criteria (JSON)"
+msgstr "المعايير (JSON)"
+
+#: templates/Reports/reports.html
+msgid "You have no saved searches. Save one on the Search page, or enter criteria as JSON."
+msgstr "ليس لديك عمليات بحث محفوظة. احفظ واحدة في صفحة البحث، أو أدخل المعايير بصيغة JSON."
+
+#: templates/Reports/reports.html
+msgid "The criteria are not valid JSON."
+msgstr "المعايير ليست JSON صالحًا."
+
+#: templates/Reports/reports.html
+msgid "Choose..."
+msgstr "اختر..."
+
+#: templates/Reports/reports.html
+msgid "No report is available to your role."
+msgstr "لا يتوفر أي تقرير لدورك."
+
+#: templates/Reports/reports.html
+msgid "No runs yet."
+msgstr "لا توجد عمليات تشغيل بعد."
+
+#: templates/Reports/reports.html
+msgid "This dataset has no rows."
+msgstr "لا تحتوي مجموعة البيانات هذه على صفوف."
+
+#: templates/Reports/reports.html
+msgid "Viewers can read reports but not run them."
+msgstr "يمكن للمشاهدين قراءة التقارير دون تشغيلها."
+
+#: templates/Reports/reports.html
+msgid "Refused: %(reason)s. Nothing was read."
+msgstr "مرفوض: %(reason)s. لم تُقرأ أي بيانات."
+
+#: templates/Reports/reports.html
+msgid "the requesting account is inactive"
+msgstr "الحساب الطالب غير نشط"
+
+#: templates/Reports/reports.html
+msgid "the requesting account no longer exists"
+msgstr "الحساب الطالب لم يعد موجودًا"
+
+#: templates/Reports/reports.html
+msgid "the requester's role may no longer run this report"
+msgstr "لم يعد دور الطالب يسمح بتشغيل هذا التقرير"
+
+#: templates/Reports/reports.html
+msgid "Failed: %(error)s"
+msgstr "فشل: %(error)s"
+
+#: templates/Reports/reports.html
+msgid "Cancelled before it finished. Nothing was kept."
+msgstr "أُلغي قبل أن ينتهي. لم يُحفظ شيء."
+
+#: templates/Reports/reports.html
+msgid "This run has not finished yet."
+msgstr "لم ينتهِ هذا التشغيل بعد."
+
+#: templates/Reports/reports.html
+msgid "Completed. Snapshot taken %(when)s."
+msgstr "اكتمل. أُخذت اللقطة في %(when)s."
+
+#: templates/Reports/reports.html
+msgid "Parameters"
+msgstr "المعاملات"
+
+#: templates/Reports/reports.html
+msgid "Parameters fingerprint"
+msgstr "بصمة المعاملات"
+
+#: templates/Reports/reports.html
+msgid "Criteria fingerprint"
+msgstr "بصمة المعايير"
+
+#: templates/Reports/reports.html
+msgid "Role at run time"
+msgstr "الدور وقت التشغيل"
+
+#: templates/Reports/reports.html
+msgid "Database snapshot"
+msgstr "لقطة قاعدة البيانات"
+
+#: templates/Reports/reports.html
+msgid "Isolation"
+msgstr "مستوى العزل"
+
+#: templates/Reports/reports.html
+msgid "Generator"
+msgstr "المولِّد"
+
+#: templates/Reports/reports.html
+msgid "Finished"
+msgstr "انتهى"
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s: %(status)s..."
+msgstr "المهمة %(id)s: %(status)s..."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s finished: %(status)s."
+msgstr "انتهت المهمة %(id)s: %(status)s."
+
+#: templates/Reports/reports.html
+msgid "Job %(id)s is still running; refresh the runs list later."
+msgstr "لا تزال المهمة %(id)s قيد التشغيل؛ حدّث قائمة عمليات التشغيل لاحقًا."
+
+#: templates/Reports/reports.html
+msgid "No runs match this filter."
+msgstr "لا توجد عمليات تشغيل تطابق هذا المرشّح."
+
+msgid "Files are made on the server from the rows this run stored. Each has a manifest and a SHA-256 checksum; every download is recorded in the audit log."
+msgstr "تُنشأ الملفات على الخادم من الصفوف التي خزّنها هذا التشغيل. لكل ملف بيان ومجموع تحقق SHA-256، وتُسجَّل كل عملية تنزيل في سجل التدقيق."
+
+msgid "Format"
+msgstr "الصيغة"
+
+msgid "Create file"
+msgstr "إنشاء ملف"
+
+msgid "All datasets"
+msgstr "كل مجموعات البيانات"
+
+msgid "No files have been made from this run yet."
+msgstr "لم يُنشأ أي ملف من هذا التشغيل بعد."
+
+msgid "Files can be made from completed runs only."
+msgstr "لا يمكن إنشاء الملفات إلا من عمليات التشغيل المكتملة."
+
+msgid "This file already exists and is listed below."
+msgstr "هذا الملف موجود بالفعل وهو مدرج أدناه."
+
+msgid "File created."
+msgstr "تم إنشاء الملف."
+
+#, python-format
+msgid "Not available yet: %(format)s (%(reason)s)"
+msgstr "غير متاح بعد: %(format)s (%(reason)s)"
+
+#, python-format
+msgid "%(n)s bytes"
+msgstr "%(n)s بايت"
+
+msgid "Manifest"
+msgstr "البيان"
+
+msgid "Verify"
+msgstr "تحقّق"
+
+msgid "Verified: the stored file matches its SHA-256 checksum and its manifest."
+msgstr "تم التحقق: الملف المخزَّن يطابق مجموع التحقق SHA-256 والبيان الخاص به."
+
+#, python-format
+msgid "Verification failed: %(checks)s. The file will not be sent."
+msgstr "فشل التحقق: %(checks)s. لن يُرسَل الملف."
+
+#: templates/auth/audit.html
+msgid "Who did what, to what, when and from where. This page only reads the log; nothing here changes it."
+msgstr "من فعل ماذا، وبأي شيء، ومتى، ومن أين. هذه الصفحة تقرأ السجل فقط؛ لا شيء هنا يغيّره."
+
+#: templates/auth/audit.html
+msgid "Reading the audit log"
+msgstr "قراءة سجل التدقيق"
+
+#: templates/auth/audit.html
+msgid "DATA_EXPORTED entries record every file that left the system: who took it, which report, search or record it came from, how many rows, and its SHA-256 checksum."
+msgstr "تسجّل إدخالات DATA_EXPORTED كل ملف غادر النظام: من أخذه، ومن أي تقرير أو بحث أو سجل جاء، وعدد صفوفه، ومجموع SHA-256 الخاص به."
+
+#: templates/auth/audit.html
+msgid "Newest entries come first. Use Older and Newer to move through the log; the total is not counted because the log grows without limit."
+msgstr "تظهر أحدث الإدخالات أولاً. استخدم «أقدم» و«أحدث» للتنقل في السجل؛ لا يُحسب المجموع لأن السجل ينمو بلا حد."
+
+#: templates/auth/audit.html
+msgid "Select a user or a resource in the list to show only its entries."
+msgstr "اختر مستخدماً أو مورداً في القائمة لعرض إدخالاته فقط."
+
+#: templates/auth/audit.html
+msgid "Any action"
+msgstr "أي إجراء"
+
+#: templates/auth/audit.html
+msgid "User name"
+msgstr "اسم المستخدم"
+
+#: templates/auth/audit.html
+msgid "Resource starts with"
+msgstr "يبدأ المورد بـ"
+
+#: templates/auth/audit.html
+msgid "From (inclusive)"
+msgstr "من (شاملاً)"
+
+#: templates/auth/audit.html
+msgid "Until (exclusive)"
+msgstr "حتى (غير شامل)"
+
+#: templates/auth/audit.html
+msgid "Show entries"
+msgstr "عرض الإدخالات"
+
+#: templates/auth/audit.html
+msgid "Resource"
+msgstr "المورد"
+
+#: templates/auth/audit.html
+msgid "IP address"
+msgstr "عنوان IP"
+
+#: templates/auth/audit.html
+msgid "no user (system or anonymous)"
+msgstr "لا مستخدم (النظام أو مجهول)"
+
+#: templates/auth/audit.html
+msgid "Older"
+msgstr "أقدم"
+
+#: templates/auth/audit.html
+msgid "Newer"
+msgstr "أحدث"
+
+#: templates/auth/audit.html
+msgid "No entries match these filters."
+msgstr "لا توجد إدخالات تطابق عوامل التصفية هذه."
+
+#: templates/auth/audit.html
+msgid "The audit log is empty."
+msgstr "سجل التدقيق فارغ."
+
+#: templates/auth/audit.html
+msgid "Showing %(count)s entries, newest first."
+msgstr "عرض %(count)s إدخالات، الأحدث أولاً."
+
+#: templates/auth/audit.html
+msgid "More entries exist; use Older to continue."
+msgstr "توجد إدخالات أخرى؛ استخدم «أقدم» للمتابعة."
+
+#: templates/auth/audit.html
+msgid "These are the oldest matching entries."
+msgstr "هذه أقدم الإدخالات المطابقة."
+
+#: templates/auth/audit.html
+msgid "The total is not counted."
+msgstr "المجموع غير محسوب."
+
+#: templates/auth/audit.html
+msgid "Only the first %(cap)s action names are listed."
+msgstr "تُدرج أسماء الإجراءات الـ %(cap)s الأولى فقط."
+
+#: templates/auth/audit.html
+msgid "Audit entry %(id)s"
+msgstr "إدخال التدقيق %(id)s"
+
+#: templates/auth/audit.html
+msgid "Show only this user's entries"
+msgstr "عرض إدخالات هذا المستخدم فقط"
+
+#: templates/auth/audit.html
+msgid "Show only entries for resources starting with this"
+msgstr "عرض إدخالات الموارد التي تبدأ بهذا فقط"
+
+#: templates/auth/audit.html
+msgid "Entry"
+msgstr "الإدخال"
+
+#: templates/auth/audit.html
+msgid "User id"
+msgstr "معرّف المستخدم"
+
+#: templates/Signals/detection.html
+msgid "Detection"
+msgstr "الكشف"
+
+#: templates/Signals/detection.html
+msgid "Which detector version analysed which content and with what outcome. Content that was never analysed is counted separately: it is not the same as content in which nothing was found."
+msgstr "أي إصدار من الكاشف حلّل أي محتوى وبأي نتيجة. يُحسب المحتوى الذي لم يُحلَّل قط بشكل منفصل: فهو ليس كالمحتوى الذي لم يُعثر فيه على شيء."
+
+#: templates/Signals/detection.html
+msgid "How detection is recorded"
+msgstr "كيف يُسجَّل الكشف"
+
+#: templates/Signals/detection.html
+msgid "Each content is analysed once by each detector, at ingestion or by re-detection. The run records the detector version, the outcome and the number of signals found."
+msgstr "يُحلَّل كل محتوى مرة واحدة بواسطة كل كاشف، عند الاستيعاب أو بإعادة الكشف. يسجّل التشغيل إصدار الكاشف والنتيجة وعدد الإشارات المعثور عليها."
+
+#: templates/Signals/detection.html
+msgid "Stale content was never analysed, was analysed by an older version (for places, an older gazetteer), or its last run failed. Re-detecting stale content analyses exactly these."
+msgstr "المحتوى المتقادم لم يُحلَّل قط، أو حلّله إصدار أقدم (للأماكن: معجم جغرافي أقدم)، أو فشل تشغيله الأخير. إعادة كشف المحتوى المتقادم تحلّل هذه بالضبط."
+
+#: templates/Signals/detection.html
+msgid "Re-detection runs as a background job and replaces the stored signals of each content it analyses. It is recorded in the audit log."
+msgstr "تعمل إعادة الكشف كمهمة في الخلفية وتستبدل الإشارات المخزنة لكل محتوى تحلّله. وتُسجَّل في سجل التدقيق."
+
+#: templates/Signals/detection.html
+msgid "Coverage"
+msgstr "التغطية"
+
+#: templates/Signals/detection.html
+msgid "Current version"
+msgstr "الإصدار الحالي"
+
+#: templates/Signals/detection.html
+msgid "Complete"
+msgstr "مكتمل"
+
+#: templates/Signals/detection.html
+msgid "Truncated"
+msgstr "مقتطع"
+
+#: templates/Signals/detection.html
+msgid "No text"
+msgstr "بلا نص"
+
+#: templates/Signals/detection.html
+msgid "Older version"
+msgstr "إصدار أقدم"
+
+#: templates/Signals/detection.html
+msgid "Never analysed"
+msgstr "لم يُحلَّل قط"
+
+#: templates/Signals/detection.html
+msgid "Stale"
+msgstr "متقادم"
+
+#: templates/Signals/detection.html
+msgid "Re-detect"
+msgstr "إعادة الكشف"
+
+#: templates/Signals/detection.html
+msgid "Stale content only"
+msgstr "المحتوى المتقادم فقط"
+
+#: templates/Signals/detection.html
+msgid "Listed content ids"
+msgstr "معرّفات المحتوى المدرجة"
+
+#: templates/Signals/detection.html
+msgid "All content"
+msgstr "كل المحتوى"
+
+#: templates/Signals/detection.html
+msgid "Detectors"
+msgstr "الكواشف"
+
+#: templates/Signals/detection.html
+msgid "Content ids (hash ids), separated by spaces, commas or new lines"
+msgstr "معرّفات المحتوى (معرّفات التجزئة)، مفصولة بمسافات أو فواصل أو أسطر جديدة"
+
+#: templates/Signals/detection.html
+msgid "I understand that this analyses every stored content again and replaces its signals."
+msgstr "أفهم أن هذا يحلّل كل محتوى مخزَّن من جديد ويستبدل إشاراته."
+
+#: templates/Signals/detection.html
+msgid "Start re-detection"
+msgstr "بدء إعادة الكشف"
+
+#: templates/Signals/detection.html
+msgid "Any version"
+msgstr "أي إصدار"
+
+#: templates/Signals/detection.html
+msgid "Any trigger"
+msgstr "أي مُشغِّل"
+
+#: templates/Signals/detection.html
+msgid "Re-detection"
+msgstr "إعادة الكشف"
+
+#: templates/Signals/detection.html
+msgid "Content id"
+msgstr "معرّف المحتوى"
+
+#: templates/Signals/detection.html
+msgid "Show runs"
+msgstr "عرض التشغيلات"
+
+#: templates/Signals/detection.html
+msgid "Ran at"
+msgstr "وقت التشغيل"
+
+#: templates/Signals/detection.html
+msgid "Signals"
+msgstr "الإشارات"
+
+#: templates/Signals/detection.html
+msgid "Characters scanned"
+msgstr "الأحرف المفحوصة"
+
+#: templates/Signals/detection.html
+msgid "Any detector"
+msgstr "أي كاشف"
+
+#: templates/Signals/detection.html
+msgid "Any outcome"
+msgstr "أي نتيجة"
+
+#: templates/Signals/detection.html
+msgid "The current version cannot be determined (for places: no gazetteer is loaded). Every content counts as stale until it can."
+msgstr "لا يمكن تحديد الإصدار الحالي (للأماكن: لم يُحمَّل معجم جغرافي). يُعدّ كل محتوى متقادماً حتى يمكن ذلك."
+
+#: templates/Signals/detection.html
+msgid "%(analysable)s contents have stored text; %(stale)s are stale for at least one detector. Exact counts from one database snapshot taken %(at)s."
+msgstr "%(analysable)s محتوى لديه نص مخزَّن؛ %(stale)s منها متقادم لكاشف واحد على الأقل. أعداد دقيقة من لقطة واحدة لقاعدة البيانات أُخذت في %(at)s."
+
+#: templates/Signals/detection.html
+msgid "Re-detect stale"
+msgstr "إعادة كشف المتقادم"
+
+#: templates/Signals/detection.html
+msgid "Nothing is stale."
+msgstr "لا شيء متقادم."
+
+#: templates/Signals/detection.html
+msgid "and %(count)s more"
+msgstr "و%(count)s أخرى"
+
+#: templates/Signals/detection.html
+msgid "no file"
+msgstr "لا ملف"
+
+#: templates/Signals/detection.html
+msgid "Showing %(from)s-%(to)s, newest first."
+msgstr "عرض %(from)s-%(to)s، الأحدث أولاً."
+
+#: templates/Signals/detection.html
+msgid "More runs exist."
+msgstr "توجد تشغيلات أخرى."
+
+#: templates/Signals/detection.html
+msgid "No more runs."
+msgstr "لا مزيد من التشغيلات."
+
+#: templates/Signals/detection.html
+msgid "No runs match these filters."
+msgstr "لا توجد تشغيلات تطابق عوامل التصفية هذه."
+
+#: templates/Signals/detection.html
+msgid "No content has been analysed yet."
+msgstr "لم يُحلَّل أي محتوى بعد."
+
+#: templates/Signals/detection.html
+msgid "%(scanned)s of %(total)s"
+msgstr "%(scanned)s من %(total)s"
+
+#: templates/Signals/detection.html
+msgid "Re-detection job %(id)s queued."
+msgstr "أُدرجت مهمة إعادة الكشف %(id)s في قائمة الانتظار."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s. %(processed)s contents analysed, %(signals)s signals, %(failed)s failed."
+msgstr "المهمة %(id)s: %(status)s. حُلِّل %(processed)s محتوى، %(signals)s إشارة، فشل %(failed)s."
+
+#: templates/Signals/detection.html
+msgid "Some runs failed; they are listed under Runs with their error."
+msgstr "فشلت بعض التشغيلات؛ وهي مدرجة تحت «التشغيلات» مع خطئها."
+
+#: templates/Signals/detection.html
+msgid "Choose at least one detector."
+msgstr "اختر كاشفاً واحداً على الأقل."
+
+#: templates/Signals/detection.html
+msgid "List at least one content id."
+msgstr "أدرج معرّف محتوى واحداً على الأقل."
+
+#: templates/Signals/detection.html
+msgid "Content ids must be positive whole numbers: %(bad)s"
+msgstr "يجب أن تكون معرّفات المحتوى أعداداً صحيحة موجبة: %(bad)s"
+
+#: templates/Signals/detection.html
+msgid "Confirm that every content should be analysed again."
+msgstr "أكّد أنه يجب تحليل كل محتوى من جديد."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s."
+msgstr "المهمة %(id)s: %(status)s."
+
+#: core/reporting/definitions.py
+msgid "Distinctive Terms Report"
+msgstr "تقرير المصطلحات المميِّزة"
+
+#: core/reporting/definitions.py
+msgid "Which words the selected documents use more (or less) often than the rest of the collection, with how sure that is."
+msgstr "الكلمات التي تستخدمها الوثائق المختارة أكثر (أو أقل) من بقية المجموعة، ومدى الثقة في ذلك."
+
+#: core/reporting/definitions.py
+msgid "Used more often in the selection"
+msgstr "مستخدمة أكثر في التحديد"
+
+#: core/reporting/definitions.py
+msgid "Used less often in the selection"
+msgstr "مستخدمة أقل في التحديد"
+
+#: core/reporting/datasets.py
+msgid "Term"
+msgstr "المصطلح"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the selection"
+msgstr "مرات الورود في التحديد"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the rest of the collection"
+msgstr "مرات الورود في بقية المجموعة"
+
+#: core/reporting/datasets.py
+msgid "Log-likelihood (G2)"
+msgstr "لوغاريتم الأرجحية (G2)"
+
+#: core/reporting/datasets.py
+msgid "Log Ratio"
+msgstr "النسبة اللوغاريتمية (Log Ratio)"
+
+#: core/reporting/datasets.py
+msgid "Counted words in the selection"
+msgstr "الكلمات المعدودة في التحديد"
+
+#: core/reporting/datasets.py
+msgid "Counted words in the rest of the collection"
+msgstr "الكلمات المعدودة في بقية المجموعة"
+
+#: core/reporting/datasets.py
+msgid "Contents in the selection"
+msgstr "المحتويات في التحديد"
+
+#: core/reporting/datasets.py
+msgid "Contents in the rest of the collection"
+msgstr "المحتويات في بقية المجموعة"
+
+#: core/reporting/datasets.py
+msgid "Word records without a count"
+msgstr "سجلات كلمات بلا عدد"
+
+#: core/reporting/datasets.py
+msgid "Significant terms"
+msgstr "المصطلحات الدالّة إحصائياً"
+
+#: core/reporting/definitions.py
+msgid "About the Distinctive Terms Report"
+msgstr "حول تقرير المصطلحات المميِّزة"
+
+#: core/reporting/definitions.py
+msgid "Compares how often each word occurs in the documents you selected with the rest of the collection you may see, and lists the words whose difference is statistically reliable."
+msgstr "يقارن عدد مرات ورود كل كلمة في الوثائق التي اخترتها مع بقية المجموعة المتاحة لك، ويسرد الكلمات التي يكون الفرق فيها موثوقاً إحصائياً."
+
+#: core/reporting/definitions.py
+msgid "Distinctive terms"
+msgstr "المصطلحات المميِّزة"
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words. Next step: open the documents that contain the top terms."
+msgstr "يقارن مقياس التميّز صيغ الكلمات المخزّنة. لا يدمج التصريفات أو المرادفات أو اللغات، لذا يُظهر تحديدٌ بلغة غير لغة المجموعة كلماتِه الوظيفية. الخطوة التالية: افتح الوثائق التي تحتوي على المصطلحات الأعلى."
+
+#: core/analytics/kinds.py
+msgid "Next step: widen the criteria, or check that the matching documents were processed."
+msgstr "الخطوة التالية: وسّع المعايير، أو تحقّق من أن الوثائق المطابقة قد عولجت."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages. %(unknown_rows)s word records without a count were left out of every total. Next step: open the documents that contain the top terms."
+msgstr "يقارن مقياس التميّز صيغ الكلمات المخزّنة. لا يدمج التصريفات أو المرادفات أو اللغات. استُبعد %(unknown_rows)s من سجلات الكلمات بلا عدد من كل المجاميع. الخطوة التالية: افتح الوثائق التي تحتوي على المصطلحات الأعلى."
+
+#: core/analytics/kinds.py
+msgid "No statistical test was performed."
+msgstr "لم يُجرَ أي اختبار إحصائي."
+
+#: core/analytics/kinds.py
+msgid "Only terms with G2 of at least %(critical)s count as findings (p < 0.0001; %(source)s). Every term in the vocabulary is tested, so the weaker significance levels are not treated as findings."
+msgstr "لا تُعدّ نتيجةً إلا المصطلحات التي تبلغ قيمة G2 لها %(critical)s على الأقل (p < 0.0001؛ %(source)s). يُختبر كل مصطلح في المفردات، لذا لا تُعامل مستويات الدلالة الأضعف كنتائج."
+
+#: core/analytics/kinds.py
+msgid "Any difference between the selection and the collection is not in word frequency at this level; categories, sources or dates may show one."
+msgstr "أي فرق بين التحديد والمجموعة ليس في تكرار الكلمات عند هذا المستوى؛ قد تُظهره الفئات أو المصادر أو التواريخ."
+
+#: core/analytics/kinds.py
+msgid "No conclusion can be drawn from this section."
+msgstr "لا يمكن استخلاص أي استنتاج من هذا القسم."
+
+#: core/analytics/kinds.py
+msgid "These terms characterise the selection against the rest of the collection. They show where it differs, not why: read the documents that contain them before drawing conclusions."
+msgstr "تميّز هذه المصطلحات التحديد مقارنةً ببقية المجموعة. إنها تُظهر أين يختلف، لا لماذا: اقرأ الوثائق التي تحتويها قبل استخلاص الاستنتاجات."
+
+#: core/analytics/kinds.py
+msgid "The matching contents are the whole visible collection, so there is no reference to compare them with."
+msgstr "المحتويات المطابقة هي كامل المجموعة المرئية، لذا لا توجد مرجعية للمقارنة بها."
+
+#: core/analytics/kinds.py
+msgid "No visible content matches the criteria, so there is nothing to compare."
+msgstr "لا يطابق أي محتوى مرئي المعايير، لذا لا يوجد ما يُقارن."
+
+#: core/analytics/kinds.py
+msgid "The matching contents have no counted words, so keyness cannot be measured."
+msgstr "لا تحتوي المحتويات المطابقة على كلمات معدودة، لذا لا يمكن قياس التميّز."
+
+#: core/analytics/kinds.py
+msgid "No term reaches G2 %(critical)s: at this level the selection's word frequencies do not differ from the rest of the collection."
+msgstr "لا يبلغ أي مصطلح قيمة G2 مقدارها %(critical)s: عند هذا المستوى لا تختلف تكرارات الكلمات في التحديد عن بقية المجموعة."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "%(significant)s مصطلحاً تُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s). أقواها «%(top_term)s»: G2 %(top_g2)s، النسبة اللوغاريتمية %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "%(significant)s مصطلحاً تُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s). أقواها «%(top_term)s»: G2 %(top_g2)s، النسبة اللوغاريتمية %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) compares word frequencies in the selected contents with the other visible contents."
+msgstr "يقارن مقياس التميّز بلوغاريتم الأرجحية (G2) تكرارات الكلمات في المحتويات المختارة مع المحتويات المرئية الأخرى."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used more often in the selection, highest G2 first."
+msgstr "يقارن مقياس التميّز (G2) والنسبة اللوغاريتمية %(target_tokens)s كلمة معدودة في %(target_contents)s محتوى مختار مع %(reference_tokens)s كلمة في %(reference_contents)s محتوى مرئي آخر. المدرج: %(shown)s مصطلحاً مستخدمة أكثر في التحديد، الأعلى G2 أولاً."
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used less often in the selection, highest G2 first."
+msgstr "يقارن مقياس التميّز (G2) والنسبة اللوغاريتمية %(target_tokens)s كلمة معدودة في %(target_contents)s محتوى مختار مع %(reference_tokens)s كلمة في %(reference_contents)s محتوى مرئي آخر. المدرج: %(shown)s مصطلحاً مستخدمة أقل في التحديد، الأعلى G2 أولاً."
+
+#: templates/Reports/reports.html
+msgid "Analyses"
+msgstr "التحليلات"
+
+#: templates/Reports/reports.html
+msgid "Measure"
+msgstr "المقياس"
+
+#: templates/Reports/reports.html
+msgid "Finding"
+msgstr "النتيجة"
+
+#: templates/Reports/reports.html
+msgid "Consequence"
+msgstr "الدلالة"
+
+#: templates/Reports/reports.html
+msgid "Caveat"
+msgstr "تحفّظ"
+
+#: templates/Reports/reports.html
+msgid "Measured"
+msgstr "مَقيس"
+
+#: templates/Reports/reports.html
+msgid "Not measurable"
+msgstr "غير قابل للقياس"
+
+#: templates/Reports/reports.html
+msgid "Analysis %(key)s, templates %(templates)s"
+msgstr "التحليل %(key)s، القوالب %(templates)s"
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the selected contents with those of the other visible contents."
+msgstr "يقارن مقياس التميّز (G2) والنسبة اللوغاريتمية تكرارات الكلمات في المحتويات المختارة بتكراراتها في المحتويات المرئية الأخرى."
+
+#: core/analytics/kinds.py
+msgid "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. Contents in the rest of the collection: %(reference_contents)s; counted words: %(reference_tokens)s."
+msgstr "المحتويات في التحديد: %(target_contents)s؛ الكلمات المعدودة: %(target_tokens)s. المحتويات في بقية المجموعة: %(reference_contents)s؛ الكلمات المعدودة: %(reference_tokens)s."
+
+#: core/analytics/kinds.py
+msgid "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "أقواها «%(top_term)s»: G2 %(top_g2)s، النسبة اللوغاريتمية %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words."
+msgstr "يقارن مقياس التميّز صيغ الكلمات المخزّنة. لا يدمج التصريفات أو المرادفات أو اللغات، لذا يُظهر تحديدٌ بلغة غير لغة المجموعة كلماتِه الوظيفية."
+
+#: core/analytics/kinds.py
+msgid "Next step: open the documents that contain the top terms."
+msgstr "الخطوة التالية: افتح الوثائق التي تحتوي على المصطلحات الأعلى."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used more often in the selection."
+msgid_plural "Listed: %(shown)s terms used more often in the selection, highest G2 first."
+msgstr[0] "المدرج: %(shown)s مصطلح مستخدم أكثر في التحديد."
+msgstr[1] "المدرج: مصطلح واحد مستخدم أكثر في التحديد."
+msgstr[2] "المدرج: مصطلحان مستخدمان أكثر في التحديد، الأعلى G2 أولاً."
+msgstr[3] "المدرج: %(shown)s مصطلحات مستخدمة أكثر في التحديد، الأعلى G2 أولاً."
+msgstr[4] "المدرج: %(shown)s مصطلح مستخدم أكثر في التحديد، الأعلى G2 أولاً."
+msgstr[5] "المدرج: %(shown)s مصطلحًا مستخدمًا أكثر في التحديد، الأعلى G2 أولاً."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used less often in the selection."
+msgid_plural "Listed: %(shown)s terms used less often in the selection, highest G2 first."
+msgstr[0] "المدرج: %(shown)s مصطلح مستخدم أقل في التحديد."
+msgstr[1] "المدرج: مصطلح واحد مستخدم أقل في التحديد."
+msgstr[2] "المدرج: مصطلحان مستخدمان أقل في التحديد، الأعلى G2 أولاً."
+msgstr[3] "المدرج: %(shown)s مصطلحات مستخدمة أقل في التحديد، الأعلى G2 أولاً."
+msgstr[4] "المدرج: %(shown)s مصطلح مستخدم أقل في التحديد، الأعلى G2 أولاً."
+msgstr[5] "المدرج: %(shown)s مصطلحًا مستخدمًا أقل في التحديد، الأعلى G2 أولاً."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "لا يُستخدم أي مصطلح (%(significant)s) في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[1] "مصطلح واحد يُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[2] "مصطلحان يُستخدمان في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[3] "%(significant)s مصطلحات تُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[4] "%(significant)s مصطلح يُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[5] "%(significant)s مصطلحًا تُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "لا يُستخدم أي مصطلح (%(significant)s) في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[1] "مصطلح واحد يُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[2] "مصطلحان يُستخدمان في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[3] "%(significant)s مصطلحات تُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[4] "%(significant)s مصطلح يُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[5] "%(significant)s مصطلحًا تُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(unknown_rows)s word record without a count was left out of every total."
+msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
+msgstr[0] "استُبعد %(unknown_rows)s سجل كلمات بلا عدد من كل المجاميع."
+msgstr[1] "استُبعد سجل كلمات واحد بلا عدد من كل المجاميع."
+msgstr[2] "استُبعد سجلا كلمات بلا عدد من كل المجاميع."
+msgstr[3] "استُبعدت %(unknown_rows)s سجلات كلمات بلا عدد من كل المجاميع."
+msgstr[4] "استُبعد %(unknown_rows)s سجل كلمات بلا عدد من كل المجاميع."
+msgstr[5] "استُبعد %(unknown_rows)s سجلًا للكلمات بلا عدد من كل المجاميع."

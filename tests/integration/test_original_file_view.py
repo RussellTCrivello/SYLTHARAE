@@ -230,11 +230,32 @@ def test_unrenderable_format_is_an_attachment(admin_client, originals):
     assert "attachment" in (resp.headers.get("Content-Disposition") or "")
 
 
-def test_download_parameter_forces_an_attachment(admin_client, originals):
+def test_download_parameter_forces_an_attachment(admin_client, originals, pg_db):
     resp = _content(admin_client, originals["ids"]["png"], download=1)
     assert resp.status_code == 200
     assert "attachment" in (resp.headers.get("Content-Disposition") or "")
     assert resp.data == _PNG
+    # The download is a disclosure: one DATA_EXPORTED record for this file.
+    import hashlib
+    import psycopg2
+    audit_id = int(resp.headers["X-Disclosure-Audit-Id"])
+    conn = psycopg2.connect(host=pg_db["host"], port=pg_db["port"], user=pg_db["user"],
+                            password=pg_db["password"], dbname=pg_db["database"])
+    with conn.cursor() as cur:
+        cur.execute("SELECT action, detail FROM audit_log WHERE id = %s", (audit_id,))
+        action, detail = cur.fetchone()
+    conn.close()
+    file_id = originals["ids"]["png"]
+    assert action == "DATA_EXPORTED"
+    assert detail["kind"] == "original_file" and detail["scope"] == f"file:{file_id}"
+    assert detail["row_count"] == 1 and detail["format"] == "png"
+    assert detail["artifact"]["sha256"] == hashlib.sha256(_PNG).hexdigest()
+
+
+def test_inline_display_is_a_preview_not_a_disclosure(admin_client, originals):
+    resp = _content(admin_client, originals["ids"]["png"])
+    assert resp.status_code == 200
+    assert "X-Disclosure-Audit-Id" not in resp.headers
 
 
 def test_pdf_is_frameable_by_this_app_only(admin_client, originals):
