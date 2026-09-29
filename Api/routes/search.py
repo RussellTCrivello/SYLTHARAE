@@ -190,10 +190,16 @@ def register_search_routes(app):
         
         query = request.args.get('q', '')
         page = request.args.get('page', 1, type=int)
-        per_page = display_config.get('results_per_page', 10)
+        per_page = request.args.get('limit', display_config.get('results_per_page', 10), type=int)
+        per_page = max(1, min(200, per_page))
         max_results = search_config.get('max_results', 1000)
         results = []
         total_results = 0
+
+        # The results table's header clicks: the same view re-asked in the
+        # clicked column's order.
+        sort = request.args.get('sort', '')
+        order = request.args.get('order', '')
 
         # Analyst-categorization search scope (FR-2.x): explicit parameter
         # wins and is persisted in the session (FR-2.3); otherwise the last
@@ -204,7 +210,9 @@ def register_search_routes(app):
         # Minimum 2 chars (reduced from 3 to match enhanced search)
         if query and len(query.strip()) >= 2:
             # Use the enhanced search_files_by_word which now supports multiple words
-            results, total_results = search_files_by_word(query, page, per_page, analyst_scope=analyst_scope)
+            results, total_results = search_files_by_word(
+                query, page, per_page, analyst_scope=analyst_scope,
+                sort=sort, order=order)
             # Decorate results with analyst categories (own, separate
             # namespace - never merged with smart categories, FR-1.4)
             results = AnalystCategoryService.attach_categories_to_results(results)

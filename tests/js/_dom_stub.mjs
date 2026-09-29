@@ -69,6 +69,41 @@ export class FakeElement {
     }
     get value() { return this._value; }
     set value(next) { this._value = next === null || next === undefined ? '' : String(next); }
+    get id() { return this.attributes.id !== undefined ? this.attributes.id : ''; }
+    set id(next) {
+        if (next === null || next === undefined || next === '') delete this.attributes.id;
+        else this.attributes.id = String(next);
+    }
+    /** `data-*` attributes as a dataset; camelCase maps both ways. */
+    get dataset() {
+        const element = this;
+        const toAttr = (prop) => 'data-' + String(prop).replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+        const fromAttr = (prop) => String(prop).replace(/^data-/, '').replace(/-(\w)/g, (_, c) => c.toUpperCase());
+        return new Proxy({}, {
+            get(_target, prop) {
+                if (typeof prop !== 'string') return undefined;
+                const value = element.getAttribute(toAttr(prop));
+                return value === null ? undefined : value;
+            },
+            set(_target, prop, value) {
+                if (typeof prop !== 'string') return false;
+                if (value === null || value === undefined) element.removeAttribute(toAttr(prop));
+                else element.setAttribute(toAttr(prop), String(value));
+                return true;
+            },
+            deleteProperty(_target, prop) {
+                if (typeof prop === 'string') element.removeAttribute(toAttr(prop));
+                return true;
+            },
+            has(_target, prop) { return typeof prop === 'string' && element.hasAttribute(toAttr(prop)); },
+            ownKeys() {
+                return Object.keys(element.attributes)
+                    .filter((name) => name.startsWith('data-'))
+                    .map(fromAttr);
+            },
+            getOwnPropertyDescriptor() { return { enumerable: true, configurable: true }; },
+        });
+    }
     get className() { return this._class; }
     set className(value) {
         this.classList.set = new Set(String(value).split(/\s+/).filter(Boolean));
@@ -84,13 +119,45 @@ export class FakeElement {
     get innerHTML() { throw new Error('innerHTML is not available here'); }
     set innerHTML(_value) { throw new Error('innerHTML is not available here'); }
     get firstChild() { return this.children[0] || null; }
+    // Table sugar, as far as the table runtime reaches: `tBodies`, `tHead`
+    // and the direct `rows` of a table/section - nothing deeper.
+    get tBodies() { return this.children.filter((c) => c.tagName === 'TBODY'); }
+    get tHead() { return this.children.find((c) => c.tagName === 'THEAD') || null; }
+    get rows() {
+        if (!['TABLE', 'TBODY', 'THEAD', 'TFOOT'].includes(this.tagName)) return undefined;
+        return this.children.filter((c) => c.tagName === 'TR');
+    }
+    get cells() {
+        if (this.tagName !== 'TR') return undefined;
+        return this.children.filter((c) => c.tagName === 'TD' || c.tagName === 'TH');
+    }
+    /** `beforeend` is the only position the runtimes use: parse the fragment
+     *  with the same tree builder the harnesses use, splice its children in. */
+    insertAdjacentHTML(position, html) {
+        if (position !== 'beforeend') {
+            throw new Error(`insertAdjacentHTML(${position}) is not modelled here`);
+        }
+        const parsed = treeFromHtml(String(html));
+        parsed.children.slice().forEach((child) => this.appendChild(child));
+    }
     appendChild(child) {
+        // A fragment is a wrapper, never a node: its children move in.
+        if (isFragment(child)) {
+            child.children.slice().forEach((grandchild) => this.appendChild(grandchild));
+            child.children = [];
+            return child;
+        }
         child.parentNode = this;
         child.ownerDocument = this.ownerDocument || null;
         this.children.push(child);
         return child;
     }
     insertBefore(child, before) {
+        if (isFragment(child)) {
+            child.children.slice().forEach((grandchild) => this.insertBefore(grandchild, before));
+            child.children = [];
+            return child;
+        }
         child.parentNode = this;
         child.ownerDocument = this.ownerDocument || null;
         const index = before ? this.children.indexOf(before) : -1;
@@ -174,7 +241,7 @@ export class FakeElement {
         const found = [];
         const walk = (node) => {
             node.children.forEach((child) => {
-                if (matches(child, selector)) found.push(child);
+                if (matchesPath(child, selector)) found.push(child);
                 walk(child);
             });
         };
@@ -182,6 +249,14 @@ export class FakeElement {
         return found;
     }
     querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
+    /** DOM-style dispatch: an event object carries type/detail/bubbles. */
+    dispatchEvent(event) {
+        const detail = event && event.detail !== undefined ? event.detail : undefined;
+        const payload = { target: this, detail };
+        if (event && event.bubbles === false) payload.bubbles = false;
+        this.dispatch(event.type, payload);
+        return true;
+    }
     closest(selector) {
         let node = this;
         while (node) {
@@ -201,10 +276,49 @@ export function matches(node, selector) {
         .some((part) => matchesOne(node, part));
 }
 
+/**
+ * Matching for queries, which may be a descendant chain - `table#id tbody`,
+ * `[data-unified-table] table`. The last part must match the node itself and
+ * the earlier parts some ancestor, outermost-first in order. (No sibling
+ * combinators: nothing these runtimes do needs them.)
+ */
+function matchesPath(node, selector) {
+    const parts = String(selector).split(',').map((part) => part.trim())
+        .filter(Boolean);
+    return parts.some((part) => {
+        const chain = part.split(/\s+/).filter(Boolean);
+        if (!matchesOne(node, chain[chain.length - 1])) return false;
+        let rest = chain.slice(0, -1);
+        let ancestor = node.parentNode;
+        while (ancestor && rest.length) {
+            if (matchesOne(ancestor, rest[rest.length - 1])) rest = rest.slice(0, -1);
+            ancestor = ancestor.parentNode;
+        }
+        return rest.length === 0;
+    });
+}
+
+/** Is this node a document fragment the way appendChild has to treat one:
+ *  a container whose children splice into the target, itself discarded? */
+function isFragment(node) {
+    return node && node.tagName === '#DOCUMENT-FRAGMENT';
+}
+
 function matchesOne(node, selector) {
     const negated = selector.match(/^(.*?):not\((.*)\)$/);
     if (negated) {
         return matchesOne(node, negated[1]) && !matchesOne(node, negated[2]);
+    }
+    // A compound of simple parts - `th.ut-sortable`, `.ut-check[checked]`,
+    // `td[data-x="y"]` - is the AND of its parts: an optional tag followed
+    // by classes, ids and attribute tests. A lone attribute selector is not
+    // a compound: it falls through to the attribute branch below.
+    const compound = selector.match(/^([a-zA-Z][\w-]*)?((?:[.#][\w-]+|:checked|\[[^\]]+\])+)$/);
+    if (compound && (compound[1]
+            || (compound[2].match(/[.#][\w-]+|:checked|\[[^\]]+\]/g) || []).length > 1)) {
+        if (compound[1] && node.tagName !== compound[1].toUpperCase()) return false;
+        const parts = compound[2].match(/[.#][\w-]+|:checked|\[[^\]]+\]/g) || [];
+        return parts.every((part) => matchesOne(node, part));
     }
     // Compound with the checkedness pseudo-class, as in ".file-checkbox:checked":
     // the box matches when it matches the rest and is actually checked.
@@ -223,16 +337,29 @@ function matchesOne(node, selector) {
     return node.tagName === selector.toUpperCase();
 }
 
-/** Parse the attributes of a start tag into a FakeElement. */
+/** The entities a server-rendered attribute may carry. */
+function decodeEntities(value) {
+    return String(value)
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+}
+
+/** Parse the attributes of a start tag into a FakeElement. Both quote
+ *  styles are honoured - templates legitimately use either - and entities
+ *  inside attribute values are decoded, as a browser would. */
 export function elementFromTag(tag) {
     const name = tag.match(/^<\s*([a-zA-Z0-9]+)/)[1];
     const attrs = {};
     const body = tag.replace(/^<\s*[a-zA-Z0-9]+/, '').replace(/\/?>$/, '');
-    const pattern = /([\w:-]+)(?:="([^"]*)")?/g;
+    const pattern = /([\w:-]+)(?:="([^"]*)"|='([^']*)')?/g;
     let match;
     while ((match = pattern.exec(body))) {
         if (['/', 'aria', ''].includes(match[1])) continue;
-        attrs[match[1]] = match[2] === undefined ? '' : match[2];
+        const raw = match[2] !== undefined ? match[2] : match[3];
+        attrs[match[1]] = raw === undefined ? '' : decodeEntities(raw);
     }
     return new FakeElement(name, attrs);
 }
@@ -281,6 +408,10 @@ export function installDom() {
         querySelector: (selector) => documentRoot.querySelector(selector),
         querySelectorAll: (selector) => documentRoot.querySelectorAll(selector),
         getElementById: (id) => documentRoot.querySelector(`[id="${id}"]`),
+        // The table runtime adopts fetched rows through a fragment; the stub
+        // has no per-document node identity to preserve, so the node itself.
+        importNode: (node) => node,
+        createDocumentFragment: () => new FakeElement('#document-fragment'),
         //: Text nodes are named by number rather than an imported class list,
         //: and nothing here walks them - `nodeType === 1` is what is asked.
         addEventListener(type, handler, options) {
@@ -320,6 +451,11 @@ export function installDom() {
     documentRoot.ownerDocument = document;
     globalThisRef.document = document;
     globalThisRef.window = globalThisRef;
+    // The unified table adopts fetched rows with `table#id + CSS.escape`;
+    // a stub CSS that passes identifiers through is enough for that.
+    globalThisRef.CSS = {
+        escape(value) { return String(value).replace(/([^a-zA-Z0-9_-])/g, '\\$1'); },
+    };
     globalThisRef.bootstrap = {
         Modal: class {
             constructor(node) { this.node = node; }

@@ -49,7 +49,7 @@ This is a measurement of the product as it is, not a target.
 | - declared with no operation behind them | 5 |
 | Templates rendering the shared ActionToolbar | 5 |
 | Hand-written action bars | 1 |
-| Templates with record actions drawn by hand | 3 |
+| Templates with record actions drawn by hand | 2 |
 | Templates with a filter submit inside a bar | 1 |
 | Templates with document viewer controls | 1 |
 | Files still calling the browser confirm() | 19 |
@@ -128,7 +128,7 @@ Each row is a scan from `SURFACES`, so the count and the files come from one sta
 | --- | --- | --- |
 | Shared action toolbar | 5 | `templates/Keyword/keywords_list.html`, `templates/Side/sides_list.html`, `templates/Sources/sources_list.html`, `templates/Word/Word_list.html`, `templates/email_words/email_words.html` |
 | Hand-written action bar | 1 | `templates/file/files_list.html` |
-| Record actions drawn by hand | 3 | `templates/Word/Word_detail.html`, `templates/Word/Word_list.html`, `templates/file/files_list.html` |
+| Record actions drawn by hand | 2 | `templates/Word/Word_detail.html`, `templates/Word/Word_list.html` |
 | Filter form submitted from a bar | 1 | `templates/email_words/email_words.html` |
 | Document viewer controls | 1 | `templates/file/full_content.html` |
 | Browser confirm() dialog | 19 | `static/js/pages/analysis-batch-page.js`, `static/js/pages/analyst-categorization-page.js`, `static/js/pages/categories-list-page.js`, `static/js/pages/category-words-page.js`, `static/js/pages/keyword-detail-page.js`, `static/js/pages/keywords-list-page.js`, `static/js/pages/monitoring-page.js`, `static/js/pages/notifications-page.js`, `static/js/pages/saved-searches-page.js`, `static/js/pages/search-advanced-page.js`, `static/js/pages/search-enhanced-page.js`, `static/js/pages/side-detail-page.js`, `static/js/pages/sides-list-page.js`, `static/js/pages/source-detail-page.js`, `static/js/pages/sources-list-page.js`, `static/js/pages/translation-management-page.js`, `static/js/pages/users-page.js`, `static/js/pages/word-detail-page.js`, `static/js/pages/words-list-page.js` |
@@ -142,7 +142,7 @@ The scripts are scanned as well as the templates, which is why the browser `conf
 
 Derived from the table above, not from taste:
 
-* **Record action surface** - the 10 registered record-scope actions, plus the 3 templates that draw record actions themselves.
+* **Record action surface** - the 10 registered record-scope actions, plus the 2 templates that draw record actions themselves.
 * **Specialized composites** - a viewer surface (1 template) for the document controls, and a filter surface (1 template) for the bar that submits a filter form.
 * **Confirmation dialog** - 7 registered actions require a confirmation, and 19 files still open the browser's own dialog to get one.
 

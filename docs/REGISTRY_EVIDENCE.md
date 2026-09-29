@@ -33,7 +33,7 @@ from the code, so it cannot claim more than the application does.
 
 - Interfaces declared: **31**
 - Cross-cutting features (not interfaces): **1**
-- Endpoints owned (canonical routes + aliases): **72**
+- Endpoints owned (canonical routes + aliases): **75**
 - With a keyboard shortcut: **17**
 - With a help topic: **29**
 - Declared domain vocabulary: **12**
@@ -57,17 +57,17 @@ Domains are **declared** in `core/interfaces/domains.py`; a declared domain may 
 | SECURITY | 0 | declared, empty |
 | INTERNAL | 1 | in use |
 
-Declared aliases: **42**, across **12** interfaces. An alias is an endpoint the interface owns but does not navigate to; aliases never become navigation entries.
+Declared aliases: **45**, across **12** interfaces. An alias is an endpoint the interface owns but does not navigate to; aliases never become navigation entries.
 
 | Interface | Aliases |
 | --- | --- |
 | `batch_analysis` | `analysis_batch_process` |
-| `categories` | `category_add`, `category_words` |
+| `categories` | `category_add`, `category_documents`, `category_words` |
 | `concurrency_monitor` | `concurrency.get_async_tasks`, `concurrency.get_metrics`, `concurrency.get_pools`, `concurrency.get_processes`, `concurrency.get_threads` |
-| `file_library` | `files.bulk_delete_files`, `files.bulk_export_files`, `files.delete_file`, `files.file_chart_data`, `files.file_content_lazy`, `files.file_content_page`, `files.file_detail`, `files.file_full_content`, `files.file_search_all_pages`, `files.file_types_page` |
+| `file_library` | `files.bulk_delete_files`, `files.bulk_export_files`, `files.delete_file`, `files.file_chart_data`, `files.file_content_lazy`, `files.file_content_page`, `files.file_detail`, `files.file_full_content`, `files.file_search_all_pages`, `files.file_type_documents`, `files.file_types_page` |
 | `input_ingestion` | `files.api_cancel_task`, `files.get_active_tasks`, `files.pause_task`, `files.resume_task`, `files.upload_page`, `files.upload_progress` |
 | `jobs` | `operations_job_detail_page` |
-| `keywords` | `keyword_detail`, `keywords_add` |
+| `keywords` | `keyword_detail`, `keyword_documents`, `keywords_add` |
 | `search` | `saved_searches_page`, `search_advanced`, `search_advanced_api`, `search_enhanced_page` |
 | `settings` | `settings_api.settings_page` |
 | `sides` | `side_add`, `side_categories_keywords`, `side_detail`, `side_edit` |
@@ -147,9 +147,9 @@ Cross-cutting settings that are **not** features (they belong to an existing int
 <!-- BEGIN GENERATED APPLICATION EVIDENCE -->
 ### 7. Endpoint coverage
 
-- Endpoints in the application's URL map (static excluded): **401**
-- User-facing page endpoints: **54**
-- Owned by an interface: **72**
+- Endpoints in the application's URL map (static excluded): **408**
+- User-facing page endpoints: **57**
+- Owned by an interface: **75**
 - **Unmanaged user-facing endpoints**: **0**
 - Interfaces with a navigable route: **30**
 
@@ -160,18 +160,18 @@ Unmanaged user-facing endpoints: **0** — every page the application serves is 
 | Classification | Endpoints |
 | --- | --- |
 | ACTION | 9 |
-| API_ENDPOINT | 320 |
+| API_ENDPOINT | 324 |
 | INTERNAL_PAGE | 1 |
 | REDIRECT | 1 |
 | SYSTEM_ENDPOINT | 16 |
 | TEST_ENDPOINT | 1 |
-| USER_INTERFACE | 53 |
+| USER_INTERFACE | 56 |
 
 By blueprint:
 
 | Blueprint | Endpoints |
 | --- | --- |
-| (app) | 203 |
+| (app) | 205 |
 | analytics | 22 |
 | archives_api | 10 |
 | auth | 12 |
@@ -179,8 +179,10 @@ By blueprint:
 | content_analysis | 6 |
 | cursor_api | 3 |
 | error_dashboard | 4 |
+| exports | 1 |
 | file_analysis | 20 |
-| files | 28 |
+| file_operations | 3 |
+| files | 29 |
 | health | 1 |
 | import_export | 6 |
 | operations_api | 29 |
@@ -203,7 +205,7 @@ The coverage rule tolerates exactly these, by name — a new page cannot be adde
 
 **TEST_ENDPOINT_PREFIXES** (1): `/_test/`
 
-Endpoints the interface switch does not gate (API, system and infrastructure; authentication and authorization are unchanged): **337**
+Endpoints the interface switch does not gate (API, system and infrastructure; authentication and authorization are unchanged): **341**
 
 ### 10. Rendered navigation
 

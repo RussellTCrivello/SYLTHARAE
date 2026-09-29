@@ -4,6 +4,7 @@ Handles file upload, browsing, viewing, and processing
 """
 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, current_app, make_response
+from werkzeug.datastructures import MultiDict
 from werkzeug.utils import secure_filename
 import os
 import sys
@@ -462,27 +463,181 @@ def api_cancel_task(task_id):
 
 # ==================== FILE BROWSER ====================
 
+#: The columns a list table may sort the File Library by: the header's
+#: `sort` key -> the SQL expression it means. The export endpoint reads the
+#: same allowlist, so a sorted export is ordered exactly like the view.
+LIST_SORT_COLUMNS = {
+    'name': 'p.file_name',
+    'size': 'p.file_size',
+    'date': 'p.date_creation',
+    'type': 'p.file_type',
+    'status': 'p.file_status',
+}
+
+
+def _library_page(args, page=1, limit=10, scope_where=None, scope_params=()):
+    """One page of the File Library's view: the rows, the count, the order.
+
+    The single query surface every rendering of the library shares - the
+    File Library page, a file type's panel, a keyword's or category's
+    panel - so a filter, a sort column or the search highlighting can never
+    disagree between them. `args` is the view's query string (search,
+    source, side, status, file_type, date_from, date_to, size_min,
+    size_max, sort, order); `page`/`limit` pick the slice.
+
+    `scope_where`/`scope_params` pin the panel's identity - the one owner a
+    panel is about (a keyword, a category). It is not a filter the reader
+    toggles; it is what the panel IS, and it composes with every filter.
+    """
+    offset = (max(1, page) - 1) * limit
+
+    filters = build_library_filters(args)
+    where_parts = list(filters.where_parts)
+    where_params = list(filters.params)
+    if scope_where:
+        where_parts.append(scope_where)
+        where_params.extend(scope_params)
+    where_clause = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
+
+    # Column sort comes from the table headers (`sort` + `order`), over
+    # LIST_SORT_COLUMNS - the list's order, so a sorted view stays sorted
+    # across pages. The default stays ORDER_BY, which is also the sequence
+    # the record pages walk in.
+    sort_key = args.get('sort', '')
+    sort_order = args.get('order', '')
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'desc'
+    if sort_key in LIST_SORT_COLUMNS:
+        list_order_by = (
+            f"{LIST_SORT_COLUMNS[sort_key]} {sort_order.upper()} NULLS LAST, "
+            "p.id DESC"
+        )
+    else:
+        sort_key = 'date'
+        list_order_by = ORDER_BY
+
+    joins = list(LIBRARY_JOINS)
+    count_query = f"""
+        SELECT COUNT(*)
+        FROM paths p
+        {' '.join(joins) if joins else ''}
+        {where_clause}
+    """
+    total_result = execute_query(
+        count_query, tuple(where_params) if where_params else None, fetch="one")
+    total_count = total_result[0] if isinstance(total_result, tuple) else (
+        total_result if isinstance(total_result, int) else 0)
+
+    rows_query = f"""
+        SELECT
+            p.id, p.file_name, p.file_path, p.file_size, p.file_type,
+            p.file_status, p.file_date, p.date_creation,
+            COALESCE(s.name, 'Unknown') as source_name,
+            COALESCE(si.name, 'Unknown') as side_name
+        FROM paths p
+        {' '.join(joins) if joins else ''}
+        {where_clause}
+        ORDER BY {list_order_by}
+        LIMIT %s OFFSET %s
+    """
+    rows = execute_query(rows_query, tuple(where_params) + (limit, offset))
+
+    # When the reader is searching, the matched part of the name is
+    # highlighted here - the same view, with the hit visible where it hit -
+    # and the row the template marks as a hit.
+    highlight_term = (args.get('search', '') or '').strip()
+    highlight_lower = highlight_term.lower()
+    files = []
+    for row in rows or []:
+        name = row[1]
+        if highlight_lower and highlight_lower in (name or '').lower():
+            from markupsafe import Markup, escape
+            escaped = escape(name)
+            name = Markup(str(escaped).replace(
+                str(escape(highlight_term)),
+                f'<mark>{escape(highlight_term)}</mark>'))
+        files.append((
+            row[0],  # id
+            name,    # file_name (highlighted when it matched the search)
+            row[2],  # file_path
+            row[3],  # file_size
+            row[4],  # file_type
+            row[5],  # file_status
+            row[6],  # file_date
+            row[7],  # date_creation
+            row[8],  # source_name
+            row[9]   # side_name
+        ))
+
+    total_pages = ((total_count - 1) // limit) + 1 if total_count > 0 else 1
+    return {
+        'files': files,
+        'total_count': total_count,
+        'total_pages': total_pages,
+        'page': max(1, page),
+        'sort_key': sort_key,
+        'sort_order': sort_order,
+    }
+
+
+
+def _documents_panel_response(table_id, scope_where, scope_params, args,
+                              identity_params):
+    """The documents-panel fragment for one owner of library documents.
+
+    Shared by every panel that pins the library to one owner - a file type,
+    a keyword, a category. The view is `_library_page` (the File Library's
+    own query and rendering), so the panel's rows, search highlighting,
+    sorting and Load More are the library's, scoped.
+    """
+    page = args.get('page', 1, type=int)
+    limit = args.get('limit', 25, type=int)
+    limit = max(1, min(200, limit))
+
+    view = _library_page(args, page=page, limit=limit,
+                         scope_where=scope_where, scope_params=scope_params)
+    nav_params = context_params(build_library_filters(args))
+
+    panel_params = MultiDict([
+        (key, value) for (key, value) in args.items(multi=True)
+        if key not in ('page', 'limit', 'cursor')
+    ])
+    from urllib.parse import urlencode
+    view_string = urlencode(panel_params)
+    identity_string = urlencode(identity_params)
+
+    return render_template(
+        'file/_file_documents_fragment.html',
+        files=view['files'],
+        total_count=view['total_count'],
+        total_pages=view['total_pages'],
+        page=view['page'],
+        limit=limit,
+        sort_by=view['sort_key'],
+        sort_order=view['sort_order'],
+        search=(args.get('search', '') or '').strip(),
+        nav_params=nav_params,
+        start_position=(view['page'] - 1) * limit + 1,
+        table_id=table_id,
+        view_string=view_string,
+        identity_string=identity_string,
+        file_type='',
+    )
+
+
 @files_bp.route('/files')
 def files_list():
-    """Enhanced File Library - OFFSET-BASED PAGINATION (like keywords page)"""
+    """Enhanced File Library - one continuous list through the shared view."""
     from settings import get_settings
     settings = get_settings()
     display_config = settings.get_display_config()
-    
+
     # Get pagination parameters
     page = request.args.get('page', 1, type=int)  # Page number
-    # Use settings default if limit not provided
     default_limit = display_config.get('results_per_page', 10)
-    limit = request.args.get('limit', default_limit, type=int)  # Records per page
-    limit = max(1, min(1000, limit))  # Clamp between 1 and 1000
-    
-    # Validate page number
-    if page < 1:
-        page = 1
-    
-    # Calculate offset
-    offset = (page - 1) * limit
-    
+    limit = request.args.get('limit', default_limit, type=int)
+    limit = max(1, min(1000, limit))
+
     # Filters are validated and rendered by Api.services.file_navigation so
     # that this list, its statistics counters and the Previous/Next controls
     # on the detail pages can never disagree about what the current view is.
@@ -496,74 +651,25 @@ def files_list():
     size_min = request.args.get('size_min', '')
     size_max = request.args.get('size_max', '')
 
-    filters = build_library_filters(request.args)
-    where_clause = filters.where_clause()
-    where_params = list(filters.params)
+    view = _library_page(request.args, page=page, limit=limit)
+    files = view['files']
+    total_files_count = view['total_count']
+    total_pages = view['total_pages']
+    sort_key = view['sort_key']
+    sort_order = view['sort_order']
 
     # The same view, as query parameters the detail pages hand back to us.
     # Every file link in this list carries them, which is what makes
     # Previous/Next on a detail page walk *this* list and not the whole
     # library.
-    nav_params = context_params(filters)
-    
-    # Build base query. The ORDER BY is the one Previous/Next walks, so the
-    # sequence the detail pages step through is exactly this list's order.
-    joins = list(LIBRARY_JOINS)
-    base_query = f"""
-        SELECT 
-            p.id, p.file_name, p.file_path, p.file_size, p.file_type,
-            p.file_status, p.file_date, p.date_creation,
-            COALESCE(s.name, 'Unknown') as source_name,
-            COALESCE(si.name, 'Unknown') as side_name
-        FROM paths p
-        {' '.join(joins) if joins else ''}
-        {where_clause}
-        ORDER BY {ORDER_BY}
-    """
-    
+    nav_params = context_params(build_library_filters(request.args))
+    start_position = (max(1, page) - 1) * limit + 1
+
     try:
-        # Get total count
-        count_query = f"""
-            SELECT COUNT(*) 
-            FROM paths p
-            {' '.join(joins) if joins else ''}
-            {where_clause}
-        """
-        total_result = execute_query(count_query, tuple(where_params) if where_params else None, fetch="one")
-        total_files_count = total_result[0] if isinstance(total_result, tuple) else (total_result if isinstance(total_result, int) else 0)
-        total_pages = ((total_files_count - 1) // limit) + 1 if total_files_count > 0 else 1
-        
-        # Get paginated results
-        files_query = f"{base_query} LIMIT %s OFFSET %s"
-        files_params = list(where_params) + [limit, offset]
-        files_rows = execute_query(files_query, tuple(files_params))
-        
-        # Convert to tuple format for template
-        files = []
-        for row in files_rows:
-            files.append((
-                row[0],  # id
-                row[1],  # file_name
-                row[2],  # file_path
-                row[3],  # file_size
-                row[4],  # file_type
-                row[5],  # file_status
-                row[6],  # file_date
-                row[7],  # date_creation
-                row[8],  # source_name
-                row[9]   # side_name
-            ))
-        
-        # Calculate start position for row numbering
-        start_position = offset + 1
-        
-        # Log for debugging
-        logger.info(f"Files list: {len(files)} files returned, total: {total_files_count}, page: {page}, start_position: {start_position}")
-        
         # Calculate total analyzed and pending files from database with same filters
         total_analyzed = 0
         total_pending = 0
-        
+
         try:
             # Same filters as the main query, minus status: each counter
             # appends its own status condition below.
@@ -572,30 +678,31 @@ def files_list():
             stats_params = list(stats_filters.params)
 
             stats_query_base = """
-                SELECT COUNT(*) 
+                SELECT COUNT(*)
                 FROM paths p
                 LEFT JOIN hash_contexts hc ON p.context_id = hc.id LEFT JOIN hashs h ON hc.hash_id = h.id
                 LEFT JOIN sources s ON hc.source_id = s.id
                 LEFT JOIN sides si ON hc.side_id = si.id
             """
-            
+
             def _status_count(status):
                 query = stats_query_base + " WHERE " + " AND ".join(
                     stats_where + ["p.file_status = %s"])
-                result = execute_query(query, tuple(stats_params + [status]), fetch="one")
+                result = execute_query(query, tuple(stats_params) + (status,), fetch="one")
                 if isinstance(result, tuple):
-                    return result[0]
-                return result if isinstance(result, int) else 0
+                    return int(result[0] or 0)
+                if isinstance(result, int):
+                    return result
+                return 0
 
             total_analyzed = _status_count('Read')
             total_pending = _status_count('Unread')
-            
-        except Exception as e:
-            logger.error(f"Error calculating statistics: {e}", exc_info=True)
+        except Exception as stats_error:
+            logger.error(f"Error calculating statistics: {stats_error}", exc_info=True)
             # Fallback: count from current page
             total_analyzed = sum(1 for f in files if f[5] == 'Read')
             total_pending = sum(1 for f in files if f[5] != 'Read')
-        
+
         # Cache sources, sides, and file types (they rarely change)
         # Use try-except for each to prevent one failure from breaking the page
         try:
@@ -603,19 +710,19 @@ def files_list():
         except Exception as e:
             logger.error(f"Error loading sources: {e}")
             sources = {}
-        
+
         try:
             sides = select_info_sides()
         except Exception as e:
             logger.error(f"Error loading sides: {e}")
             sides = {}
-        
+
         try:
             file_types = select_info_file_types()
         except Exception as e:
             logger.error(f"Error loading file types: {e}")
             file_types = {}
-        
+
         return render_template('file/files_list.html',
                              files=files,
                              page=page,
@@ -637,8 +744,10 @@ def files_list():
                              size_max=size_max or '',
                              limit=limit,
                              start_position=start_position,
+                             sort_by=sort_key,
+                             sort_order=sort_order,
                              nav_params=nav_params)
-    
+
     except Exception as e:
         logger.error(f"Error in files_list: {e}", exc_info=True)
         # Fallback to empty results with safe defaults
@@ -670,6 +779,8 @@ def files_list():
                              side_filter=side_filter or '',
                              status_filter=status_filter or '',
                              file_type_filter=request.args.get('file_type', '') or '',
+                             sort_by='date',
+                             sort_order='desc',
                              cursor_pagination=True,
                              nav_params={},
                              error=str(e))
@@ -713,6 +824,62 @@ def _file_type_label(value):
         '7z': '7-Zip archive', 'unknown': 'Unknown format',
     }
     return names.get(normalized, normalized.upper() if normalized else 'Unknown format')
+
+
+@files_bp.route('/files/types/<file_type>/documents')
+def file_type_documents(file_type):
+    """One detected format's documents, as the unified-table fragment.
+
+    The File Types dashboard embeds this in its side panel. It is the same
+    view the File Library serves - the shared `_library_page` query, the
+    same rows, the same search highlighting - pinned to one `file_type`,
+    so the panel and the library can never disagree about what a row is.
+    """
+    args = request.args.copy()
+    # The panel's identity is the type: it overrides whatever the query
+    # string carried, and it is the one parameter the "entire dataset"
+    # export scope keeps.
+    view_params = MultiDict([
+        (key, value) for (key, value) in request.args.items(multi=True)
+        if key != 'file_type'
+    ])
+    view_params.add('file_type', file_type)
+    args = view_params
+
+    page = args.get('page', 1, type=int)
+    limit = args.get('limit', 25, type=int)
+    limit = max(1, min(200, limit))
+
+    view = _library_page(args, page=page, limit=limit)
+    nav_params = context_params(build_library_filters(args))
+
+    # The panel's own view string (paging coordinates excluded): what its
+    # Export menu speaks about, and what a sort or search re-ask carries.
+    panel_params = MultiDict([
+        (key, value) for (key, value) in args.items(multi=True)
+        if key not in ('page', 'limit', 'cursor')
+    ])
+    from urllib.parse import urlencode
+    view_string = urlencode(panel_params)
+    identity_string = urlencode({'file_type': file_type})
+
+    return render_template(
+        'file/_file_documents_fragment.html',
+        files=view['files'],
+        total_count=view['total_count'],
+        total_pages=view['total_pages'],
+        page=view['page'],
+        limit=limit,
+        sort_by=view['sort_key'],
+        sort_order=view['sort_order'],
+        search=(args.get('search', '') or '').strip(),
+        nav_params=nav_params,
+        start_position=(view['page'] - 1) * limit + 1,
+        table_id='panelFilesTable',
+        view_string=view_string,
+        identity_string=identity_string,
+        file_type=file_type,
+    )
 
 
 @files_bp.route('/files/types')
@@ -2346,12 +2513,14 @@ def original_file_content(file_id):
     from Api.services.original_file import OriginalFileService
 
     download = request.args.get('download') in ('1', 'true', 'yes', 'on')
+    save_as_name = (request.args.get('filename') or '').strip() or None
     try:
         # Recorded only when the response is an attachment (download=1) -
         # inline display is a preview, see docs/SECURITY.md.
         note_disclosure(kind='original_file', scope=f'file:{file_id}', unit='file',
                         row_count=1, file_ids=[file_id])
-        return OriginalFileService.content_response(file_id, download=download)
+        return OriginalFileService.content_response(
+            file_id, download=download, filename=save_as_name)
     except FileNotFoundError as missing:
         reason = str(missing)
         status = 404

@@ -5,6 +5,11 @@
 
 import { endpoints } from '../api/endpoints.js';
 import { getCSRFToken } from '../core/utils.js';
+import {
+    chooseExportDestination,
+    ensureExportExtension,
+    saveExportBlob,
+} from '../core/export-download.js';
 
 /**
  * Export a single file
@@ -19,33 +24,132 @@ export function exportFile(fileId) {
 }
 
 /**
- * Export selected files
- * @param {Array<number>} fileIds - Array of file IDs
+ * The two batch export kinds, as one function: the extracted content of
+ * the selection (mode "text") or the original source files (mode
+ * "originals", one ZIP for many). Both are Save As: the reader names the
+ * archive and picks its location before anything is fetched.
+ *
+ * @param {Array<number|string>} fileIds - the selection
+ * @param {string} mode - "text" (content) | "originals" (source files)
  */
-export async function exportSelectedFiles(fileIds) {
+export async function exportSelectedFiles(fileIds, mode = 'text') {
     if (!fileIds || fileIds.length === 0) {
         if (window.showWarning) {
             window.showWarning(window.translations?.pleaseSelectFilesToExport || 'Please select files to export');
         }
         return;
     }
-    
-    // Create a form and submit for download
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = endpoints.bulkExport();
-    
-    fileIds.forEach(id => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'file_ids';
-        input.value = id;
-        form.appendChild(input);
+
+    const kind = mode === 'originals' ? 'originals' : 'text';
+    const suggested = kind === 'originals' ? 'original_files' : 'extracted_content';
+    const extension = 'zip';
+
+    // The count is part of the ask: the archive is about to carry this many
+    // files, and the name is the reader's to choose or keep.
+    const name = await askArchiveName(
+        `${suggested}.${extension}`,
+        fileIds.length,
+        kind === 'originals'
+            ? (window.translations?.exportOriginalsCount || 'original files')
+            : (window.translations?.exportContentCount || 'extracted contents'));
+    if (name === null) return;
+
+    let destination;
+    try {
+        destination = await chooseExportDestination(ensureExportExtension(name, extension, suggested));
+        if (destination === false) return;
+    } catch (error) {
+        console.warn('Save location picker unavailable:', error);
+    }
+
+    try {
+        const response = await fetch(endpoints.bulkExport(), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify({
+                file_ids: fileIds.map((id) => parseInt(id, 10)).filter(Number.isFinite),
+                mode: kind,
+                filename: name,
+            }),
+        });
+        if (!response.ok) {
+            const problem = await response.json().catch(() => ({}));
+            throw new Error(problem.error || `HTTP ${response.status}`);
+        }
+        const blob = await response.blob();
+        const saved = await saveExportBlob(
+            blob, ensureExportExtension(name, extension, suggested), destination);
+        if (saved && window.showSuccess) {
+            window.showSuccess(`${fileIds.length} files exported.`);
+        }
+    } catch (error) {
+        console.error('Bulk export failed:', error);
+        if (window.showError) {
+            window.showError(error.message || 'Could not export the selection.');
+        } else if (window.alert) {
+            window.alert(error.message || 'Could not export the selection.');
+        }
+    }
+}
+
+/** Name the archive: an inline dialog, never a browser prompt. Resolves
+ *  with the chosen name, or null when the reader cancelled. */
+export function askArchiveName(defaultName, count, kindLabel = 'files') {
+    return new Promise((resolve) => {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'file-actions-backdrop';
+        backdrop.style.zIndex = '1080';
+        const panel = document.createElement('div');
+        panel.className = 'file-actions-panel file-actions-dialog';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.innerHTML = ''
+            + '<div class="file-actions-panel-head"><h3 class="file-actions-title"></h3></div>'
+            + '<div class="file-actions-panel-body">'
+            + '<p class="file-actions-count"></p>'
+            + '<label class="file-actions-field"><span></span>'
+            + '<input type="text" class="form-control"></label>'
+            + '<div class="file-actions-dialog-actions">'
+            + '<button type="button" class="btn btn-primary" data-archive-save></button>'
+            + '<button type="button" class="btn btn-outline-secondary" data-archive-cancel></button>'
+            + '</div></div>';
+        panel.querySelector('.file-actions-title').textContent =
+            window.translations?.nameTheArchive || 'Name the archive';
+        panel.querySelector('.file-actions-count').textContent = `${count} ${kindLabel}`;
+        panel.querySelector('.file-actions-field span').textContent =
+            window.translations?.archiveName || 'File name';
+        const input = panel.querySelector('input');
+        input.value = defaultName;
+        panel.querySelector('[data-archive-save]').textContent =
+            window.translations?.save || 'Save';
+        panel.querySelector('[data-archive-cancel]').textContent =
+            window.translations?.cancel || 'Cancel';
+
+        const done = (value) => {
+            backdrop.remove();
+            document.removeEventListener('keydown', onKey, true);
+            resolve(value);
+        };
+        const onKey = (event) => {
+            if (event.key === 'Escape') { event.stopPropagation(); done(null); }
+            if (event.key === 'Enter') { event.stopPropagation(); done(input.value.trim() || defaultName); }
+        };
+        panel.querySelector('[data-archive-save]').addEventListener('click',
+            () => done(input.value.trim() || defaultName));
+        panel.querySelector('[data-archive-cancel]').addEventListener('click', () => done(null));
+        backdrop.addEventListener('click', (event) => {
+            if (event.target === backdrop) done(null);
+        });
+        document.addEventListener('keydown', onKey, true);
+        backdrop.appendChild(panel);
+        document.body.appendChild(backdrop);
+        input.focus();
+        input.select();
     });
-    
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
 }
 
 /**

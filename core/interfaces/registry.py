@@ -135,7 +135,8 @@ REGISTRY: Tuple[Interface, ...] = (
         aliases=("files.file_detail", "files.file_content_lazy",
                  "files.file_content_page", "files.file_full_content",
                  "files.file_search_all_pages", "files.file_chart_data",
-                 "files.file_types_page", "files.delete_file",
+                 "files.file_types_page", "files.file_type_documents",
+                 "files.delete_file",
                  "files.bulk_delete_files", "files.bulk_export_files"),
         help_topic="discover/file-library", keyboard_shortcut="g f",
     ),
@@ -169,7 +170,7 @@ REGISTRY: Tuple[Interface, ...] = (
         "keywords", "Keywords",
         "Keywords identified in the material.",
         Domain.DISCOVER, "keywords_list", "bi-key",
-        aliases=("keyword_detail", "keywords_add"),
+        aliases=("keyword_detail", "keywords_add", "keyword_documents"),
         help_topic="discover/keywords",
     ),
     _if(
@@ -183,7 +184,7 @@ REGISTRY: Tuple[Interface, ...] = (
         "categories", "Categories",
         "Categories and the words assigned to them.",
         Domain.DISCOVER, "categories_list", "bi-tags",
-        aliases=("category_words", "category_add"),
+        aliases=("category_words", "category_add", "category_documents"),
         help_topic="discover/categories",
     ),
     _if(

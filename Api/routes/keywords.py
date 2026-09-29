@@ -3,6 +3,7 @@ Keywords routes
 """
 
 from flask import render_template, request, redirect, url_for, flash, jsonify
+from werkzeug.datastructures import MultiDict
 
 from Api.utils import (
     execute_query, load_text_keyword, batch_load_keywords_from_rows,
@@ -18,7 +19,8 @@ from database.operations import get_category_operations, get_keyword_operations
 from Api.performance_utils import batch_load_keywords
 from datetime import datetime
 import logging
-from core.serialization import pack_int_list, unpack_int_list
+from core.serialization import pack_int_list
+from Api.blueprints.files import _documents_panel_response, unpack_int_list
 from core.errors import client_error, client_safe_message
 
 logger = logging.getLogger(__name__)
@@ -33,23 +35,34 @@ def register_keywords_routes(app):
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', 10, type=int)
             search = request.args.get('search', '').strip()
+            # Column sort comes from the table headers. Keyword text lives in
+            # a pickled column the database cannot order by, so the page sorts
+            # the formatted rows in Python over this allowlist - the same
+            # keys, and the same fallbacks, the API endpoint accepts.
+            sort_by = request.args.get('sort', 'usage_count')
+            sort_order = request.args.get('order', 'desc')
             
             if page < 1:
                 page = 1
             if per_page < 1 or per_page > 100:  # Limit per_page to prevent DoS
                 per_page = 10
+            if sort_by not in ('usage_count', 'text', 'id', 'status'):
+                sort_by = 'usage_count'
+            if sort_order not in ('asc', 'desc'):
+                sort_order = 'desc'
             
             if len(search) > 500:
                 search = search[:500]
-            
+
             keywords_rows, total_keywords = get_keywords_with_usage(
                 search_term=search if search else None,
                 page=page,
-                per_page=per_page
+                per_page=per_page,
+                sort_by=sort_by,
+                sort_order=sort_order
             )
             
             total_pages = (total_keywords + per_page - 1) // per_page if total_keywords > 0 else 1
-            offset = (page - 1) * per_page
             
             keyword_text_map = batch_load_keywords_from_rows(keywords_rows) if keywords_rows else {}
             
@@ -81,18 +94,9 @@ def register_keywords_routes(app):
                     logger.error(f"Error loading keyword {kw[0]}: {e}")
                     continue
             
-            # Filter by search if provided
-            if search:
-                search_lower = search.lower()
-                formatted_keywords = [kw for kw in formatted_keywords if search_lower in kw['text'].lower()]
-                # Recalculate pagination for filtered results
-                total_keywords = len(formatted_keywords)
-                total_pages = (total_keywords + per_page - 1) // per_page if total_keywords > 0 else 1
-                # Apply pagination to filtered results
-                start_idx = offset
-                end_idx = start_idx + per_page
-                formatted_keywords = formatted_keywords[start_idx:end_idx]
-            
+            # The loader filtered (search), ordered (requested column) and
+            # paginated the full list; the page only formats the rows it got.
+
             return render_template('Keyword/keywords_list.html',
                                    keywords=formatted_keywords,
                                    page=page,
@@ -100,11 +104,34 @@ def register_keywords_routes(app):
                                    total_pages=total_pages,
                                    total_keywords=total_keywords,
                                    search=search,
+                                   sort_by=sort_by,
+                                   sort_order=sort_order,
                                    delete_keyword_url=url_for('delete_keyword_api', keyword_id=0).replace('/0', ''))
         except Exception as e:
             flash(f"Error loading keywords: {e}", "error")
-            return render_template('Keyword/keywords_list.html', keywords=[], page=1, per_page=20, total_pages=1, total_keywords=0, search='', delete_keyword_url='/keyword/')
+            return render_template('Keyword/keywords_list.html', keywords=[], page=1, per_page=20, total_pages=1, total_keywords=0, search='', sort_by='usage_count', sort_order='desc', delete_keyword_url='/keyword/')
     
+
+
+
+
+    @app.route('/keywords/<int:keyword_id>/documents')
+    def keyword_documents(keyword_id):
+        """One keyword's documents, as the unified-table fragment (panel).
+
+        The Keywords page embeds this in its side panel: the File Library's
+        own list, pinned to the documents this keyword occurs in.
+        """
+        return _documents_panel_response(
+            'keywordFilesTable',
+            "EXISTS (SELECT 1 FROM keywords_hashs kh "
+            "WHERE kh.hash_id = hc.hash_id AND kh.keyword_id = %s)",
+            (keyword_id,),
+            request.args,
+            {'keyword_id': keyword_id},
+        )
+
+
     @app.route('/api/keyword/check', methods=['POST'])
     def keyword_check():
         """Check if a keyword already exists in a category"""

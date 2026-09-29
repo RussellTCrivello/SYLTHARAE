@@ -57,11 +57,11 @@ document with what it writes.
 | Actions declared and not built | 1 |
 | Actions named in markup and never registered | 0 |
 | Actions no described screen presents | 1 |
-| Declared components | 20 |
+| Declared components | 22 |
 | Components an element cannot resolve to | 0 |
-| Classes rendered in the product | 278 |
-| Classes the project owns | 81 |
-| Classes that are third-party | 197 |
+| Classes rendered in the product | 401 |
+| Classes the project owns | 154 |
+| Classes that are third-party | 247 |
 | Classes belonging to nobody | 0 |
 | Bindings the scan found | 10 |
 
@@ -83,7 +83,7 @@ with the evidence.
 
 | Action | Status | Where | Shared surface it uses |
 | --- | --- | --- | --- |
-| `files.reprocess` | declared, not built | Api/blueprints/files.py:124 | the shared record action surface |
+| `files.reprocess` | declared, not built | Api/blueprints/files.py:125 | the shared record action surface |
 | `files.analyze_selected` | presented, nothing binds it | file_library | the shared record action surface |
 | `files.delete_selected` | presented, nothing binds it | file_library | the shared record action surface |
 | `files.export_selected` | presented, nothing binds it | file_library | the shared record action surface |
@@ -155,7 +155,7 @@ with the evidence.
 | --- | --- | --- |
 | action | 34 | 34 |
 | binding | 6 | 34 |
-| component | 20 | 20 |
+| component | 22 | 22 |
 | execution | 29 | 34 |
 | help | 29 | 31 |
 | interface | 31 | 31 |

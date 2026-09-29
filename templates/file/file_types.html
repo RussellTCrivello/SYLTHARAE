@@ -3,18 +3,22 @@
 {% block title %}{{ _('File Types') }}{% endblock %}
 {% block page_type %}file-types{% endblock %}
 
+{% from 'components/table.html' import record_table %}
+{% from 'components/documents_panel.html' import documents_panel %}
+
 {% block extra_css %}
 <link href="{{ url_for('static', filename='css/file-type-workspace.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<main class="file-type-workspace">
+<main class="file-type-workspace{% if file_types %} file-type-workspace-split{% endif %}">
+    <div class="file-type-main">
     <header class="page-header file-type-header">
         <div>
             <p class="file-type-eyebrow">{{ _('Ingestion classification') }}</p>
             <h1 class="page-title"><i class="bi bi-file-earmark-break me-2" aria-hidden="true"></i>{{ _('Browse by file type') }}</h1>
             <p class="file-type-intro">
-                {{ _('Files are grouped by their detected format after ingestion. Choose a format to browse its filenames, inspect records, or export a names list.') }}
+                {{ _('Files are grouped by their detected format after ingestion. Choose a format to open its documents in the panel beside this list.') }}
             </p>
         </div>
         <nav class="file-type-actions" aria-label="{{ _('File type workspace actions') }}">
@@ -44,47 +48,61 @@
     </section>
 
     {% if file_types %}
-    <div class="file-type-table-wrap">
-        <table class="table file-type-table">
-            <caption class="visually-hidden">{{ _('Indexed documents grouped by detected file format') }}</caption>
-            <thead>
-                <tr>
-                    <th scope="col">{{ _('Format') }}</th>
-                    <th scope="col" class="text-end">{{ _('Documents') }}</th>
-                    <th scope="col" class="text-end">{{ _('Total size') }}</th>
-                    <th scope="col">{{ _('Actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in file_types %}
-                <tr>
-                    <th scope="row">
-                        <span class="file-type-chip">{{ item.label }}</span>
-                        <code>{{ item.file_type }}</code>
-                    </th>
-                    <td class="text-end file-type-count">{{ "{:,}".format(item.file_count|int) }}</td>
-                    <td class="text-end">{{ item.total_size|filesizeformat }}</td>
-                    <td>
-                        <div class="file-type-row-actions">
-                            <a class="btn btn-sm btn-outline-primary"
-                               href="{{ url_for('files.files_list', file_type=item.file_type) }}">
-                                <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{{ _('Browse filenames') }}
-                            </a>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    data-export-names="type" data-file-type="{{ item.file_type }}" data-format="csv">
-                                {{ _('Names CSV') }}
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    data-export-names="type" data-file-type="{{ item.file_type }}" data-format="excel">
-                                {{ _('Names Excel') }}
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    {#- The formats list is one unified table: sortable headers, the same
+        presentation contract as every other list. The rows are few, so the
+        sort happens in place (client mode) - a click never reloads. -#}
+    {% call record_table(
+            id='fileTypesTable',
+            columns=[
+                {'key': 'type', 'label': _('Format'), 'sortable': True, 'type': 'text'},
+                {'key': 'code', 'label': _('Code'), 'sortable': True, 'type': 'text', 'width': '110px'},
+                {'key': 'count', 'label': _('Documents'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '130px'},
+                {'key': 'size', 'label': _('Total size'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '130px'},
+                {'kind': 'actions', 'width': '1%'}
+            ],
+            mode='client',
+            sort_key='count',
+            sort_dir='desc',
+            info_text=_('%(types)d detected formats across %(files)d indexed documents',
+                        types=file_types|length, files=total_files|int),
+            empty_message=_('No indexed files yet.'),
+            export_interface=export_interface_for(request.endpoint),
+            export_columns=[
+                {'key': 'file_type', 'label': _('File type')},
+                {'key': 'count', 'label': _('Count')},
+                {'key': 'size', 'label': _('Total size')},
+            ]) %}
+        {% for item in file_types %}
+        <tr class="file-type-row" data-panel-open
+            data-panel-url="{{ url_for('files.file_type_documents', file_type=item.file_type) }}"
+            data-panel-label="{{ item.label }}"
+            tabindex="0" role="button"
+            aria-label="{{ _('Open the documents of format') }} {{ item.label }}">
+            <td data-ut-value="{{ item.label|lower }}">
+                <span class="file-type-chip">{{ item.label }}</span>
+            </td>
+            <td data-ut-value="{{ item.file_type }}"><code>{{ item.file_type }}</code></td>
+            <td class="text-end file-type-count" data-ut-value="{{ item.file_count }}">{{ "{:,}".format(item.file_count|int) }}</td>
+            <td class="text-end" data-ut-value="{{ item.total_size }}">{{ item.total_size|filesizeformat }}</td>
+            <td>
+                <div class="file-type-row-actions">
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            data-panel-open
+                            data-panel-url="{{ url_for('files.file_type_documents', file_type=item.file_type) }}"
+                            data-panel-label="{{ item.label }}"
+                            title="{{ _('Browse these documents in the panel') }}">
+                        <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{{ _('Open') }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-export-names="type" data-file-type="{{ item.file_type }}" data-format="csv"
+                            title="{{ _('Export the filenames of this format') }}">
+                        {{ _('Names CSV') }}
+                    </button>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% endcall %}
     {% else %}
     <div class="file-type-empty" role="status">
         <i class="bi bi-inbox" aria-hidden="true"></i>
@@ -92,6 +110,13 @@
         <p>{{ _('File formats and counts appear here after documents are ingested.') }}</p>
     </div>
     {% endif %}
+    </div>
+
+    {#- The panel: one format's documents, the same unified table the File
+        Library renders, fetched as a fragment and adopted in place. One
+        shared component with the keywords and categories panels. -#}
+    {{ documents_panel(id='documentsPanel',
+                       open_label=_('Documents of the chosen format')) }}
 </main>
 
 <script type="application/json" id="file-types-page-data">{{ {
@@ -100,7 +125,9 @@
         "exportReady": _('Filename export ready.'),
         "exportFailed": _('Could not export the filename list.'),
         "exportLimit": _('This filename export exceeds the synchronous limit. Narrow the list and try again.'),
-        "csrfError": _('Your session expired. Refresh the page and try again.')
+        "csrfError": _('Your session expired. Refresh the page and try again.'),
+        "panelFailed": _('Could not load the documents of this format.'),
+        "panelLoadFailed": _('Could not load more documents.')
     }
 }|tojson }}</script>
 {% endblock %}

@@ -5,6 +5,7 @@
 {% block page_type %}files-list{% endblock %}
 
 {% block extra_css %}
+<link href="{{ url_for('static', filename='css/unified-table.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/file-manger.css') }}" rel="stylesheet">
 {% endblock %}
 
@@ -22,8 +23,8 @@
 
 <!-- Page Tips -->
 {% from 'components/page_tips.html' import page_tips %}
-{% from 'components/filter_bar.html' import search_group %}
-{% from 'components/states.html' import empty_state %}
+{% from 'components/filter_bar.html' import filter_section, filter_grid, filter_group, search_group %}
+{% from 'components/file_library_table.html' import file_library_table %}
     {% call page_tips() %}
 
 <div class="tips-section">
@@ -107,16 +108,14 @@
     </div>
 
     <!-- Filters Section -->
-    <div class="file-filters-section">
+    {#- Sorting lives in the table headers now (record_table); the filters
+        remain the ones that say *which* files are listed. -#}
+    {% call filter_section() %}
         <!-- Search and Main Filters -->
-        <div class="filter-controls-grid">
+        {% call filter_grid() %}
         {{ search_group('smartSearch', _("Search Files"), _("Search by name, content..."), value=search, onclear='clearFileSearch()') }}
 
-            <div class="filter-group">
-                <label for="sourceFilter" class="filter-label">
-                    <i class="bi bi-building"></i>
-                    {{ _('Source') }}
-                </label>
+            {% call filter_group('sourceFilter', _('Source'), 'bi-building') %}
                 <select id="sourceFilter" class="form-select">
                     <option value="">{{ _('All Sources') }}</option>
                     {% for sid, sname in sources.items() %}
@@ -125,13 +124,9 @@
                     </option>
                     {% endfor %}
                 </select>
-            </div>
+            {% endcall %}
 
-            <div class="filter-group">
-                <label for="sideFilter" class="filter-label">
-                    <i class="bi bi-diagram-3"></i>
-                    {{ _('Side') }}
-                </label>
+            {% call filter_group('sideFilter', _('Side'), 'bi-diagram-3') %}
                 <select id="sideFilter" class="form-select">
                     <option value="">{{ _('All Sides') }}</option>
                     {% for sid, sname in sides.items() %}
@@ -140,13 +135,9 @@
                     </option>
                     {% endfor %}
                 </select>
-            </div>
+            {% endcall %}
 
-            <div class="filter-group">
-                <label for="fileTypeFilter" class="filter-label">
-                    <i class="bi bi-file-earmark"></i>
-                    {{ _('File Type') }}
-                </label>
+            {% call filter_group('fileTypeFilter', _('File Type'), 'bi-file-earmark') %}
                 <select id="fileTypeFilter" class="form-select">
                     <option value="">{{ _('All Types') }}</option>
                     {% if file_types %}
@@ -157,35 +148,16 @@
                         {% endfor %}
                     {% endif %}
                 </select>
-            </div>
+            {% endcall %}
 
-            <div class="filter-group">
-                <label for="statusFilter" class="filter-label">
-                    <i class="bi bi-check-circle"></i>
-                    {{ _('Status') }}
-                </label>
+            {% call filter_group('statusFilter', _('Status'), 'bi-check-circle') %}
                 <select id="statusFilter" class="form-select">
                     <option value="">{{ _('All Status') }}</option>
                     <option value="Read" {% if status_filter == 'Read' %}selected{% endif %}>{{ _('Analyzed') }}</option>
                     <option value="Unread" {% if status_filter == 'Unread' %}selected{% endif %}>{{ _('Pending') }}</option>
                 </select>
-            </div>
-
-            <div class="filter-group">
-                <label for="sortBy" class="filter-label">
-                    <i class="bi bi-sort-alpha-down"></i>
-                    {{ _('Sort By') }}
-                </label>
-                <select id="sortBy" class="form-select">
-                    <option value="date_desc">{{ _('Newest First') }}</option>
-                    <option value="date_asc">{{ _('Oldest First') }}</option>
-                    <option value="name_asc">{{ _('Name (A-Z)') }}</option>
-                    <option value="name_desc">{{ _('Name (Z-A)') }}</option>
-                    <option value="size_desc">{{ _('Largest First') }}</option>
-                    <option value="size_asc">{{ _('Smallest First') }}</option>
-                </select>
-            </div>
-        </div>
+            {% endcall %}
+        {% endcall %}
 
         <!-- Action Bar -->
         <div class="action-bar">
@@ -204,9 +176,15 @@
                     <i class="bi bi-lightning-charge"></i>
                     {{ _('Analyze') }}
                 </button>
-                <button class="btn-action btn-outline-primary" id="bulkExportBtn" data-on-click="bulkExport()" disabled>
-                    <i class="bi bi-download"></i>
-                    {{ _('Export') }}
+                <button class="btn-action btn-outline-primary" id="bulkContentBtn" data-on-click="bulkExport('text')" disabled
+                        title="{{ _('Export the extracted content of the selection as one archive') }}">
+                    <i class="bi bi-file-earmark-text"></i>
+                    {{ _('Export Content') }}
+                </button>
+                <button class="btn-action btn-outline-primary" id="bulkOriginalsBtn" data-on-click="bulkExport('originals')" disabled
+                        title="{{ _('Export the original files of the selection as one ZIP') }}">
+                    <i class="bi bi-file-zip"></i>
+                    {{ _('Export Originals') }}
                 </button>
                 <button type="button" class="btn-action btn-outline-primary" id="bulkNamesCsvBtn" data-on-click="exportSelectedFileNames('csv')" disabled>
                     <i class="bi bi-filetype-csv" aria-hidden="true"></i>
@@ -233,139 +211,37 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Results Info and Per Page -->
-    <div class="results-info-bar">
-        <div class="results-info" id="filesResultsInfo">
-            {% if files and files|length > 0 %}
-                {% set start = start_position|default(1) %}
-                {% set end = start + files|length - 1 %}
-                {{ _('Showing records') }} {{ start }}–{{ end }} {{ _('of') }} {{ total_files|default(0) }} {{ _('files') }}
-            {% else %}
-                {{ _('No files found') }}
-            {% endif %}
-        </div>
-        <div class="d-flex align-items-center">
-            <label for="perPageFiles" class="form-label me-2 mb-0">{{ _('Per Page:') }}</label>
-            <select id="perPageFiles" class="form-select form-select-sm" style="width: auto;" data-on-change="changeFilesPageSize()">
-                {% set current_limit = request.args.get('limit', '10') %}
-                <option value="10" {% if current_limit == '10' %}selected{% endif %}>10</option>
-                <option value="25" {% if current_limit == '25' %}selected{% endif %}>25</option>
-                <option value="50" {% if current_limit == '50' %}selected{% endif %}>50</option>
-                <option value="100" {% if current_limit == '100' %}selected{% endif %}>100</option>
-            </select>
-        </div>
-    </div>
+    {% endcall %}
 
     <!-- Files Display Container -->
     <div class="files-display-container">
-        <!-- List View (Default) -->
+        <!-- List View (Default): the file library's table, through the one
+             shared rendering (components/file_library_table.html) - the same
+             table the type/keyword/category panels embed. -->
         <div class="files-view files-view-list active" data-view="list">
-            <div class="table-wrapper">
-                <table class="files-table" id="filesTable">
-                    <thead>
-                        <tr>
-                            <th class="col-checkbox">
-                                <input type="checkbox" id="selectAllCheckbox" data-on-change="toggleSelectAll(this)">
-                            </th>
-                            <th class="col-number">#</th>
-                            <th class="col-name">{{ _('File Name') }}</th>
-                            <th class="col-type">{{ _('Type') }}</th>
-                            <th class="col-size">{{ _('Size') }}</th>
-                            <th class="col-source">{{ _('Source') }}</th>
-                            <th class="col-side">{{ _('Side') }}</th>
-                            <th class="col-status">{{ _('Status') }}</th>
-                            <th class="col-date">{{ _('Date') }}</th>
-                            <th class="col-actions">{{ _('Actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody id="filesTableBody">
-                        {% for file in files %}
-                        {% set row_number = (start_position|default(1)) + loop.index0 %}
-                        <tr class="file-row" 
-                            data-file-id="{{ file[0] }}" 
-                            data-size="{{ file[3] }}" 
-                            data-type="{{ file[4] }}"
-                            data-status="{{ file[5] }}"
-                            data-date="{{ file[7].isoformat() if file[7] else '' }}">
-                            <td class="col-checkbox">
-                                <input type="checkbox" 
-                                       class="file-checkbox" 
-                                       value="{{ file[0] }}" 
-                                       data-on-change="updateBulkToolbar()">
-                            </td>
-                            <td class="col-number">
-                                <span class="row-number">{{ row_number }}</span>
-                            </td>
-                            <td class="col-name">
-                                <span class="file-name" data-file-id="{{ file[0] }}">
-                                    <strong>{{ file[1][:50] }}{% if file[1]|length > 50 %}...{% endif %}</strong>
-                                </span>
-                            </td>
-                            <td class="col-type">
-                                <span class="badge badge-type">{{ file[4]|upper if file[4] else '' }}</span>
-                            </td>
-                            <td class="col-size">
-                                <span class="badge badge-size">
-                                    {% if file[3] > 1048576 %}
-                                        {{ (file[3] / 1048576)|round(1) }} MB
-                                    {% else %}
-                                        {{ (file[3] / 1024)|round|int }} KB
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td class="col-source">{{ file[8] }}</td>
-                            <td class="col-side">{{ file[9] }}</td>
-                            <td class="col-status">
-                                {% if file[5] == 'Read' %}
-                                    <span class="badge badge-success">
-                                        <i class="bi bi-check-circle"></i>
-                                        {{ _('Read') }}
-                                    </span>
-                                {% else %}
-                                    <span class="badge badge-secondary">
-                                        <i class="bi bi-dash-circle"></i>
-                                        {{ _('Unread') }}
-                                    </span>
-                                {% endif %}
-                            </td>
-                            <td class="col-date">
-                                {% if file[7] %}
-                                    {{ file[7].strftime('%Y-%m-%d') }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </td>
-                            <td class="col-actions">
-                                <div class="action-buttons">
-                                    <a href="{{ url_for('files.file_detail', file_id=file[0], **nav_params) }}"
-                                       class="btn-action-icon" 
-                                       title="{{ _('View Details') }}">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                        <button class="btn-action-icon btn-danger"
-                                            data-on-click="deleteFile({{ file[0] }})"
-                                            title="{{ _('Delete') }}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="10">
-                                {{ empty_state(
-                                    message=_('No files found.'),
-                                    action_label=_('Upload your first file'),
-                                    action_href=url_for('operations_input_page'),
-                                    action_icon=None) }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        {% set library_type_options -%}
+            [{%- for value in (file_types or {}).keys() -%}
+            {%- if value -%}{'value': value, 'label': value|upper}{% if not loop.last %}, {% endif %}{% endif %}
+            {%- endfor -%}]
+        {%- endset %}
+        {{ file_library_table(
+                files,
+                id='filesTable',
+                info_id='filesResultsInfo',
+                start_position=start_position|default(1),
+                total_files_count=total_files|default(0),
+                page=page|default(1),
+                total_pages=total_pages|default(1),
+                limit=limit|default(10),
+                sort_by=sort_by|default('date'),
+                sort_order=sort_order|default('desc'),
+                search=search or '',
+                nav_params=nav_params or {},
+                type_options=library_type_options,
+                per_page_onchange='changeFilesPageSize()',
+                select_all_onchange='toggleSelectAll(this)',
+                show_per_page=True,
+                delete_handler=True) }}
         </div>
 
         <!-- Grid View -->
@@ -405,6 +281,14 @@
                         {#- The "quick preview" eye button called a placeholder that only
                             logged to the console (and was not even loaded here); the
                             file page below is the preview. -#}
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                data-file-menu-button
+                                data-file-id="{{ file[0] }}"
+                                data-file-name="{{ file[1] }}"
+                                title="{{ _('File Actions') }}"
+                                aria-haspopup="menu">
+                            <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+                        </button>
                         <a href="{{ url_for('files.file_detail', file_id=file[0], **nav_params) }}"
                            class="btn btn-sm btn-outline-primary" 
                            data-on-click="event.stopPropagation();">
@@ -417,17 +301,6 @@
         </div>
     </div>
 
-    <!-- Server-rendered Pagination -->
-    {% if total_pages and total_pages > 1 %}
-        {% from "components/unified_pagination.html" import unified_pagination %}
-        {% set pagination_params = {'limit': limit|default(10), 'search': search|default('')} %}
-        {% if source_filter %}{% set _ = pagination_params.update({'source': source_filter}) %}{% endif %}
-        {% if side_filter %}{% set _ = pagination_params.update({'side': side_filter}) %}{% endif %}
-        {% if status_filter %}{% set _ = pagination_params.update({'status': status_filter}) %}{% endif %}
-        {% if file_type_filter %}{% set _ = pagination_params.update({'file_type': file_type_filter}) %}{% endif %}
-        {{ unified_pagination(page|default(1), total_pages, url_for, 'files.files_list', pagination_params) }}
-    {% endif %}
-</div>
 
 <!-- Page Data - Passed to JavaScript via JSON script tag -->
 <script type="application/json" id="page-data">{{ {
@@ -470,5 +343,6 @@
 }|tojson }}</script>
 
 
+<script src="{{ url_for('static', filename='js/modules/ui/unified-table.js') }}?v=20260929a" defer></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/files-list-page.js') }}"></script>
 {% endblock %}

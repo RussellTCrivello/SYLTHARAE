@@ -211,3 +211,99 @@
         padding: 0.8rem;
     }
 }
+
+/* --------------------------------------------------------------------- */
+/* The side panel: the chosen format's documents, the unified table       */
+/* --------------------------------------------------------------------- */
+
+.file-type-workspace-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (min-width: 992px) {
+    body.file-type-panel-open .file-type-workspace-split,
+    .file-type-workspace-split:has(.file-type-panel:not([hidden])) {
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 42%);
+    }
+}
+
+.file-type-panel {
+    position: sticky;
+    top: 1rem;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 0.75rem;
+    background: var(--bs-body-bg, #fff);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+}
+
+.file-type-panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+    background: var(--bs-tertiary-bg, #f8f9fa);
+}
+
+.file-type-panel-heading { min-width: 0; }
+
+.file-type-panel-title {
+    font-size: 1.05rem;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-type-panel-sub {
+    margin: 0.15rem 0 0;
+    font-size: 0.85rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.file-type-panel-tools {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.file-type-panel-search { min-width: 11rem; }
+
+.file-type-panel-body {
+    overflow: auto;
+    padding: 0.5rem 0.75rem 0.75rem;
+}
+
+.file-type-panel-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 2.25rem 1rem;
+    text-align: center;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.file-type-panel-placeholder .bi { font-size: 1.9rem; }
+
+/* The formats table rows read as openers. */
+.file-type-row[data-type-open] { cursor: pointer; }
+.file-type-row[data-type-open]:hover { background: var(--bs-tertiary-bg, #f8f9fa); }
+.file-type-row:focus-visible {
+    outline: 2px solid var(--bs-primary, #0d6efd);
+    outline-offset: -2px;
+}
+
+.file-type-row-actions {
+    display: flex;
+    gap: 0.35rem;
+    justify-content: flex-end;
+}

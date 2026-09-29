@@ -56,6 +56,8 @@ Read from the `{# component: … #}` declaration at the top of each file in `tem
 | `analyst_classify` | `templates/components/analyst_classify.html` | `normal`, `editing`, `saving`, `success`, `error`, `unauthorized` | `analyst_classify` | The analyst-category control for the record being read, usable from wherever that record is displayed. |
 | `breadcrumbs` | `templates/components/breadcrumbs.html` | `normal` | `breadcrumbs` | Where the reader is, rendered from the interface registry: a page says what it is about, the registry supplies the words and icons. |
 | `confirm_dialog` | `templates/components/confirm_dialog.html` | `normal`, `saving`, `error`, `unauthorized` | `confirm_dialog` | One way to ask "are you sure?" before something irreversible. The component renders the question; it never performs the operation and never knows what the operation is. The page decides - and it says which action it is asking about, by id, so the dialog and the action registry agree on what is happening. |
+| `documents_panel` | `templates/components/documents_panel.html` | `normal`, `loading`, `empty` | `documents_panel` | The side panel of one owner's documents - a file type, a keyword, a category. One markup for every host page; the body is the shared file-library table fragment, adopted in place by static/js/modules/ui/documents-panel.js. Openers anywhere on the page declare data-panel-open + data-panel-url. |
+| `file_library_table` | `templates/components/file_library_table.html` | `normal`, `empty`, `filtered` | `file_library_table` | The File Library's table - the one rendering of the library's rows, shared by the File Library page and by the documents panels (a file type's, a keyword's, a category's documents). Ten columns, sortable headers, the Type/Size/Date column filters, Load More, the per-row action menu, selection. |
 | `file_nav` | `templates/components/file_nav.html` | `normal`, `empty` | `file_nav` | Previous/next through the records the reader is working through, and where this one sits in that set. |
 | `filter_bar` | `templates/components/filter_bar.html` | `normal`, `filtered`, `empty` | `filter_section`, `filter_grid`, `filter_bar`, `filter_group`, `search_group`, `hidden_filter` | The controls above a list that decide which records it shows: a search box and the filters that narrow it, in the arrangement fifteen pages currently rebuild by hand. |
 | `operations_widget` | `templates/components/operations_widget.html` | `normal`, `loading`, `empty`, `error` | — | What the ingestion and processing system is doing right now: active jobs, throughput, and the shortcuts into Operations. |
@@ -70,7 +72,7 @@ Read from the `{# component: … #}` declaration at the top of each file in `tem
 | `sidebar_nav` | `templates/components/sidebar_nav.html` | `normal`, `empty` | — | The product navigation, grouped by domain, rendered from the navigation model the application prepares. |
 | `states` | `templates/components/states.html` | `loading`, `empty`, `filtered`, `success`, `warning`, `error`, `unauthorized`, `unavailable`, `archived` | `state_panel`, `empty_state`, `filtered_state`, `loading_state`, `success_state`, `warning_state`, `error_state`, `unauthorized_state`, `unavailable_state`, `archived_state` | The states a region can be in, in one place, so a page never invents its own wording for "nothing here yet" or its own markup for "this failed". |
 | `status_badge` | `templates/components/status_badge.html` | `success`, `warning`, `error`, `unavailable`, `archived` | `status_badge`, `_chip`, `status_badge_with_icon` | One way to show a status word, so the same state is not green on one page and grey on the next. An application status is looked up in the vocabulary - `core/frontend/status_vocabulary.py` - which maps it to one of a few presentation states; the component only turns that state into classes. |
-| `table` | `templates/components/table.html` | `normal`, `empty`, `filtered`, `selected`, `loading`, `error` | `data_table`, `table_empty_row`, `table_loading_row`, `table_error_row`, `select_all_checkbox`, `sort_header` | The frame a list of records is read in, and the rows that stand in for a list that is empty, still loading or failed. Ten tables in this application were written with ten different class combinations; this is the one they become. |
+| `table` | `templates/components/table.html` | `normal`, `empty`, `filtered`, `selected`, `loading`, `error` | `data_table`, `table_empty_row`, `table_loading_row`, `table_error_row`, `select_all_checkbox`, `export_menu`, `column_filter`, `columns_menu`, `sort_header`, `record_table` | The frame a list of records is read in, and the rows that stand in for a list that is empty, still loading or failed. Ten tables in this application were written with ten different class combinations; this is the one they become. `record_table` is the complete unit - toolbar, sortable headers, body, states - that every list interface renders through; `data_table` is the bare frame the older pages still call. |
 | `toast` | `templates/components/toast.html` | `success`, `warning`, `error`, `loading`, `unavailable` | `toast_region` | One place where the application tells the reader that something happened. Every action ends visibly - success, information, warning, failure - and every message passes through here, so no page invents its own notification and no failure goes silent. |
 
 ### States (§63)
@@ -79,10 +81,10 @@ Every state in the vocabulary is answered by at least one component; a state nob
 
 | State | Meaning | Implemented by |
 | --- | --- | --- |
-| `loading` | Work is in progress; the reader is told what is being waited for. | `action_toolbar`, `operations_widget`, `record_actions`, `record_header`, `screen_inspector`, `search_input`, `states`, `table`, `toast` |
-| `empty` | Nothing exists here yet, and the reader is told how to start. | `file_nav`, `filter_bar`, `operations_widget`, `page_tips`, `record_header`, `screen_inspector`, `sidebar_nav`, `states`, `table` |
-| `normal` | The ordinary case: content is present and usable. | `analyst_classify`, `page_data`, `breadcrumbs`, `confirm_dialog`, `pagination_cursor`, `file_nav`, `filter_bar`, `operations_widget`, `page_tips`, `record_actions`, `record_header`, `screen_inspector`, `search_input`, `sidebar_nav`, `table`, `pagination` |
-| `filtered` | Something exists, but not under the filters applied. | `pagination_cursor`, `filter_bar`, `search_input`, `states`, `table`, `pagination` |
+| `loading` | Work is in progress; the reader is told what is being waited for. | `action_toolbar`, `documents_panel`, `operations_widget`, `record_actions`, `record_header`, `screen_inspector`, `search_input`, `states`, `table`, `toast` |
+| `empty` | Nothing exists here yet, and the reader is told how to start. | `documents_panel`, `file_library_table`, `file_nav`, `filter_bar`, `operations_widget`, `page_tips`, `record_header`, `screen_inspector`, `sidebar_nav`, `states`, `table` |
+| `normal` | The ordinary case: content is present and usable. | `analyst_classify`, `page_data`, `breadcrumbs`, `confirm_dialog`, `pagination_cursor`, `documents_panel`, `file_library_table`, `file_nav`, `filter_bar`, `operations_widget`, `page_tips`, `record_actions`, `record_header`, `screen_inspector`, `search_input`, `sidebar_nav`, `table`, `pagination` |
+| `filtered` | Something exists, but not under the filters applied. | `pagination_cursor`, `file_library_table`, `filter_bar`, `search_input`, `states`, `table`, `pagination` |
 | `selected` | A row or record is chosen; actions that need a choice appear. | `action_toolbar`, `table` |
 | `editing` | A value is being changed, and the change is not saved yet. | `analyst_classify` |
 | `saving` | A change is on its way to the server. | `analyst_classify`, `confirm_dialog` |
@@ -99,17 +101,17 @@ Counted by scanning `templates/**`. These are the places a shared component has 
 
 | Markup | Component that replaces it | Templates |
 | --- | --- | --- |
-| Hand-written empty state | `states` | 4 templates |
+| Hand-written empty state | `states` | 3 templates |
 | Hand-written loading indicator | `states` | 9 templates |
 | Hand-written inline error | `states` | 6 templates |
-| Hand-written table | `table` | 15 templates |
+| Hand-written table | `table` | 10 templates |
 | Hand-written pagination markup | `pagination` | 0 templates |
-| Pagination mount (filled by the shared renderer) | `pagination` | 4 templates |
+| Pagination mount (filled by the shared renderer) | `pagination` | 8 templates |
 | Hand-written search input | `search_input` | 7 templates |
-| Hand-written filter control | `filter_bar` | 14 templates |
+| Hand-written filter control | `filter_bar` | 8 templates |
 | Browser confirm() dialog | `confirm_dialog` | 0 templates |
 | Hand-written status badge | `status_badge` | 0 badges, in 0 templates |
-| Hand-written badge chip (count, id, method) | — | 68 badges |
+| Hand-written badge chip (count, id, method) | — | 39 badges |
 | Hand-written action bar | `action_toolbar` | 2 templates |
 
 ### Adoption
@@ -118,11 +120,11 @@ How much of the repeated markup has moved onto its component. Standardized count
 
 | Markup | Standardized | Hand-written | Adoption |
 | --- | --- | --- | --- |
-| Hand-written empty state | 7 | 4 | 64% |
-| Hand-written table | 6 | 15 | 29% |
+| Hand-written empty state | 5 | 3 | 62% |
+| Hand-written table | 13 | 10 | 57% |
 | Hand-written pagination markup | 10 | 0 | 100% |
 | Hand-written search input | 8 | 7 | 53% |
-| Hand-written filter control | 1 | 14 | 7% |
+| Hand-written filter control | 7 | 8 | 47% |
 | Browser confirm() dialog | 2 | 0 | 100% |
 | Hand-written status badge | 7 | 0 | 100% |
 | Hand-written action bar | 5 | 2 | 71% |
@@ -139,8 +141,8 @@ Every class a component renders has exactly one owner. **OWNED** means an SYLTHA
 
 | Ownership | Classes |
 | --- | --- |
-| OWNED (SYLTHARAE) | 81 |
-| THIRD_PARTY (Bootstrap, Bootstrap Icons) | 197 |
+| OWNED (SYLTHARAE) | 154 |
+| THIRD_PARTY (Bootstrap, Bootstrap Icons) | 247 |
 | UNKNOWN | 0 |
 
 Third-party stylesheets bundled with the application: `static/css/bootstrap.min.css`, `static/icons/bootstrap-icons.css`.
@@ -148,8 +150,22 @@ Third-party stylesheets bundled with the application: `static/css/bootstrap.min.
 Owned by declaration rather than by a stylesheet - the component states these are its own hooks, and no rule styles them (which is a decision, not an accident):
 
 * `cursor-pagination-container` (cursor_pagination.html)
+* `documents-panel` (documents_panel.html)
+* `file-checkbox` (file_library_table.html)
+* `ut-row-check` (file_library_table.html)
 * `file-nav__text` (file_nav.html)
 * `search-input-spinner` (search_input.html)
 * `sidebar-nav-badge` (sidebar_nav.html)
+* `ut-body` (table.html)
+* `ut-check-all` (table.html)
+* `ut-columns` (table.html)
+* `ut-columns-btn` (table.html)
+* `ut-columns-check` (table.html)
+* `ut-export-heading` (table.html)
+* `ut-export-scope` (table.html)
+* `ut-export-scope-check` (table.html)
+* `ut-export-scope-option` (table.html)
+* `ut-filter-check` (table.html)
+* `ut-head` (table.html)
 
 <!-- END GENERATED COMPONENT AUDIT -->

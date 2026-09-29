@@ -16,108 +16,108 @@ def register_sides_routes(app):
     
     @app.route('/sides')
     def sides_list():
-        """Side Management with CURSOR-BASED PAGINATION for billion+ records"""
-        from Api.cursor_pagination import get_cursor_paginator, SortDirection
-        
-        cursor = request.args.get('cursor', type=int)
-        limit = request.args.get('limit', 50, type=int)
-        limit = max(1, min(1000, limit))
-        search = request.args.get('search', '')
-        
+        """Side Management — server-side search, sort and pagination"""
         try:
-            # Build filters
-            filters = {}
-            joins = [
-                'LEFT JOIN hash_contexts hc ON si.id = hc.side_id',
-                'LEFT JOIN paths p ON p.context_id = hc.id'
-            ]
-            
-            if search:
-                filters['si.name'] = {'op': 'ILIKE', 'value': f'%{search}%'}
-            
-            # Use cursor-based pagination
-            paginator = get_cursor_paginator('sides')
-            
-            # Note: For GROUP BY queries with aggregates, cursor pagination groups by primary key
-            select_columns = [
-                'si.id', 'si.name', 'si.importance', 'si.date_creation',
-                'COUNT(DISTINCT p.id) as doc_count',
-                'COUNT(DISTINCT hc.source_id) as source_count'
-            ]
-            
-            result = paginator.get_page(
-                cursor=cursor,
-                limit=limit,
-                sort_column='si.importance',
-                sort_direction=SortDirection.DESC,
-                filters=filters if filters else None,
-                joins=joins,
-                select_columns=select_columns,
-                table_alias='si'
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 50, type=int)
+            search = (request.args.get('search') or '').strip()
+
+            if page < 1:
+                page = 1
+            if per_page < 1 or per_page > 200:
+                per_page = 50
+            if len(search) > 500:
+                search = search[:500]
+
+            # Column sort comes from the table headers: `sort` + `order` in
+            # the query string, resolved against an allowlist.
+            SORT_COLUMNS = {
+                'name': 'si.name',
+                'importance': 'si.importance',
+                'date': 'si.date_creation',
+            }
+            sort_by = request.args.get('sort', 'importance')
+            sort_order = request.args.get('order', 'desc')
+            if sort_by not in SORT_COLUMNS:
+                sort_by = 'importance'
+            if sort_order not in ('asc', 'desc'):
+                sort_order = 'desc'
+            order_by = f"{SORT_COLUMNS[sort_by]} {sort_order.upper()} NULLS LAST, si.id DESC"
+
+            offset = (page - 1) * per_page
+            joins = (
+                "LEFT JOIN hash_contexts hc ON si.id = hc.side_id "
+                "LEFT JOIN paths p ON p.context_id = hc.id"
             )
-            
-            # Format results
+            where = "WHERE si.name ILIKE %s" if search else ""
+            base_params = (f"%{search}%",) if search else ()
+
+            rows = execute_query(
+                f"""
+                SELECT si.id, si.name, si.importance, si.date_creation,
+                       COUNT(DISTINCT p.id) AS doc_count,
+                       COUNT(DISTINCT hc.source_id) AS source_count
+                FROM sides si
+                {joins}
+                {where}
+                GROUP BY si.id
+                ORDER BY {order_by}
+                LIMIT %s OFFSET %s
+                """,
+                base_params + (per_page, offset),
+                fetch="all",
+            )
+            total_row = execute_query(
+                f"SELECT COUNT(DISTINCT si.id) FROM sides si {joins} {where}",
+                base_params,
+                fetch="one",
+            )
+            total_sides = (total_row[0] if total_row else 0) or 0
+            total_pages = ((total_sides - 1) // per_page) + 1 if total_sides > 0 else 1
+
+            def _iso(value):
+                if value is None:
+                    return None
+                if isinstance(value, str):
+                    return value
+                if hasattr(value, 'isoformat'):
+                    return value.isoformat()
+                return str(value)
+
             formatted_sides = []
-            for row in result['data']:
+            for row in rows or []:
                 formatted_sides.append({
-                    'id': row.get('id'),
-                    'name': row.get('name'),
-                    'importance': row.get('importance'),
-                    'date_creation': row.get('date_creation'),
-                    'doc_count': row.get('doc_count', 0),
-                    'source_count': row.get('source_count', 0)
+                    'id': row[0],
+                    'name': row[1],
+                    'importance': row[2],
+                    'date_creation': _iso(row[3]),
+                    'doc_count': row[4] or 0,
+                    'source_count': row[5] or 0,
                 })
-            
-            # Calculate approximate page number for display (cursor pagination doesn't use real pages)
-            estimated_page = 1
-            if cursor:
-                # Rough estimate: assume each page has 'limit' items
-                estimated_page = max(1, (cursor // limit) + 1)
-            
-            total_estimated = result.get('total_estimated') or 0
-            has_next = result.get('has_next', False)
-            has_prev = result.get('has_prev', False)
-            
-            # Calculate total_pages: if we have next/prev pages, ensure at least 2 pages
-            if total_estimated > 0:
-                total_pages = max(1, (total_estimated + limit - 1) // limit)
-            elif has_next or has_prev:
-                # If we have pagination but no estimate, set to at least 2
-                total_pages = 2
-            else:
-                total_pages = 1
-            
+
             return render_template('Side/sides_list.html',
                                  sides=formatted_sides,
                                  search=search,
-                                 cursor_pagination=True,
-                                 next_cursor=result.get('next_cursor'),
-                                 prev_cursor=result.get('prev_cursor'),
-                                 has_next=has_next,
-                                 has_prev=has_prev,
-                                 total_estimated=total_estimated,
-                                 total_sides=total_estimated,
-                                 page=estimated_page,
+                                 total_sides=total_sides,
+                                 page=page,
+                                 per_page=per_page,
                                  total_pages=total_pages,
-                                 query_time_ms=result.get('query_time_ms', 0))
-        
+                                 sort_by=sort_by,
+                                 sort_order=sort_order)
+
         except Exception as e:
             logger.error(f"Error in sides_list: {e}", exc_info=True)
             flash('Error loading sides. Please check database connection.', 'error')
             return render_template('Side/sides_list.html',
                                  sides=[],
-                                 search=search,
-                                 cursor_pagination=True,
+                                 search=search or '',
                                  total_sides=0,
-                                 total_estimated=0,
                                  page=1,
+                                 per_page=50,
                                  total_pages=1,
-                                 next_cursor=None,
-                                 prev_cursor=None,
-                                 has_next=False,
-                                 has_prev=False,
-                                 error=str(e))
-    
+                                 sort_by='importance',
+                                 sort_order='desc')
+
     @app.route('/side/add', methods=['GET', 'POST'])
     def side_add():
         """Add new side - redirects to sides list with modal"""

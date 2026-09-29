@@ -2037,6 +2037,18 @@
     "internal": true
   },
   {
+    "endpoint": "category_documents",
+    "rule": "/categories/<int:category_id>/documents",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "USER_INTERFACE",
+    "owned_by": "categories",
+    "internal": false
+  },
+  {
     "endpoint": "category_words",
     "rule": "/categories/<int:category_id>/words",
     "methods": [
@@ -2470,6 +2482,18 @@
     "internal": true
   },
   {
+    "endpoint": "exports.export_interface",
+    "rule": "/api/export/<interface_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "exports",
+    "module": "exports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "favicon",
     "rule": "/favicon.ico",
     "methods": [
@@ -2734,6 +2758,42 @@
     "internal": false
   },
   {
+    "endpoint": "file_operations.copy_file",
+    "rule": "/api/file/<int:file_id>/copy",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "file_operations",
+    "module": "file_operations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_operations.locate_file",
+    "rule": "/api/file/<int:file_id>/locate",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_operations",
+    "module": "file_operations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_operations.rename_file",
+    "rule": "/api/file/<int:file_id>/rename",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "file_operations",
+    "module": "file_operations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "files.api_cancel_task",
     "rule": "/upload/cancel/<task_id>",
     "methods": [
@@ -2917,6 +2977,18 @@
   {
     "endpoint": "files.file_search_all_pages",
     "rule": "/file/<int:file_id>/search",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.file_type_documents",
+    "rule": "/files/types/<file_type>/documents",
     "methods": [
       "GET"
     ],
@@ -3350,6 +3422,18 @@
   {
     "endpoint": "keyword_detail",
     "rule": "/keywords/<int:keyword_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "USER_INTERFACE",
+    "owned_by": "keywords",
+    "internal": false
+  },
+  {
+    "endpoint": "keyword_documents",
+    "rule": "/keywords/<int:keyword_id>/documents",
     "methods": [
       "GET"
     ],

@@ -7,6 +7,11 @@
 let translations = {};
 
 document.addEventListener('DOMContentLoaded', function() {
+    // The documents side panel is the shared component; this page only
+    // points it at its table id.
+    if (window.DocumentsPanel) {
+        window.DocumentsPanel.wire({ panelId: 'documentsPanel', tableId: 'keywordFilesTable' });
+    }
     // Load translations from JSON script tag
     const pageDataEl = document.getElementById('keywords-list-page-data');
     if (pageDataEl) {
@@ -72,15 +77,21 @@ if (typeof window.translations === 'undefined') {
     const searchInput = document.getElementById('searchKeywords');
     const statusFilter = document.getElementById('statusFilter');
     const categoryFilter = document.getElementById('categoryFilter');
-    const sortBySelect = document.getElementById('sortBy');
-    const sortOrderSelect = document.getElementById('sortOrder');
     const perPageSelect = document.getElementById('perPage');
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const TABLE_ID = 'keywordsTable';
+    const COLUMN_COUNT = 7;
     
     let currentPage = 1;
     let currentPerPage = 10;
-    let currentSort = 'usage_count';
-    let currentOrder = 'desc';
+    // Seed from the URL so a server-rendered, sorted view (the sort/order
+    // query params the headers wrote) is the state the page starts in.
+    const SORTABLE_COLUMNS = ['usage_count', 'text', 'id', 'status'];
+    const initialParams = new URLSearchParams(window.location.search);
+    const sortFromUrl = initialParams.get('sort');
+    const orderFromUrl = initialParams.get('order');
+    let currentSort = SORTABLE_COLUMNS.includes(sortFromUrl) ? sortFromUrl : 'usage_count';
+    let currentOrder = orderFromUrl === 'asc' ? 'asc' : 'desc';
     let currentFilters = {};
     let selectedKeywords = new Set();
     let categories = [];
@@ -96,18 +107,23 @@ if (typeof window.translations === 'undefined') {
         if (perPageSelect) {
             currentPerPage = parseInt(perPageSelect.value) || 10;
         }
-        
-        // ✅ FIXED: Initialize sort dropdowns with current values
-        if (sortBySelect) {
-            sortBySelect.value = currentSort;
-        }
-        if (sortOrderSelect) {
-            sortOrderSelect.value = currentOrder;
-        }
-        
+
         // ✅ FIXED: Update sort icons to reflect current sort state
         updateSortIcons();
-        
+
+        // Column sort lives in the table headers: the unified table asks the
+        // page to re-fetch in the chosen order.
+        if (window.UnifiedTable) {
+            window.UnifiedTable.onSort(TABLE_ID, function (key, direction) {
+                // A third header click clears the sort: the request goes out
+                // without sort parameters, the route's default order.
+                currentSort = direction == null ? null : key;
+                currentOrder = direction == null ? null : direction;
+                currentPage = 1;
+                fetchPage(1);
+            });
+        }
+
         // ✅ FIXED: Create pagination container on init to ensure it's always visible
         createPaginationContainer();
         
@@ -118,18 +134,23 @@ if (typeof window.translations === 'undefined') {
     
     // Update sort icons to reflect current sort state
     function updateSortIcons() {
-        // Reset all icons to default
+        // The header is the one sort control; the unified table owns how the
+        // decision is drawn (indicator, aria-sort).
+        if (window.UnifiedTable) {
+            window.UnifiedTable.setSort(TABLE_ID, currentSort, currentOrder);
+            return;
+        }
+        // Fallback without the module: reset every indicator, mark the active one.
         document.querySelectorAll('[id^="sortIcon-"]').forEach(icon => {
             icon.className = 'bi bi-arrow-down-up';
         });
         
-        // Update the active sort icon
         const activeIcon = document.getElementById(`sortIcon-${currentSort}`);
         if (activeIcon) {
             if (currentOrder === 'asc') {
-                activeIcon.className = 'bi bi-arrow-up';
+                activeIcon.className = 'bi bi-sort-up';
             } else {
-                activeIcon.className = 'bi bi-arrow-down';
+                activeIcon.className = 'bi bi-sort-down';
             }
         }
     }
@@ -205,58 +226,33 @@ if (typeof window.translations === 'undefined') {
 
     function renderRows(items, page) {
         console.log(`renderRows called with ${items?.length || 0} items, page ${page}`);
-        
+
         // ✅ FIXED: Check if tableBody exists
         if (!tableBody) {
             console.error('tableBody element not found!');
             return;
         }
-        
-        tableBody.innerHTML = '';
-        
+
+        if (!window.UnifiedTable) {
+            console.error('UnifiedTable module not loaded');
+            return;
+        }
+
         if (!items || items.length === 0) {
             console.log('No items to render, showing empty state');
             const query = searchInput?.value?.trim() || '';
-            const message = query ? 
-                `${translations.noKeywordsFoundMatching} "${query}". ${translations.tryDifferentSearchTerm}` : 
+            const message = query ?
+                `${translations.noKeywordsFoundMatching} "${query}". ${translations.tryDifferentSearchTerm}` :
                 translations.noKeywordsYet;
-            const icon = query ? 'bi-search' : 'bi-key';
-            // Get keywords add URL from page data
-            const pageDataEl = document.getElementById('keywords-list-page-data');
-            let keywordsAddUrl = '/keywords/add';
-            if (pageDataEl) {
-                try {
-                    const data = JSON.parse(pageDataEl.textContent);
-                    keywordsAddUrl = data.keywords_add_url || '/keywords/add';
-                } catch (e) {
-                    // Use default
-                }
-            }
-            const action = query ? '' : ` — <a href="${keywordsAddUrl}">${translations.addYourFirstKeyword}</a>`;
-            
-            tableBody.innerHTML = `
-                <tr><td colspan="7" class="text-center py-5 text-muted">
-                    <i class="bi ${icon} display-4 mb-3"></i>
-                    <div>${message}${action}</div>
-                </td></tr>`;
+
+            UnifiedTable.renderRows(tableBody, [
+                UnifiedTable.states.empty(COLUMN_COUNT, { message, filtered: Boolean(query) })
+            ]);
             return;
         }
-        
+
         console.log(`Rendering ${items.length} items`);
-        
-        // ✅ DEBUG: Validate item structure
-        if (items.length > 0) {
-            const firstItem = items[0];
-            console.log('First item structure:', {
-                hasId: 'id' in firstItem,
-                hasText: 'text' in firstItem,
-                hasUsageCount: 'usage_count' in firstItem,
-                id: firstItem.id,
-                text: firstItem.text ? firstItem.text.substring(0, 50) : 'NO TEXT',
-                usage_count: firstItem.usage_count
-            });
-        }
-        
+
         // Detect duplicates
         const keywordCounts = {};
         const duplicates = new Set();
@@ -272,13 +268,16 @@ if (typeof window.translations === 'undefined') {
                 keywordCounts[text] = 1;
             }
         });
-        
+
         // Update duplicate count
         const duplicateCountEl = document.getElementById('duplicateCount');
         if (duplicateCountEl) {
             duplicateCountEl.textContent = duplicates.size;
         }
 
+        // The same row the server renders, drawn with the same pieces: one
+        // join, one insertion, a page of rows for one reflow.
+        const rows = [];
         items.forEach((kw, idx) => {
             // Validate the server ID before using it as a row/action identifier.
             const keywordId = Number(kw?.id);
@@ -287,65 +286,57 @@ if (typeof window.translations === 'undefined') {
                 return;
             }
             const globalIndex = ((page - 1) * currentPerPage) + (idx + 1);
-            const tr = document.createElement('tr');
             const keywordText = String(kw.text || '').toLowerCase().trim();
             const isDuplicate = kw.is_duplicate || duplicates.has(keywordText);
-            
-            tr.dataset.keywordId = String(keywordId);
-            tr.dataset.keyword = keywordText;
-            if (isDuplicate) {
-                tr.classList.add('table-warning');
-                tr.style.borderLeft = '4px solid #f59e0b';
-            }
-            
-            // ✅ FIXED: Use proper HTML escaping to prevent XSS
-            const escapedText = escapeHtml(kw.text || '');
-            const escapedCategoryName = escapeHtml(kw.category_name || translations.uncategorized || 'Uncategorized');
-            
-            tr.innerHTML = `
-                <td>
-                    <input type="checkbox" class="form-check-input keyword-checkbox"
-                           value="${keywordId}" aria-label="${escapeHtml(translations.selectKeyword || 'Select keyword')}">
-                </td>
-                <td><span class="badge bg-secondary">${globalIndex}</span></td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <span class="keyword-text" data-keyword-id="${keywordId}">
-                            <strong>${escapedText}</strong>
-                            ${isDuplicate ? `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>${escapeHtml(translations.duplicate || 'Duplicate')}</span>` : ''}
-                        </span>
-                        <button type="button" class="btn btn-sm btn-link p-0 ms-1 keyword-row-action" data-action="edit" data-keyword-id="${keywordId}"
-                                title="${escapeHtml(translations.editKeyword || 'Edit Keyword')}" aria-label="${escapeHtml(translations.editKeyword || 'Edit Keyword')}">
-                            <i class="bi bi-pencil" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </td>
-                <td><span class="badge bg-info">${escapeHtml(kw.usage_count)}</span></td>
-                <td>${kw.usage_count > 0 ? `<span class="badge bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>${escapeHtml(translations.active || 'Active')}</span>` : `<span class="badge bg-secondary"><i class="bi bi-dash-circle me-1" aria-hidden="true"></i>${escapeHtml(translations.unused || 'Unused')}</span>`}</td>
-                <td>
-                    <span class="badge bg-light text-dark">${escapedCategoryName}</span>
-                </td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-primary keyword-row-action" data-action="view" data-keyword-id="${keywordId}"
-                                title="${escapeHtml(translations.viewDetails || 'View Details')}" aria-label="${escapeHtml(translations.viewDetails || 'View Details')}">
-                            <i class="bi bi-eye" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-danger keyword-row-action" data-action="delete" data-keyword-id="${keywordId}"
-                                title="${escapeHtml(translations.deleteKeyword || 'Delete')}" aria-label="${escapeHtml(translations.deleteKeyword || 'Delete')}">
-                            <i class="bi bi-trash" aria-hidden="true"></i>
-                        </button>
-                        ${isDuplicate ? `<button type="button" class="btn btn-outline-warning keyword-row-action" data-action="merge" data-keyword-text="${escapeHtml(keywordText)}"
-                                title="${escapeHtml(translations.mergeDuplicates || 'Merge duplicates')}" aria-label="${escapeHtml(translations.mergeDuplicates || 'Merge duplicates')}"><i class="bi bi-arrow-down-up" aria-hidden="true"></i></button>` : ''}
-                    </div>
-                </td>`;
-            tableBody.appendChild(tr);
+            const usage = kw.usage_count || 0;
+            const active = usage > 0;
+
+            rows.push(`
+                <tr data-keyword-id="${keywordId}" data-keyword="${escapeHtml(keywordText)}"
+                    data-usage-count="${usage}" data-status="${active ? 'active' : 'unused'}">
+                    <td class="ut-col-select">
+                        <input type="checkbox" class="keyword-checkbox ut-row-check"
+                               value="${keywordId}" data-on-change="updateBulkButtons()"
+                               aria-label="${escapeHtml(translations.selectKeyword || 'Select keyword')}">
+                    </td>
+                    <td class="ut-index-cell"><span class="ut-badge ut-badge-neutral">${globalIndex}</span></td>
+                    <td data-ut-value="${escapeHtml(keywordText)}">
+                        <span class="ut-name">${escapeHtml(kw.text || '')}</span>
+                        ${isDuplicate ? `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>${escapeHtml(translations.duplicate || 'Duplicate')}</span>` : ''}
+                    </td>
+                    <td class="text-end" data-ut-value="${usage}">${usage}</td>
+                    <td data-ut-value="${active ? 'active' : 'unused'}">${active
+                        ? `<span class="badge bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>${escapeHtml(translations.active || 'Active')}</span>`
+                        : `<span class="badge bg-secondary"><i class="bi bi-dash-circle me-1" aria-hidden="true"></i>${escapeHtml(translations.unused || 'Unused')}</span>`}</td>
+                    <td data-ut-value="${escapeHtml((kw.category_name || translations.uncategorized || 'Uncategorized').toLowerCase())}">
+                        <span class="ut-muted">${escapeHtml(kw.category_name || translations.uncategorized || 'Uncategorized')}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm ut-actions">
+                            <button type="button" class="btn btn-outline-primary keyword-row-action" data-action="view" data-keyword-id="${keywordId}"
+                                    title="${escapeHtml(translations.viewDetails || 'View Details')}" aria-label="${escapeHtml(translations.viewDetails || 'View Details')}">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-warning keyword-row-action" data-action="edit" data-keyword-id="${keywordId}"
+                                    title="${escapeHtml(translations.editKeyword || 'Edit Keyword')}" aria-label="${escapeHtml(translations.editKeyword || 'Edit Keyword')}">
+                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger keyword-row-action" data-action="delete" data-keyword-id="${keywordId}"
+                                    title="${escapeHtml(translations.deleteKeyword || 'Delete')}" aria-label="${escapeHtml(translations.deleteKeyword || 'Delete')}">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                            ${isDuplicate ? `<button type="button" class="btn btn-outline-warning keyword-row-action" data-action="merge" data-keyword-text="${escapeHtml(keywordText)}"
+                                    title="${escapeHtml(translations.mergeDuplicates || 'Merge duplicates')}" aria-label="${escapeHtml(translations.mergeDuplicates || 'Merge duplicates')}"><i class="bi bi-arrow-down-up" aria-hidden="true"></i></button>` : ''}
+                        </div>
+                    </td>
+                </tr>`);
         });
+        UnifiedTable.renderRows(tableBody, rows);
     }
 
     function renderPaginator(page, total_pages) {
         console.log(`renderPaginator called: page=${page}, total_pages=${total_pages}`);
-        
+
         // ✅ FIXED: Validate pagination inputs
         if (total_pages < 1) {
             total_pages = 1;
@@ -496,48 +487,29 @@ if (typeof window.translations === 'undefined') {
     }
 
     function createPaginationContainer() {
-        // Find the stat-card that contains the keywords table (not the stat cards at the top)
+        // The template renders the mount (`#pagination`); find it, or fall
+        // back to a container inserted right after the table unit.
         const keywordsTable = document.getElementById('keywordsTable');
         if (!keywordsTable) {
             console.error('keywordsTable element not found');
             return null;
         }
-        
-        // Find the stat-card that contains the table
-        const statCard = keywordsTable.closest('.stat-card');
-        if (!statCard) {
-            console.error('stat-card containing keywordsTable not found');
-            return null;
-        }
-        
-        // Check if pagination container already exists (check both unified and old style)
-        let container = statCard.querySelector('.unified-pagination-container') || 
-                       statCard.querySelector('.pagination-container') || 
-                       statCard.querySelector('#paginationContainer');
+
+        let container = document.getElementById('pagination') ||
+            document.querySelector('.pagination-container') ||
+            document.querySelector('.unified-pagination-container');
         if (container) {
             if (!container.id) container.id = 'paginationContainer';
             return container;
         }
-        
-        // Find the table-wrapper or table-responsive div and insert pagination directly after it
-        const tableWrapper = statCard.querySelector('.table-wrapper');
-        const tableResponsive = statCard.querySelector('.table-responsive');
-        const insertAfter = tableWrapper || tableResponsive || keywordsTable;
-        
+
+        const unit = keywordsTable.closest('.ut');
+        if (!unit || !unit.parentNode) return null;
+
         container = document.createElement('div');
         container.id = 'paginationContainer';
-        container.className = 'unified-pagination-container'; // Use unified class to match template
-        container.style.width = '100%'; // Full width
-        container.style.clear = 'both'; // Ensure it's on a new line
-        
-        if (insertAfter && insertAfter.parentNode) {
-            // Insert directly after the table wrapper/responsive/table
-            insertAfter.parentNode.insertBefore(container, insertAfter.nextSibling);
-        } else {
-            // Fallback: append to stat-card
-            statCard.appendChild(container);
-        }
-        
+        container.className = 'pagination-container';
+        unit.parentNode.insertBefore(container, unit.nextSibling);
         return container;
     }
 
@@ -561,14 +533,10 @@ if (typeof window.translations === 'undefined') {
         pendingFetch = controller;
 
         // Show loading state
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr><td colspan="7" class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">${translations.loading || 'Loading...'}</span>
-                    </div>
-                    <div class="mt-2 text-muted">${translations.loading || 'Loading...'}</div>
-                </td></tr>`;
+        if (tableBody && window.UnifiedTable) {
+            UnifiedTable.renderRows(tableBody, [
+                UnifiedTable.states.loading(COLUMN_COUNT, translations.loading || 'Loading...')
+            ]);
         }
 
         // Get API URL from page data or use default
@@ -586,8 +554,8 @@ if (typeof window.translations === 'undefined') {
         const url = new URL(apiUrl, window.location.origin);
         url.searchParams.set('page', page);
         url.searchParams.set('per_page', currentPerPage);
-        url.searchParams.set('sort', currentSort);
-        url.searchParams.set('order', currentOrder);
+        if (currentSort) url.searchParams.set('sort', currentSort);
+        if (currentOrder) url.searchParams.set('order', currentOrder);
         
         if (searchInput.value.trim()) url.searchParams.set('q', searchInput.value.trim());
         if (statusFilter.value) url.searchParams.set('status', statusFilter.value);
@@ -630,46 +598,40 @@ if (typeof window.translations === 'undefined') {
                 // ✅ FIXED: Handle both success:true and direct keywords array responses
                 if (!json || typeof json !== 'object') {
                     console.error('API returned null/undefined or invalid format');
-                    if (tableBody) {
-                        tableBody.innerHTML = `
-                            <tr><td colspan="7" class="text-center py-5 text-danger">
-                                <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
-                                <div>${translations.errorLoadingKeywords || 'Error loading keywords'}: Invalid response</div>
-                                <div class="small mt-2">${translations.checkBrowserConsole || 'Check browser console'}</div>
-                            </td></tr>`;
+                    if (tableBody && window.UnifiedTable) {
+                        UnifiedTable.renderRows(tableBody, [
+                            UnifiedTable.states.error(COLUMN_COUNT,
+                                `${translations.errorLoadingKeywords || 'Error loading keywords'}: Invalid response`)
+                        ]);
                     }
                     return;
                 }
-                
+
                 // Check if response has error (success: false)
                 if (json.success === false) {
                     console.error('API error', json);
                     const errorMsg = json?.error || 'Unknown API error';
-                    if (tableBody) {
-                        tableBody.innerHTML = `
-                            <tr><td colspan="7" class="text-center py-5 text-danger">
-                                <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
-                                <div>${translations.errorLoadingKeywords || 'Error loading keywords'}: ${errorMsg}</div>
-                                <div class="small mt-2">${translations.checkBrowserConsole || 'Check browser console'}</div>
-                            </td></tr>`;
+                    if (tableBody && window.UnifiedTable) {
+                        UnifiedTable.renderRows(tableBody, [
+                            UnifiedTable.states.error(COLUMN_COUNT,
+                                `${translations.errorLoadingKeywords || 'Error loading keywords'}: ${errorMsg}`)
+                        ]);
                     }
                     return;
                 }
-                
+
                 // ✅ FIXED: Validate required fields
                 if (!Array.isArray(json.keywords) && !Array.isArray(json.results) && !Array.isArray(json.items)) {
                     console.error('API response missing keywords array', json);
-                    if (tableBody) {
-                        tableBody.innerHTML = `
-                            <tr><td colspan="7" class="text-center py-5 text-danger">
-                                <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
-                                <div>${translations.errorLoadingKeywords || 'Error loading keywords'}: API response missing keywords array</div>
-                                <div class="small mt-2">${translations.checkBrowserConsole || 'Check browser console'}</div>
-                            </td></tr>`;
+                    if (tableBody && window.UnifiedTable) {
+                        UnifiedTable.renderRows(tableBody, [
+                            UnifiedTable.states.error(COLUMN_COUNT,
+                                `${translations.errorLoadingKeywords || 'Error loading keywords'}: API response missing keywords array`)
+                        ]);
                     }
                     return;
                 }
-                
+
                 // ✅ FIXED: Update currentPerPage from API response to keep in sync
                 if (json.per_page) {
                     currentPerPage = json.per_page;
@@ -677,20 +639,11 @@ if (typeof window.translations === 'undefined') {
                         perPageSelect.value = json.per_page;
                     }
                 }
-                
-                // ✅ FIXED: Sync sort state from API response
-                if (json.sort_by) {
-                    currentSort = json.sort_by;
-                    if (sortBySelect) {
-                        sortBySelect.value = currentSort;
-                    }
-                }
-                if (json.sort_order) {
-                    currentOrder = json.sort_order;
-                    if (sortOrderSelect) {
-                        sortOrderSelect.value = currentOrder;
-                    }
-                }
+
+                // The server decides the order; the headers show its answer.
+                // No sort in the answer means the default order: cleared.
+                currentSort = json.sort_by || null;
+                currentOrder = json.sort_by ? (json.sort_order || null) : null;
                 updateSortIcons();
                 
                 // Get keywords array - handle both success:true and direct array responses
@@ -740,25 +693,23 @@ if (typeof window.translations === 'undefined') {
                 } catch (renderError) {
                     console.error('❌ Error rendering rows:', renderError);
                     console.error('Stack:', renderError.stack);
-                    if (tableBody) {
-                        tableBody.innerHTML = `
-                            <tr><td colspan="7" class="text-center py-5 text-danger">
-                                <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
-                                <div>Error rendering keywords: ${renderError.message}</div>
-                                <div class="small mt-2">Check browser console for details</div>
-                            </td></tr>`;
+                    if (tableBody && window.UnifiedTable) {
+                        UnifiedTable.renderRows(tableBody, [
+                            UnifiedTable.states.error(COLUMN_COUNT,
+                                `${translations.errorLoadingKeywords || 'Error loading keywords'}: ${renderError.message}`)
+                        ]);
                     }
                 }
             })
             .catch(err => {
                 if (err.name === 'AbortError') return;
                 console.error('Fetch error', err);
-                tableBody.innerHTML = `
-                    <tr><td colspan="7" class="text-center py-5 text-danger">
-                        <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
-                        <div>${translations.failedToLoadKeywords}: ${err.message}</div>
-                        <div class="small mt-2">${translations.checkBrowserConsoleAndLogs}</div>
-                    </td></tr>`;
+                if (tableBody && window.UnifiedTable) {
+                    UnifiedTable.renderRows(tableBody, [
+                        UnifiedTable.states.error(COLUMN_COUNT,
+                            `${translations.failedToLoadKeywords}: ${err.message}`)
+                    ]);
+                }
                 const infoEl = document.getElementById('searchResultsInfo');
                 if (infoEl) infoEl.textContent = translations.errorLoadingData || 'Error loading data';
             })
@@ -858,28 +809,7 @@ if (typeof window.translations === 'undefined') {
         }
         url.searchParams.set('page', '1');
         window.history.pushState({}, '', url);
-        
-        fetchPage(1);
-    }
 
-    function sortBy(field) {
-        if (currentSort === field) {
-            currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-        } else {
-            currentSort = field;
-            currentOrder = 'asc';
-        }
-        sortBySelect.value = currentSort;
-        sortOrderSelect.value = currentOrder;
-        updateSortIcons();
-        fetchPage(currentPage);
-    }
-    
-    function applySorting() {
-        currentSort = sortBySelect.value;
-        currentOrder = sortOrderSelect.value;
-        currentPage = 1;
-        updateSortIcons();
         fetchPage(1);
     }
 
@@ -2259,8 +2189,6 @@ if (typeof window.translations === 'undefined') {
     window.selectAll = selectAll;
     window.selectNone = selectNone;
     window.applyFilters = applyFilters;
-    window.applySorting = applySorting;
-    window.sortBy = sortBy;
     window.changePageSize = changePageSize;
     window.clearSearch = clearSearch;
     window.bulkDelete = bulkDelete;

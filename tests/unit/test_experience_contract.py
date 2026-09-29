@@ -56,7 +56,11 @@ DOC = PROJECT_ROOT / "docs/EXPERIENCE_CONTRACT.md"
 TEMPLATES = {
     "file_library": ("templates/file/files_list.html",
                      "templates/file/file_detail.html",
-                     "templates/file/full_content.html"),
+                     "templates/file/full_content.html",
+                     # The library's rows live in the one shared table
+                     # component, which the panels embed too.
+                     "templates/components/file_library_table.html",
+                     "templates/file/file_types.html"),
     "keywords": ("templates/Keyword/keywords_list.html",),
     "words": ("templates/Word/Word_list.html",),
     "sources": ("templates/Sources/sources_list.html",),
