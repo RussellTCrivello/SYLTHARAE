@@ -75,13 +75,15 @@ def _read_po(path: Path, keep_untranslated: bool = False) -> Dict[str, str]:
         for message in catalog:
             if not message.id:
                 continue
+            # A plural entry is one message, looked up by its singular msgid.
+            msgid = message.id[0] if isinstance(message.id, (list, tuple)) else message.id
             text = message.string
             if isinstance(text, (list, tuple)):
                 text = next((part for part in text if part), "")
             if not text and keep_untranslated:
-                text = message.id
+                text = msgid
             if text:
-                messages[str(message.id)] = str(text)
+                messages[str(msgid)] = str(text)
     return messages
 
 

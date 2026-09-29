@@ -77,3 +77,31 @@ def test_translation_manager_is_admin_only_and_edits_runtime_catalog(admin_clien
         admin_client.put(
             '/api/translations/manage/catalog', json=reset_payload, headers=headers,
         )
+
+
+def test_the_client_catalog_survives_plural_entries(admin_client):
+    """NARR-01 added the first msgid_plural entries (report narrative, used on
+    the server through ngettext). The client catalog used them as JSON keys
+    (tuples), jsonify failed, and the handler answered 200 with an *empty*
+    catalog: every JavaScript-rendered string lost its translation. Plural
+    entries are left out; every flat string is still served."""
+    from babel.messages.pofile import read_po
+
+    from core.analytics.kinds import KEYNESS_TEMPLATES_V2
+
+    plural = KEYNESS_TEMPLATES_V2.plurals()[0]
+    for locale in ('ar', 'he', 'fa', 'en'):
+        path = f'translations/{locale}/LC_MESSAGES/messages.po'
+        with open(path, 'rb') as fh:
+            catalog = read_po(fh, locale=locale)
+        assert catalog.get(plural.singular).pluralizable, 'the catalog has plural entries'
+        body = admin_client.get(f'/api/i18n/catalog?locale={locale}').get_json()
+        assert body['success'] is True, body
+        assert body['locale'] == locale
+        if locale == 'en':
+            continue
+        flat = sum(1 for m in catalog if isinstance(m.id, str) and m.id
+                   and isinstance(m.string, str) and m.string)
+        assert body['count'] >= flat > 1000, (locale, body['count'], flat)
+        assert plural.singular not in body['translations']
+        assert body['translations']['Translation Management'], locale

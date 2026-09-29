@@ -117,6 +117,57 @@ parameters intact.
 means for the reader's work, and that the documents must be read before
 drawing conclusions. They never claim a cause.
 
+### Counts and plurals (NARR-01, step 17)
+
+`keyness@1` put numbers into fixed noun forms: "1 terms" in English, and in
+Arabic always the 11-99 form (مصطلحاً) even for 3-10, in Croatian always
+"pojmova" even for 1, 2 or 21. The catalogs declared the right plural rules
+(`ar` nplurals=6, `hr` 3, `en`/`he`/`fa` 2), but no code consulted them.
+
+**How counts are handled now:**
+
+* **A plural sentence** is `Plural(singular, plural, count)`. It is rendered
+  with gettext `ngettext(singular, plural, n)`, so the form comes from the
+  catalog's `Plural-Forms` header. There is no plural logic in our code.
+* **One count per sentence.** A voice that states several counts is a list
+  of whole sentences, joined by a space, never fragments glued inside one
+  sentence. Sizes that no noun agrees with use plural-neutral wording
+  ("Contents in the selection: 3; counted words: 1,204.").
+* **Validation** (`TemplateSet`): the plural msgid must contain `%(count)s`,
+  the singular may not add placeholders, and singular and plural must differ.
+  The count must be a whole number of at least 0. A plural sentence rendered
+  without an `ngettext` is an error, never a guess.
+* **Translation gate** (`ReportRegistry.validate_translations`, run by
+  `python -m core.reporting.lock --check`): every plural entry needs the same
+  `msgid_plural` and exactly `nplurals` non-empty forms. Every form keeps the
+  sentence's placeholders; only the count may be omitted, because Arabic
+  says "مصطلح واحد" and uses a dual without the digit.
+* **The API passes `get_translations().ngettext`, not
+  `flask_babel.ngettext`.** The Flask-Babel wrapper formats with `{"num": n}`
+  itself, and our named parameters would raise `KeyError`. The artifacts
+  render in the source language with `source_ngettext` (English
+  `n != 1`) until step 18.
+
+**Record formats.** The released `keyness@1` is `record_format=1`: one
+sentence per voice (`voice/key/msgid/params`), no plurals. Its fingerprint
+formula is unchanged, so the lock still matches. New sets are format 2: the
+record carries `"format": 2`, and each voice holds
+`{"voice", "sentences": [...]}`, where a plural sentence adds `msgid_plural`
+and `count`. `render` reads both formats, so every stored narrative still
+renders.
+
+**Versions.**
+
+* Kind `keyness@2`, analysis `term_keyness@2` and report `term_keyness@2`
+  have the same datasets and measures as v1; only the wording changes. That
+  is tested: identical measures and rows, different text.
+* `term_keyness@1` is `superseded`. It is not offered in the definitions, but
+  stays registered and runs when `version: 1` is requested. That is tested
+  on PostgreSQL, over HTTP, and on the live server.
+* Kinds are keyed `name@version`; `Analysis.kind_version` defaults to 1.
+* Unchanged sentences keep their v1 msgids and translations. There are 5 new
+  plain msgids and 5 new plural entries, in all catalogs and the `.pot`.
+
 ## Keyness (`term_keyness@1`)
 
 *Which words do the selected documents use more (or less) often than the rest
@@ -199,6 +250,7 @@ Analyses are written in the same transaction that completes the run.
 | manifest | `report-manifest/1` | `report-manifest/2` | lists the run's analyses: key, fingerprint, state, template set/version/fingerprint, and whether this artifact includes them |
 | JSON / HTML renderers | `report-json/1`, `report-html/1` | `/2` | carry an analyses section |
 | CSV / XLSX | `/1` | unchanged | they render datasets only; the manifest says `included: false` |
+| keyness templates / kind / analysis / report (step 17, NARR-01) | `keyness@1`, `term_keyness@1` (active) | `keyness@2`, `term_keyness@2` active; v1 superseded, still runnable and renderable | plural-aware wording; measures unchanged |
 
 Artifacts already stored keep their recorded versions and still verify.
 

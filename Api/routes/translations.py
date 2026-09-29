@@ -93,6 +93,11 @@ def get_all_translations(locale: str = None) -> dict:
                         catalog = read_po(f, locale=locale)
                         
                         for message in catalog:
+                            # Plural entries (tuple ids, used by the report
+                            # narrative through ngettext) are not flat UI
+                            # strings; a tuple key would break jsonify.
+                            if not isinstance(message.id, str):
+                                continue
                             if message.id and message.id != '':
                                 if message.string:
                                     translations[message.id] = message.string
@@ -178,6 +183,14 @@ def get_i18n_catalog():
                 with open(po_file, 'rb') as f:
                     catalog = read_po(f, locale=locale)
                     for message in catalog:
+                        # Only flat UI strings: a plural entry has a tuple id
+                        # (singular, plural) and tuple forms, is rendered on
+                        # the server through ngettext, and as a JSON key would
+                        # make jsonify fail - which the handler below turned
+                        # into an empty catalog for every client (found when
+                        # NARR-01 added the first plural entries).
+                        if not isinstance(message.id, str) or not isinstance(message.string, str):
+                            continue
                         if message.id and message.string:
                             translations[message.id] = message.string
         except Exception as e:
