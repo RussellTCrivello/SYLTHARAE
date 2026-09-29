@@ -86,6 +86,7 @@ store. Statuses use the same evidence ladder.
 | Step 14 Report runs + `/reports` | 3 433 | 29 | 97 | identical to the recorded list (`comm` against REGRESSION_FAILURES.txt: 0 new, 0 gone); generated docs regenerated with their own commands before the run |
 | Step 15 Report artifacts + manifests | 3 445 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone). The first run had 30: `test_reports_page_js.py` pins the page smoke test's check count (16) and this step added 15 checks; the pin was raised to 31 (stricter, not weaker) and the full suite rerun |
 | M1 Audit Log viewer + m0024 | 3 471 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone); +26 tests (23 PG/API, 1 migration, 1 page wrapper, 1 translation template) |
+| M2 Detection page + m0025 | 3 497 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone); +26 tests (23 PG/API, 1 migration, 1 page wrapper, 1 translation template). An intermediate run had 30: `test_reference_docs_are_current`, stale because this work added `tools/perf/detection_admin_perf.py`; regenerated with `tools/docs/generate_reference.py`, test unchanged, full suite rerun |
 
 On the `294104e` run a 31st failure first appeared:
 `test_screen_inspector.py::...test_the_document_is_what_the_product_now_says`.
