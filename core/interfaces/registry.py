@@ -310,6 +310,17 @@ REGISTRY: Tuple[Interface, ...] = (
 
     # -- OPERATE ----------------------------------------------------------
     _if(
+        "detection", "Detection",
+        "Which detector version analysed which content, with what outcome: "
+        "coverage per detector, content never analysed or analysed by an older "
+        "version, failed runs with their error, and re-detection as a "
+        "background job.",
+        Domain.OPERATE, "detection_page", "bi-radar",
+        dependencies=("signal_horizon", "jobs"),
+        required_role="admin",
+        help_topic="operate/detection", keyboard_shortcut="g d",
+    ),
+    _if(
         "jobs", "Jobs",
         "Every long-running operation: what it is doing, what it did, and the "
         "event stream behind it. This is the system of record for processing.",

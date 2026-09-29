@@ -11510,3 +11510,207 @@ msgstr "الإدخال"
 #: templates/auth/audit.html
 msgid "User id"
 msgstr "معرّف المستخدم"
+
+#: templates/Signals/detection.html
+msgid "Detection"
+msgstr "الكشف"
+
+#: templates/Signals/detection.html
+msgid "Which detector version analysed which content and with what outcome. Content that was never analysed is counted separately: it is not the same as content in which nothing was found."
+msgstr "أي إصدار من الكاشف حلّل أي محتوى وبأي نتيجة. يُحسب المحتوى الذي لم يُحلَّل قط بشكل منفصل: فهو ليس كالمحتوى الذي لم يُعثر فيه على شيء."
+
+#: templates/Signals/detection.html
+msgid "How detection is recorded"
+msgstr "كيف يُسجَّل الكشف"
+
+#: templates/Signals/detection.html
+msgid "Each content is analysed once by each detector, at ingestion or by re-detection. The run records the detector version, the outcome and the number of signals found."
+msgstr "يُحلَّل كل محتوى مرة واحدة بواسطة كل كاشف، عند الاستيعاب أو بإعادة الكشف. يسجّل التشغيل إصدار الكاشف والنتيجة وعدد الإشارات المعثور عليها."
+
+#: templates/Signals/detection.html
+msgid "Stale content was never analysed, was analysed by an older version (for places, an older gazetteer), or its last run failed. Re-detecting stale content analyses exactly these."
+msgstr "المحتوى المتقادم لم يُحلَّل قط، أو حلّله إصدار أقدم (للأماكن: معجم جغرافي أقدم)، أو فشل تشغيله الأخير. إعادة كشف المحتوى المتقادم تحلّل هذه بالضبط."
+
+#: templates/Signals/detection.html
+msgid "Re-detection runs as a background job and replaces the stored signals of each content it analyses. It is recorded in the audit log."
+msgstr "تعمل إعادة الكشف كمهمة في الخلفية وتستبدل الإشارات المخزنة لكل محتوى تحلّله. وتُسجَّل في سجل التدقيق."
+
+#: templates/Signals/detection.html
+msgid "Coverage"
+msgstr "التغطية"
+
+#: templates/Signals/detection.html
+msgid "Current version"
+msgstr "الإصدار الحالي"
+
+#: templates/Signals/detection.html
+msgid "Complete"
+msgstr "مكتمل"
+
+#: templates/Signals/detection.html
+msgid "Truncated"
+msgstr "مقتطع"
+
+#: templates/Signals/detection.html
+msgid "No text"
+msgstr "بلا نص"
+
+#: templates/Signals/detection.html
+msgid "Older version"
+msgstr "إصدار أقدم"
+
+#: templates/Signals/detection.html
+msgid "Never analysed"
+msgstr "لم يُحلَّل قط"
+
+#: templates/Signals/detection.html
+msgid "Stale"
+msgstr "متقادم"
+
+#: templates/Signals/detection.html
+msgid "Re-detect"
+msgstr "إعادة الكشف"
+
+#: templates/Signals/detection.html
+msgid "Stale content only"
+msgstr "المحتوى المتقادم فقط"
+
+#: templates/Signals/detection.html
+msgid "Listed content ids"
+msgstr "معرّفات المحتوى المدرجة"
+
+#: templates/Signals/detection.html
+msgid "All content"
+msgstr "كل المحتوى"
+
+#: templates/Signals/detection.html
+msgid "Detectors"
+msgstr "الكواشف"
+
+#: templates/Signals/detection.html
+msgid "Content ids (hash ids), separated by spaces, commas or new lines"
+msgstr "معرّفات المحتوى (معرّفات التجزئة)، مفصولة بمسافات أو فواصل أو أسطر جديدة"
+
+#: templates/Signals/detection.html
+msgid "I understand that this analyses every stored content again and replaces its signals."
+msgstr "أفهم أن هذا يحلّل كل محتوى مخزَّن من جديد ويستبدل إشاراته."
+
+#: templates/Signals/detection.html
+msgid "Start re-detection"
+msgstr "بدء إعادة الكشف"
+
+#: templates/Signals/detection.html
+msgid "Any version"
+msgstr "أي إصدار"
+
+#: templates/Signals/detection.html
+msgid "Any trigger"
+msgstr "أي مُشغِّل"
+
+#: templates/Signals/detection.html
+msgid "Re-detection"
+msgstr "إعادة الكشف"
+
+#: templates/Signals/detection.html
+msgid "Content id"
+msgstr "معرّف المحتوى"
+
+#: templates/Signals/detection.html
+msgid "Show runs"
+msgstr "عرض التشغيلات"
+
+#: templates/Signals/detection.html
+msgid "Ran at"
+msgstr "وقت التشغيل"
+
+#: templates/Signals/detection.html
+msgid "Signals"
+msgstr "الإشارات"
+
+#: templates/Signals/detection.html
+msgid "Characters scanned"
+msgstr "الأحرف المفحوصة"
+
+#: templates/Signals/detection.html
+msgid "Any detector"
+msgstr "أي كاشف"
+
+#: templates/Signals/detection.html
+msgid "Any outcome"
+msgstr "أي نتيجة"
+
+#: templates/Signals/detection.html
+msgid "The current version cannot be determined (for places: no gazetteer is loaded). Every content counts as stale until it can."
+msgstr "لا يمكن تحديد الإصدار الحالي (للأماكن: لم يُحمَّل معجم جغرافي). يُعدّ كل محتوى متقادماً حتى يمكن ذلك."
+
+#: templates/Signals/detection.html
+msgid "%(analysable)s contents have stored text; %(stale)s are stale for at least one detector. Exact counts from one database snapshot taken %(at)s."
+msgstr "%(analysable)s محتوى لديه نص مخزَّن؛ %(stale)s منها متقادم لكاشف واحد على الأقل. أعداد دقيقة من لقطة واحدة لقاعدة البيانات أُخذت في %(at)s."
+
+#: templates/Signals/detection.html
+msgid "Re-detect stale"
+msgstr "إعادة كشف المتقادم"
+
+#: templates/Signals/detection.html
+msgid "Nothing is stale."
+msgstr "لا شيء متقادم."
+
+#: templates/Signals/detection.html
+msgid "and %(count)s more"
+msgstr "و%(count)s أخرى"
+
+#: templates/Signals/detection.html
+msgid "no file"
+msgstr "لا ملف"
+
+#: templates/Signals/detection.html
+msgid "Showing %(from)s-%(to)s, newest first."
+msgstr "عرض %(from)s-%(to)s، الأحدث أولاً."
+
+#: templates/Signals/detection.html
+msgid "More runs exist."
+msgstr "توجد تشغيلات أخرى."
+
+#: templates/Signals/detection.html
+msgid "No more runs."
+msgstr "لا مزيد من التشغيلات."
+
+#: templates/Signals/detection.html
+msgid "No runs match these filters."
+msgstr "لا توجد تشغيلات تطابق عوامل التصفية هذه."
+
+#: templates/Signals/detection.html
+msgid "No content has been analysed yet."
+msgstr "لم يُحلَّل أي محتوى بعد."
+
+#: templates/Signals/detection.html
+msgid "%(scanned)s of %(total)s"
+msgstr "%(scanned)s من %(total)s"
+
+#: templates/Signals/detection.html
+msgid "Re-detection job %(id)s queued."
+msgstr "أُدرجت مهمة إعادة الكشف %(id)s في قائمة الانتظار."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s. %(processed)s contents analysed, %(signals)s signals, %(failed)s failed."
+msgstr "المهمة %(id)s: %(status)s. حُلِّل %(processed)s محتوى، %(signals)s إشارة، فشل %(failed)s."
+
+#: templates/Signals/detection.html
+msgid "Some runs failed; they are listed under Runs with their error."
+msgstr "فشلت بعض التشغيلات؛ وهي مدرجة تحت «التشغيلات» مع خطئها."
+
+#: templates/Signals/detection.html
+msgid "Choose at least one detector."
+msgstr "اختر كاشفاً واحداً على الأقل."
+
+#: templates/Signals/detection.html
+msgid "List at least one content id."
+msgstr "أدرج معرّف محتوى واحداً على الأقل."
+
+#: templates/Signals/detection.html
+msgid "Content ids must be positive whole numbers: %(bad)s"
+msgstr "يجب أن تكون معرّفات المحتوى أعداداً صحيحة موجبة: %(bad)s"
+
+#: templates/Signals/detection.html
+msgid "Confirm that every content should be analysed again."
+msgstr "أكّد أنه يجب تحليل كل محتوى من جديد."

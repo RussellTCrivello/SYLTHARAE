@@ -13854,3 +13854,207 @@ msgstr ""
 #: templates/auth/audit.html
 msgid "User id"
 msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Detection"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Which detector version analysed which content and with what outcome. Content that was never analysed is counted separately: it is not the same as content in which nothing was found."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "How detection is recorded"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Each content is analysed once by each detector, at ingestion or by re-detection. The run records the detector version, the outcome and the number of signals found."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Stale content was never analysed, was analysed by an older version (for places, an older gazetteer), or its last run failed. Re-detecting stale content analyses exactly these."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Re-detection runs as a background job and replaces the stored signals of each content it analyses. It is recorded in the audit log."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Coverage"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Current version"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Complete"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Truncated"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "No text"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Older version"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Never analysed"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Stale"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Re-detect"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Stale content only"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Listed content ids"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "All content"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Detectors"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Content ids (hash ids), separated by spaces, commas or new lines"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "I understand that this analyses every stored content again and replaces its signals."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Start re-detection"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Any version"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Any trigger"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Re-detection"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Content id"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Show runs"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Ran at"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Signals"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Characters scanned"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Any detector"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Any outcome"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "The current version cannot be determined (for places: no gazetteer is loaded). Every content counts as stale until it can."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "%(analysable)s contents have stored text; %(stale)s are stale for at least one detector. Exact counts from one database snapshot taken %(at)s."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Re-detect stale"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Nothing is stale."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "and %(count)s more"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "no file"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Showing %(from)s-%(to)s, newest first."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "More runs exist."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "No more runs."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "No runs match these filters."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "No content has been analysed yet."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "%(scanned)s of %(total)s"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Re-detection job %(id)s queued."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s. %(processed)s contents analysed, %(signals)s signals, %(failed)s failed."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Some runs failed; they are listed under Runs with their error."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Choose at least one detector."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "List at least one content id."
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Content ids must be positive whole numbers: %(bad)s"
+msgstr ""
+
+#: templates/Signals/detection.html
+msgid "Confirm that every content should be analysed again."
+msgstr ""

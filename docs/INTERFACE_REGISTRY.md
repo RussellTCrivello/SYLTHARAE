@@ -67,12 +67,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 ## Generated reference
 
 <!-- BEGIN GENERATED REGISTRY TABLE -->
-- Interfaces: **30** (features declared separately: **1**)
-- Endpoints owned: **71**
-- With a keyboard shortcut: **16**; with a help topic: **28**
-- By domain: ADMINISTRATION 2, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 2, REPORT 3, SETTINGS 3, WORK 1
-- By status: ACTIVE 29, DEPRECATED 1
-- By kind: INTERNAL 1, PAGE 28, SECTION 1
+- Interfaces: **31** (features declared separately: **1**)
+- Endpoints owned: **72**
+- With a keyboard shortcut: **17**; with a help topic: **29**
+- By domain: ADMINISTRATION 2, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 3, SETTINGS 3, WORK 1
+- By status: ACTIVE 30, DEPRECATED 1
+- By kind: INTERNAL 1, PAGE 29, SECTION 1
 
 
 ### WORK (1)
@@ -127,10 +127,11 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `reports` | Reports | REPORT | `reports_page` | — | any | on | `search`, `jobs` | report/reports | g r | ACTIVE |
 | `charts_dashboard` | Charts Dashboard | REPORT | `charts_dashboard` | — | any | on | `file_library` | report/charts | — | ACTIVE |
 
-### OPERATE (2)
+### OPERATE (3)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `detection` | Detection | OPERATE | `detection_page` | — | admin | on | `signal_horizon`, `jobs` | operate/detection | g d | ACTIVE |
 | `jobs` | Jobs | OPERATE | `operations_jobs_page` | `operations_job_detail_page` | any | on | — | operate/jobs | g j | ACTIVE |
 | `import_export_console` | Import/Export | OPERATE | `import_export_page` | — | admin | on | — | — | — | DEPRECATED |
 

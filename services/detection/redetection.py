@@ -30,6 +30,12 @@ from services.detection import signal_store
 logger = logging.getLogger(__name__)
 
 SCOPES = ("stale", "all", "hash_ids")
+
+#: Content the detectors can analyse: stored text in either table. Shared by
+#: the ``stale`` selection and by ``detection_status`` so that the count the
+#: interface shows is the set the job would process.
+HAS_TEXT = ("(EXISTS (SELECT 1 FROM contents_raw r WHERE r.hash_id = h.id)"
+            " OR EXISTS (SELECT 1 FROM contents c WHERE c.hash_id = h.id))")
 BATCH = 200
 
 
@@ -64,9 +70,7 @@ def _select_sql(scope: str, versions: Dict[str, Optional[str]]):
                 " ORDER BY hash_id LIMIT %s", ())
     if scope == "stale":
         clause, params = _stale_clause(versions)
-        return ("SELECT h.id FROM hashs h WHERE h.id > %s AND ("
-                " EXISTS (SELECT 1 FROM contents_raw r WHERE r.hash_id = h.id)"
-                " OR EXISTS (SELECT 1 FROM contents c WHERE c.hash_id = h.id)) AND " + clause +
+        return ("SELECT h.id FROM hashs h WHERE h.id > %s AND " + HAS_TEXT + " AND " + clause +
                 " ORDER BY h.id LIMIT %s", params)
     raise ValueError(f"scope must be one of {SCOPES}")
 

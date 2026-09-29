@@ -733,6 +733,30 @@
     "internal": true
   },
   {
+    "endpoint": "api_detection_runs",
+    "rule": "/api/signals/detection/runs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_detection_status",
+    "rule": "/api/signals/detection/status",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_email_words_all",
     "rule": "/api/email-words/all",
     "methods": [
@@ -2264,6 +2288,18 @@
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
+  },
+  {
+    "endpoint": "detection_page",
+    "rule": "/signals/detection",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "signals",
+    "classification": "USER_INTERFACE",
+    "owned_by": "detection",
+    "internal": false
   },
   {
     "endpoint": "dismiss_notification",

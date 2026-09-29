@@ -23,6 +23,14 @@
   ``signal_redetection`` job on the existing JobManager (no second job
   framework). Body: ``{"scope": "stale"|"all"|"hash_ids", "hash_ids": [...],
   "detectors": ["temporal", "places"]}`` (``detectors`` optional, default all).
+  Audited as ``signals.redetect``.
+* ``GET  /signals/detection`` - administrators: the Detection page.
+* ``GET  /api/signals/detection/status`` - administrators: per detector, the
+  current version, run counts by version and status, never-analysed and
+  stale counts (one snapshot, exact).
+* ``GET  /api/signals/detection/runs`` - administrators: run rows, newest
+  first; ``detector``, ``status``, ``trigger``, ``hash_id``, ``version``
+  (``current``/``older``/exact), ``limit`` <= 200, ``offset``.
 """
 
 import datetime
@@ -139,10 +147,68 @@ def register_signal_routes(app):
         except Exception:
             logger.exception("signal re-detection job creation failed")
             return _error("JOB_CREATE_FAILED", "Re-detection job could not be created", 500)
+        # Re-detection replaces stored signals: record who asked for what.
+        from core.security.service import get_auth_service
+
+        get_auth_service().audit(
+            "signals.redetect", user_id=getattr(user, "id", None),
+            username=getattr(user, "username", None),
+            resource=f"signal_redetection:{job['job_id']}",
+            detail={"scope": scope, "detectors": detectors,
+                    "hash_id_count": len(hash_ids) if hash_ids else None},
+            ip_address=request.remote_addr)
         if manager.synchronous:
             job = manager.get(job["job_id"])
             return jsonify({"success": True, "job": job_to_api(job)})
         return jsonify({"success": True, "job": job_to_api(job)}), 202
+
+    # ------------------------------------------------------------------
+    # Detection coverage and run history (administrators)
+    # ------------------------------------------------------------------
+
+    @app.route("/signals/detection", methods=["GET"])
+    @admin_required
+    def detection_page():
+        """Detection coverage, run history and re-detection (registry ``detection``)."""
+        from flask import render_template
+
+        from services.detection import detection_admin
+
+        return render_template("Signals/detection.html", page_data={
+            "detectors": list(detector_registry.NAMES),
+            "statuses": list(detection_admin.STATUSES),
+            "page_size": detection_admin.DEFAULT_LIMIT,
+            "max_hash_ids": MAX_REDETECT_IDS,
+        })
+
+    @app.route("/api/signals/detection/status", methods=["GET"])
+    @admin_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_detection_status():
+        from Api.utils.utils import get_connection
+        from services.detection import detection_admin
+
+        try:
+            with get_connection() as conn:
+                body = detection_admin.detection_status(conn)
+        except detection_admin.DetectionAdminError as exc:
+            return _error(exc.code, exc.message, exc.status)
+        return jsonify(dict(body, success=True))
+
+    @app.route("/api/signals/detection/runs", methods=["GET"])
+    @admin_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_detection_runs():
+        from Api.utils.utils import get_connection
+        from services.detection import detection_admin
+
+        try:
+            filters = detection_admin.parse_run_filters(request.args.to_dict(flat=True))
+            with get_connection() as conn:
+                body = detection_admin.list_runs(conn, filters)
+        except detection_admin.DetectionAdminError as exc:
+            return _error(exc.code, exc.message, exc.status)
+        return jsonify(dict(body, success=True))
 
     # ------------------------------------------------------------------
     # Signal Explorer and Horizon

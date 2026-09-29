@@ -46,8 +46,8 @@ document with what it writes.
 
 | Measurement | Count |
 | --- | --- |
-| Interfaces | 30 |
-| Navigable interfaces | 28 |
+| Interfaces | 31 |
+| Navigable interfaces | 29 |
 | Interfaces with a described screen | 5 |
 | Interfaces declaring no help topic | 2 |
 | Interfaces declaring no keyboard shortcut | 14 |
@@ -139,6 +139,7 @@ with the evidence.
 | `comprehensive_dashboard` | REPORT | `comprehensive_dashboard` | report/detailed-dashboard | Not declared | 0 |
 | `reports` | REPORT | `reports_page` | report/reports | g r | 0 |
 | `charts_dashboard` | REPORT | `charts_dashboard` | report/charts | Not declared | 0 |
+| `detection` | OPERATE | `detection_page` | operate/detection | g d | 0 |
 | `jobs` | OPERATE | `operations_jobs_page` | operate/jobs | g j | 0 |
 | `import_export_console` | OPERATE | `import_export_page` | Not declared | Not declared | 0 |
 | `users` | ADMINISTRATION | `users_page` | administration/users | g u | 0 |
@@ -156,8 +157,8 @@ with the evidence.
 | binding | 6 | 34 |
 | component | 20 | 20 |
 | execution | 29 | 34 |
-| help | 28 | 30 |
-| interface | 30 | 30 |
+| help | 29 | 31 |
+| interface | 31 | 31 |
 | permission | 34 | 34 |
 | scope | 34 | 34 |
 | state | 34 | 34 |

@@ -11348,3 +11348,207 @@ msgstr "רשומה"
 #: templates/auth/audit.html
 msgid "User id"
 msgstr "מזהה משתמש"
+
+#: templates/Signals/detection.html
+msgid "Detection"
+msgstr "זיהוי"
+
+#: templates/Signals/detection.html
+msgid "Which detector version analysed which content and with what outcome. Content that was never analysed is counted separately: it is not the same as content in which nothing was found."
+msgstr "איזו גרסת גלאי ניתחה איזה תוכן ובאיזו תוצאה. תוכן שמעולם לא נותח נספר בנפרד: הוא אינו זהה לתוכן שבו לא נמצא דבר."
+
+#: templates/Signals/detection.html
+msgid "How detection is recorded"
+msgstr "כיצד הזיהוי מתועד"
+
+#: templates/Signals/detection.html
+msgid "Each content is analysed once by each detector, at ingestion or by re-detection. The run records the detector version, the outcome and the number of signals found."
+msgstr "כל תוכן מנותח פעם אחת בכל גלאי, בעת הקליטה או בזיהוי מחדש. ההרצה מתעדת את גרסת הגלאי, את התוצאה ואת מספר האותות שנמצאו."
+
+#: templates/Signals/detection.html
+msgid "Stale content was never analysed, was analysed by an older version (for places, an older gazetteer), or its last run failed. Re-detecting stale content analyses exactly these."
+msgstr "תוכן מיושן לא נותח מעולם, נותח בגרסה ישנה יותר (למקומות: מילון גאוגרפי ישן יותר), או שההרצה האחרונה שלו נכשלה. זיהוי מחדש של תוכן מיושן מנתח בדיוק את אלה."
+
+#: templates/Signals/detection.html
+msgid "Re-detection runs as a background job and replaces the stored signals of each content it analyses. It is recorded in the audit log."
+msgstr "זיהוי מחדש רץ כמשימת רקע ומחליף את האותות השמורים של כל תוכן שהוא מנתח. הוא מתועד ביומן הביקורת."
+
+#: templates/Signals/detection.html
+msgid "Coverage"
+msgstr "כיסוי"
+
+#: templates/Signals/detection.html
+msgid "Current version"
+msgstr "הגרסה הנוכחית"
+
+#: templates/Signals/detection.html
+msgid "Complete"
+msgstr "הושלם"
+
+#: templates/Signals/detection.html
+msgid "Truncated"
+msgstr "קוצר"
+
+#: templates/Signals/detection.html
+msgid "No text"
+msgstr "אין טקסט"
+
+#: templates/Signals/detection.html
+msgid "Older version"
+msgstr "גרסה ישנה יותר"
+
+#: templates/Signals/detection.html
+msgid "Never analysed"
+msgstr "מעולם לא נותח"
+
+#: templates/Signals/detection.html
+msgid "Stale"
+msgstr "מיושן"
+
+#: templates/Signals/detection.html
+msgid "Re-detect"
+msgstr "זיהוי מחדש"
+
+#: templates/Signals/detection.html
+msgid "Stale content only"
+msgstr "תוכן מיושן בלבד"
+
+#: templates/Signals/detection.html
+msgid "Listed content ids"
+msgstr "מזהי התוכן הרשומים"
+
+#: templates/Signals/detection.html
+msgid "All content"
+msgstr "כל התוכן"
+
+#: templates/Signals/detection.html
+msgid "Detectors"
+msgstr "גלאים"
+
+#: templates/Signals/detection.html
+msgid "Content ids (hash ids), separated by spaces, commas or new lines"
+msgstr "מזהי תוכן (מזהי גיבוב), מופרדים ברווחים, בפסיקים או בשורות חדשות"
+
+#: templates/Signals/detection.html
+msgid "I understand that this analyses every stored content again and replaces its signals."
+msgstr "אני מבין/ה שפעולה זו מנתחת מחדש כל תוכן שמור ומחליפה את האותות שלו."
+
+#: templates/Signals/detection.html
+msgid "Start re-detection"
+msgstr "התחל זיהוי מחדש"
+
+#: templates/Signals/detection.html
+msgid "Any version"
+msgstr "כל גרסה"
+
+#: templates/Signals/detection.html
+msgid "Any trigger"
+msgstr "כל מקור הפעלה"
+
+#: templates/Signals/detection.html
+msgid "Re-detection"
+msgstr "זיהוי מחדש"
+
+#: templates/Signals/detection.html
+msgid "Content id"
+msgstr "מזהה תוכן"
+
+#: templates/Signals/detection.html
+msgid "Show runs"
+msgstr "הצג הרצות"
+
+#: templates/Signals/detection.html
+msgid "Ran at"
+msgstr "הורץ ב־"
+
+#: templates/Signals/detection.html
+msgid "Signals"
+msgstr "אותות"
+
+#: templates/Signals/detection.html
+msgid "Characters scanned"
+msgstr "תווים שנסרקו"
+
+#: templates/Signals/detection.html
+msgid "Any detector"
+msgstr "כל גלאי"
+
+#: templates/Signals/detection.html
+msgid "Any outcome"
+msgstr "כל תוצאה"
+
+#: templates/Signals/detection.html
+msgid "The current version cannot be determined (for places: no gazetteer is loaded). Every content counts as stale until it can."
+msgstr "לא ניתן לקבוע את הגרסה הנוכחית (למקומות: לא נטען מילון גאוגרפי). כל תוכן נחשב מיושן עד שיהיה אפשר."
+
+#: templates/Signals/detection.html
+msgid "%(analysable)s contents have stored text; %(stale)s are stale for at least one detector. Exact counts from one database snapshot taken %(at)s."
+msgstr "ל־%(analysable)s תכנים יש טקסט שמור; %(stale)s מיושנים לפחות עבור גלאי אחד. ספירות מדויקות מתמונת מצב אחת של מסד הנתונים שנלקחה ב־%(at)s."
+
+#: templates/Signals/detection.html
+msgid "Re-detect stale"
+msgstr "זהה מחדש את המיושנים"
+
+#: templates/Signals/detection.html
+msgid "Nothing is stale."
+msgstr "אין דבר מיושן."
+
+#: templates/Signals/detection.html
+msgid "and %(count)s more"
+msgstr "ועוד %(count)s"
+
+#: templates/Signals/detection.html
+msgid "no file"
+msgstr "אין קובץ"
+
+#: templates/Signals/detection.html
+msgid "Showing %(from)s-%(to)s, newest first."
+msgstr "מוצגים %(from)s-%(to)s, החדשים ראשונים."
+
+#: templates/Signals/detection.html
+msgid "More runs exist."
+msgstr "קיימות הרצות נוספות."
+
+#: templates/Signals/detection.html
+msgid "No more runs."
+msgstr "אין הרצות נוספות."
+
+#: templates/Signals/detection.html
+msgid "No runs match these filters."
+msgstr "אין הרצות התואמות למסננים אלה."
+
+#: templates/Signals/detection.html
+msgid "No content has been analysed yet."
+msgstr "עדיין לא נותח שום תוכן."
+
+#: templates/Signals/detection.html
+msgid "%(scanned)s of %(total)s"
+msgstr "%(scanned)s מתוך %(total)s"
+
+#: templates/Signals/detection.html
+msgid "Re-detection job %(id)s queued."
+msgstr "משימת הזיהוי מחדש %(id)s נכנסה לתור."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s. %(processed)s contents analysed, %(signals)s signals, %(failed)s failed."
+msgstr "משימה %(id)s: %(status)s. נותחו %(processed)s תכנים, %(signals)s אותות, %(failed)s נכשלו."
+
+#: templates/Signals/detection.html
+msgid "Some runs failed; they are listed under Runs with their error."
+msgstr "חלק מההרצות נכשלו; הן מופיעות תחת «הרצות» עם השגיאה שלהן."
+
+#: templates/Signals/detection.html
+msgid "Choose at least one detector."
+msgstr "בחרו לפחות גלאי אחד."
+
+#: templates/Signals/detection.html
+msgid "List at least one content id."
+msgstr "ציינו לפחות מזהה תוכן אחד."
+
+#: templates/Signals/detection.html
+msgid "Content ids must be positive whole numbers: %(bad)s"
+msgstr "מזהי תוכן חייבים להיות מספרים שלמים חיוביים: %(bad)s"
+
+#: templates/Signals/detection.html
+msgid "Confirm that every content should be analysed again."
+msgstr "אשרו שיש לנתח מחדש כל תוכן."

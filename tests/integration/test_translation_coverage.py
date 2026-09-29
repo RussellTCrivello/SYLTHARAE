@@ -64,6 +64,7 @@ INTERFACE_TEMPLATES = (
     "templates/Monitoring/monitoring.html",
     "templates/Reports/reports.html",
     "templates/auth/audit.html",
+    "templates/Signals/detection.html",
 )
 
 #: The page modules whose strings reach the user through window.t().

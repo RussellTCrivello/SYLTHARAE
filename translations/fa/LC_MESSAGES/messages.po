@@ -11644,3 +11644,207 @@ msgstr "ورودی"
 #: templates/auth/audit.html
 msgid "User id"
 msgstr "شناسه کاربر"
+
+#: templates/Signals/detection.html
+msgid "Detection"
+msgstr "تشخیص"
+
+#: templates/Signals/detection.html
+msgid "Which detector version analysed which content and with what outcome. Content that was never analysed is counted separately: it is not the same as content in which nothing was found."
+msgstr "کدام نسخهٔ آشکارساز کدام محتوا را با چه نتیجه‌ای تحلیل کرد. محتوایی که هرگز تحلیل نشده جداگانه شمرده می‌شود: این با محتوایی که در آن چیزی یافت نشده یکسان نیست."
+
+#: templates/Signals/detection.html
+msgid "How detection is recorded"
+msgstr "تشخیص چگونه ثبت می‌شود"
+
+#: templates/Signals/detection.html
+msgid "Each content is analysed once by each detector, at ingestion or by re-detection. The run records the detector version, the outcome and the number of signals found."
+msgstr "هر محتوا یک بار توسط هر آشکارساز، هنگام دریافت یا با تشخیص دوباره، تحلیل می‌شود. اجرا نسخهٔ آشکارساز، نتیجه و تعداد سیگنال‌های یافته‌شده را ثبت می‌کند."
+
+#: templates/Signals/detection.html
+msgid "Stale content was never analysed, was analysed by an older version (for places, an older gazetteer), or its last run failed. Re-detecting stale content analyses exactly these."
+msgstr "محتوای کهنه هرگز تحلیل نشده، با نسخه‌ای قدیمی‌تر تحلیل شده (برای مکان‌ها: جای‌نامه‌ای قدیمی‌تر) یا آخرین اجرای آن شکست خورده است. تشخیص دوبارهٔ محتوای کهنه دقیقاً همین‌ها را تحلیل می‌کند."
+
+#: templates/Signals/detection.html
+msgid "Re-detection runs as a background job and replaces the stored signals of each content it analyses. It is recorded in the audit log."
+msgstr "تشخیص دوباره به‌صورت کار پس‌زمینه اجرا می‌شود و سیگنال‌های ذخیره‌شدهٔ هر محتوایی را که تحلیل می‌کند جایگزین می‌کند. در گزارش حسابرسی ثبت می‌شود."
+
+#: templates/Signals/detection.html
+msgid "Coverage"
+msgstr "پوشش"
+
+#: templates/Signals/detection.html
+msgid "Current version"
+msgstr "نسخهٔ کنونی"
+
+#: templates/Signals/detection.html
+msgid "Complete"
+msgstr "کامل"
+
+#: templates/Signals/detection.html
+msgid "Truncated"
+msgstr "بریده‌شده"
+
+#: templates/Signals/detection.html
+msgid "No text"
+msgstr "بدون متن"
+
+#: templates/Signals/detection.html
+msgid "Older version"
+msgstr "نسخهٔ قدیمی‌تر"
+
+#: templates/Signals/detection.html
+msgid "Never analysed"
+msgstr "هرگز تحلیل نشده"
+
+#: templates/Signals/detection.html
+msgid "Stale"
+msgstr "کهنه"
+
+#: templates/Signals/detection.html
+msgid "Re-detect"
+msgstr "تشخیص دوباره"
+
+#: templates/Signals/detection.html
+msgid "Stale content only"
+msgstr "فقط محتوای کهنه"
+
+#: templates/Signals/detection.html
+msgid "Listed content ids"
+msgstr "شناسه‌های محتوای فهرست‌شده"
+
+#: templates/Signals/detection.html
+msgid "All content"
+msgstr "همهٔ محتوا"
+
+#: templates/Signals/detection.html
+msgid "Detectors"
+msgstr "آشکارسازها"
+
+#: templates/Signals/detection.html
+msgid "Content ids (hash ids), separated by spaces, commas or new lines"
+msgstr "شناسه‌های محتوا (شناسه‌های درهم‌ساز)، جداشده با فاصله، ویرگول یا خط جدید"
+
+#: templates/Signals/detection.html
+msgid "I understand that this analyses every stored content again and replaces its signals."
+msgstr "می‌دانم که این کار هر محتوای ذخیره‌شده را دوباره تحلیل و سیگنال‌هایش را جایگزین می‌کند."
+
+#: templates/Signals/detection.html
+msgid "Start re-detection"
+msgstr "آغاز تشخیص دوباره"
+
+#: templates/Signals/detection.html
+msgid "Any version"
+msgstr "هر نسخه‌ای"
+
+#: templates/Signals/detection.html
+msgid "Any trigger"
+msgstr "هر محرکی"
+
+#: templates/Signals/detection.html
+msgid "Re-detection"
+msgstr "تشخیص دوباره"
+
+#: templates/Signals/detection.html
+msgid "Content id"
+msgstr "شناسهٔ محتوا"
+
+#: templates/Signals/detection.html
+msgid "Show runs"
+msgstr "نمایش اجراها"
+
+#: templates/Signals/detection.html
+msgid "Ran at"
+msgstr "زمان اجرا"
+
+#: templates/Signals/detection.html
+msgid "Signals"
+msgstr "سیگنال‌ها"
+
+#: templates/Signals/detection.html
+msgid "Characters scanned"
+msgstr "نویسه‌های پویش‌شده"
+
+#: templates/Signals/detection.html
+msgid "Any detector"
+msgstr "هر آشکارسازی"
+
+#: templates/Signals/detection.html
+msgid "Any outcome"
+msgstr "هر نتیجه‌ای"
+
+#: templates/Signals/detection.html
+msgid "The current version cannot be determined (for places: no gazetteer is loaded). Every content counts as stale until it can."
+msgstr "نسخهٔ کنونی قابل تعیین نیست (برای مکان‌ها: هیچ جای‌نامه‌ای بارگذاری نشده). تا زمانی که ممکن شود، هر محتوا کهنه به شمار می‌آید."
+
+#: templates/Signals/detection.html
+msgid "%(analysable)s contents have stored text; %(stale)s are stale for at least one detector. Exact counts from one database snapshot taken %(at)s."
+msgstr "%(analysable)s محتوا متن ذخیره‌شده دارند؛ %(stale)s برای دست‌کم یک آشکارساز کهنه‌اند. شمارش‌های دقیق از یک تصویر پایگاه داده که در %(at)s گرفته شد."
+
+#: templates/Signals/detection.html
+msgid "Re-detect stale"
+msgstr "تشخیص دوبارهٔ کهنه‌ها"
+
+#: templates/Signals/detection.html
+msgid "Nothing is stale."
+msgstr "هیچ چیز کهنه نیست."
+
+#: templates/Signals/detection.html
+msgid "and %(count)s more"
+msgstr "و %(count)s مورد دیگر"
+
+#: templates/Signals/detection.html
+msgid "no file"
+msgstr "بدون پرونده"
+
+#: templates/Signals/detection.html
+msgid "Showing %(from)s-%(to)s, newest first."
+msgstr "نمایش %(from)s-%(to)s، جدیدترین اول."
+
+#: templates/Signals/detection.html
+msgid "More runs exist."
+msgstr "اجراهای بیشتری وجود دارد."
+
+#: templates/Signals/detection.html
+msgid "No more runs."
+msgstr "اجرای دیگری نیست."
+
+#: templates/Signals/detection.html
+msgid "No runs match these filters."
+msgstr "هیچ اجرایی با این پالایه‌ها مطابقت ندارد."
+
+#: templates/Signals/detection.html
+msgid "No content has been analysed yet."
+msgstr "هنوز هیچ محتوایی تحلیل نشده است."
+
+#: templates/Signals/detection.html
+msgid "%(scanned)s of %(total)s"
+msgstr "%(scanned)s از %(total)s"
+
+#: templates/Signals/detection.html
+msgid "Re-detection job %(id)s queued."
+msgstr "کار تشخیص دوبارهٔ %(id)s در صف قرار گرفت."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s. %(processed)s contents analysed, %(signals)s signals, %(failed)s failed."
+msgstr "کار %(id)s: %(status)s. %(processed)s محتوا تحلیل شد، %(signals)s سیگنال، %(failed)s ناموفق."
+
+#: templates/Signals/detection.html
+msgid "Some runs failed; they are listed under Runs with their error."
+msgstr "برخی اجراها شکست خوردند؛ آن‌ها با خطایشان زیر «اجراها» فهرست شده‌اند."
+
+#: templates/Signals/detection.html
+msgid "Choose at least one detector."
+msgstr "دست‌کم یک آشکارساز انتخاب کنید."
+
+#: templates/Signals/detection.html
+msgid "List at least one content id."
+msgstr "دست‌کم یک شناسهٔ محتوا فهرست کنید."
+
+#: templates/Signals/detection.html
+msgid "Content ids must be positive whole numbers: %(bad)s"
+msgstr "شناسه‌های محتوا باید عدد صحیح مثبت باشند: %(bad)s"
+
+#: templates/Signals/detection.html
+msgid "Confirm that every content should be analysed again."
+msgstr "تأیید کنید که هر محتوا باید دوباره تحلیل شود."
