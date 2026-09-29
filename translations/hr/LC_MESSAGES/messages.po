@@ -12467,3 +12467,57 @@ msgstr "Trenutačna vrijednost"
 msgid "Revision"
 msgstr "Revizija"
 
+# --- Scenario Outcome report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Scenario Outcome Report"
+msgstr "Izvještaj ishoda scenarija"
+
+#: core/reporting/definitions.py
+msgid "Every decision one scenario has recorded, newest first: which contents it classified, into which outcomes, through which cases, what changed against the previous evaluation, and how each result was delivered. The scenario's outcomes are readable by its owner and by administrators; everyone else is refused before anything is read."
+msgstr "Svaka odluka koju je jedan scenarij zabilježio, najnovije prve: koje je sadržaje razvrstao, u koje ishode, kroz koje slučajeve, što se promijenilo u odnosu na prethodnu procjenu i kako je svaki ishod dostavljen. Ishode scenarija čita njegov vlasnik i administratori; svi ostali odbijaju se prije nego što se išta pročita."
+
+#: core/reporting/definitions.py
+msgid "About the Scenario Outcome Report"
+msgstr "O izvještaju ishoda scenarija"
+
+#: core/reporting/definitions.py
+msgid "Shows what one scenario decided: per content, the outcomes it was classified into, the cases that matched, what its previous outcomes were, and whether the result was only recorded or also notified, with the derived priority and its basis. History is never overwritten - each evaluation's results stay exactly as they were recorded. A scenario's outcomes are visible to its owner and to administrators."
+msgstr "Prikazuje što je jedan scenarij odlučio: po sadržaju, u koje je ishode razvrstao, koji su se slučaji podudarali, koji su mu bili prethodni ishodi, te je li ishod samo zabilježen ili je poslana i obavijest, s izvedenim prioritetom i njegovom osnovom. Povijest se nikada ne prepisuje - rezultati svake procjene ostaju točno onakvi kakvi su zabilježeni. Ishodi scenarija vidljivi su njegovom vlasniku i administratorima."
+
+#: core/reporting/datasets.py
+msgid "Outcome ID"
+msgstr "ID ishoda"
+
+#: core/reporting/datasets.py
+msgid "Scenario"
+msgstr "Scenarij"
+
+#: core/reporting/datasets.py
+msgid "Scenario version"
+msgstr "Verzija scenarija"
+
+#: core/reporting/datasets.py
+msgid "Evaluation ID"
+msgstr "ID procjene"
+
+#: core/reporting/datasets.py
+msgid "Evaluated at"
+msgstr "Vrijeme procjene"
+
+#: core/reporting/datasets.py
+msgid "Outcomes"
+msgstr "Ishodi"
+
+#: core/reporting/datasets.py
+msgid "Matched cases"
+msgstr "Podudarni slučajevi"
+
+#: core/reporting/datasets.py
+msgid "Previous outcomes"
+msgstr "Prethodni ishodi"
+
+#: core/reporting/datasets.py
+msgid "Recorded at"
+msgstr "Vrijeme zabilježbe"
+

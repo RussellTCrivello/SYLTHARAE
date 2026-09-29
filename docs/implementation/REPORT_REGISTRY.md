@@ -137,6 +137,7 @@ tracked, so it ships in the `git archive` release anyway.
 | `relationship@1` | context | admin, analyst, viewer | `relationship.contexts@1` (capped 5000, most cross-posted first) |
 | `latest@1` | path | admin, analyst, viewer | `latest.entries@1` (capped 5000, newest first; read per viewer - every row states this reader's view state, and running it advances the reader's baseline) |
 | `change@1` | path | admin, analyst, viewer | `change.added@1` + `change.modified@1` + `change.removed@1` (each capped 5000; read per viewer against one shared watermark - added from the ingestion date, modified/removed from the revision log with previous and current values) |
+| `scenario_outcome@1` | scenario_outcome | admin, analyst, viewer | `scenario.outcomes@1` (capped 5000, newest event first; owner-scoped - the owner and admins read, everyone else refused before retrieval) |
 
 `search_results@1` is the registry's reference definition: it needs no
 analytics and reuses the compiler end to end. The two step-17 families read
@@ -186,8 +187,17 @@ the same reader progress, so "what changed since you last looked" answers
 for the set you looked at, however you looked at it. No removal operation
 exists yet, so an empty removed list is today's honest measurement; the
 log and its report are ready for the operation that will record removals.
-The remaining catalog families (Scenario Outcome, Comprehensive) are added
-only when their datasets exist and are verified.
+The Scenario Outcome family reads the append-only ``scenario_outcomes``
+log with the engine's own delivery and priority facts. The per-scenario
+access decision is declared on the definition (``access_control``) and
+enforced twice: the runner refuses a non-owner at submission - before
+anything is read or recorded, the same rule the saved-search check
+applies - and the dataset's ``{owner}`` predicate (a declarative access
+mechanism beside criteria, scope and the viewer tokens) repeats the rule
+in SQL, so a future consumer cannot forget it. Admins read every
+scenario; the reader's source scope applies on top. The remaining catalog
+family (Comprehensive) is added only when its dataset exists and is
+verified (step 23).
 
 ## Evidence
 
@@ -273,6 +283,18 @@ only when their datasets exist and are verified.
   the run shows it; an empty view records viewed-with-nothing, not zero.
   Over HTTP: rename through the file operation is visible to the report,
   and the next run marks it seen.
+* Scenario Outcome (step 17): `test_report_catalog_scenario_outcome.py`
+  (12): the access decision is declared on the definition, the ownership
+  predicate is bound (never interpolated), previous outcomes and priority
+  are nullable (unknown, not low/zero), a scope without a reader is
+  refused. PG (registry suite, 30): the owner and admins read the
+  history; another reader gets nothing; outcomes arrive as structured
+  JSON; the transition row carries its previous outcomes; baseline rows
+  carry no derived priority; the newest event first, across evaluations.
+  PG (runs suite, 16): the owner's run completes with no baseline block;
+  a non-owner is refused at submission with no run recorded; a
+  nonexistent scenario is a validation error. Over HTTP: owner reads,
+  another analyst gets 403 at submission, admin reads.
 ## Limitations
 
 * **Nullability is checked empirically.** Tests assert that no NULL appears

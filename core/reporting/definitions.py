@@ -203,6 +203,28 @@ CHANGE_V1 = ReportDefinition(
     datasets=("change.added@1", "change.modified@1", "change.removed@1"),
 )
 
+SCENARIO_OUTCOME_V1 = ReportDefinition(
+    report_id="scenario_outcome",
+    version=1,
+    title="Scenario Outcome Report",
+    description="Every decision one scenario has recorded, newest first: "
+                "which contents it classified, into which outcomes, "
+                "through which cases, what changed against the previous "
+                "evaluation, and how each result was delivered. The "
+                "scenario's outcomes are readable by its owner and by "
+                "administrators; everyone else is refused before anything "
+                "is read.",
+    help_topic="reports/scenario-outcome",
+    unit="scenario_outcome",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("scenario_id", "integer", "Scenario", required=True,
+                  minimum=1),
+    ),
+    datasets=("scenario.outcomes@1",),
+    access_control="scenario_owner",
+)
+
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
@@ -214,6 +236,7 @@ REPORTS: Tuple[ReportDefinition, ...] = (
     RELATIONSHIP_V1,
     LATEST_V1,
     CHANGE_V1,
+    SCENARIO_OUTCOME_V1,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
@@ -262,6 +285,18 @@ HELP_TOPICS: Tuple[HelpTopic, ...] = (
                 "reference date you choose: overdue, this week, this month, "
                 "this quarter, and later. Undated references and purely "
                 "past mentions are not part of the horizon.",
+    ),
+    HelpTopic(
+        topic="reports/scenario-outcome",
+        title="About the Scenario Outcome Report",
+        summary="Shows what one scenario decided: per content, the "
+                "outcomes it was classified into, the cases that matched, "
+                "what its previous outcomes were, and whether the result "
+                "was only recorded or also notified, with the derived "
+                "priority and its basis. History is never overwritten - "
+                "each evaluation's results stay exactly as they were "
+                "recorded. A scenario's outcomes are visible to its owner "
+                "and to administrators.",
     ),
     HelpTopic(
         topic="reports/change",

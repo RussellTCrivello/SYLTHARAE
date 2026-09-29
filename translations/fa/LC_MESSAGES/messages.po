@@ -12349,3 +12349,57 @@ msgstr "مقدار فعلی"
 msgid "Revision"
 msgstr "بازبینی"
 
+# --- Scenario Outcome report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Scenario Outcome Report"
+msgstr "گزارش نتایج سناریو"
+
+#: core/reporting/definitions.py
+msgid "Every decision one scenario has recorded, newest first: which contents it classified, into which outcomes, through which cases, what changed against the previous evaluation, and how each result was delivered. The scenario's outcomes are readable by its owner and by administrators; everyone else is refused before anything is read."
+msgstr "هر تصمیمی که یک سناریو ثبت کرده، جدیدترین اول: کدام محتواها را طبقه‌بندی کرده، به کدام نتایج، از طریق کدام پرونده‌ها، چه چیزی نسبت به ارزیابی قبلی تغییر کرده، و هر نتیجه چگونه تحویل داده شده است. نتایج سناریو را مالک آن و مدیران می‌خوانند؛ دیگران پیش از خواندن هر چیزی رد می‌شوند."
+
+#: core/reporting/definitions.py
+msgid "About the Scenario Outcome Report"
+msgstr "درباره گزارش نتایج سناریو"
+
+#: core/reporting/definitions.py
+msgid "Shows what one scenario decided: per content, the outcomes it was classified into, the cases that matched, what its previous outcomes were, and whether the result was only recorded or also notified, with the derived priority and its basis. History is never overwritten - each evaluation's results stay exactly as they were recorded. A scenario's outcomes are visible to its owner and to administrators."
+msgstr "نشان می‌دهد یک سناریو چه تصمیمی گرفت: برای هر محتوا، به کدام نتایج طبقه‌بندی شد، کدام پرونده‌ها منطبق بودند، نتایج قبلی‌اش چه بود، و آیا نتیجه فقط ثبت شد یا اعلان هم فرستاده شد، با اولویت مشتق‌شده و مبنای آن. تاریخچه هرگز بازنویسی نمی‌شود - نتایج هر ارزیابی دقیقاً همان‌طور که ثبت شده باقی می‌ماند. نتایج یک سناریو برای مالک و مدیران دیده می‌شود."
+
+#: core/reporting/datasets.py
+msgid "Outcome ID"
+msgstr "شناسه نتیجه"
+
+#: core/reporting/datasets.py
+msgid "Scenario"
+msgstr "سناریو"
+
+#: core/reporting/datasets.py
+msgid "Scenario version"
+msgstr "نسخه سناریو"
+
+#: core/reporting/datasets.py
+msgid "Evaluation ID"
+msgstr "شناسه ارزیابی"
+
+#: core/reporting/datasets.py
+msgid "Evaluated at"
+msgstr "زمان ارزیابی"
+
+#: core/reporting/datasets.py
+msgid "Outcomes"
+msgstr "نتایج"
+
+#: core/reporting/datasets.py
+msgid "Matched cases"
+msgstr "پرونده‌های منطبق"
+
+#: core/reporting/datasets.py
+msgid "Previous outcomes"
+msgstr "نتایج قبلی"
+
+#: core/reporting/datasets.py
+msgid "Recorded at"
+msgstr "زمان ثبت"
+

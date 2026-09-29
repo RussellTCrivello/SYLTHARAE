@@ -478,3 +478,80 @@ class TestOverHttp:
                       "/datasets/change.modified@1?limit=10").get_json()
         assert page2["rows"] == [], (
             "the reader's watermark marked the event seen")
+
+    def test_scenario_outcome_owner_reads_and_others_are_refused(
+            self, app, corpus, sync_jobs, pg_db):
+        """Over HTTP: the owner runs the report and reads its rows; another
+        analyst gets 403 at submission; an admin reads everything."""
+        from _seed import connect as _connect
+
+        conn = _connect(pg_db)
+        from core.security.service import get_auth_service
+        password = "kat-scenario-password-123"
+        owner_username = f"kat_sc_owner_{corpus['tag']}"
+        get_auth_service().create_user(owner_username, password, role="analyst")
+        with conn, conn.cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE username = %s",
+                        (owner_username,))
+            owner_id = cur.fetchone()[0]
+            cur.execute(
+                "INSERT INTO scenarios (owner_user_id, name, version,"
+                " definition, definition_fingerprint, status)"
+                " VALUES (%s, %s, 1, '{}'::jsonb,"
+                " encode(sha256(%s::bytea), 'hex')::char(64), 'paused')"
+                " RETURNING id",
+                (owner_id, f"kat_scenario_{corpus['tag']}",
+                 f"kat_scenario_{corpus['tag']}".encode()))
+            scenario_id = cur.fetchone()[0]
+            cur.execute(
+                "INSERT INTO scenario_evaluations (scenario_id,"
+                " scenario_version, kind, trigger, status,"
+                " definition_fingerprint, reference_date, evaluated_at,"
+                " counts) VALUES (%s, 1, 'evaluation', 'manual',"
+                " 'completed', encode(sha256(%s::bytea), 'hex')::char(64),"
+                " CURRENT_DATE, NOW(), '{}'::jsonb) RETURNING id",
+                (scenario_id, f"kat_eval_{corpus['tag']}".encode()))
+            evaluation_id = cur.fetchone()[0]
+            cur.execute(
+                "INSERT INTO scenario_outcomes (scenario_id, evaluation_id,"
+                " scenario_version, hash_id, outcomes, matched_cases,"
+                " delivery, priority, priority_basis, recorded_at)"
+                " SELECT %s, %s, 1, hc.hash_id, '{watch}', '{escalate}',"
+                " 'notified', 'high', '{}'::jsonb, NOW()"
+                " FROM hash_contexts hc LIMIT 1",
+                (scenario_id, evaluation_id))
+        conn.close()
+
+        c_owner = app.test_client()
+        assert c_owner.post("/auth/login", json={
+            "username": owner_username, "password": password}).status_code == 200
+        resp = _post(c_owner, "/api/reports/runs",
+                     {"report_id": "scenario_outcome",
+                      "parameters": {"scenario_id": scenario_id}})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        run = resp.get_json()["run"]
+        page = c_owner.get(f"/api/reports/runs/{run['id']}"
+                           "/datasets/scenario.outcomes@1").get_json()
+        assert page["row_count"] == 1
+        assert page["rows"][0]["outcomes"] == ["watch"]
+        assert page["rows"][0]["delivery"] == "notified"
+        assert page["rows"][0]["priority"] is not None
+
+        # Another analyst: refused at submission, before anything runs.
+        c_other, _ = _login_new(app, "analyst")
+        resp = _post(c_other, "/api/reports/runs",
+                     {"report_id": "scenario_outcome",
+                      "parameters": {"scenario_id": scenario_id}})
+        assert resp.status_code == 403, resp.get_data(as_text=True)
+        assert "do not have access" in resp.get_data(as_text=True)
+
+        # An admin reads everything.
+        c_admin, _ = _login_new(app, "admin")
+        resp = _post(c_admin, "/api/reports/runs",
+                     {"report_id": "scenario_outcome",
+                      "parameters": {"scenario_id": scenario_id}})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        run = resp.get_json()["run"]
+        page = c_admin.get(f"/api/reports/runs/{run['id']}"
+                           "/datasets/scenario.outcomes@1").get_json()
+        assert page["row_count"] == 1

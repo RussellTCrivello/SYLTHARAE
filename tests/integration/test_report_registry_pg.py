@@ -149,6 +149,47 @@ def corpus(pg_db, app):
                                     text="ignored", hash_id=tie_hash,
                                     file_date=datetime.date(2026, 1, 2))
         paths[s2].append(tie_x_path)
+        # Scenario corpus: one scenario (owner = the bootstrap admin, so
+        # the shape test's user-1 binding sees it), one completed
+        # evaluation, and outcomes across the delivery states - including
+        # one transition with previous outcomes.
+        cur.execute(
+            "INSERT INTO users (username, password_hash, role)"
+            " VALUES (%s, 'x', 'admin') RETURNING id",
+            (f"rs_admin_{tag}",))
+        admin_user = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO scenarios (owner_user_id, name, version, definition,"
+            " definition_fingerprint, status)"
+            " VALUES (%s, %s, 1, '{}'::jsonb,"
+            " encode(sha256(%s::bytea), 'hex')::char(64), 'paused')"
+            " RETURNING id",
+            (admin_user, f"seed_scenario_{tag}",
+             f"seed_scenario_{tag}".encode()))
+        scenario_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO scenario_evaluations (scenario_id, scenario_version,"
+            " kind, trigger, status, definition_fingerprint, reference_date,"
+            " evaluated_at, counts)"
+            " VALUES (%s, 1, 'evaluation', 'manual', 'completed',"
+            " sha256(%s::bytea)::text::char(64), CURRENT_DATE, NOW(),"
+            " '{}'::jsonb) RETURNING id", (scenario_id, f"eval-{tag}".encode()))
+        evaluation_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO scenario_outcomes (scenario_id, evaluation_id,"
+            " scenario_version, hash_id, outcomes, matched_cases,"
+            " previous_outcomes, delivery, priority, priority_basis,"
+            " recorded_at)"
+            " VALUES (%s, %s, 1, %s, '{watch}', '{escalate}', '{none}',"
+            " 'notified', 'high', '{}'::jsonb, NOW())",
+            (scenario_id, evaluation_id, matched_hashes[0]))
+        cur.execute(
+            "INSERT INTO scenario_outcomes (scenario_id, evaluation_id,"
+            " scenario_version, hash_id, outcomes, matched_cases, delivery,"
+            " recorded_at)"
+            " VALUES (%s, %s, 1, %s, '{none}', '{}', 'baseline', NOW())",
+            (scenario_id, evaluation_id, matched_hashes[1]))
+
         # Change corpus: recorded modification history (migration 0029)
         # on two matched occurrences. previous/current values mirror the
         # rename writer's shape; changed_at is NOW() by default.
@@ -224,7 +265,8 @@ def corpus(pg_db, app):
              _hashlib.sha256(f"{tag}-place-unres".encode()).hexdigest()))
     yield {"conn": conn, "word": word, "tag": tag, "s1": s1, "s2": s2,
            "paths": paths, "cat_a": cat_a, "cat_b": cat_b,
-           "keyword_id": keyword_id}
+           "keyword_id": keyword_id, "scenario_id": scenario_id,
+           "evaluation_id": evaluation_id, "admin_user": admin_user}
     conn.close()
 
 
@@ -246,12 +288,17 @@ def test_every_dataset_executes_with_its_declared_shape(corpus, key):
     report = next(r for r in REGISTRY.reports if key in r.datasets)
     extra = ({"as_of": "2026-01-10"}
              if any(p.name == "as_of" for p in report.parameters) else {})
-    values = report.normalize_parameters(
-        {"criteria": {"text": corpus["word"]}, **extra})
+    if any(p.name == "criteria" for p in report.parameters):
+        supplied = {"criteria": {"text": corpus["word"]}}
+    elif any(p.name == "scenario_id" for p in report.parameters):
+        supplied = {"scenario_id": corpus["scenario_id"]}
+    else:
+        supplied = {}
+    values = report.normalize_parameters({**supplied, **extra})
     # A viewer dataset is bound per reader (fail-closed without one); a
     # plain integer exercises the viewer path for latest.entries@1 without
     # affecting any other dataset's binding.
-    scope = AccessScope.unrestricted(user_id=1)
+    scope = AccessScope.unrestricted(user_id=corpus["admin_user"])
     names, types, rows = _execute(corpus["conn"], ds.bind(values, scope))
     assert names == [c.name for c in ds.columns]
     for column, oid in zip(ds.columns, types):
@@ -672,6 +719,79 @@ def test_change_reports_the_three_states_per_reader(corpus):
     assert len(rows_modified_2) == 1
     assert rows_modified_2[0][names_m.index("previous_value")] == \
         "later_before.txt"
+
+
+def test_scenario_outcomes_are_owner_scoped_before_retrieval(corpus):
+    """The per-scenario access decision, enforced in the query: the owner
+    and admins read the history; another reader gets nothing - refused
+    before retrieval, never handed rows to hide afterwards."""
+    conn = corpus["conn"]
+    ds = REGISTRY.dataset("scenario.outcomes@1")
+    values = REGISTRY.report("scenario_outcome").normalize_parameters(
+        {"scenario_id": corpus["scenario_id"]})
+
+    def _ids(user_id):
+        rows = _execute(conn, ds.bind(values, AccessScope.unrestricted(user_id=user_id)))[2]
+        return rows
+
+    with conn, conn.cursor() as cur:
+        cur.execute("SELECT owner_user_id FROM scenarios WHERE id = %s",
+                    (corpus["scenario_id"],))
+        owner = cur.fetchone()[0]
+        cur.execute("INSERT INTO users (username, password_hash, role)"
+                    " VALUES (%s, 'x', 'analyst') RETURNING id",
+                    (f"rs_b_{corpus['tag']}",))
+        reader_b = cur.fetchone()[0]
+        cur.execute("SELECT role FROM users WHERE id = %s", (owner,))
+        owner_is_admin = cur.fetchone()[0] == "admin"
+
+    rows_owner = _ids(owner)
+    assert len(rows_owner) == 2
+    names = _execute(conn, ds.bind(values, AccessScope.unrestricted(user_id=owner)))[0]
+    oi, di, pi = (names.index("outcomes"), names.index("delivery"),
+                  names.index("priority"))
+    by_delivery = {r[di]: r for r in rows_owner}
+    notified = by_delivery["notified"]
+    assert list(notified[oi]) == ["watch"], "the json array arrives structured"
+    assert notified[pi] == "high"
+    baseline = by_delivery["baseline"]
+    assert baseline[pi] is None, "no derived priority - not zero, not low"
+    po = rows_owner and [
+        r[names.index("previous_outcomes")] for r in rows_owner
+        if r[names.index("previous_outcomes")] is not None]
+    assert po == [["none"]], "the transition carries its previous outcomes"
+    assert all(r[names.index("file_name")] for r in rows_owner), (
+        "the representative document's name identifies the content")
+    recorded = [r[names.index("recorded_at")] for r in rows_owner]
+    assert recorded == sorted(recorded, reverse=True), "newest first"
+
+    # Another reader: nothing. (The submit path refuses outright; this is
+    # the SQL's own defence if any future consumer skips it.)
+    if not owner_is_admin:
+        assert _ids(reader_b) == []
+
+    # The outcome rows a later evaluation records appear alongside: the
+    # history is append-only and the report shows all of it.
+    with conn, conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO scenario_evaluations (scenario_id, scenario_version,"
+            " kind, trigger, status, definition_fingerprint, reference_date,"
+            " evaluated_at, counts)"
+            " VALUES (%s, 1, 'evaluation', 'ingestion', 'completed',"
+            " sha256(%s::bytea)::text::char(64), CURRENT_DATE,"
+            " NOW() + interval '1 hour', '{}'::jsonb) RETURNING id",
+            (corpus["scenario_id"], f"eval2-{corpus['tag']}".encode()))
+        evaluation_2 = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO scenario_outcomes (scenario_id, evaluation_id,"
+            " scenario_version, hash_id, outcomes, matched_cases, delivery,"
+            " recorded_at)"
+            " VALUES (%s, %s, 1, %s, '{review}', '{watch}', 'recorded', NOW())",
+            (corpus["scenario_id"], evaluation_2, owner))
+    rows_after = _ids(owner)
+    assert len(rows_after) == 3
+    assert rows_after[0][names.index("evaluation_id")] == evaluation_2, (
+        "the newest event first")
 
 
 def test_relationship_counts_contexts_not_path_rows(corpus):

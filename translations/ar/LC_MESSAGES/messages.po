@@ -12235,3 +12235,57 @@ msgstr "القيمة الحالية"
 msgid "Revision"
 msgstr "مراجعة"
 
+# --- Scenario Outcome report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Scenario Outcome Report"
+msgstr "تقرير نتائج السيناريو"
+
+#: core/reporting/definitions.py
+msgid "Every decision one scenario has recorded, newest first: which contents it classified, into which outcomes, through which cases, what changed against the previous evaluation, and how each result was delivered. The scenario's outcomes are readable by its owner and by administrators; everyone else is refused before anything is read."
+msgstr "كل قرار سجله سيناريو واحد، الأحدث أولاً: أي المحتويات صنفها، وإلى أي نتائج، وعبر أي حالات، وما تغير مقارنة بالتقييم السابق، وكيف سُلِّمت كل نتيجة. نتائج السيناريو يقرأها مالكها والمديرون؛ ويُرفض الجميع الآخرون قبل قراءة أي شيء."
+
+#: core/reporting/definitions.py
+msgid "About the Scenario Outcome Report"
+msgstr "حول تقرير نتائج السيناريو"
+
+#: core/reporting/definitions.py
+msgid "Shows what one scenario decided: per content, the outcomes it was classified into, the cases that matched, what its previous outcomes were, and whether the result was only recorded or also notified, with the derived priority and its basis. History is never overwritten - each evaluation's results stay exactly as they were recorded. A scenario's outcomes are visible to its owner and to administrators."
+msgstr "يعرض ما قرره سيناريو واحد: لكل محتوى، النتائج التي صنف فيها، والحالات المطابقة، وما كانت نتائجه السابقة، وهل سُجل النتيجة فقط أم أُرسل إشعار بها أيضاً، مع الأولوية المشتقة وأساسها. لا تُكتب التاريخية أبداً - تبقى نتائج كل تقييم كما سُجلت تماماً. نتائج السيناريو مرئية لمالكها وللمديرين."
+
+#: core/reporting/datasets.py
+msgid "Outcome ID"
+msgstr "معرّف النتيجة"
+
+#: core/reporting/datasets.py
+msgid "Scenario"
+msgstr "السيناريو"
+
+#: core/reporting/datasets.py
+msgid "Scenario version"
+msgstr "إصدار السيناريو"
+
+#: core/reporting/datasets.py
+msgid "Evaluation ID"
+msgstr "معرّف التقييم"
+
+#: core/reporting/datasets.py
+msgid "Evaluated at"
+msgstr "وقت التقييم"
+
+#: core/reporting/datasets.py
+msgid "Outcomes"
+msgstr "النتائج"
+
+#: core/reporting/datasets.py
+msgid "Matched cases"
+msgstr "الحالات المطابقة"
+
+#: core/reporting/datasets.py
+msgid "Previous outcomes"
+msgstr "النتائج السابقة"
+
+#: core/reporting/datasets.py
+msgid "Recorded at"
+msgstr "وقت التسجيل"
+

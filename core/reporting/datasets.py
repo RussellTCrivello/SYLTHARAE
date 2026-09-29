@@ -861,6 +861,83 @@ CHANGE_REMOVED_V1 = _change_revision_dataset(
     "measurement today. Capped: at most row_limit rows, newest event "
     "first; overflow is detected and recorded as truncation, never hidden.")
 
+# --- Scenario Outcome report (step 17) ---------------------------------------
+# What the scenario engine decided, and why. The per-scenario access
+# decision: a scenario's outcomes are readable by its owner and by admins,
+# refused BEFORE retrieval (the runner checks at submission, and the SQL
+# predicate repeats the rule so no future consumer can forget it) - the
+# same owner model the monitoring layer enforces on rules and scenarios
+# themselves. The evaluation ran under its owner's access scope, so the
+# outcomes are already the product of an authorized read; the reader's own
+# source scope is applied on top (defense in depth, meaningful the day an
+# ACL lands).
+SCENARIO_OUTCOMES_V1 = Dataset(
+    dataset_id="scenario.outcomes",
+    version=1,
+    description=(
+        "Every recorded outcome of one scenario, newest first: the "
+        "evaluation that produced it, the content it decided about, the "
+        "outcomes and matched cases, the previous outcomes when the "
+        "content had changed outcome, the delivery state (baseline, "
+        "recorded, notified, overflow) and the derived priority with its "
+        "basis - the evidence a reader needs to answer what was decided "
+        "and why. Append-only history: evaluations are never overwritten. "
+        "Capped: at most row_limit rows; overflow is detected (row_limit "
+        "+ 1 fetched) and recorded as truncation, never hidden."),
+    unit="scenario_outcome",
+    semantics="capped",
+    row_limit=5000,
+    columns=(
+        Column("outcome_id", "bigint", False, "Outcome ID"),
+        Column("scenario_name", "text", False, "Scenario"),
+        Column("scenario_version", "integer", False, "Scenario version"),
+        Column("evaluation_id", "bigint", False, "Evaluation ID"),
+        Column("evaluated_at", "timestamptz", False, "Evaluated at"),
+        Column("hash_id", "integer", False, "Content ID"),
+        # The representative path's name; a content whose every path was
+        # removed keeps its outcome history but has no name - unknown,
+        # never an empty string.
+        Column("file_name", "text", True, "File name"),
+        Column("outcomes", "json", False, "Outcomes"),
+        Column("matched_cases", "json", False, "Matched cases"),
+        Column("previous_outcomes", "json", True, "Previous outcomes"),
+        Column("delivery", "text", False, "Delivery"),
+        # A baseline/recorded row carries no derived priority: NULL means
+        # not derived, never zero or low.
+        Column("priority", "text", True, "Priority"),
+        Column("recorded_at", "timestamptz", False, "Recorded at"),
+    ),
+    sql=(
+        "SELECT rpt_o.id AS outcome_id, rpt_sc.name AS scenario_name,"
+        " rpt_o.scenario_version AS scenario_version,"
+        " rpt_o.evaluation_id AS evaluation_id,"
+        " rpt_ev.evaluated_at AS evaluated_at,"
+        " rpt_o.hash_id AS hash_id, rpt_p.file_name AS file_name,"
+        " to_jsonb(rpt_o.outcomes) AS outcomes,"
+        " to_jsonb(rpt_o.matched_cases) AS matched_cases,"
+        " to_jsonb(rpt_o.previous_outcomes) AS previous_outcomes,"
+        " rpt_o.delivery AS delivery, rpt_o.priority AS priority,"
+        " rpt_o.recorded_at AS recorded_at "
+        "FROM scenario_outcomes rpt_o "
+        "JOIN scenarios rpt_sc ON rpt_sc.id = rpt_o.scenario_id "
+        "JOIN scenario_evaluations rpt_ev ON rpt_ev.id = rpt_o.evaluation_id "
+        "LEFT JOIN LATERAL (SELECT p.file_name FROM paths p WHERE p.context_id IN"
+        "     (SELECT hc.id FROM hash_contexts hc WHERE hc.hash_id = rpt_o.hash_id)"
+        "     ORDER BY p.id LIMIT 1) rpt_p ON TRUE "
+        "WHERE rpt_o.scenario_id = %s "
+        "AND {owner} "
+        "AND EXISTS (SELECT 1 FROM hash_contexts hc"
+        "     WHERE hc.hash_id = rpt_o.hash_id AND {scope}) "
+        "ORDER BY rpt_o.recorded_at DESC, rpt_o.id DESC "
+        "LIMIT %s"),  # nosec B608 # fixed fragments; values are bound parameters
+    sql_params=("scenario_id", TOKEN_VIEWER_ID, TOKEN_VIEWER_ID, TOKEN_SCOPE,
+                TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("scenario_id",),
+    owner_column="rpt_sc.owner_user_id",
+    scope_column="hc.source_id",
+)
+
 DATASETS: Tuple[Dataset, ...] = (
     SEARCH_RESULTS_MATCHES_V1,
     SEARCH_RESULTS_COUNT_V1,
@@ -875,4 +952,5 @@ DATASETS: Tuple[Dataset, ...] = (
     CHANGE_ADDED_V1,
     CHANGE_MODIFIED_V1,
     CHANGE_REMOVED_V1,
+    SCENARIO_OUTCOMES_V1,
 )

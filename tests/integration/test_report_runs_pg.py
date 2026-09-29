@@ -442,3 +442,85 @@ def test_change_run_advances_one_watermark_for_all_its_datasets(world):
     assert base4["baseline_recorded"] is True
     assert base4["last_max_id_before"] is None
     assert base4["advanced_to"] == 0, "viewed and saw nothing - not a zero measurement"
+
+
+def test_scenario_outcome_submit_refuses_before_retrieval(world):
+    """The declared access control is enforced at submission: the owner's
+    run completes; another reader is refused with no run created; a
+    scenario that does not exist is a validation error."""
+    conn = world["conn"]
+    with conn, conn.cursor() as cur:
+        cur.execute("INSERT INTO users (username, password_hash, role)"
+                    " VALUES (%s, 'x', 'analyst') RETURNING id",
+                    (f"rr_sc_owner_{_U}",))
+        owner = SimpleNamespace(id=cur.fetchone()[0], role="analyst",
+                                username=f"rr_sc_owner_{_U}",
+                                has_role=lambda *roles: False)
+        cur.execute("INSERT INTO users (username, password_hash, role)"
+                    " VALUES (%s, 'x', 'analyst') RETURNING id",
+                    (f"rr_sc_other_{_U}",))
+        other = SimpleNamespace(id=cur.fetchone()[0], role="analyst",
+                                username=f"rr_sc_other_{_U}",
+                                has_role=lambda *roles: False)
+        cur.execute(
+            "INSERT INTO scenarios (owner_user_id, name, version, definition,"
+            " definition_fingerprint, status)"
+            " VALUES (%s, %s, 1, '{}'::jsonb,"
+            " encode(sha256(%s::bytea), 'hex')::char(64), 'paused')"
+            " RETURNING id",
+            (owner.id, f"runs_scenario_{_U}", f"runs_scenario_{_U}".encode()))
+        scenario_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO scenario_evaluations (scenario_id, scenario_version,"
+            " kind, trigger, status, definition_fingerprint, reference_date,"
+            " evaluated_at, counts)"
+            " VALUES (%s, 1, 'evaluation', 'manual', 'completed',"
+            " encode(sha256(%s::bytea), 'hex')::char(64), CURRENT_DATE,"
+            " NOW(), '{}'::jsonb) RETURNING id",
+            (scenario_id, f"runs_eval_{_U}".encode()))
+        evaluation_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO scenario_outcomes (scenario_id, evaluation_id,"
+            " scenario_version, hash_id, outcomes, matched_cases, delivery,"
+            " recorded_at) SELECT %s, %s, 1, h.id, '{watch}', '{c}',"
+            " 'recorded', NOW() FROM hashs h LIMIT 1",
+            (scenario_id, evaluation_id))
+
+    def _submit(user, sid):
+        return runs.submit_run(conn, user=user, report_id="scenario_outcome",
+                               parameters={"scenario_id": sid})
+
+    run = _submit(owner, scenario_id)
+    out = runs.execute_run(conn, run["id"])
+    assert out["status"] == "completed", out
+    page = runs.dataset_rows(conn, run["id"], "scenario.outcomes@1", user=owner)
+    assert page["row_count"] == 1
+    assert page["baseline"] is None, (
+        "outcome history is not a per-reader view - no baseline block")
+    row = page["rows"][0]
+    assert row["outcomes"] == ["watch"] and row["delivery"] == "recorded"
+
+    with conn, conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM report_runs")
+        runs_before = cur.fetchone()[0]
+    try:
+        _submit(other, scenario_id)
+        refused = None
+    except runs.ReportRunError as exc:
+        refused = exc
+    assert refused is not None and refused.status == 403, (
+        "a non-owner is refused at submission")
+    assert "do not have access" in str(refused)
+    with conn, conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM report_runs")
+        assert cur.fetchone()[0] == runs_before, (
+            "refused before anything is recorded - no run to hide")
+
+    try:
+        _submit(owner, scenario_id + 1)
+        missing = None
+    except runs.ReportRunError as exc:
+        missing = exc
+    assert missing is not None and missing.status == 400, (
+        "a scenario that does not exist is a validation error, not an "
+        "empty report")

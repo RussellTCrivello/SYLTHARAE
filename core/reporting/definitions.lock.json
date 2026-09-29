@@ -13,6 +13,7 @@
     "keyword_intelligence.matches@1": "b1318b899cc552abe2a49313872fdd8e8a617ff04057a6bcb2ed35a9b19357c9",
     "latest.entries@1": "bccd64fa68249828cb5936f63578b833b938928005b0af9af13e47e2e595ecc1",
     "relationship.contexts@1": "49e730ed7865f69a3d1fa804111ecc8a52b6ba7eb429d01cf6919208180057bf",
+    "scenario.outcomes@1": "00e805e4a763e126b5bd6d81e55957aaf3703e5fb142f6e8aa6df06665efe76d",
     "search_results.count@1": "4ffcaaa72705048eb986b46129c8f2383bd3cd08da18c96e535b7ee6c5db6764",
     "search_results.matches@1": "15491b6eaa13b19a29c7b137fedae1869af10e48c69ae8b761d3e77505862df1",
     "term_keyness.ranked@1": "985b5756e9dbd2289634d41b179ab1edd2de5d9093083e9c6ede5ced19406b01",
@@ -26,6 +27,7 @@
     "keyword_intelligence@1": "465576c26f366a087ac3530863eef9266a398ff8ed277868621ca87fc27ccafa",
     "latest@1": "c26ab0650039878cdba35ae52312fab9d3738febf2e0b17967b852fb3eee473a",
     "relationship@1": "cff99d55b3d2703819d9f99ab1203b949aec7537339517841a75c11b1447efc3",
+    "scenario_outcome@1": "f10ba33fc04ef5753ec761fc8913e984168d1e7785ef9e04561feb9dc20f24a2",
     "search_results@1": "82cd519e3d801e3b283bd6e00f66f2b0b87d2b6607d72545949ddf618b2b8f97",
     "term_keyness@1": "f43240c50871fdc8abe351e4e1964bfaa17fbdc5dd35981bfa44419f2ac3b8bb",
     "term_keyness@2": "8729596fbe18310f4193d4c28949d5837641724e7ec7fb119fcfecafebe8f973"

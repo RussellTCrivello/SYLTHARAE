@@ -85,7 +85,7 @@ PARAMETER_TYPES: Tuple[str, ...] = (
 )
 
 #: Named SQL slots. Each is filled from code, never from a request value.
-SQL_SLOTS: Tuple[str, ...] = ("where", "order", "scope")
+SQL_SLOTS: Tuple[str, ...] = ("where", "order", "scope", "owner")
 
 #: Special parameter tokens in ``Dataset.sql_params``.
 TOKEN_CRITERIA = "@criteria"   # params of the compiled {where}
@@ -301,6 +301,11 @@ class Dataset:
     parameters: Tuple[str, ...] = ()      # report parameter names it reads
     criteria_param: Optional[str] = None  # which parameter feeds {where}/{order}
     scope_column: Optional[str] = None    # column the {scope} slot restricts
+    #: Ownership-scoped datasets: the column holding the owning user's id.
+    #: The {owner} slot keeps the rows the reader owns - or, for an admin,
+    #: every row - so an unauthorized reader is refused before retrieval,
+    #: never handed rows to hide afterwards.
+    owner_column: Optional[str] = None
     unscoped_reason: Optional[str] = None
     #: Which column records the reader's progress (Latest: the path id the
     #: reader has read up to). Declared only on viewer datasets; the runner
@@ -343,26 +348,33 @@ class Dataset:
                 _check(token in (TOKEN_CRITERIA, TOKEN_SCOPE, TOKEN_LIMIT)
                        + _VIEWER_TOKENS,
                        f"{self.dataset_id}: unknown token {token!r}")
-        # Viewer tokens: both or neither, always over a criteria view (the
-        # baseline's identity is that view's fingerprint), and progress
-        # recording only makes sense for a declared viewer dataset.
+        # Viewer tokens: the id alone marks a dataset read per reader
+        # (an ownership predicate); the key additionally marks a
+        # per-view watermark, which needs a criteria view to be keyed
+        # to; progress recording needs both.
         has_id = TOKEN_VIEWER_ID in tokens
         has_key = TOKEN_VIEWER_KEY in tokens
-        _check(has_id == has_key,
-               f"{self.dataset_id}: {TOKEN_VIEWER_ID} and {TOKEN_VIEWER_KEY} "
-               "are declared together")
-        if has_id:
+        _check(not has_key or has_id,
+               f"{self.dataset_id}: {TOKEN_VIEWER_KEY} requires {TOKEN_VIEWER_ID}")
+        if has_key:
             _check(self.criteria_param is not None,
-                   f"{self.dataset_id}: viewer tokens need criteria_param - "
+                   f"{self.dataset_id}: the view key needs criteria_param - "
                    "the reader's baseline is keyed to one view's fingerprint")
         if self.progress_column is not None:
-            _check(has_id,
-                   f"{self.dataset_id}: progress_column requires the viewer tokens")
+            _check(has_id and has_key,
+                   f"{self.dataset_id}: progress_column requires {TOKEN_VIEWER_ID} "
+                   f"and {TOKEN_VIEWER_KEY}")
             _check(any(c.name == self.progress_column for c in self.columns),
                    f"{self.dataset_id}: progress_column must be a declared column")
         plain = [t for t in tokens if not t.startswith("@")]
         viewer_n = sum(1 for t in tokens if t in _VIEWER_TOKENS)
-        _check(sql.replace("%%", "").count("%s") == len(plain) + viewer_n + 1,
+        # The {owner} slot contributes its two bound %s (the owner match
+        # and the admin check, both the reader's id) only when the slot is
+        # filled, so a declarative placeholder counts as two here.
+        probe = sql.replace("%%", "")
+        if self.owner_column is not None:
+            probe = probe.replace("{owner}", "%s %s")
+        _check(probe.count("%s") == len(plain) + viewer_n + 1,
                f"{self.dataset_id}: %s count does not match sql_params")
         _check(set(plain) <= set(self.parameters),
                f"{self.dataset_id}: sql_params use undeclared parameters "
@@ -371,14 +383,25 @@ class Dataset:
         # Access before retrieval: exactly one declared mechanism.
         by_criteria = self.criteria_param is not None
         by_scope = self.scope_column is not None
+        by_owner = self.owner_column is not None
         by_reason = bool(self.unscoped_reason and self.unscoped_reason.strip())
         # A criteria dataset may also declare scope_column: the compiler
         # scopes the rows the criteria select, and {scope} restricts rows the
-        # dataset reads *outside* the criteria (a reference corpus).
-        _check(by_reason != (by_criteria or by_scope),
+        # dataset reads *outside* the criteria (a reference corpus). An
+        # owner dataset may add scope_column for the same reason.
+        _check(by_reason != (by_criteria or by_scope or by_owner),
                f"{self.dataset_id}: declare exactly one of criteria_param, "
-               "scope_column or unscoped_reason (a criteria dataset may add "
-               "scope_column for rows outside its criteria)")
+               "scope_column, owner_column or unscoped_reason (a criteria or "
+               "owner dataset may add scope_column for rows outside it)")
+        if by_owner:
+            _check(bool(re.fullmatch(r"[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*",
+                                     self.owner_column)),
+                   f"{self.dataset_id}: owner_column must be alias.column")
+            _check("owner" in slots,
+                   f"{self.dataset_id}: owner_column needs an {{owner}} slot")
+            _check(TOKEN_VIEWER_ID in tokens,
+                   f"{self.dataset_id}: owner_column needs {TOKEN_VIEWER_ID} - "
+                   "the ownership predicate is bound to the reader")
         if by_criteria:
             _check(self.criteria_param in self.parameters,
                    f"{self.dataset_id}: criteria_param must be one of its parameters")
@@ -424,6 +447,9 @@ class Dataset:
             "roles": sorted(self.roles), "parameters": sorted(self.parameters),
             "criteria_param": self.criteria_param,
             "scope_column": self.scope_column,
+            # Only when set, so the fingerprints of released versions stay
+            # stable (the same rule the report analyses follow).
+            **({"owner_column": self.owner_column} if self.owner_column else {}),
             "unscoped": bool(self.unscoped_reason),
         }
 
@@ -465,20 +491,29 @@ class Dataset:
         progress_key = None
         if TOKEN_VIEWER_ID in self.sql_params:
             # The reader is the authenticated requester the scope already
-            # carries - never a request value. The view key is derived
-            # here, purely, from the criteria fingerprint plus the
-            # parameters that shape the view (the criteria parameter
-            # itself excluded: its content is the fingerprint).
+            # carries - never a request value. The view key, when the
+            # dataset carries one, is derived here, purely, from the
+            # criteria fingerprint plus the parameters that shape the
+            # view (the criteria parameter itself excluded: its content
+            # is the fingerprint).
             if not isinstance(scope.user_id, int):
                 raise ReportParameterError(
                     f"{self.dataset_id}: a reader identity is required - "
                     "this dataset is read per viewer")
-            from .baselines import baseline_key
-            shaping = {k: v for k, v in values.items()
-                       if k != self.criteria_param}
-            progress_key = baseline_key(criteria_fp, shaping)
             slot_params[TOKEN_VIEWER_ID] = (scope.user_id,)
-            slot_params[TOKEN_VIEWER_KEY] = (progress_key,)
+            if TOKEN_VIEWER_KEY in self.sql_params:
+                from .baselines import baseline_key
+                shaping = {k: v for k, v in values.items()
+                           if k != self.criteria_param}
+                progress_key = baseline_key(criteria_fp, shaping)
+                slot_params[TOKEN_VIEWER_KEY] = (progress_key,)
+        if self.owner_column is not None:
+            # The reader owns the row, or is an admin: the ownership
+            # decision happens in the query, before anything is retrieved.
+            fills["owner"] = (f"({self.owner_column} = %s OR EXISTS "
+                              "(SELECT 1 FROM users rpt_adm"
+                              " WHERE rpt_adm.id = %s"
+                              " AND rpt_adm.role = 'admin'))")
         sql = self.sql.format(**fills) if fills else self.sql
         params: List[Any] = []
         for token in self.sql_params:
@@ -511,6 +546,10 @@ class ReportDefinition:
     datasets: Tuple[str, ...]      # dataset keys "id@version"
     status: str = "active"         # active | superseded
     analyses: Tuple[str, ...] = ()  # analysis keys "id@version" (core.analytics)
+    #: Pre-retrieval authorization beyond roles, when the report reads
+    #: something with its own owner (a scenario's outcomes). The runner
+    #: refuses before anything is read - never create-then-hide.
+    access_control: Optional[str] = None
 
     def __post_init__(self) -> None:
         _check(bool(_ID.match(self.report_id or "")) and "." not in self.report_id,
@@ -559,6 +598,8 @@ class ReportDefinition:
         if self.analyses:
             fps = analysis_fingerprints or {}
             out["analyses"] = [[key, fps.get(key)] for key in self.analyses]
+        if self.access_control:
+            out["access_control"] = self.access_control
         return out
 
     def fingerprint(self, dataset_fingerprints: Mapping[str, str],

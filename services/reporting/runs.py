@@ -143,6 +143,27 @@ def _criteria_parameter(definition):
     return params[0] if len(params) == 1 else None
 
 
+def _enforce_access_control(conn, definition, normalized, user_id: Optional[int],
+                            is_admin: bool) -> None:
+    """Pre-retrieval authorization for definitions that read something
+    with its own owner (the same rule the saved-search check applies:
+    refuse before anything is read, never create-then-hide)."""
+    if definition.access_control != "scenario_owner":
+        raise RuntimeError(f"{definition.key}: unknown access_control "
+                           f"{definition.access_control!r}")
+    with _dict_cur(conn) as cur:
+        cur.execute("SELECT owner_user_id FROM scenarios WHERE id = %s",
+                    (normalized["scenario_id"],))
+        row = cur.fetchone()
+    conn.rollback()
+    if row is None:
+        raise ReportRunError("VALIDATION_FAILED", "the scenario does not exist")
+    if row["owner_user_id"] != user_id and not is_admin:
+        raise ReportRunError("FORBIDDEN",
+                             "you do not have access to this scenario's outcomes",
+                             403)
+
+
 def _saved_search_criteria(cur, search_id: Any, user_id: int, is_admin: bool) -> Dict[str, Any]:
     from Api.services.saved_searches_repository import can_read
 
@@ -206,6 +227,8 @@ def submit_run(conn, *, user, report_id: Any, version: Any = None,
         raise ReportRunError("VALIDATION_FAILED", str(exc)) from None
     if len(criteria_fps) > 1:     # a definition fault, not a request fault
         raise RuntimeError(f"{definition.key}: datasets disagree on the criteria fingerprint")
+    if definition.access_control is not None:
+        _enforce_access_control(conn, definition, normalized, user_id, is_admin)
     with _dict_cur(conn) as cur:
         cur.execute(
             "INSERT INTO report_runs (report_id, report_version, definition_fingerprint,"  # nosec B608 # _RUN_COLUMNS is a constant; filters are fixed fragments with bound parameters

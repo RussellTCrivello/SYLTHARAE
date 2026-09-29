@@ -12053,3 +12053,57 @@ msgstr "ערך נוכחי"
 msgid "Revision"
 msgstr "מהדורה"
 
+# --- Scenario Outcome report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Scenario Outcome Report"
+msgstr "דוח תוצאות התרחיש"
+
+#: core/reporting/definitions.py
+msgid "Every decision one scenario has recorded, newest first: which contents it classified, into which outcomes, through which cases, what changed against the previous evaluation, and how each result was delivered. The scenario's outcomes are readable by its owner and by administrators; everyone else is refused before anything is read."
+msgstr "כל החלטה שתרחיש אחד תיעד, החדשות ביותר ראשונות: אילו תכנים סיווג, לאילו תוצאות, באילו מקרים, מה השתנה מול ההערכה הקודמת, וכיצד כל תוצאה נמסרה. את תוצאות התרחיש קורא הבעלים והמנהלים; כולם אחרים נדחים לפני שנקרא דבר."
+
+#: core/reporting/definitions.py
+msgid "About the Scenario Outcome Report"
+msgstr "אודות דוח תוצאות התרחיש"
+
+#: core/reporting/definitions.py
+msgid "Shows what one scenario decided: per content, the outcomes it was classified into, the cases that matched, what its previous outcomes were, and whether the result was only recorded or also notified, with the derived priority and its basis. History is never overwritten - each evaluation's results stay exactly as they were recorded. A scenario's outcomes are visible to its owner and to administrators."
+msgstr "מציג מה תרחיש אחד החליט: לכל תוכן, לאילו תוצאות סווג, אילו מקרים התאימו, מה היו תוצאותיו הקודמות, והאם התוצאה רק נרשמה או גם נשלחה הודעה, עם העדיפות שנגזרה והבסיס שלה. ההיסטוריה לעולם אינה נכתבת מחדש - תוצאות כל הערכה נשארות בדיוק כפי שנרשמו. תוצאות תרחיש גלויות לבעליו ולמנהלים."
+
+#: core/reporting/datasets.py
+msgid "Outcome ID"
+msgstr "מזהה תוצאה"
+
+#: core/reporting/datasets.py
+msgid "Scenario"
+msgstr "תרחיש"
+
+#: core/reporting/datasets.py
+msgid "Scenario version"
+msgstr "גרסת התרחיש"
+
+#: core/reporting/datasets.py
+msgid "Evaluation ID"
+msgstr "מזהה הערכה"
+
+#: core/reporting/datasets.py
+msgid "Evaluated at"
+msgstr "מועד הערכה"
+
+#: core/reporting/datasets.py
+msgid "Outcomes"
+msgstr "תוצאות"
+
+#: core/reporting/datasets.py
+msgid "Matched cases"
+msgstr "מקרים שהתאימו"
+
+#: core/reporting/datasets.py
+msgid "Previous outcomes"
+msgstr "תוצאות קודמות"
+
+#: core/reporting/datasets.py
+msgid "Recorded at"
+msgstr "מועד רישום"
+

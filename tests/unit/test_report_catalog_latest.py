@@ -70,15 +70,15 @@ class TestDatasetContract:
         assert LATEST_ENTRIES_V1.progress_column == "path_id"
         assert any(c.name == "path_id" for c in LATEST_ENTRIES_V1.columns)
 
-    def test_viewer_tokens_need_each_other_and_criteria(self):
+    def test_the_view_key_requires_the_viewer_id(self):
         with pytest.raises(Exception) as exc:
             LATEST_ENTRIES_V1.__class__(
                 dataset_id="x.bad", version=1, description="d", unit="path",
                 semantics="capped", row_limit=10,
                 columns=LATEST_ENTRIES_V1.columns, sql="SELECT 1 LIMIT %s",
-                sql_params=("@viewer_id", "@limit"), roles=("admin",),
+                sql_params=("@viewer_key", "@limit"), roles=("admin",),
                 criteria_param="criteria")
-        assert "together" in str(exc.value)
+        assert "@viewer_key requires @viewer_id" in str(exc.value)
 
     def test_progress_column_requires_the_viewer_tokens(self):
         with pytest.raises(Exception) as exc:
@@ -86,9 +86,9 @@ class TestDatasetContract:
                 dataset_id="x.bad2", version=1, description="d", unit="path",
                 semantics="capped", row_limit=10,
                 columns=LATEST_ENTRIES_V1.columns, sql="SELECT 1 LIMIT %s",
-                sql_params=("@limit",), roles=("admin",),
+                sql_params=("@viewer_id", "@limit"), roles=("admin",),
                 criteria_param="criteria", progress_column="path_id")
-        assert "progress_column requires" in str(exc.value)
+        assert "progress_column requires @viewer_id and @viewer_key" in str(exc.value)
 
     def test_bind_refuses_a_scope_without_a_reader(self):
         # Fail closed: a viewer dataset without an authenticated reader
