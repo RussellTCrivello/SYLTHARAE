@@ -377,10 +377,12 @@ Report runs: submit, execute (a JobManager job), read (tables of m0022).
 - `fail_unstarted(conn, run_id: int, error: str) -> None` - The job for a queued run could not be created.
 - `jsonable(value: Any) -> Any` - A stored cell. Dates and timestamps as ISO 8601; ``Decimal`` as its
 - `query_fingerprint(sql: str, params) -> str`
+- `compute_analyses(definition, results: List[Dict[str, Any]], parameters: Dict[str, Any], registry = REGISTRY) -> List[Dict[str, Any]]` - The definition's analyses over the dataset results just read, in
 - `execute_run(conn, run_id: int, *, job_id: Optional[str] = None, cancel_cb: Optional[Callable[[], bool]] = None, progress_cb: Optional[Callable] = None, regis...` - Execute a queued run. Returns ``{"run_id", "status", "error",
 - `run_report_job(get_connection: Callable, *, run_id: int, job_id: Optional[str] = None, progress_cb: Optional[Callable] = None, cancel_cb: Optional[Callable[[...` - JobManager entry point (job type ``report_run``).
 - `run_to_api(row: Dict[str, Any], *, registry = REGISTRY) -> Dict[str, Any]`
 - `get_run(conn, run_id: int, *, user, registry = REGISTRY) -> Dict[str, Any]` - One run with its dataset summaries (no rows).
+- `run_analyses(conn, run_id: int) -> List[Dict[str, Any]]` - A run's stored analyses (template references, not prose) in order.
 - `list_runs(conn, *, user, all_users: bool = False, report_id: Optional[str] = None, status: Optional[str] = None, limit: int = 50, offset: int = 0, registry =...`
 - `dataset_rows(conn, run_id: int, dataset_key: str, *, user, limit: int = 100, offset: int = 0, registry = REGISTRY) -> Dict[str, Any]` - A page of one dataset's stored rows, sliced in SQL.
 

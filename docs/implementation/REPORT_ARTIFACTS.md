@@ -61,8 +61,8 @@ fails the job with that reason and stores nothing), and in total by retention
 
 | Format | Renderer | Content |
 | --- | --- | --- |
-| `json` | `report-json/1` | canonical JSON (sorted keys): report, run provenance, every dataset with columns, rows and a completeness sentence |
-| `html` | `report-html/1` | self-contained page: provenance table, per dataset a completeness sentence (shortened lists say so), the declared column labels, rows; every value HTML-escaped and wrapped in `<bdi>`; a `default-src 'none'` CSP meta tag |
+| `json` | `report-json/2` | canonical JSON (sorted keys): report, run provenance, every dataset with columns, rows and a completeness sentence; the run's analyses (stored record plus the five voices rendered in English; `/1` had no analyses section) |
+| `html` | `report-html/2` | self-contained page: provenance table, each analysis with its state and five voices (step 16), per dataset a completeness sentence (shortened lists say so), the declared column labels, rows; every value HTML-escaped and wrapped in `<bdi>`; a `default-src 'none'` CSP meta tag |
 | `xlsx` | `report-xlsx/1` | a Provenance sheet (run, snapshot, fingerprints, and per dataset semantics, limit, rows, truncated, completeness, query fingerprint) and one sheet per dataset |
 | `csv` | `report-csv/1` | one dataset (`dataset_key` required), UTF-8 with BOM, CRLF |
 
@@ -84,7 +84,7 @@ PDF and SVG charts are refused with the reason "step 18". They are not
 approximated: authoritative PDF must come from the server-side multilingual
 renderer, which is not built yet.
 
-## Manifest (`report-manifest/1`)
+## Manifest (`report-manifest/2`)
 
 The manifest records:
 
@@ -97,6 +97,10 @@ The manifest records:
   and runner version.
 * `snapshot`: the `pg_current_snapshot()` identity, when it was taken, and the
   isolation level.
+* `analyses` (added in `/2`, step 16): per analysis the key, fingerprint,
+  kind, state, reason, inputs, template set, version and fingerprint, and
+  `included` (whether this artifact's content carries it: JSON/HTML yes,
+  CSV/XLSX no).
 * `datasets`: key, dataset fingerprint, query fingerprint, semantics, row
   limit, row count, truncated and columns.
 * `row_count` and `truncated` for what this file contains.

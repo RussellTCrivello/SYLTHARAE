@@ -46,12 +46,30 @@ it reuses instead of duplicating:
 Every dataset declares exactly one of:
 
 1. `criteria_param`: WHERE and ORDER BY come from `compile_criteria`, which
-   compiles `AccessScope.allowed_source_ids` into SQL. Such a dataset may
-   not add its own `{scope}`.
+   compiles `AccessScope.allowed_source_ids` into SQL. Such a dataset adds
+   `{scope}` only when it also declares `scope_column`, and only for rows
+   it reads *outside* its criteria (step 16: the keyness reference corpus).
+   An undeclared `{scope}` is refused.
 2. `scope_column` (`alias.column`): `{scope}` becomes `TRUE`, `FALSE` or
    `col = ANY(%s)`.
 3. `unscoped_reason`: a written reason why nothing source-scoped is read
-   (for example gazetteer reference data).
+   (for example gazetteer reference data). It cannot be combined with 1 or 2.
+
+### Analyses (step 16)
+
+A report may list analyses (`ReportDefinition.analyses`, keys `id@version`,
+declared in `core/reporting/definitions.py` as `core.analytics.kinds.Analysis`).
+`validate()` checks the following:
+
+* every listed analysis is registered and every registered one is used;
+* each input is a dataset of the same report, with the semantics and columns
+  the kind requires;
+* every kind parameter is declared by the report.
+
+Every template msgid, analysis title and enum choice label passes the
+translation gate. The lock pins analyses in their own section. A report's
+fingerprint covers its analyses only when it has some, so reports without
+analyses keep their released fingerprints. See [ANALYTICS.md](ANALYTICS.md).
 
 ### Row-limit semantics
 

@@ -29,7 +29,7 @@ lock-pinned fingerprint at submission), `parameters` (normalised JSON) and
 re-checked at execution), `job_id`, `status`
 (`queued`/`running`/`completed`/`failed`/`refused`/`cancelled`),
 `refusal_reason`, `error`, `snapshot` (`pg_current_snapshot()::text`),
-`snapshot_at`, `isolation_level`, `generator_version` (`report-runner/1`),
+`snapshot_at`, `isolation_level`, `generator_version` (`report-runner/2`; `/2` since step 16 computes and stores the report's analyses, see [ANALYTICS.md](ANALYTICS.md)),
 `requested_at`/`started_at`/`finished_at`.
 
 `report_run_datasets`: per dataset `dataset_key`, `dataset_fingerprint`,
@@ -138,8 +138,8 @@ and removed afterwards. Start-up on a clean clone is step 27.
 - No real browser (Playwright download blocked): layout, CSS and real bidi
   rendering of `/reports` are not verified; the page runs in a DOM stub.
 - Translations are not reviewed by native speakers.
-- Only `search_results@1` is registered; the other catalog reports need their
-  datasets and analytics (steps 16-17).
+- Registered: `search_results@1` and `term_keyness@1` (step 16). The other
+  catalog reports need their datasets (step 17).
 - Artifacts and downloads: see [REPORT_ARTIFACTS.md](REPORT_ARTIFACTS.md)
   (step 15). No scheduling (20); no retention of runs (21): rows are kept
   until then.

@@ -424,6 +424,7 @@ File-preview endpoints backed by opaque file IDs, never server paths.
 Reports API (step 14: runs; step 15: artifacts).
 
 - `definition_to_api(definition, registry, *, can_run = False)` - What the page needs to show and fill a report's form. Labels are
+- `analysis_to_api(analysis, registry)` - A stored analysis with its narrative rendered in the caller's language
 - `register_report_routes(app)`
 - `register_report_artifact_routes(app)` - Step 15: artifacts of completed runs (services/reporting/artifacts.py).
 

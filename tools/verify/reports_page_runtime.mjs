@@ -99,7 +99,7 @@ check(text('runDetailTitle').includes(`#${ids.first}`) && text('runDetailTitle')
 check(/Completed\. Snapshot taken/.test(text('runOutcome')), `outcome: ${text('runOutcome')}`);
 check(/Database snapshot\s*\d+:\d+:/.test(text('runProvenance')) && /repeatable read, read only/.test(text('runProvenance')),
     'provenance shows the snapshot and isolation');
-check(/report-runner\/1/.test(text('runProvenance')), 'provenance shows the generator');
+check(/report-runner\/2/.test(text('runProvenance')), 'provenance shows the generator');
 check(rows('runDataRows').length === 2, `two matching files listed (${rows('runDataRows').length})`);
 check(/Complete: 2 rows\./.test(text('runDatasetNote')), `completeness stated: ${text('runDatasetNote')}`);
 const header = byId('runDataHead').textContent;
