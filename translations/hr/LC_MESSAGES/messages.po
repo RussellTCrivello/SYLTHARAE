@@ -12264,3 +12264,45 @@ msgstr "Sadržaji u odgovarajućem skupu"
 #: core/reporting/datasets.py
 msgid "Share of the matched set"
 msgstr "Udio u odgovarajućem skupu"
+
+# --- Horizon report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Horizon Report"
+msgstr "Izvještaj horizonta"
+
+#: core/reporting/definitions.py
+msgid "The detected dates and relative references in the matched documents, bucketed against a reference date you choose: overdue, this week, this month, this quarter, and later. The same buckets as the Horizon page; the reference date is recorded with the run, so it can be reproduced."
+msgstr "Otkriveni datumi i relativne reference u odgovarajućim dokumentima, svrstani prema referentnom datumu koji odaberete: zakasnjelo, ovaj tjedan, ovaj mjesec, ovaj kvartal i kasnije. Iste kategorije kao stranica horizonta; referentni datum bilježi se s pokretanjem, tako da se može reproducirati."
+
+#: core/reporting/definitions.py
+msgid "About the Horizon Report"
+msgstr "O izvještaju horizonta"
+
+#: core/reporting/definitions.py
+msgid "Lists the dates and relative references detected in the matched documents - when something is promised or expected to happen - grouped by how soon it arrives relative to the reference date you choose: overdue, this week, this month, this quarter, and later. Undated references and purely past mentions are not part of the horizon."
+msgstr "Navodi datume i relativne reference otkrivene u odgovarajućim dokumentima - kada se nešto obećava ili očekuje - grupirane prema tome koliko brzo dolaze u odnosu na referentni datum koji odaberete: zakasnjelo, ovaj tjedan, ovaj mjesec, ovaj kvartal i kasnije. Nedatirane reference i spominjanja koja su isključivo prošlost nisu dio horizonta."
+
+#: core/reporting/datasets.py
+msgid "Signal ID"
+msgstr "ID signala"
+
+#: core/reporting/datasets.py
+msgid "End date"
+msgstr "Datum završetka"
+
+#: core/reporting/datasets.py
+msgid "Horizon bucket"
+msgstr "Kategorija horizonta"
+
+#: core/reporting/datasets.py
+msgid "Signal type"
+msgstr "Vrsta signala"
+
+#: core/reporting/datasets.py
+msgid "Detected value"
+msgstr "Otkrivena vrijednost"
+
+#: core/reporting/datasets.py
+msgid "Evidence sentence"
+msgstr "Rečenica dokaza"

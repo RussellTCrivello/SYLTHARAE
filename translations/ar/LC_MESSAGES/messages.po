@@ -12032,3 +12032,45 @@ msgstr "المحتويات في المجموعة المطابقة"
 #: core/reporting/datasets.py
 msgid "Share of the matched set"
 msgstr "الحصة من المجموعة المطابقة"
+
+# --- Horizon report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Horizon Report"
+msgstr "تقرير الأفق"
+
+#: core/reporting/definitions.py
+msgid "The detected dates and relative references in the matched documents, bucketed against a reference date you choose: overdue, this week, this month, this quarter, and later. The same buckets as the Horizon page; the reference date is recorded with the run, so it can be reproduced."
+msgstr "التواريخ والمراجع النسبية المكتشفة في المستندات المطابقة، مصنفة مقابل تاريخ مرجعي تختاره: متأخرة، هذا الأسبوع، هذا الشهر، هذا الربع، ولاحقًا. التصنيفات نفسها الموجودة في صفحة الأفق؛ ويُسجَّل التاريخ المرجعي مع التشغيل حتى يمكن إعادة إنتاجه."
+
+#: core/reporting/definitions.py
+msgid "About the Horizon Report"
+msgstr "حول تقرير الأفق"
+
+#: core/reporting/definitions.py
+msgid "Lists the dates and relative references detected in the matched documents - when something is promised or expected to happen - grouped by how soon it arrives relative to the reference date you choose: overdue, this week, this month, this quarter, and later. Undated references and purely past mentions are not part of the horizon."
+msgstr "يسرد التواريخ والمراجع النسبية المكتشفة في المستندات المطابقة - متى يُعد شيئًا ما أو يُتوقع حدوثه - مصنفة حسب قرب وقوعه من التاريخ المرجعي الذي تختاره: متأخرة، هذا الأسبوع، هذا الشهر، هذا الربع، ولاحقًا. المراجع بلا تاريخ والذكريات الماضية الصرفة ليست جزءًا من الأفق."
+
+#: core/reporting/datasets.py
+msgid "Signal ID"
+msgstr "معرّف الإشارة"
+
+#: core/reporting/datasets.py
+msgid "End date"
+msgstr "تاريخ الانتهاء"
+
+#: core/reporting/datasets.py
+msgid "Horizon bucket"
+msgstr "فئة الأفق"
+
+#: core/reporting/datasets.py
+msgid "Signal type"
+msgstr "نوع الإشارة"
+
+#: core/reporting/datasets.py
+msgid "Detected value"
+msgstr "القيمة المكتشفة"
+
+#: core/reporting/datasets.py
+msgid "Evidence sentence"
+msgstr "جملة الدليل"

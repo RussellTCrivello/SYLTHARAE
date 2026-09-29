@@ -132,6 +132,7 @@ tracked, so it ships in the `git archive` release anyway.
 | `search_results@1` | path | admin, analyst, viewer | `search_results.matches@1` (capped 5000, criteria-compiled order), `search_results.count@1` (exact) |
 | `keyword_intelligence@1` | keyword | admin, analyst, viewer | `keyword_intelligence.matches@1` (capped 1000, most contents first) |
 | `category_analysis@1` | category | admin, analyst, viewer | `category_analysis.summary@1` (capped 1000, most contents first) |
+| `horizon@1` | signal | admin, analyst, viewer | `horizon.signals@1` (capped 5000, event date soonest first; `as_of` reference date is a required recorded parameter) |
 
 `search_results@1` is the registry's reference definition: it needs no
 analytics and reuses the compiler end to end. The two step-17 families read
@@ -143,9 +144,15 @@ counts carried separately) and Category Analysis aggregates
 when a word belongs to several, so contents count in every category that
 applies, shares are per category against the same matched set - their sum
 may exceed 100% - and the share is NULL over an empty matched set: unknown,
-never zero). The remaining catalog families (Horizon, Entity/Place,
-Relationship, Latest/Change, Scenario Outcome, Comprehensive) are added only
-when their datasets exist and are verified.
+never zero). The Horizon family lists resolved temporal signals over the
+matched contents, bucketed by the Signal Explorer's *own* bucket definition -
+`core/detection/horizon.py`, imported by both the explorer query and the
+dataset, never restated - against the run's declared reference date (`as_of`),
+which is recorded with the run so the bucketing is reproducible; undated
+signals and purely past mentions stay out of the horizon exactly as on the
+page. The remaining catalog families (Entity/Place, Relationship,
+Latest/Change, Scenario Outcome, Comprehensive) are added only when their
+datasets exist and are verified.
 
 ## Evidence
 
@@ -178,6 +185,15 @@ when their datasets exist and are verified.
   write; the JSON artifact, its manifest (report id/version/unit, criteria
   fingerprint, snapshot, per-dataset row counts) and the offline
   verification agree.
+* Horizon (step 17): `test_report_catalog_horizon.py` (11): the bucket SQL is
+  the imported core definition, temporal signals only, undated and past out
+  of scope, `as_of` a required bound date parameter, provenance columns
+  declared nullable. PG: the corpus seeds overdue/week/month/quarter/later
+  signals plus a past mention and an undated signal - the five horizon
+  buckets land exactly, order is soonest-first, and a later reference date
+  moves the buckets without dropping rows. Over HTTP: the run records
+  `as_of`, buckets come back as declared, and a run without the reference
+  date is refused (400) before anything executes.
 
 ## Limitations
 

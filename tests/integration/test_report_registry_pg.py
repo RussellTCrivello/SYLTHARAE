@@ -99,6 +99,55 @@ def corpus(pg_db, app):
             cur.execute("INSERT INTO keywords_hashs (hash_id, keyword_id,"
                         " word_count) VALUES (%s, %s, %s)",
                         (h, keyword_id, None if h == tie_hash else 2))
+
+        # Horizon corpus: temporal signals on the first matched content.
+        # Reference date for the bucket assertions is 2026-01-10 (as_of).
+        import hashlib as _hashlib
+        cur.execute("SELECT content FROM contents_raw WHERE hash_id = %s"
+                    " ORDER BY chunk_seq LIMIT 1", (matched_hashes[0],))
+        _body = cur.fetchone()[0] or "seed document body"
+        _sentence = _body[:min(40, len(_body))]
+        _signals = [
+            # (signal_type, date_from, date_to, orientation, expected bucket)
+            ("date_reference", datetime.date(2026, 1, 5), datetime.date(2026, 1, 5),
+             "future", "overdue"),
+            ("date_reference", datetime.date(2026, 1, 12), datetime.date(2026, 1, 12),
+             "future", "week"),
+            ("relative_reference", datetime.date(2026, 2, 1), datetime.date(2026, 2, 1),
+             "future", "month"),
+            ("date_reference", datetime.date(2026, 3, 15), datetime.date(2026, 3, 15),
+             "future", "quarter"),
+            ("date_reference", datetime.date(2027, 1, 1), datetime.date(2027, 1, 1),
+             "future", "later"),
+            # A past mention: resolved but not part of the horizon proper.
+            ("date_reference", datetime.date(2026, 1, 2), datetime.date(2026, 1, 2),
+             "past", None),
+        ]
+        for i, (stype, d_from, d_to, orient, _bucket) in enumerate(_signals):
+            cur.execute(
+                "INSERT INTO content_signals (hash_id, detector, detector_ver,"
+                " signal_type, value, surface, char_start, char_end, language,"
+                " calendar, resolution, date_from, date_to, text_orientation,"
+                " anchor_date, evidence, dedup_key, method, confidence,"
+                " confidence_basis, evidence_sentence, sentence_start,"
+                " sentence_end)"
+                " VALUES (%s, 'temporal', 'temporal-1.1.0', %s, %s, %s, 3, 20,"
+                " 'en', 'gregorian', 'absolute', %s, %s, %s, %s, %s::jsonb, %s,"
+                " 'parse', 'high', 'explicit_day', %s, 0, %s)",
+                (matched_hashes[0], stype, f"2026-01-{i + 1:02d}", f"day {i}",
+                 d_from, d_to, orient, d_from,
+                 '{"normalized": "seed"}',
+                 _hashlib.sha256(f"{tag}-sig-{i}".encode()).hexdigest(),
+                 _sentence, len(_sentence)))
+        # An undated signal: never a bucket, not listed by the horizon.
+        cur.execute(
+            "INSERT INTO content_signals (hash_id, detector, detector_ver,"
+            " signal_type, value, surface, char_start, char_end, resolution,"
+            " evidence, dedup_key)"
+            " VALUES (%s, 'temporal', 'temporal-1.1.0', 'ambiguous_reference',"
+            " 'someday', 'someday', 5, 12, 'ambiguous', '{}'::jsonb, %s)",
+            (matched_hashes[0],
+             _hashlib.sha256(f"{tag}-sig-undated".encode()).hexdigest()))
     yield {"conn": conn, "word": word, "tag": tag, "s1": s1, "s2": s2,
            "paths": paths, "cat_a": cat_a, "cat_b": cat_b,
            "keyword_id": keyword_id}
@@ -121,7 +170,10 @@ def _values(corpus):
 def test_every_dataset_executes_with_its_declared_shape(corpus, key):
     ds = REGISTRY.dataset(key)
     report = next(r for r in REGISTRY.reports if key in r.datasets)
-    values = report.normalize_parameters({"criteria": {"text": corpus["word"]}})
+    extra = ({"as_of": "2026-01-10"}
+             if any(p.name == "as_of" for p in report.parameters) else {})
+    values = report.normalize_parameters(
+        {"criteria": {"text": corpus["word"]}, **extra})
     names, types, rows = _execute(corpus["conn"], ds.bind(values, AccessScope.unrestricted()))
     assert names == [c.name for c in ds.columns]
     for column, oid in zip(ds.columns, types):
@@ -276,3 +328,42 @@ def test_the_new_capped_datasets_show_overflow_through_the_extra_row(corpus):
     _, _, rows = _execute(corpus["conn"], small_cat.bind(values, AccessScope.unrestricted()))
     assert len(rows) == 2 == small_cat.row_limit + 1
     assert rows[0][4] >= rows[1][4], "ordered by contents, most widespread first"
+
+
+def test_the_horizon_buckets_against_the_declared_reference_date(corpus):
+    """The report's buckets come from the same definition as the explorer's,
+    relative to the run's declared as_of - so a stored run is reproducible."""
+    from services.detection.signal_query import DEFAULT_BUCKETS
+    values = REGISTRY.report("horizon").normalize_parameters({
+        "criteria": {"text": corpus["word"]},
+        "as_of": "2026-01-10"})
+    names, _, rows = _new_dataset(corpus, "horizon.signals@1", values)
+    assert names == [c.name for c in REGISTRY.dataset("horizon.signals@1").columns]
+    by_value = {r[7]: r for r in rows}
+    expected = {"2026-01-01": "overdue", "2026-01-02": "week",
+                "2026-01-03": "month", "2026-01-04": "quarter",
+                "2026-01-05": "later"}
+    for value, bucket in expected.items():
+        assert by_value[value][5] == bucket, (value, by_value[value][5])
+    # The past mention and the undated signal are out of the horizon proper.
+    assert len(rows) == 5
+    assert all(r[5] in DEFAULT_BUCKETS for r in rows)
+    # Soonest event date first (the horizon reads forward).
+    dates = [r[3] for r in rows]
+    assert dates == sorted(dates)
+    # Provenance columns carried (seeded signals have them).
+    assert all(r[10] == "high" and r[11] == "parse" for r in rows)
+
+
+def test_a_different_reference_date_moves_the_buckets_not_the_rows(corpus):
+    one = REGISTRY.report("horizon").normalize_parameters({
+        "criteria": {"text": corpus["word"]}, "as_of": "2026-01-10"})
+    other = REGISTRY.report("horizon").normalize_parameters({
+        "criteria": {"text": corpus["word"]}, "as_of": "2027-06-01"})
+    _, _, early = _new_dataset(corpus, "horizon.signals@1", one)
+    _, _, late = _new_dataset(corpus, "horizon.signals@1", other)
+    assert {r[5] for r in early} != {r[5] for r in late}, (
+        "a later reference date pulls the same signals into earlier buckets")
+    assert {r[0] for r in early} <= {r[0] for r in late}
+    overdue = [r for r in late if r[5] == "overdue"]
+    assert overdue and all(r[10] == "high" for r in overdue)

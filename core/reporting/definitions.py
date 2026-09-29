@@ -107,12 +107,32 @@ CATEGORY_ANALYSIS_V1 = ReportDefinition(
     datasets=("category_analysis.summary@1",),
 )
 
+HORIZON_V1 = ReportDefinition(
+    report_id="horizon",
+    version=1,
+    title="Horizon Report",
+    description="The detected dates and relative references in the matched "
+                "documents, bucketed against a reference date you choose: "
+                "overdue, this week, this month, this quarter, and later. "
+                "The same buckets as the Horizon page; the reference date is "
+                "recorded with the run, so it can be reproduced.",
+    help_topic="reports/horizon",
+    unit="signal",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("criteria", "criteria", "Search criteria", required=True),
+        Parameter("as_of", "date", "Reference date", required=True),
+    ),
+    datasets=("horizon.signals@1",),
+)
+
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
     TERM_KEYNESS_V2,
     KEYWORD_INTELLIGENCE_V1,
     CATEGORY_ANALYSIS_V1,
+    HORIZON_V1,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
@@ -151,5 +171,15 @@ HELP_TOPICS: Tuple[HelpTopic, ...] = (
                 "occur, and the share of the matched set. Because categories "
                 "can share words, contents are counted in every category "
                 "that applies and shares are per category, not a partition.",
+    ),
+    HelpTopic(
+        topic="reports/horizon",
+        title="About the Horizon Report",
+        summary="Lists the dates and relative references detected in the "
+                "matched documents - when something is promised or expected "
+                "to happen - grouped by how soon it arrives relative to the "
+                "reference date you choose: overdue, this week, this month, "
+                "this quarter, and later. Undated references and purely "
+                "past mentions are not part of the horizon.",
     ),
 )

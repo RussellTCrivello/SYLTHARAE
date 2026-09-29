@@ -12146,3 +12146,45 @@ msgstr "محتواها در مجموعه منطبق"
 #: core/reporting/datasets.py
 msgid "Share of the matched set"
 msgstr "سهم از مجموعه منطبق"
+
+# --- Horizon report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Horizon Report"
+msgstr "گزارش افق"
+
+#: core/reporting/definitions.py
+msgid "The detected dates and relative references in the matched documents, bucketed against a reference date you choose: overdue, this week, this month, this quarter, and later. The same buckets as the Horizon page; the reference date is recorded with the run, so it can be reproduced."
+msgstr "تاریخ‌ها و ارجاع‌های نسبی شناسایی‌شده در پرونده‌های منطبق، دسته‌بندی‌شده مقابل تاریخ مرجعی که شما انتخاب می‌کنید: عقب‌افتاده، این هفته، این ماه، این فصل، و بعدتر. همان دسته‌های صفحهٔ افق؛ تاریخ مرجع همراه با اجرا ثبت می‌شود، پس قابل بازتولید است."
+
+#: core/reporting/definitions.py
+msgid "About the Horizon Report"
+msgstr "درباره گزارش افق"
+
+#: core/reporting/definitions.py
+msgid "Lists the dates and relative references detected in the matched documents - when something is promised or expected to happen - grouped by how soon it arrives relative to the reference date you choose: overdue, this week, this month, this quarter, and later. Undated references and purely past mentions are not part of the horizon."
+msgstr "تاریخ‌ها و ارجاع‌های نسبی شناسایی‌شده در پرونده‌های منطبق را فهرست می‌کند - اینکه چه چیزی وعده داده یا انتظار می‌رود اتفاق بیفتد - و بر اساس اینکه نسبت به تاریخ مرجع انتخابی شما چقدر زود فرا می‌رسد گروه‌بندی می‌کند: عقب‌افتاده، این هفته، این ماه، این فصل، و بعدتر. ارجاع‌های بی‌تاریخ و اشاره‌های صرفاً گذشته‌ای بخشی از افق نیستند."
+
+#: core/reporting/datasets.py
+msgid "Signal ID"
+msgstr "شناسه سیگنال"
+
+#: core/reporting/datasets.py
+msgid "End date"
+msgstr "تاریخ پایان"
+
+#: core/reporting/datasets.py
+msgid "Horizon bucket"
+msgstr "دستهٔ افق"
+
+#: core/reporting/datasets.py
+msgid "Signal type"
+msgstr "نوع سیگنال"
+
+#: core/reporting/datasets.py
+msgid "Detected value"
+msgstr "مقدار شناسایی‌شده"
+
+#: core/reporting/datasets.py
+msgid "Evidence sentence"
+msgstr "جملهٔ شاهد"

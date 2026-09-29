@@ -5,6 +5,7 @@
   },
   "datasets": {
     "category_analysis.summary@1": "c77fcb27d586a9b2225e9d43838ed1c0775617c4999983ce946190fc6d3df579",
+    "horizon.signals@1": "0e0296bca94b1661a9b0d25271d2bffbb325f284c51ee858f53c1d15ec2125de",
     "keyword_intelligence.matches@1": "b1318b899cc552abe2a49313872fdd8e8a617ff04057a6bcb2ed35a9b19357c9",
     "search_results.count@1": "4ffcaaa72705048eb986b46129c8f2383bd3cd08da18c96e535b7ee6c5db6764",
     "search_results.matches@1": "15491b6eaa13b19a29c7b137fedae1869af10e48c69ae8b761d3e77505862df1",
@@ -13,6 +14,7 @@
   },
   "reports": {
     "category_analysis@1": "732942fff84e43ad61008da4860a4817f8d1c1dc87a4cd882661fc2327a38773",
+    "horizon@1": "cf00d76188f0faf0697697bf82215d94bfb58d4729d14ddf2918b7129b68e7df",
     "keyword_intelligence@1": "465576c26f366a087ac3530863eef9266a398ff8ed277868621ca87fc27ccafa",
     "search_results@1": "82cd519e3d801e3b283bd6e00f66f2b0b87d2b6607d72545949ddf618b2b8f97",
     "term_keyness@1": "f43240c50871fdc8abe351e4e1964bfaa17fbdc5dd35981bfa44419f2ac3b8bb",

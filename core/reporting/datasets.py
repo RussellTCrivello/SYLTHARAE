@@ -16,6 +16,8 @@ from __future__ import annotations
 from typing import Tuple
 
 from core.criteria.sql import CANONICAL_FROM
+from core.detection import horizon as _horizon
+from core.detection import temporal_intel as _temporal
 from core.security.service import ALL_ROLES
 
 from .model import TOKEN_CRITERIA, TOKEN_LIMIT, TOKEN_SCOPE, Column, Dataset
@@ -366,6 +368,92 @@ CATEGORY_ANALYSIS_SUMMARY_V1 = Dataset(
     criteria_param="criteria",
 )
 
+# ---------------------------------------------------------------------------
+# Horizon (step 17)
+#
+# One row per resolved temporal signal (date_reference / relative_reference
+# from the temporal detector) whose content is matched by the criteria,
+# bucketed by how soon its event date arrives. The bucket expression and the
+# reference-date join are imported from core.detection.horizon - the same
+# definition the Signal Explorer runs; nothing here re-derives the buckets.
+# The reference date is a declared report parameter (as_of), so a stored run
+# is reproducible: the same snapshot and the same as_of give the same
+# buckets. The representative document of a signal is the lowest path id
+# among the criteria-matched occurrences of its content (signals are
+# content-derived since m0011; the evidence sentence locates the text in any
+# occurrence). Undated signals are the explorer's separate ``undated`` count,
+# never a bucket, and are not listed here; signals whose day has passed
+# without being future-oriented are the explorer's ``past`` bucket and are
+# not part of the horizon proper.
+# ---------------------------------------------------------------------------
+
+_HORIZON_TYPES_SQL = "(" + ", ".join(f"'{t}'" for t in _horizon.HORIZON_SIGNAL_TYPES) + ")"
+
+HORIZON_SIGNALS_V1 = Dataset(
+    dataset_id="horizon.signals",
+    version=1,
+    description=(
+        "Resolved temporal signals (date and relative references from the "
+        "temporal detector) whose content matches the criteria, bucketed "
+        "against the declared reference date: overdue (an end date before "
+        "the reference date in a future-oriented sentence), week, month, "
+        "quarter, later - the Signal Explorer's own buckets. One row per "
+        "signal; its document columns are the first (lowest id) matching "
+        "occurrence of the signal's content. Ordered by event date, soonest "
+        "first. Capped: at most row_limit signals; overflow is detected "
+        "(row_limit + 1 fetched) and recorded as truncation, never hidden. "
+        "Confidence, method and the evidence sentence are NULL for signals "
+        "stored before provenance was recorded (unknown, not zero); undated "
+        "signals are out of scope here."),
+    unit="signal",
+    semantics="capped",
+    row_limit=5000,
+    columns=(
+        Column("signal_id", "bigint", False, "Signal ID"),
+        Column("path_id", "integer", False, "File ID"),
+        Column("file_name", "text", False, "File name"),
+        Column("event_date", "date", False, "Event date"),
+        Column("end_date", "date", True, "End date"),
+        Column("bucket", "text", False, "Horizon bucket"),
+        Column("signal_type", "text", False, "Signal type"),
+        Column("value", "text", False, "Detected value"),
+        Column("language", "text", True, "Language"),
+        Column("calendar", "text", True, "Calendar"),
+        Column("confidence", "text", True, "Confidence"),
+        Column("method", "text", True, "Method"),
+        Column("detector_ver", "text", False, "Detector version"),
+        Column("evidence_sentence", "text", True, "Evidence sentence"),
+    ),
+    sql=(
+        "WITH rpt_base AS ("
+        " SELECT DISTINCT hc.hash_id AS hash_id FROM " + CANONICAL_FROM + " WHERE {where}"
+        ") "
+        "SELECT s.id AS signal_id, rpt_doc.path_id, rpt_doc.file_name,"  # nosec B608 # module constants only (CANONICAL_FROM, core.detection.horizon bucket SQL, detector constants); values are bound parameters
+        " s.date_from AS event_date, s.date_to AS end_date,"
+        f" {_horizon.bucket_sql()} AS bucket,"
+        " s.signal_type, s.value, s.language, s.calendar,"
+        " s.confidence, s.method, s.detector_ver, s.evidence_sentence"
+        " FROM rpt_base"
+        " JOIN content_signals s ON s.hash_id = rpt_base.hash_id"
+        " CROSS JOIN LATERAL ("
+        "  SELECT p.id AS path_id, p.file_name"
+        "  FROM paths p JOIN hash_contexts rpt_hc2 ON rpt_hc2.id = p.context_id"
+        "  WHERE rpt_hc2.hash_id = rpt_base.hash_id"
+        "  ORDER BY p.id LIMIT 1"
+        " ) rpt_doc"
+        f" {_horizon.REF_SQL}"
+        f" WHERE s.detector = '{_temporal.DETECTOR_NAME}'"
+        f" AND s.signal_type IN {_HORIZON_TYPES_SQL}"
+        " AND s.date_from IS NOT NULL"
+        f" AND {_horizon.bucket_sql()} <> 'past'"
+        " ORDER BY s.date_from ASC, s.id ASC"
+        " LIMIT %s"),
+    sql_params=(TOKEN_CRITERIA, "as_of", TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("criteria", "as_of"),
+    criteria_param="criteria",
+)
+
 DATASETS: Tuple[Dataset, ...] = (
     SEARCH_RESULTS_MATCHES_V1,
     SEARCH_RESULTS_COUNT_V1,
@@ -373,4 +461,5 @@ DATASETS: Tuple[Dataset, ...] = (
     TERM_KEYNESS_TOTALS_V1,
     KEYWORD_INTELLIGENCE_MATCHES_V1,
     CATEGORY_ANALYSIS_SUMMARY_V1,
+    HORIZON_SIGNALS_V1,
 )

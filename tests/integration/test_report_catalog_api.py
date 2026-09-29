@@ -81,6 +81,28 @@ def corpus(pg_db, app):
             cur.execute("INSERT INTO keywords_hashs (hash_id, keyword_id,"
                         " word_count) VALUES (%s, %s, %s)",
                         (h, keyword_id, None if h == hashes[0] else 2))
+        # Horizon corpus: one overdue and one this-week signal on the first
+        # content (reference date 2026-05-10 sits between the corpora's dates).
+        import hashlib as _hashlib
+        cur.execute("SELECT content FROM contents_raw WHERE hash_id = %s"
+                    " ORDER BY chunk_seq LIMIT 1", (hashes[0],))
+        _sentence = (cur.fetchone()[0] or "seed body")[:30]
+        for i, (d_from, orient, bucket) in enumerate([
+                (datetime.date(2026, 5, 1), "future", "overdue"),
+                (datetime.date(2026, 5, 14), "future", "week")]):
+            cur.execute(
+                "INSERT INTO content_signals (hash_id, detector, detector_ver,"
+                " signal_type, value, surface, char_start, char_end, language,"
+                " calendar, resolution, date_from, date_to, text_orientation,"
+                " anchor_date, evidence, dedup_key, method, confidence,"
+                " confidence_basis, evidence_sentence, sentence_start, sentence_end)"
+                " VALUES (%s, 'temporal', 'temporal-1.1.0', 'date_reference',"
+                " %s, %s, 0, 10, 'en', 'gregorian', 'absolute', %s, %s, %s,"
+                " %s, '{}'::jsonb, %s, 'parse', 'high', 'explicit_day', %s, 0, %s)",
+                (hashes[0], f"2026-05-{i + 1:02d}", f"seed date {i}",
+                 d_from, d_from, orient, d_from,
+                 _hashlib.sha256(f"kat-{tag}-sig-{i}".encode()).hexdigest(),
+                 _sentence, len(_sentence)))
     yield {"conn": conn, "word": word, "tag": tag, "paths": paths,
            "keyword_id": keyword_id}
     conn.close()
@@ -232,3 +254,30 @@ class TestOverHttp:
         assert [d["dataset_key"] for d in datasets] == \
             ["keyword_intelligence.matches@1"]
         assert datasets[0]["row_count"] == run["datasets"][0]["row_count"] >= 2
+
+
+    def test_horizon_run_buckets_against_the_declared_reference_date(
+            self, app, corpus, sync_jobs):
+        c, username = _analyst(app)
+        resp = _post(c, "/api/reports/runs",
+                     {"report_id": "horizon",
+                      "parameters": {"criteria": {"text": corpus["word"]},
+                                     "as_of": "2026-05-10"}})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        run = resp.get_json()["run"]
+        assert run["status"] == "completed"
+        assert run["parameters"]["as_of"] == "2026-05-10", (
+            "the reference date is recorded with the run: it is reproducible")
+        rows = c.get(f"/api/reports/runs/{run['id']}/datasets/horizon.signals@1"
+                     "?limit=10").get_json()["rows"]
+        buckets = sorted(r["bucket"] for r in rows
+                         if r["signal_type"] == "date_reference"
+                         and r["value"].startswith("2026-05"))
+        assert buckets == ["overdue", "week"], buckets
+        assert rows[0]["event_date"] <= rows[-1]["event_date"], (
+            "the horizon reads forward: soonest first")
+        # A run without the reference date is refused before anything runs.
+        bad = _post(c, "/api/reports/runs",
+                    {"report_id": "horizon",
+                     "parameters": {"criteria": {"text": corpus["word"]}}})
+        assert bad.status_code == 400
