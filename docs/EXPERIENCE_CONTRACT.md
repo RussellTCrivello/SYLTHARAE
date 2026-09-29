@@ -31,8 +31,8 @@ The reference below is generated. Every count in it comes from the code:
 ### What this build declares
 
 - Contracts: **31** (described: **5**, derived from the registry only: **26**)
-- Definitions: **34** actions, **14** columns, **6** filters, **0** fields, **5** states
-- Translation keys the screens need: **222**
+- Definitions: **34** actions, **27** columns, **6** filters, **0** fields, **5** states
+- Translation keys the screens need: **235**
 - With help: **29**; with a shortcut: **17**; with a navigation entry: **31**
 
 ### Every screen
@@ -42,8 +42,8 @@ The reference below is generated. Every count in it comes from the code:
 | `dashboard` | WORK | derived | `screen.dashboard.title` | — | — | — | — | yes |
 | `file_library` | DISCOVER | yes | `screen.file_library.title` | 7 | 4 | 12 | 1 | yes |
 | `search` | DISCOVER | derived | `screen.search.title` | — | — | — | — | yes |
-| `sources` | DISCOVER | yes | `screen.sources.title` | — | — | 4 | 1 | yes |
-| `sides` | DISCOVER | yes | `screen.sides.title` | — | — | 4 | 1 | yes |
+| `sources` | DISCOVER | yes | `screen.sources.title` | 8 | — | 4 | 1 | yes |
+| `sides` | DISCOVER | yes | `screen.sides.title` | 5 | — | 4 | 1 | yes |
 | `keywords` | DISCOVER | yes | `screen.keywords.title` | 4 | 2 | 6 | 1 | yes |
 | `words` | DISCOVER | yes | `screen.words.title` | 3 | — | 7 | 1 | yes |
 | `categories` | DISCOVER | derived | `screen.categories.title` | — | — | — | — | yes |
@@ -91,8 +91,8 @@ The strings a screen's contract asks for, and how many of them a language actual
 | `dashboard` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
 | `file_library` | 32 | 90.6% (0 by key) | 90.6% (0 by key) | 90.6% (0 by key) | 84.4% (0 by key) |
 | `search` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
-| `sources` | 11 | 90.9% (0 by key) | 90.9% (0 by key) | 90.9% (0 by key) | 90.9% (0 by key) |
-| `sides` | 11 | 90.9% (0 by key) | 90.9% (0 by key) | 90.9% (0 by key) | 90.9% (0 by key) |
+| `sources` | 19 | 94.7% (0 by key) | 94.7% (0 by key) | 94.7% (0 by key) | 94.7% (0 by key) |
+| `sides` | 16 | 93.8% (0 by key) | 93.8% (0 by key) | 93.8% (0 by key) | 93.8% (0 by key) |
 | `keywords` | 21 | 71.4% (0 by key) | 71.4% (0 by key) | 71.4% (0 by key) | 61.9% (0 by key) |
 | `words` | 19 | 78.9% (0 by key) | 73.7% (0 by key) | 73.7% (0 by key) | 68.4% (0 by key) |
 | `categories` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |

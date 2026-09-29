@@ -528,6 +528,11 @@ from Api.routes.experience_api import register_experience_routes
 register_experience_routes(app)
 logger.info("✅ Experience contract views registered")
 
+# Register the shared list exports (one endpoint, every list interface)
+from Api.routes.exports import register_exports_routes
+register_exports_routes(app)
+logger.info("✅ List export views registered")
+
 # ==================== FAVICON ROUTE ====================
 @app.route('/favicon.ico')
 def favicon():

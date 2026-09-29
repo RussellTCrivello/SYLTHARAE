@@ -294,12 +294,19 @@ class TestPagination:
         assert "data-on-" not in text
 
     def test_cursor_pages_get_the_cursor_component(self):
-        """sides and sources are cursor-paged; they used to render the
-        numbered pager and then guess a cursor from the page number."""
+        """The two pagination models stay honest about which is which.
+
+        Sources and sides used to be cursor-paged with the numbered pager
+        bolted on (a page number guessed a cursor); they are server-paged
+        lists now and render the numbered pager. The cursor component stays
+        for the lists that actually stream, and no list guesses a cursor
+        from a page number any more.
+        """
         for relative in ("templates/Side/sides_list.html",
                          "templates/Sources/sources_list.html"):
             text = (PROJECT_ROOT / relative).read_text()
-            assert "components/cursor_pagination.html" in text, relative
+            assert "components/unified_pagination.html" in text, relative
+            assert "cursor_pagination.html" not in text, relative
             assert "unified-pagination-item" not in text, relative
             assert "estimatedCursor" not in text, relative
 
@@ -438,9 +445,8 @@ class TestAdoption:
     def test_the_migrated_table_uses_the_frame(self):
         text = (PROJECT_ROOT / "templates/Word/Word_list.html").read_text()
         assert "components/table.html" in text
-        assert "{% call data_table(" in text
+        assert "{% call record_table(" in text
         assert "<table" not in text, "the page writes its own table frame again"
-        assert "table_empty_row(" in text
 
     def test_the_filter_and_action_bar_page_uses_the_components(self):
         text = (PROJECT_ROOT / "templates/Keyword/keywords_list.html").read_text()
@@ -476,15 +482,15 @@ class TestAdoption:
             ).PATTERNS if p.key == "empty_state")))
         assert counts()["pattern_empty_state"] < 7, (
             "adoption has not started; the baseline was seven templates")
-        assert counts()["pattern_empty_state"] == 4, (
-            "three of the seven empty states moved onto the component; this "
-            "number is the measure of the phase, so it is pinned rather than "
-            "admired")
-        # Both added management screens (file types and translations) have
-        # their own tabular controls; they are intentionally visible as users
-        # to the table pattern audit until migrated to the component.
-        assert counts()["pattern_table"] == 15
-        assert counts()["pattern_filter"] == 14
+        assert counts()["pattern_empty_state"] == 3, (
+            "the raw empty-state blocks the card grids carried went with the "
+            "grids when sources and sides moved onto record_table; what is "
+            "left are the three dashboards that have not been migrated")
+        # The seven list interfaces render through record_table now; what is
+        # left hand-writing table markup are the dashboards and screens the
+        # table migration has not reached.
+        assert counts()["pattern_table"] == 11
+        assert counts()["pattern_filter"] == 8
         # Two bars are still hand-written, and both are waiting for the layer
         # that owns them: the file list (record actions on a richer model) and
         # the full-content reader (document/viewer controls). Keywords, Words,
@@ -502,12 +508,12 @@ class TestAdoption:
         assert counts()["badges_status"] == 0, (
             "a hand-written status badge is back; every one of them now "
             "renders through the component and the vocabulary")
-        # Current inventory: 68 non-status count/id/method chips remain
-        # hand-written in templates. (It was 70: RES-CSP-01 moved the Jobs,
-        # Job detail and Operations widget scripts - each with a fallback
-        # badge chip - out of the templates into static/js; the markup moved,
-        # it was not migrated.)
-        assert counts()["badges_chip"] == 68
+        # Current inventory: 43 non-status count/id/method chips remain
+        # hand-written in templates. (It was 68: the id/count chips the
+        # sources and sides card grids rendered were deleted with the grids
+        # when both lists moved onto record_table - the markup moved, it was
+        # not migrated.)
+        assert counts()["badges_chip"] == 43
 
 
 class TestTheComponentsRenderWhatTheyPromised:

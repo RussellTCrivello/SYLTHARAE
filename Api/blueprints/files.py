@@ -500,6 +500,30 @@ def files_list():
     where_clause = filters.where_clause()
     where_params = list(filters.params)
 
+    # Column sort comes from the table headers (`sort` + `order`), over a
+    # fixed allowlist - the list's order, so a sorted view stays sorted
+    # across pages. The default stays ORDER_BY, which is also the sequence
+    # the record pages walk in.
+    LIST_SORT_COLUMNS = {
+        'name': 'p.file_name',
+        'size': 'p.file_size',
+        'date': 'p.date_creation',
+        'type': 'p.file_type',
+        'status': 'p.file_status',
+    }
+    sort_key = request.args.get('sort', '')
+    sort_order = request.args.get('order', '')
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'desc'
+    if sort_key in LIST_SORT_COLUMNS:
+        list_order_by = (
+            f"{LIST_SORT_COLUMNS[sort_key]} {sort_order.upper()} NULLS LAST, "
+            "p.id DESC"
+        )
+    else:
+        sort_key = 'date'
+        list_order_by = ORDER_BY
+
     # The same view, as query parameters the detail pages hand back to us.
     # Every file link in this list carries them, which is what makes
     # Previous/Next on a detail page walk *this* list and not the whole
@@ -518,7 +542,7 @@ def files_list():
         FROM paths p
         {' '.join(joins) if joins else ''}
         {where_clause}
-        ORDER BY {ORDER_BY}
+        ORDER BY {list_order_by}
     """
     
     try:
@@ -637,6 +661,8 @@ def files_list():
                              size_max=size_max or '',
                              limit=limit,
                              start_position=start_position,
+                             sort_by=sort_key,
+                             sort_order=sort_order,
                              nav_params=nav_params)
     
     except Exception as e:
@@ -670,6 +696,8 @@ def files_list():
                              side_filter=side_filter or '',
                              status_filter=status_filter or '',
                              file_type_filter=request.args.get('file_type', '') or '',
+                             sort_by='date',
+                             sort_order='desc',
                              cursor_pagination=True,
                              nav_params={},
                              error=str(e))

@@ -2470,6 +2470,18 @@
     "internal": true
   },
   {
+    "endpoint": "exports.export_interface",
+    "rule": "/api/export/<interface_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "exports",
+    "module": "exports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "favicon",
     "rule": "/favicon.ico",
     "methods": [

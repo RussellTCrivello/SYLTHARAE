@@ -1,0 +1,420 @@
+/*
+   Unified table — the one presentation every list table shares.
+
+   Seven list interfaces (File Library, Keywords, Words, Categories,
+   Words in Category, Sources, Sides) used to draw their tables with seven
+   different class combinations and their own stylesheets. They now all
+   render through the `record_table` component (templates/components/table.html)
+   and wear this sheet and nothing else for their table chrome:
+
+   * `.ut`            the whole unit: toolbar, frame, pager mount
+   * `.ut-toolbar`    results info + per-page selector above the table
+   * `.unified-table` the table itself (extends Bootstrap's `.table`)
+   * `.ut-col-*`      header cells, sortable or not
+   * `.ut-badge-*`    the standardized cell badges (status/count/id)
+   * `.ut-actions`    the row action button group
+
+   Colour, spacing, radius and motion come from the design-system custom
+   properties, so theme changes and dark mode reach these tables for free.
+   Nothing here is page-specific: a rule that only one table needs belongs
+   to that page, not to this sheet.
+*/
+
+/* ------------------------------------------------------------------ */
+/* The unit: toolbar + frame + pager                                   */
+/* ------------------------------------------------------------------ */
+
+.ut {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm, 0.75rem);
+    width: 100%;
+}
+
+/* Toolbar: where the list answers "how much is here" and "how much at once" */
+.ut-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm, 0.75rem);
+    padding: 0 var(--spacing-xs, 0.5rem);
+}
+
+.ut-info {
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--text-light, #64748b);
+    min-height: 1.25rem;
+}
+
+.ut-per-page {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs, 0.5rem);
+}
+
+.ut-per-page-label {
+    margin: 0;
+    font-size: var(--font-size-sm, 0.875rem);
+    font-weight: var(--font-weight-medium, 500);
+    color: var(--text-light, #64748b);
+    white-space: nowrap;
+}
+
+.ut-per-page-select {
+    width: auto;
+    min-width: 4.5rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* The frame                                                           */
+/* ------------------------------------------------------------------ */
+
+.ut-frame {
+    width: 100%;
+}
+
+.unified-table {
+    width: 100%;
+    margin-bottom: 0;
+    vertical-align: middle;
+    --bs-table-hover-bg: var(--table-row-hover, #f1f5f9);
+}
+
+/* Headers: one shape for every column, sortable or not */
+.unified-table thead th,
+.unified-table .ut-col {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--table-header-bg, #f8fafc);
+    color: var(--table-header-text, #334155);
+    font-size: var(--font-size-sm, 0.8125rem);
+    font-weight: var(--font-weight-semibold, 600);
+    text-transform: none;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--table-border, #e2e8f0);
+    padding: var(--spacing-sm, 0.75rem) var(--spacing-sm, 0.75rem);
+    user-select: none;
+}
+
+.unified-table td {
+    padding: var(--spacing-sm, 0.75rem);
+    border-bottom: 1px solid var(--table-border-light, #eef2f7);
+}
+
+.unified-table tbody tr {
+    transition: background-color var(--motion-fast, 120ms) var(--ease-out, ease-out);
+}
+
+.unified-table tbody tr:hover > td {
+    background: var(--table-row-hover, #f8fafc);
+}
+
+/* A row with a chosen record: the one state selection has */
+.unified-table tbody tr.ut-selected > td {
+    background: color-mix(in srgb, var(--primary-color, #4f46e5) 7%, transparent);
+}
+
+/* Row numbers and any other count read better not proportional */
+.ut-col-index,
+.ut-index-cell {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-light, #64748b);
+}
+
+.ut-index-cell .ut-badge {
+    min-width: 2.25rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sorting: built into the header, one control, three states           */
+/* ------------------------------------------------------------------ */
+
+.ut-th-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 1.5rem;
+}
+
+.ut-th-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ut-sort-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--border-radius-sm, 0.375rem);
+    background: transparent;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.55;
+    transition: opacity var(--motion-fast, 120ms) var(--ease-out, ease-out),
+                background-color var(--motion-fast, 120ms) var(--ease-out, ease-out),
+                color var(--motion-fast, 120ms) var(--ease-out, ease-out);
+}
+
+.ut-sortable:hover .ut-sort-btn,
+.ut-sort-btn:focus-visible {
+    opacity: 1;
+    background: color-mix(in srgb, var(--primary-color, #4f46e5) 10%, transparent);
+    color: var(--primary-color, #4f46e5);
+}
+
+.ut-sortable.ut-sorted .ut-sort-btn {
+    opacity: 1;
+    color: var(--primary-color, #4f46e5);
+}
+
+/* A sortable header that is not the active one still shows it can be clicked */
+.ut-sortable {
+    cursor: pointer;
+}
+
+.ut-sortable:focus-within {
+    outline: 2px solid color-mix(in srgb, var(--primary-color, #4f46e5) 45%, transparent);
+    outline-offset: -2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cell vocabulary: badges, numbers, actions                           */
+/* ------------------------------------------------------------------ */
+
+.ut-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2em 0.6em;
+    border-radius: var(--radius-pill, 999px);
+    font-size: var(--font-size-sm, 0.75rem);
+    font-weight: var(--font-weight-medium, 500);
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.ut-badge-success {
+    background: var(--alert-success-bg, rgba(16, 185, 129, 0.12));
+    color: var(--success-color, #10b981);
+}
+
+.ut-badge-neutral {
+    background: var(--alert-secondary-bg, rgba(100, 116, 139, 0.12));
+    color: var(--text-light, #64748b);
+}
+
+.ut-badge-info {
+    background: var(--alert-info-bg, rgba(59, 130, 246, 0.12));
+    color: var(--info-color, #3b82f6);
+}
+
+.ut-badge-primary {
+    background: color-mix(in srgb, var(--primary-color, #4f46e5) 12%, transparent);
+    color: var(--primary-color, #4f46e5);
+}
+
+.ut-badge-warning {
+    background: var(--alert-warning-bg, rgba(245, 158, 11, 0.14));
+    color: var(--warning-color, #d97706);
+}
+
+.ut-badge-danger {
+    background: var(--alert-danger-bg, rgba(239, 68, 68, 0.12));
+    color: var(--danger-color, #ef4444);
+}
+
+/* The row action group: one size, one rhythm, everywhere */
+.ut-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-wrap: nowrap;
+}
+
+.ut-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.ut-actions .btn + .btn {
+    margin-inline-start: 0;
+}
+
+/* Importance stars (Sources, Sides) keep one rendering */
+.ut-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    color: var(--warning-color, #f59e0b);
+    font-size: var(--font-size-sm, 0.8125rem);
+}
+
+.ut-stars .ut-stars-off {
+    color: var(--border-dark, #cbd5e1);
+}
+
+.ut-stars .ut-stars-value {
+    margin-inline-start: 0.375rem;
+    color: var(--text-light, #64748b);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Long record names truncate instead of stretching the table */
+.ut-name {
+    display: block;
+    max-width: 34ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--text-dark, #1e293b);
+}
+
+a.ut-name:hover {
+    color: var(--primary-color, #4f46e5);
+}
+
+.ut-muted {
+    color: var(--text-light, #64748b);
+}
+
+/* ------------------------------------------------------------------ */
+/* States drawn inside the body (the same markup the server renders)   */
+/* ------------------------------------------------------------------ */
+
+.ut-state-cell {
+    text-align: center;
+    padding: var(--spacing-xl, 2.5rem) var(--spacing-md, 1rem) !important;
+    color: var(--text-light, #64748b);
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive: the frame scrolls, the toolbar wraps                    */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+    .ut-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ut-per-page {
+        justify-content: flex-end;
+    }
+
+    .ut-name {
+        max-width: 22ch;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* RTL: the sort button flips with the reading direction               */
+/* ------------------------------------------------------------------ */
+
+[dir="rtl"] .unified-table thead th,
+[dir="rtl"] .unified-table .ut-col {
+    text-align: right;
+}
+
+[dir="rtl"] .ut-th-inner {
+    flex-direction: row;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion                                                      */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    .unified-table tbody tr,
+    .ut-sort-btn {
+        transition: none;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Export menu                                                         */
+/* ------------------------------------------------------------------ */
+
+.ut-export .ut-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1, 0.25rem);
+}
+
+.ut-export-label {
+    margin-inline-start: var(--spacing-1, 0.25rem);
+}
+
+.ut-export-menu {
+    min-width: 15rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.ut-export-columns {
+    padding: 0 var(--spacing-2, 0.5rem);
+}
+
+.ut-export-column {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2, 0.5rem);
+    padding: var(--spacing-1, 0.25rem) var(--spacing-2, 0.5rem);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.ut-export-column .form-check-input {
+    margin-top: 0;
+    flex: none;
+}
+
+.ut-export-column-check {
+    margin-top: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Print: the table is the page                                        */
+/* ------------------------------------------------------------------ */
+
+@media print {
+    /* Chrome, sidebars, toolbars and pagers do not belong on paper; the
+       records do. Row actions and checkboxes have no meaning there either. */
+    .ut-toolbar,
+    .ut-col-select,
+    td.ut-col-select,
+    .ut-col-actions,
+    td .ut-actions,
+    .pagination-container,
+    .unified-pagination-container,
+    .file-filters-section,
+    .action-bar,
+    .page-header .d-flex {
+        display: none !important;
+    }
+
+    .ut-frame,
+    .table-responsive {
+        overflow: visible !important;
+        border: none !important;
+    }
+
+    .unified-table {
+        width: 100% !important;
+        font-size: 11pt;
+    }
+
+    .unified-table .ut-sort-btn {
+        display: none !important;
+    }
+}

@@ -70,7 +70,7 @@ Read from the `{# component: … #}` declaration at the top of each file in `tem
 | `sidebar_nav` | `templates/components/sidebar_nav.html` | `normal`, `empty` | — | The product navigation, grouped by domain, rendered from the navigation model the application prepares. |
 | `states` | `templates/components/states.html` | `loading`, `empty`, `filtered`, `success`, `warning`, `error`, `unauthorized`, `unavailable`, `archived` | `state_panel`, `empty_state`, `filtered_state`, `loading_state`, `success_state`, `warning_state`, `error_state`, `unauthorized_state`, `unavailable_state`, `archived_state` | The states a region can be in, in one place, so a page never invents its own wording for "nothing here yet" or its own markup for "this failed". |
 | `status_badge` | `templates/components/status_badge.html` | `success`, `warning`, `error`, `unavailable`, `archived` | `status_badge`, `_chip`, `status_badge_with_icon` | One way to show a status word, so the same state is not green on one page and grey on the next. An application status is looked up in the vocabulary - `core/frontend/status_vocabulary.py` - which maps it to one of a few presentation states; the component only turns that state into classes. |
-| `table` | `templates/components/table.html` | `normal`, `empty`, `filtered`, `selected`, `loading`, `error` | `data_table`, `table_empty_row`, `table_loading_row`, `table_error_row`, `select_all_checkbox`, `sort_header` | The frame a list of records is read in, and the rows that stand in for a list that is empty, still loading or failed. Ten tables in this application were written with ten different class combinations; this is the one they become. |
+| `table` | `templates/components/table.html` | `normal`, `empty`, `filtered`, `selected`, `loading`, `error` | `data_table`, `table_empty_row`, `table_loading_row`, `table_error_row`, `select_all_checkbox`, `export_menu`, `sort_header`, `record_table` | The frame a list of records is read in, and the rows that stand in for a list that is empty, still loading or failed. Ten tables in this application were written with ten different class combinations; this is the one they become. `record_table` is the complete unit - toolbar, sortable headers, body, states - that every list interface renders through; `data_table` is the bare frame the older pages still call. |
 | `toast` | `templates/components/toast.html` | `success`, `warning`, `error`, `loading`, `unavailable` | `toast_region` | One place where the application tells the reader that something happened. Every action ends visibly - success, information, warning, failure - and every message passes through here, so no page invents its own notification and no failure goes silent. |
 
 ### States (§63)
@@ -99,17 +99,17 @@ Counted by scanning `templates/**`. These are the places a shared component has 
 
 | Markup | Component that replaces it | Templates |
 | --- | --- | --- |
-| Hand-written empty state | `states` | 4 templates |
+| Hand-written empty state | `states` | 3 templates |
 | Hand-written loading indicator | `states` | 9 templates |
 | Hand-written inline error | `states` | 6 templates |
-| Hand-written table | `table` | 15 templates |
+| Hand-written table | `table` | 11 templates |
 | Hand-written pagination markup | `pagination` | 0 templates |
-| Pagination mount (filled by the shared renderer) | `pagination` | 4 templates |
+| Pagination mount (filled by the shared renderer) | `pagination` | 8 templates |
 | Hand-written search input | `search_input` | 7 templates |
-| Hand-written filter control | `filter_bar` | 14 templates |
+| Hand-written filter control | `filter_bar` | 8 templates |
 | Browser confirm() dialog | `confirm_dialog` | 0 templates |
 | Hand-written status badge | `status_badge` | 0 badges, in 0 templates |
-| Hand-written badge chip (count, id, method) | — | 68 badges |
+| Hand-written badge chip (count, id, method) | — | 43 badges |
 | Hand-written action bar | `action_toolbar` | 2 templates |
 
 ### Adoption
@@ -118,11 +118,11 @@ How much of the repeated markup has moved onto its component. Standardized count
 
 | Markup | Standardized | Hand-written | Adoption |
 | --- | --- | --- | --- |
-| Hand-written empty state | 7 | 4 | 64% |
-| Hand-written table | 6 | 15 | 29% |
-| Hand-written pagination markup | 10 | 0 | 100% |
+| Hand-written empty state | 5 | 3 | 62% |
+| Hand-written table | 12 | 11 | 52% |
+| Hand-written pagination markup | 12 | 0 | 100% |
 | Hand-written search input | 8 | 7 | 53% |
-| Hand-written filter control | 1 | 14 | 7% |
+| Hand-written filter control | 7 | 8 | 47% |
 | Browser confirm() dialog | 2 | 0 | 100% |
 | Hand-written status badge | 7 | 0 | 100% |
 | Hand-written action bar | 5 | 2 | 71% |
@@ -139,8 +139,8 @@ Every class a component renders has exactly one owner. **OWNED** means an SYLTHA
 
 | Ownership | Classes |
 | --- | --- |
-| OWNED (SYLTHARAE) | 81 |
-| THIRD_PARTY (Bootstrap, Bootstrap Icons) | 197 |
+| OWNED (SYLTHARAE) | 111 |
+| THIRD_PARTY (Bootstrap, Bootstrap Icons) | 217 |
 | UNKNOWN | 0 |
 
 Third-party stylesheets bundled with the application: `static/css/bootstrap.min.css`, `static/icons/bootstrap-icons.css`.
@@ -151,5 +151,8 @@ Owned by declaration rather than by a stylesheet - the component states these ar
 * `file-nav__text` (file_nav.html)
 * `search-input-spinner` (search_input.html)
 * `sidebar-nav-badge` (sidebar_nav.html)
+* `ut-body` (table.html)
+* `ut-check-all` (table.html)
+* `ut-head` (table.html)
 
 <!-- END GENERATED COMPONENT AUDIT -->

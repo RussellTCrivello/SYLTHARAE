@@ -1,0 +1,529 @@
+"""Database-column export for the list interfaces.
+
+One endpoint, one contract: ``GET /api/export/<interface_id>`` re-runs the
+interface's own list query — the same search, sort and filters the table on
+screen shows — without pagination, and returns the **requested columns** as a
+CSV or Excel download. The reader chooses the columns in the table toolbar;
+the server decides what a column *is* from the allowlist below, so a column
+name is never trusted from the request.
+
+The three answers this module must not invent: it does not export a column
+that is not in the interface's spec, it does not export more rows than
+``MAX_EXPORT_ROWS``, and it does not guess a filter the list route would not
+apply. Every spec here mirrors its list route's SQL.
+"""
+
+from __future__ import annotations
+
+import csv
+import io
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+from flask import Blueprint, Response, jsonify, request
+
+from Api.utils import (
+    execute_query,
+    get_categories_paged,
+    get_keywords_with_usage,
+    get_words_by_category_paged,
+    get_words_with_usage,
+)
+from core.security.disclosure import note_disclosure
+from core.security.rate_limit import INTERACTIVE_READ_LIMIT, limiter
+
+logger = logging.getLogger(__name__)
+
+exports_bp = Blueprint('exports', __name__)
+
+#: A hard ceiling on one export. The list interfaces page for a reason; an
+#: export that tried to materialise everything at once would be the thing
+#: the pagination exists to prevent.
+MAX_EXPORT_ROWS = 100_000
+
+#: Each interface's exportable columns: ``(key, label)`` plus the SQL
+#: expression a key means. ``None`` marks a column the exporter derives in
+#: Python from the row (a status word, not a database value).
+ColumnSpec = Tuple[str, str, Optional[str]]
+
+FILE_COLUMNS: Tuple[ColumnSpec, ...] = (
+    ('id', 'Id', 'p.id'),
+    ('name', 'File Name', 'p.file_name'),
+    ('type', 'Type', 'p.file_type'),
+    ('size', 'Size', 'p.file_size'),
+    ('source', 'Source', "COALESCE(s.name, 'Unknown')"),
+    ('side', 'Side', "COALESCE(si.name, 'Unknown')"),
+    ('status', 'Status', 'p.file_status'),
+    ('date', 'Date', 'p.file_date'),
+    ('path', 'Path', 'p.file_path'),
+    ('created', 'Created', 'p.date_creation'),
+)
+
+SOURCE_COLUMNS: Tuple[ColumnSpec, ...] = (
+    ('id', 'Id', 's.id'),
+    ('name', 'Name', 's.name'),
+    ('job', 'Job/Type', 's.job'),
+    ('importance', 'Importance', 's.importance'),
+    ('country', 'Country', 's.country'),
+    ('city', 'City', 's.city'),
+    ('description', 'Description', 's.description'),
+    ('accounts', 'Social Media Accounts', 's.accounts'),
+    ('note', 'Notes', 's.note'),
+    ('attachments', 'Attachments', 's.attachments'),
+    ('ownership', 'Ownership', 's.ownership'),
+    ('access_status', 'Access Status', 's.access_status'),
+    ('created', 'Created', 's.date_creation'),
+    ('discovered', 'Discovery Date', 's.entry_date'),
+    ('category', 'Category', 'w.word'),
+    ('documents', 'Documents', 'doc_count'),
+)
+
+SIDE_COLUMNS: Tuple[ColumnSpec, ...] = (
+    ('id', 'Id', 'si.id'),
+    ('name', 'Name', 'si.name'),
+    ('importance', 'Importance', 'si.importance'),
+    ('sources', 'Sources', 'source_count'),
+    ('documents', 'Documents', 'doc_count'),
+    ('created', 'Created', 'si.date_creation'),
+)
+
+KEYWORD_COLUMNS: Tuple[ColumnSpec, ...] = (
+    ('id', 'Id', 'k.id'),
+    ('text', 'Keyword', None),
+    ('usage_count', 'Usage', 'usage_count'),
+    ('status', 'Status', None),
+    ('category', 'Category', 'category_name'),
+)
+
+WORD_COLUMNS: Tuple[ColumnSpec, ...] = (
+    ('id', 'Id', None),
+    ('word', 'Word', None),
+    ('usage_count', 'Usage Count', 'usage_count'),
+    ('status', 'Status', None),
+)
+
+#: Categories export on the table's own keys: the list header says Files and
+#: Words, so the export column does too.
+CATEGORY_COLUMNS: Tuple[ColumnSpec, ...] = (
+    ('id', 'Id', 'id'),
+    ('name', 'Category Name', 'name'),
+    ('files', 'Files', 'file_count'),
+    ('words', 'Words', 'word_count'),
+)
+
+CATEGORY_WORD_COLUMNS: Tuple[ColumnSpec, ...] = (
+    ('id', 'Id', 'id'),
+    ('word', 'Word', 'word'),
+    ('usage_count', 'Usage Count', 'usage_count'),
+)
+
+
+def _status_word(usage_count: Any) -> str:
+    """The status word the table shows: used means active."""
+    return 'Active' if (usage_count or 0) > 0 else 'Inactive'
+
+
+def _int_arg(name: str, default: int) -> int:
+    try:
+        value = int(request.args.get(name, '') or default)
+    except (TypeError, ValueError):
+        return default
+    return value
+
+
+def _file_rows() -> List[Dict[str, Any]]:
+    """The File Library's own list query, without pagination."""
+    from Api.blueprints.files import LIBRARY_JOINS, LIST_SORT_COLUMNS, ORDER_BY
+    from Api.services.file_navigation import build_library_filters
+
+    filters = build_library_filters(request.args)
+    where_clause = filters.where_clause()
+    where_params = list(filters.params)
+
+    sort_key = request.args.get('sort', '')
+    sort_order = request.args.get('order', 'desc')
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'desc'
+    if sort_key in LIST_SORT_COLUMNS:
+        order_by = f"{LIST_SORT_COLUMNS[sort_key]} {sort_order.upper()} NULLS LAST, p.id DESC"
+    else:
+        order_by = ORDER_BY
+
+    query = f"""
+        SELECT p.id, p.file_name, p.file_type, p.file_size,
+               COALESCE(s.name, 'Unknown') as source_name,
+               COALESCE(si.name, 'Unknown') as side_name,
+               p.file_status, p.file_date, p.file_path, p.date_creation
+        FROM paths p
+        {' '.join(LIBRARY_JOINS)}
+        {where_clause}
+        ORDER BY {order_by}
+        LIMIT {MAX_EXPORT_ROWS}
+    """
+    rows = execute_query(query, tuple(where_params) if where_params else None,
+                         fetch='all') or []
+    keys = ['id', 'name', 'type', 'size', 'source', 'side', 'status',
+            'date', 'path', 'created']
+    return [dict(zip(keys, row)) for row in rows]
+
+
+def _source_rows() -> List[Dict[str, Any]]:
+    joins = (
+        "LEFT JOIN hash_contexts hc ON s.id = hc.source_id "
+        "LEFT JOIN paths p ON p.context_id = hc.id "
+        "LEFT JOIN categorys c ON s.category_id = c.id "
+        "LEFT JOIN words w ON c.word_id = w.id"
+    )
+    search = (request.args.get('search') or '').strip()
+    where = "WHERE s.name ILIKE %s" if search else ""
+    params: Tuple = (f"%{search}%",) if search else ()
+
+    sort_by = request.args.get('sort', 'importance')
+    sort_order = request.args.get('order', 'desc')
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'desc'
+    columns = {'name': 's.name', 'importance': 's.importance',
+               'date': 's.date_creation', 'discovered': 's.entry_date'}
+    if sort_by not in columns:
+        sort_by = 'importance'
+    order_by = f"{columns[sort_by]} {sort_order.upper()} NULLS LAST, s.id DESC"
+
+    rows = execute_query(
+        f"""
+        SELECT s.id, s.name, s.job, s.importance, s.country, s.city,
+               s.description, s.accounts, s.note, s.attachments,
+               s.date_creation, s.ownership, s.access_status, s.entry_date,
+               w.word AS category_name, COUNT(DISTINCT p.id) AS doc_count
+        FROM sources s
+        {joins}
+        {where}
+        GROUP BY s.id, w.word
+        ORDER BY {order_by}
+        LIMIT {MAX_EXPORT_ROWS}
+        """,
+        params,
+        fetch='all',
+    ) or []
+    keys = ['id', 'name', 'job', 'importance', 'country', 'city',
+            'description', 'accounts', 'note', 'attachments', 'created',
+            'ownership', 'access_status', 'discovered', 'category',
+            'documents']
+    return [dict(zip(keys, row)) for row in rows]
+
+
+def _side_rows() -> List[Dict[str, Any]]:
+    joins = (
+        "LEFT JOIN hash_contexts hc ON si.id = hc.side_id "
+        "LEFT JOIN paths p ON p.context_id = hc.id"
+    )
+    search = (request.args.get('search') or '').strip()
+    where = "WHERE si.name ILIKE %s" if search else ""
+    params: Tuple = (f"%{search}%",) if search else ()
+
+    sort_by = request.args.get('sort', 'importance')
+    sort_order = request.args.get('order', 'desc')
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'desc'
+    columns = {'name': 'si.name', 'importance': 'si.importance',
+               'date': 'si.date_creation'}
+    if sort_by not in columns:
+        sort_by = 'importance'
+    order_by = f"{columns[sort_by]} {sort_order.upper()} NULLS LAST, si.id DESC"
+
+    rows = execute_query(
+        f"""
+        SELECT si.id, si.name, si.importance, si.date_creation,
+               COUNT(DISTINCT p.id) AS doc_count,
+               COUNT(DISTINCT hc.source_id) AS source_count
+        FROM sides si
+        {joins}
+        {where}
+        GROUP BY si.id
+        ORDER BY {order_by}
+        LIMIT {MAX_EXPORT_ROWS}
+        """,
+        params,
+        fetch='all',
+    ) or []
+    keys = ['id', 'name', 'importance', 'created', 'documents', 'sources']
+    return [dict(zip(keys, row)) for row in rows]
+
+
+def _keyword_rows() -> List[Dict[str, Any]]:
+    search = (request.args.get('q') or request.args.get('search') or '').strip()
+    sort_by = request.args.get('sort', 'usage_count')
+    sort_order = request.args.get('order', 'desc')
+    if sort_by not in ('usage_count', 'text', 'id', 'status'):
+        sort_by = 'usage_count'
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'desc'
+
+    keyword_rows, _total = get_keywords_with_usage(
+        search_term=search if search else None,
+        page=1,
+        per_page=MAX_EXPORT_ROWS,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
+    from Api.utils.utils import batch_load_keywords_from_rows
+    text_map = batch_load_keywords_from_rows(keyword_rows) if keyword_rows else {}
+
+    category_names: Dict[int, str] = {}
+    category_ids = {row[1] for row in keyword_rows or [] if row[1]}
+    if category_ids:
+        placeholders = ','.join(['%s'] * len(category_ids))
+        cat_rows = execute_query(
+            f"""
+            SELECT c.id, w.word
+            FROM categorys c
+            LEFT JOIN words w ON c.word_id = w.id
+            WHERE c.id IN ({placeholders})
+            """,
+            tuple(category_ids),
+            fetch='all',
+        ) or []
+        category_names = {row[0]: row[1] for row in cat_rows}
+
+    records: List[Dict[str, Any]] = []
+    for row in keyword_rows or []:
+        keyword_id, category_id, _blob, usage_count = row[0], row[1], row[2], row[3]
+        text = text_map.get(keyword_id) or ''
+        records.append({
+            'id': keyword_id,
+            'text': text,
+            'usage_count': usage_count or 0,
+            'status': _status_word(usage_count),
+            'category': category_names.get(category_id),
+        })
+    return records
+
+
+def _word_rows() -> List[Dict[str, Any]]:
+    search = (request.args.get('q') or request.args.get('search') or '').strip()
+    sort_by = request.args.get('sort', 'usage_count')
+    sort_order = request.args.get('order', 'desc')
+    if sort_by not in ('usage_count', 'word', 'id', 'status'):
+        sort_by = 'usage_count'
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'desc'
+
+    words, _total = get_words_with_usage(
+        search_term=search if search else None,
+        page=1,
+        per_page=MAX_EXPORT_ROWS,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
+    for record in words:
+        record['status'] = _status_word(record.get('usage_count'))
+    return words
+
+
+def _category_rows() -> List[Dict[str, Any]]:
+    search = (request.args.get('search') or '').strip()
+    sort_by = request.args.get('sort', 'files')
+    sort_order = request.args.get('order', 'desc')
+    if sort_by not in ('name', 'files', 'words', 'id'):
+        sort_by = 'files'
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'desc'
+    categories, _total = get_categories_paged(
+        search=search if search else None,
+        page=1,
+        per_page=MAX_EXPORT_ROWS,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
+    # The loader speaks its own names (file_count/word_count); the export
+    # speaks the table's (files/words).
+    return [{'id': c['id'], 'name': c['name'],
+             'files': c['file_count'], 'words': c['word_count']}
+            for c in categories]
+
+
+def _category_word_rows() -> List[Dict[str, Any]]:
+    category_id = _int_arg('category_id', 0)
+    if category_id < 1:
+        raise ValueError('category_id is required')
+    search = (request.args.get('search') or '').strip()
+    sort_by = request.args.get('sort', 'word')
+    sort_order = request.args.get('order', 'asc')
+    if sort_by not in ('word', 'usage_count', 'id'):
+        sort_by = 'word'
+    if sort_order not in ('asc', 'desc'):
+        sort_order = 'asc'
+    words, _total = get_words_by_category_paged(
+        category_id,
+        search=search if search else None,
+        page=1,
+        per_page=MAX_EXPORT_ROWS,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
+    return words
+
+
+#: interface_id -> title, column spec, row loader. The loader reads its
+#: filters from the request, exactly as the interface's list route does, so
+#: "export" always means "this view, every row of it".
+EXPORT_SPECS: Dict[str, Dict[str, Any]] = {
+    'file_library': {
+        'title': 'file_library',
+        'columns': FILE_COLUMNS,
+        'rows': _file_rows,
+    },
+    'sources': {
+        'title': 'sources',
+        'columns': SOURCE_COLUMNS,
+        'rows': _source_rows,
+    },
+    'sides': {
+        'title': 'sides',
+        'columns': SIDE_COLUMNS,
+        'rows': _side_rows,
+    },
+    'keywords': {
+        'title': 'keywords',
+        'columns': KEYWORD_COLUMNS,
+        'rows': _keyword_rows,
+    },
+    'words': {
+        'title': 'words',
+        'columns': WORD_COLUMNS,
+        'rows': _word_rows,
+    },
+    'categories': {
+        'title': 'categories',
+        'columns': CATEGORY_COLUMNS,
+        'rows': _category_rows,
+    },
+    'category_words': {
+        'title': 'category_words',
+        'columns': CATEGORY_WORD_COLUMNS,
+        'rows': _category_word_rows,
+    },
+}
+
+
+def _resolve_columns(interface_id: str) -> Tuple[List[Tuple[str, str]], Optional[str]]:
+    """The requested columns, or an error when a name is not in the spec."""
+    spec = EXPORT_SPECS[interface_id]
+    requested = (request.args.get('columns') or '').strip()
+    if not requested:
+        return [(key, label) for key, label, _expr in spec['columns']], None
+    known = {key: label for key, label, _expr in spec['columns']}
+    chosen: List[Tuple[str, str]] = []
+    for key in [k.strip() for k in requested.split(',') if k.strip()]:
+        if key not in known:
+            return [], f"unknown column '{key}' for interface '{interface_id}'"
+        if key not in [c[0] for c in chosen]:
+            chosen.append((key, known[key]))
+    return chosen or [(key, label) for key, label, _expr in spec['columns']], None
+
+
+def _cell(value: Any) -> Any:
+    if value is None:
+        return ''
+    if isinstance(value, bool):
+        return int(value)
+    if hasattr(value, 'isoformat'):
+        return value.isoformat()
+    return value
+
+
+def _csv_response(title: str, columns: List[Tuple[str, str]], records: List[Dict[str, Any]]) -> Response:
+    buffer = io.StringIO()
+    buffer.write('\ufeff')  # Excel opens UTF-8 CSVs correctly with a BOM
+    writer = csv.writer(buffer)
+    writer.writerow([label for _key, label in columns])
+    for record in records:
+        writer.writerow([_cell(record.get(key)) for key, _label in columns])
+    return Response(
+        buffer.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename="{title}.csv"'},
+    )
+
+
+def _xlsx_response(title: str, columns: List[Tuple[str, str]], records: List[Dict[str, Any]]) -> Response:
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = title[:31] or 'Export'
+    sheet.append([label for _key, label in columns])
+    for record in records:
+        sheet.append([_cell(record.get(key)) for key, _label in columns])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    return Response(
+        buffer.getvalue(),
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment; filename="{title}.xlsx"'},
+    )
+
+
+@limiter.limit(INTERACTIVE_READ_LIMIT)
+@exports_bp.route('/api/export/<interface_id>', methods=['GET'])
+def export_interface(interface_id: str):
+    """One view, every row, the reader's chosen columns, CSV or Excel."""
+    spec = EXPORT_SPECS.get(interface_id)
+    if spec is None:
+        return jsonify({
+            'success': False,
+            'error': f"unknown interface '{interface_id}'",
+            'known': sorted(EXPORT_SPECS),
+        }), 404
+
+    columns, error = _resolve_columns(interface_id)
+    if error:
+        return jsonify({'success': False, 'error': error}), 400
+
+    export_format = (request.args.get('format') or 'csv').lower()
+    if export_format not in ('csv', 'xlsx', 'excel'):
+        return jsonify({'success': False, 'error': 'format must be csv or xlsx'}), 400
+
+    try:
+        records = spec['rows']()
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:  # pragma: no cover - defensive, logged
+        logger.error(f"Export failed for {interface_id}: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'Export failed'}), 500
+
+    stamp = datetime.now().strftime('%Y%m%d_%H%M')
+    title = f"{spec['title']}_export_{stamp}"
+    note_disclosure(kind='list_export', scope=f"interface:{interface_id}",
+                    unit='row', row_count=len(records),
+                    format='xlsx' if export_format == 'xlsx' or export_format == 'excel' else 'csv',
+                    columns=[key for key, _label in columns])
+
+    if export_format in ('xlsx', 'excel'):
+        return _xlsx_response(title, columns, records)
+    return _csv_response(title, columns, records)
+
+
+#: The list route a table lives on -> the export spec that serves it. The
+#: templates ask for their export through this map (never as a literal), so
+#: the product id is written in exactly one place.
+EXPORT_INTERFACE_BY_ENDPOINT = {
+    'files.files_list': 'file_library',
+    'sources_list': 'sources',
+    'sides_list': 'sides',
+    'keywords_list': 'keywords',
+    'words_list': 'words',
+    'categories_list': 'categories',
+    'category_words': 'category_words',
+}
+
+
+def export_interface_for(endpoint):
+    return EXPORT_INTERFACE_BY_ENDPOINT.get(endpoint or '')
+
+
+def register_exports_routes(app):
+    """Register the export blueprint with the Flask app"""
+    app.jinja_env.globals['export_interface_for'] = export_interface_for
+    app.register_blueprint(exports_bp)

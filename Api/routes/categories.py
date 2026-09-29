@@ -4,8 +4,8 @@ Categories routes
 
 from flask import redirect, url_for, request, jsonify, render_template, flash
 from Api.utils import (
-    execute_query, get_categories_with_stats, get_category,
-    get_words_by_category, get_word_id, insert_word, insert_category,
+    execute_query, get_categories_with_stats, get_categories_paged, get_category,
+    get_words_by_category, get_words_by_category_paged, get_word_id, insert_word, insert_category,
     list_categories, invalidate_query_cache
 )
 import logging
@@ -15,58 +15,109 @@ logger = logging.getLogger(__name__)
 
 def register_categories_routes(app):
     """Register category routes with the Flask app"""
-    
+
     @app.route('/categories')
     def categories_list():
-        """Category Management Page"""
+        """Category Management Page — server-side search, sort and pagination"""
         try:
-            # Get categories with statistics
-            categories_data = get_categories_with_stats(limit=1000)
-            
-            categories = []
-            for cat in categories_data:
-                categories.append({
-                    'id': cat.get('id'),
-                    'name': cat.get('name') or 'Unnamed Category',
-                    'file_count': cat.get('file_count') or 0,
-                    'word_count': cat.get('word_count') or 0
-                })
-            
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 20, type=int)
+            search = request.args.get('search', '').strip()
+            sort_by = request.args.get('sort', 'files')
+            sort_order = request.args.get('order', 'desc')
+
+            if page < 1:
+                page = 1
+            if per_page < 1 or per_page > 200:
+                per_page = 20
+            if sort_by not in ('name', 'files', 'words', 'id'):
+                sort_by = 'files'
+            if sort_order not in ('asc', 'desc'):
+                sort_order = 'desc'
+            if len(search) > 500:
+                search = search[:500]
+
+            categories, total_categories = get_categories_paged(
+                search=search if search else None,
+                page=page,
+                per_page=per_page,
+                sort_by=sort_by,
+                sort_order=sort_order
+            )
+
+            total_pages = ((total_categories - 1) // per_page) + 1 if total_categories > 0 else 1
+
             return render_template('Category/categories_list.html',
                                  categories=categories,
-                                 total_categories=len(categories))
+                                 page=page,
+                                 per_page=per_page,
+                                 total_pages=total_pages,
+                                 total_categories=total_categories,
+                                 search=search,
+                                 sort_by=sort_by,
+                                 sort_order=sort_order)
         except Exception as e:
             logger.error(f"Error loading categories list: {e}")
             import traceback
             logger.error(traceback.format_exc())
             return render_template('Category/categories_list.html',
                                  categories=[],
-                                 total_categories=0)
-    
+                                 page=1,
+                                 per_page=20,
+                                 total_pages=1,
+                                 total_categories=0,
+                                 search='',
+                                 sort_by='files',
+                                 sort_order='desc')
+
     @app.route('/categories/<int:category_id>/words')
     def category_words(category_id):
-        """View words in a specific category"""
+        """View words in a specific category — server-side search, sort, pagination"""
         try:
             category = get_category(category_id)
-            
+
             if not category:
                 flash('Category not found', 'error')
                 return redirect(url_for('categories_list'))
-            
-            # Get words in this category
-            words_data = get_words_by_category(category_id, limit=10000)
-            
-            # Format words for template
-            words = []
-            for word_data in words_data:
-                words.append({
-                    'id': word_data.get('id') or word_data.get('word_id'),
-                    'word': word_data.get('word') or word_data.get('text') or str(word_data.get('id', ''))
-                })
-            
+
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 20, type=int)
+            search = request.args.get('search', '').strip()
+            sort_by = request.args.get('sort', 'word')
+            sort_order = request.args.get('order', 'asc')
+
+            if page < 1:
+                page = 1
+            if per_page < 1 or per_page > 200:
+                per_page = 20
+            if sort_by not in ('word', 'usage_count', 'id'):
+                sort_by = 'word'
+            if sort_order not in ('asc', 'desc'):
+                sort_order = 'asc'
+            if len(search) > 500:
+                search = search[:500]
+
+            words, total_words = get_words_by_category_paged(
+                category_id,
+                search=search if search else None,
+                page=page,
+                per_page=per_page,
+                sort_by=sort_by,
+                sort_order=sort_order
+            )
+
+            total_pages = ((total_words - 1) // per_page) + 1 if total_words > 0 else 1
+
             return render_template('Category/category_words.html',
                                  category=category,
-                                 words=words)
+                                 words=words,
+                                 page=page,
+                                 per_page=per_page,
+                                 total_pages=total_pages,
+                                 total_words=total_words,
+                                 search=search,
+                                 sort_by=sort_by,
+                                 sort_order=sort_order)
         except Exception as e:
             logger.error(f"Error loading category words: {e}")
             import traceback

@@ -3,9 +3,7 @@
 {% block title %}{{ _('Keywords Management') }}{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', filename='css/fmas.css') }}" rel="stylesheet" />
-
-<link href="{{ url_for('static', filename='css/keywords-list.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/unified-table.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/category-words.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='dist/css/select2.min.css') }}" rel="stylesheet" />
 {% endblock %}
@@ -27,10 +25,11 @@
 
 <!-- Page Tips -->
 {% from 'components/page_tips.html' import page_tips %}
-{% from 'components/states.html' import empty_state %}
 {% from 'components/status_badge.html' import status_badge %}
 {% from 'components/filter_bar.html' import filter_section, filter_grid, filter_group, search_group %}
 {% from 'components/action_toolbar.html' import action_toolbar, action_group, action_button, bulk_action_button, selection_summary %}
+{% from 'components/table.html' import record_table %}
+{% from "components/unified_pagination.html" import unified_pagination %}
     {% call page_tips() %}
 
 <div class="tips-section">
@@ -130,22 +129,6 @@
                 <option value="">{{ _('All Categories') }}</option>
             </select>
         {% endcall %}
-
-        {% call filter_group('sortBy', _('Sort By'), 'bi-sort-alpha-down') %}
-            <select class="form-select" id="sortBy" data-on-change="applySorting()">
-                <option value="usage_count">{{ _('Usage Count') }}</option>
-                <option value="text">{{ _('Text') }}</option>
-                <option value="id">{{ _('ID') }}</option>
-                <option value="date_creation">{{ _('Date Created') }}</option>
-            </select>
-        {% endcall %}
-
-        {% call filter_group('sortOrder', _('Order'), 'bi-arrow-down-up') %}
-            <select class="form-select" id="sortOrder" data-on-change="applySorting()">
-                <option value="desc">{{ _('Descending') }}</option>
-                <option value="asc">{{ _('Ascending') }}</option>
-            </select>
-        {% endcall %}
     {% endcall %}
 
     <!-- Action Bar -->
@@ -172,136 +155,105 @@
     {% endcall %}
 {% endcall %}
 
-<!-- Pagination info above table -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <small class="text-muted" id="searchResultsInfo" aria-live="polite">
-            {% if keywords %}
-                {% set start = (page - 1) * per_page + 1 %}
-                {% set end = start + keywords|length - 1 %}
-                {{ _('Showing') }} {{ start }}-{{ end }} {{ _('of') }} {{ total_keywords }} {{ _('keywords') }}
-            {% else %}
-                {{ _('No keywords found') }}
+{#- The list: one unit - toolbar, sortable headers, body, pager. Sorting is
+    the table's own control; the page re-fetches in the chosen order. -#}
+{% set showing_info -%}
+    {%- if keywords -%}
+        {%- set start = (page - 1) * per_page + 1 -%}
+        {%- set end = start + keywords|length - 1 -%}
+        {{ _('Showing') }} {{ start }}–{{ end }} {{ _('of') }} {{ total_keywords }} {{ _('keywords') }}
+    {%- else -%}
+        {{ _('No keywords found') }}
+    {%- endif -%}
+{%- endset %}
+{% call record_table(
+        id='keywordsTable',
+        columns=[
+            {'kind': 'select', 'width': '50px'},
+            {'kind': 'index', 'width': '70px'},
+            {'key': 'text', 'label': _('Keyword'), 'sortable': True, 'type': 'text'},
+            {'key': 'usage_count', 'label': _('Usage'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '110px'},
+            {'key': 'status', 'label': _('Status'), 'sortable': True, 'width': '140px'},
+            {'key': 'category', 'label': _('Category'), 'width': '160px'},
+            {'kind': 'actions', 'width': '150px'}
+        ],
+        mode='server',
+        sort_key=sort_by|default('usage_count'),
+        sort_dir=sort_order|default('desc'),
+        info_text=showing_info,
+        info_id='searchResultsInfo',
+        per_page=per_page,
+        per_page_id='perPage',
+        on_per_page_change='changePageSize()',
+        select_all_id='selectAllCheckbox',
+        select_all_onchange='toggleSelectAll()',
+        empty_message=_('No keywords found.'),
+        empty_action_label=_('Add your first keyword'),
+        empty_action_onclick='openAddKeywordModal()',
+        export_interface=export_interface_for(request.endpoint),
+        export_columns=[
+            {'key': 'id', 'label': _('Id')},
+        ]) %}
+    {% for keyword in keywords %}
+    {% set row_number = (page - 1) * per_page + loop.index %}
+    <tr data-keyword-id="{{ keyword.id }}"
+        data-usage-count="{{ keyword.usage_count }}"
+        data-status="{{ 'active' if keyword.usage_count > 0 else 'unused' }}">
+        <td class="ut-col-select">
+            <input type="checkbox"
+                   class="keyword-checkbox ut-row-check"
+                   value="{{ keyword.id }}"
+                   data-on-change="updateSelection()"
+                   aria-label="{{ _('Select keyword') }}: {{ keyword.text }}">
+        </td>
+        <td class="ut-index-cell"><span class="ut-badge ut-badge-neutral">{{ row_number }}</span></td>
+        <td data-ut-value="{{ keyword.text|lower }}">
+            <span class="ut-name">{{ keyword.text }}</span>
+            {% if keyword.is_duplicate %}
+                {{ status_badge(status='duplicate', title=_('Duplicate keyword'), extra_class='ms-2') }}
             {% endif %}
-        </small>
-    </div>
-    <div class="d-flex align-items-center">
-        <label for="perPage" class="form-label me-2 mb-0">{{ _('Per Page:') }}</label>
-        <select class="form-select form-select-sm" id="perPage" style="width: auto;" data-on-change="changePageSize()">
-            <option value="10" selected>{{ _('10') }}</option>
-            <option value="25">{{ _('25') }}</option>
-            <option value="50">{{ _('50') }}</option>
-            <option value="100">{{ _('100') }}</option>
-        </select>
-    </div>
-</div>
+        </td>
+        <td class="text-end" data-ut-value="{{ keyword.usage_count }}">
+            {{ keyword.usage_count }}
+        </td>
+        <td data-ut-value="{{ 'active' if keyword.usage_count > 0 else 'unused' }}">
+            {{ status_badge(status='active' if keyword.usage_count > 0 else 'unused') }}
+        </td>
+        <td>
+            <span class="ut-muted">{{ keyword.category_name|default(_('Uncategorized')) }}</span>
+        </td>
+        <td>
+            <div class="btn-group btn-group-sm ut-actions">
+                <a href="{{ url_for('keyword_detail', keyword_id=keyword.id) }}"
+                   class="btn btn-outline-primary"
+                   title="{{ _('View Details') }}">
+                    <i class="bi bi-eye"></i>
+                </a>
+                <button class="btn btn-outline-warning"
+                        data-on-click="editKeyword({{ keyword.id }})"
+                        title="{{ _('Edit') }}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-danger"
+                        data-on-click="deleteKeyword({{ keyword.id }})"
+                        title="{{ _('Delete') }}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+{% endcall %}
 
-<div class="stat-card">
-    <div class="table-wrapper">
-        <table class="table table-hover align-middle" id="keywordsTable" style="width: 100%;">
-            <thead>
-                <tr>
-                    <th style="width:50px">
-                        <input type="checkbox" id="selectAllCheckbox" data-on-change="toggleSelectAll()">
-                    </th>
-                    <th style="width:70px">#</th>
-                    <th>
-                        <div class="d-flex align-items-center">
-                            <span>{{ _('Keyword') }}</span>
-                            <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortBy('text')" title="{{ _('Sort by text') }}" id="sortBtn-text">
-                                <i class="bi bi-arrow-down-up" id="sortIcon-text"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th style="width:120px">
-                        <div class="d-flex align-items-center">
-                            <span>{{ _('Usage') }}</span>
-                            <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortBy('usage_count')" title="{{ _('Sort by usage') }}" id="sortBtn-usage_count">
-                                <i class="bi bi-arrow-down-up" id="sortIcon-usage_count"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th style="width:120px">
-                        <div class="d-flex align-items-center">
-                            <span>{{ _('Status') }}</span>
-                            <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortBy('status')" title="{{ _('Sort by status') }}" id="sortBtn-status">
-                                <i class="bi bi-arrow-down-up" id="sortIcon-status"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th style="width:120px">{{ _('Category') }}</th>
-                    <th style="width:200px">{{ _('Actions') }}</th>
-                </tr>
-            </thead>
-            <tbody id="keywordsTableBody">
-                {% if keywords %}
-                    {% for keyword in keywords %}
-                    {% set row_number = (page - 1) * per_page + loop.index %}
-                    <tr data-keyword-id="{{ keyword.id }}" 
-                        data-usage-count="{{ keyword.usage_count }}"
-                        data-status="{{ 'active' if keyword.usage_count > 0 else 'unused' }}">
-                        <td>
-                            <input type="checkbox" 
-                                   class="keyword-checkbox" 
-                                   value="{{ keyword.id }}" 
-                                   data-on-change="updateBulkButtons()">
-                        </td>
-                        <td>{{ row_number }}</td>
-                        <td>
-                            <strong>{{ keyword.text }}</strong>
-                            {% if keyword.is_duplicate %}
-                                {{ status_badge(status='duplicate', title=_('Duplicate keyword'), extra_class='ms-2') }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="badge bg-info">{{ keyword.usage_count }}</span>
-                        </td>
-                        <td>
-                            {{ status_badge(status='active' if keyword.usage_count > 0 else 'unused') }}
-                        </td>
-                        <td>
-                            <span class="text-muted">{{ keyword.category_name|default(_('Uncategorized')) }}</span>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ url_for('keyword_detail', keyword_id=keyword.id) }}" 
-                                   class="btn btn-outline-primary" 
-                                   title="{{ _('View Details') }}">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <button class="btn btn-outline-warning" 
-                                        data-on-click="editKeyword({{ keyword.id }})" 
-                                        title="{{ _('Edit') }}">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-outline-danger" 
-                                        data-on-click="deleteKeyword({{ keyword.id }})" 
-                                        title="{{ _('Delete') }}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="7" class="text-center py-4">
-                            {{ empty_state(
-                                message=_('No keywords found.'),
-                                action_label=_('Add your first keyword'),
-                                action_onclick='openAddKeywordModal()',
-                                action_icon=None) }}
-                        </td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Server-rendered Pagination -->
+<!-- Pagination: the mount the server pager fills, and the client pager refills -->
+<div class="pagination-container" id="pagination">
     {% if total_pages > 1 %}
-        {% from "components/unified_pagination.html" import unified_pagination %}
-        {{ unified_pagination(page, total_pages, url_for, 'keywords_list', {'search': search, 'per_page': per_page}) }}
+        {{ unified_pagination(page, total_pages, url_for, 'keywords_list', {
+            'search': search,
+            'per_page': per_page,
+            'sort': sort_by|default('usage_count'),
+            'order': sort_order|default('desc')
+        }) }}
     {% endif %}
 </div>
 
@@ -416,5 +368,6 @@
         "loading": _('Loading...')
     }
 }|tojson }}</script>
+<script src="{{ url_for('static', filename='js/modules/ui/unified-table.js') }}?v=20260929a" defer></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/keywords-list-page.js') }}"></script>
 {% endblock %}

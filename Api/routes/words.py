@@ -21,16 +21,23 @@ def register_words_routes(app):
     
     @app.route('/words')
     def words_list():
-        """Words Management with server-side pagination"""
+        """Words Management with server-side pagination and sorting"""
         try:
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', 10, type=int)
             search = request.args.get('search', '').strip()
+            # Column sort comes from the table headers: `sort` + `order` in
+            # the query string. `get_words_with_usage` validates the column
+            # against its allowlist and falls back to usage count.
+            sort_by = request.args.get('sort', 'usage_count')
+            sort_order = request.args.get('order', 'desc')
             
             if page < 1:
                 page = 1
             if per_page < 1 or per_page > 100:
                 per_page = 10
+            if sort_order not in ('asc', 'desc'):
+                sort_order = 'desc'
             
             if len(search) > 500:
                 search = search[:500]
@@ -39,8 +46,8 @@ def register_words_routes(app):
                 search_term=search if search else None,
                 page=page,
                 per_page=per_page,
-                sort_by='usage_count',
-                sort_order='desc'
+                sort_by=sort_by,
+                sort_order=sort_order
             )
             
             total_pages = (total_words + per_page - 1) // per_page if total_words > 0 else 1
@@ -51,11 +58,13 @@ def register_words_routes(app):
                                    per_page=per_page,
                                    total_pages=total_pages,
                                    total_words=total_words,
-                                   search=search)
+                                   search=search,
+                                   sort_by=sort_by,
+                                   sort_order=sort_order)
         except Exception as e:
             logger.error(f"Error loading words: {e}")
             flash(f"Error loading words: {e}", "error")
-            return render_template('Word/Word_list.html', words=[], page=1, per_page=10, total_pages=1, total_words=0, search='')
+            return render_template('Word/Word_list.html', words=[], page=1, per_page=10, total_pages=1, total_words=0, search='', sort_by='usage_count', sort_order='desc')
     
     @app.route('/words/add', methods=['GET', 'POST'])
     def words_add():
@@ -129,8 +138,9 @@ def register_words_routes(app):
             sort_order = request.args.get('order', 'desc')
             status_filter = request.args.get('status', '')
             
-            # Validate sort parameters
-            valid_sorts = ['usage_count', 'word', 'id']
+            # Validate sort parameters ('status' is a derived column the
+            # shared loader maps to its usage expression)
+            valid_sorts = ['usage_count', 'word', 'id', 'status']
             if sort_by not in valid_sorts:
                 sort_by = 'usage_count'
             if sort_order not in ['asc', 'desc']:

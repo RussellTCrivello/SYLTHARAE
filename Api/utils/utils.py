@@ -1312,6 +1312,100 @@ def get_categories_with_stats(limit: int = 100) -> list:
         return []
 
 
+#: The columns a category list may be ordered by, as SQL - the allowlist that
+#: turns a table header's sort key into an ORDER BY clause. Text only ever
+#: comes from the caller's key here, never from the request itself.
+_CATEGORY_SORT_COLUMNS = {
+    'name': 'w.word',
+    'files': 'file_count',
+    'words': 'word_count',
+    'id': 'c.id',
+}
+
+
+def get_categories_paged(
+    search: str = None,
+    page: int = 1,
+    per_page: int = 20,
+    sort_by: str = 'files',
+    sort_order: str = 'desc'
+) -> tuple:
+    """
+    Get one page of categories with statistics, searched, sorted server-side.
+
+    The list page used to load up to a thousand categories and search, sort
+    and page them in the browser; this gives the same view one page at a
+    time, in the order the table headers asked for.
+
+    Args:
+        search: Optional category-name substring (case-insensitive)
+        page: Page number (1-based)
+        per_page: Results per page
+        sort_by: One of name | files | words | id
+        sort_order: 'asc' or 'desc'
+
+    Returns:
+        Tuple of (categories_list, total_count)
+    """
+    try:
+        page = max(1, int(page))
+        per_page = max(1, min(int(per_page), 200))
+        if sort_by not in _CATEGORY_SORT_COLUMNS:
+            sort_by = 'files'
+        if sort_order not in ('asc', 'desc'):
+            sort_order = 'desc'
+        direction = 'ASC' if sort_order == 'asc' else 'DESC'
+        order_column = _CATEGORY_SORT_COLUMNS[sort_by]
+
+        where_sql = ""
+        params: list = []
+        if search:
+            where_sql = "WHERE w.word ILIKE %s"
+            params.append(f"%{search}%")
+
+        count_query = f"""
+            SELECT COUNT(*)
+            FROM categorys c
+            JOIN words w ON c.word_id = w.id
+            {where_sql}
+        """
+        total_result = execute_query(count_query, tuple(params), fetch="one")
+        total = total_result[0] if total_result else 0
+
+        offset = (page - 1) * per_page
+        query = f"""
+            SELECT
+                c.id,
+                w.word as name,
+                COUNT(DISTINCT p.id) as file_count,
+                COUNT(DISTINCT wc.word_id) as word_count
+            FROM categorys c
+            JOIN words w ON c.word_id = w.id
+            LEFT JOIN words_categorys wc ON wc.category_id = c.id
+            LEFT JOIN words_hashs wp ON wp.word_id = wc.word_id
+            LEFT JOIN hash_contexts hc ON hc.hash_id = wp.hash_id
+            LEFT JOIN paths p ON p.context_id = hc.id
+            {where_sql}
+            GROUP BY c.id, w.word
+            ORDER BY {order_column} {direction}, w.word ASC
+            LIMIT %s OFFSET %s
+        """
+        results = execute_query(query, tuple(params) + (per_page, offset), fetch="all")
+        categories = [
+            {
+                'id': row[0],
+                'name': row[1] or 'Unnamed Category',
+                'file_count': row[2] or 0,
+                'word_count': row[3] or 0
+            }
+            for row in (results or [])
+        ]
+        return categories, total or 0
+    except Exception as e:
+        logger.error(f"Error getting paged categories: {e}")
+        return [], 0
+
+
 def get_category(category_id: int) -> dict:
     """
     Get a category by ID
@@ -1379,6 +1473,93 @@ def get_words_by_category(category_id: int, limit: int = 100) -> list:
     except Exception as e:
         logger.error(f"Error getting words by category {category_id}: {e}")
         return []
+
+
+#: The columns a words-in-category list may be ordered by, as SQL.
+_CATEGORY_WORDS_SORT_COLUMNS = {
+    'word': 'w.word',
+    'usage_count': 'usage_count',
+    'id': 'w.id',
+}
+
+
+def get_words_by_category_paged(
+    category_id: int,
+    search: str = None,
+    page: int = 1,
+    per_page: int = 20,
+    sort_by: str = 'word',
+    sort_order: str = 'asc'
+) -> tuple:
+    """
+    Get one page of a category's words, searched and sorted server-side.
+
+    The words-in-category page used to load up to ten thousand rows and do
+    everything in the browser; this serves the same table one page at a time.
+
+    Args:
+        category_id: Category ID
+        search: Optional word substring (case-insensitive)
+        page: Page number (1-based)
+        per_page: Results per page
+        sort_by: One of word | usage_count | id
+        sort_order: 'asc' or 'desc'
+
+    Returns:
+        Tuple of (words_list, total_count)
+    """
+    try:
+        page = max(1, int(page))
+        per_page = max(1, min(int(per_page), 200))
+        if sort_by not in _CATEGORY_WORDS_SORT_COLUMNS:
+            sort_by = 'word'
+        if sort_order not in ('asc', 'desc'):
+            sort_order = 'asc'
+        direction = 'ASC' if sort_order == 'asc' else 'DESC'
+        order_column = _CATEGORY_WORDS_SORT_COLUMNS[sort_by]
+
+        where_parts = ["wc.category_id = %s"]
+        params: list = [category_id]
+        if search:
+            where_parts.append("w.word ILIKE %s")
+            params.append(f"%{search}%")
+        where_sql = "WHERE " + " AND ".join(where_parts)
+
+        count_query = f"""
+            SELECT COUNT(*)
+            FROM words_categorys wc
+            JOIN words w ON w.id = wc.word_id
+            {where_sql}
+        """
+        total_result = execute_query(count_query, tuple(params), fetch="one")
+        total = total_result[0] if total_result else 0
+
+        offset = (page - 1) * per_page
+        query = f"""
+            SELECT DISTINCT w.id, w.word, COUNT(DISTINCT p.id) as usage_count
+            FROM words_categorys wc
+            JOIN words w ON w.id = wc.word_id
+            LEFT JOIN words_hashs wp ON wp.word_id = w.id
+            LEFT JOIN hash_contexts hc ON hc.hash_id = wp.hash_id
+            LEFT JOIN paths p ON p.context_id = hc.id
+            {where_sql}
+            GROUP BY w.id, w.word
+            ORDER BY {order_column} {direction}, w.word ASC
+            LIMIT %s OFFSET %s
+        """
+        results = execute_query(query, tuple(params) + (per_page, offset), fetch="all")
+        words = [
+            {
+                'id': row[0],
+                'word': row[1],
+                'usage_count': row[2] or 0
+            }
+            for row in (results or [])
+        ]
+        return words, total or 0
+    except Exception as e:
+        logger.error(f"Error getting paged words for category {category_id}: {e}")
+        return [], 0
 
 
 # ==================== WORD FUNCTIONS ====================
@@ -1461,10 +1642,15 @@ def get_words_with_usage(
         
         where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
         
-        # Validate sort_by
-        valid_sorts = ['usage_count', 'word', 'id']
+        # Validate sort_by; 'status' is derived (a word is active when it has
+        # usage), so it maps to the usage expression the table shows.
+        valid_sorts = ['usage_count', 'word', 'id', 'status']
         if sort_by not in valid_sorts:
             sort_by = 'usage_count'
+        order_column = {'status': 'COUNT(DISTINCT p.id) > 0'}.get(sort_by, sort_by)
+        # A status sort keeps usage count as its tiebreaker so the active
+        # words are ordered by how much they are used.
+        status_tiebreak = ', COUNT(DISTINCT p.id) {dir}, w.word'.format(dir=sort_order.upper()) if sort_by == 'status' else ', w.word'
         
         # Validate sort_order
         if sort_order not in ['asc', 'desc']:
@@ -1479,7 +1665,7 @@ def get_words_with_usage(
             LEFT JOIN paths p ON p.context_id = hc.id
             {where_sql}
             GROUP BY w.id, w.word
-            ORDER BY {sort_by} {sort_order.upper()}, w.word
+            ORDER BY {order_column} {sort_order.upper()}{status_tiebreak}
             LIMIT %s OFFSET %s
         """
         params.extend([per_page, offset])
@@ -1698,7 +1884,9 @@ def get_words_for_dropdown(limit: int = 1000) -> list:
 def get_keywords_with_usage(
     search_term: str = None,
     page: int = 1,
-    per_page: int = 10
+    per_page: int = 10,
+    sort_by: str = 'usage_count',
+    sort_order: str = 'desc'
 ) -> tuple:
     """
     Get keywords with usage statistics
@@ -1710,23 +1898,43 @@ def get_keywords_with_usage(
         search_term: Optional search term to filter keywords by text
         page: Page number (1-based)
         per_page: Results per page
+        sort_by: Column to order by ('usage_count', 'id', 'status' or 'text').
+                 Keyword text is stored pickled, so only 'text' needs the
+                 Python-side full-list path; the rest order in SQL.
+        sort_order: 'asc' or 'desc'
     
     Returns:
         Tuple of (keywords_rows, total_count)
     """
     try:
-        # If no search term, use simple query without text loading
-        if not search_term:
+        sort_direction = 'ASC' if str(sort_order).lower() == 'asc' else 'DESC'
+        if sort_by not in ('usage_count', 'id', 'status', 'text'):
+            sort_by = 'usage_count'
+
+        # SQL order clauses for the columns the database can see.
+        if sort_by == 'id':
+            order_clause = f"ORDER BY k.id {sort_direction}"
+        elif sort_by == 'status':
+            order_clause = (
+                f"ORDER BY (COUNT(DISTINCT p.id) > 0) {sort_direction}, "
+                f"usage_count {sort_direction}, k.id"
+            )
+        else:  # usage_count
+            order_clause = f"ORDER BY usage_count {sort_direction}, k.id"
+
+        # If no search term and the requested column is orderable in SQL,
+        # use a simple query without text loading
+        if not search_term and sort_by != 'text':
             offset = (page - 1) * per_page
             
-            query = """
+            query = f"""
                 SELECT k.id, k.category_id, k.keyword, COUNT(DISTINCT p.id) as usage_count
                 FROM keywords k
                 LEFT JOIN keywords_hashs kp ON kp.keyword_id = k.id
                 LEFT JOIN hash_contexts hc ON hc.hash_id = kp.hash_id
                 LEFT JOIN paths p ON p.context_id = hc.id
                 GROUP BY k.id, k.category_id, k.keyword
-                ORDER BY usage_count DESC, k.id
+                {order_clause}
                 LIMIT %s OFFSET %s
             """
             
@@ -1741,9 +1949,11 @@ def get_keywords_with_usage(
             total = total_result[0] if total_result else 0
             return results or [], total
         
-        # With search term: load keywords in batches and filter by text
-        # This is more efficient than unpickling each keyword individually
-        search_lower = search_term.lower()
+        # Otherwise load keywords in batches and work in Python: search needs
+        # the texts, and so does a sort by text (pickled column). This is more
+        # efficient than unpickling each keyword individually.
+        if search_term:
+            search_lower = search_term.lower()
         
         # First, get all keywords with usage counts (without pagination)
         # We'll filter by text and then paginate
@@ -1770,17 +1980,32 @@ def get_keywords_with_usage(
             keyword_id = kw[0]
             keyword_text = keyword_text_map.get(keyword_id, '')
             
-            # Case-insensitive search in keyword text
-            if search_lower in keyword_text.lower():
-                filtered_keywords.append(kw)
+            if search_term and search_lower not in keyword_text.lower():
+                continue
+            filtered_keywords.append((kw, keyword_text))
         
-        # Sort by usage count (descending), then by ID
-        filtered_keywords.sort(key=lambda x: (x[3] or 0, x[0]), reverse=True)
+        # The order the table headers asked for, applied to the full list
+        # before the page slice, so every page shares one order.
+        if sort_by == 'text':
+            filtered_keywords.sort(
+                key=lambda item: ((item[1] or '').lower(), item[0][0]),
+                reverse=(sort_direction == 'DESC'))
+        elif sort_by == 'id':
+            filtered_keywords.sort(
+                key=lambda item: (item[0][0] or 0,), reverse=(sort_direction == 'DESC'))
+        elif sort_by == 'status':
+            filtered_keywords.sort(
+                key=lambda item: ((item[0][3] or 0) > 0, item[0][3] or 0, item[0][0]),
+                reverse=(sort_direction == 'DESC'))
+        else:  # usage_count
+            filtered_keywords.sort(
+                key=lambda item: (item[0][3] or 0, item[0][0]),
+                reverse=(sort_direction == 'DESC'))
         
         # Apply pagination
         total = len(filtered_keywords)
         offset = (page - 1) * per_page
-        paginated_results = filtered_keywords[offset:offset + per_page]
+        paginated_results = [item[0] for item in filtered_keywords[offset:offset + per_page]]
         
         return paginated_results, total
         

@@ -27,15 +27,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const tableBody = document.getElementById('wordsTableBody');
     const searchInput = document.getElementById('searchWords');
     const statusFilter = document.getElementById('statusFilter');
-    const sortBySelect = document.getElementById('sortBy');
-    const sortOrderSelect = document.getElementById('sortOrder');
     const perPageSelect = document.getElementById('perPage');
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const TABLE_ID = 'wordsTable';
+    const COLUMN_COUNT = 6;
     
     let currentPage = 1;
     let currentPerPage = 10;
-    let currentSort = 'usage_count';
-    let currentOrder = 'desc';
+    // Seed from the URL so a server-rendered, sorted view (the sort/order
+    // query params the headers wrote) is the state the page starts in.
+    const SORTABLE_COLUMNS = ['usage_count', 'word', 'id', 'status'];
+    const initialParams = new URLSearchParams(window.location.search);
+    const sortFromUrl = initialParams.get('sort');
+    const orderFromUrl = initialParams.get('order');
+    let currentSort = SORTABLE_COLUMNS.includes(sortFromUrl) ? sortFromUrl : 'usage_count';
+    let currentOrder = orderFromUrl === 'asc' ? 'asc' : 'desc';
     let selectedWords = new Set();
     let wordModal = null;
     let editWordId = null;
@@ -66,15 +72,18 @@ document.addEventListener('DOMContentLoaded', function() {
             currentPerPage = parseInt(perPageSelect.value) || 10;
         }
         
-        if (sortBySelect) {
-            sortBySelect.value = currentSort;
-        }
-        if (sortOrderSelect) {
-            sortOrderSelect.value = currentOrder;
-        }
-        
         updateSortIcons();
-        createPaginationContainer();
+        
+        // Column sort lives in the table headers: the unified table asks the
+        // page to re-fetch in the chosen order.
+        if (window.UnifiedTable) {
+            window.UnifiedTable.onSort(TABLE_ID, function (key, direction) {
+                currentSort = key;
+                currentOrder = direction;
+                currentPage = 1;
+                fetchPage(1);
+            });
+        }
         
         // Only fetch page if tableBody exists
         if (tableBody) {
@@ -94,17 +103,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateSortIcons() {
-        document.querySelectorAll('[id^="sortIcon-"]').forEach(icon => {
-            icon.className = 'bi bi-arrow-down-up';
-        });
-        
-        const activeIcon = document.getElementById(`sortIcon-${currentSort}`);
-        if (activeIcon) {
-            if (currentOrder === 'asc') {
-                activeIcon.className = 'bi bi-arrow-up';
-            } else {
-                activeIcon.className = 'bi bi-arrow-down';
-            }
+        // The header is the one sort control; the unified table owns how the
+        // decision is drawn (indicator, aria-sort).
+        if (window.UnifiedTable) {
+            window.UnifiedTable.setSort(TABLE_ID, currentSort, currentOrder);
         }
     }
     
@@ -131,62 +133,59 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function renderRows(words, page) {
-        if (!tableBody) return;
-        
-        tableBody.innerHTML = '';
-        
+        if (!tableBody || !window.UnifiedTable) return;
+
         if (!words || words.length === 0) {
             const query = searchInput?.value?.trim() || '';
-            const message = query ? 
-                `${translations.noWordsFound} "${query}".` : 
+            const message = query ?
+                `${translations.noWordsFound} "${query}".` :
                 translations.noWordsYet;
-            
-            tableBody.innerHTML = `
-                <tr><td colspan="6" class="text-center py-5 text-muted">
-                    <i class="bi bi-book display-4 mb-3"></i>
-                    <div>${message}</div>
-                </td></tr>`;
+
+            UnifiedTable.renderRows(tableBody, [
+                UnifiedTable.states.empty(COLUMN_COUNT, { message, filtered: Boolean(query) })
+            ]);
             return;
         }
-        
+
+        // The same row the server renders, drawn with the same pieces: one
+        // join, one insertion, a hundred rows for one reflow.
+        const rows = [];
         words.forEach((word, idx) => {
             if (!word || !word.id) return;
-            
+
             const globalIndex = ((page - 1) * currentPerPage) + (idx + 1);
-            const tr = document.createElement('tr');
-            tr.dataset.wordId = word.id;
-            
-            tr.innerHTML = `
-                <td>
-                    <input type="checkbox" class="form-check-input word-checkbox" 
-                           value="${word.id}" data-on-change="updateSelection()">
-                </td>
-                <td><span class="badge bg-secondary">${globalIndex}</span></td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <span class="word-text" data-word-id="${word.id}">
-                            <strong>${(word.word || '').replace(/</g,'&lt;')}</strong>
-                        </span>
-                        <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="editWord(${word.id})" title="${translations.editWord}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                    </div>
-                </td>
-                <td><span class="badge bg-info">${word.usage_count || 0}</span></td>
-                <td>${word.usage_count > 0 ? `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>${translations.active}</span>` : `<span class="badge bg-secondary"><i class="bi bi-dash-circle me-1"></i>${translations.unused}</span>`}</td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" data-on-click="viewWord(${word.id})" title="${translations.viewDetails || 'View Details'}">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" data-on-click="deleteWord(${word.id})" title="${translations.deleteWord || 'Delete'}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </td>`;
-            tableBody.appendChild(tr);
+            const usage = word.usage_count || 0;
+            const active = usage > 0;
+            rows.push(`
+                <tr data-word-id="${word.id}" data-usage-count="${usage}" data-status="${active ? 'active' : 'unused'}">
+                    <td class="ut-col-select">
+                        <input type="checkbox" class="word-checkbox ut-row-check"
+                               value="${word.id}" data-on-change="updateBulkButtons()"
+                               aria-label="${translations.editWord || 'Word'}: ${UnifiedTable.fmt.escapeHtml(word.word || '')}">
+                    </td>
+                    <td class="ut-index-cell"><span class="ut-badge ut-badge-neutral">${globalIndex}</span></td>
+                    <td><span class="ut-name" data-word-id="${word.id}">${UnifiedTable.fmt.escapeHtml(word.word || '')}</span></td>
+                    <td class="text-end" data-ut-value="${usage}">${usage}</td>
+                    <td data-ut-value="${active ? 'active' : 'unused'}">${active
+                        ? `<span class="badge bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>${translations.active}</span>`
+                        : `<span class="badge bg-secondary"><i class="bi bi-dash-circle me-1" aria-hidden="true"></i>${translations.unused}</span>`}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm ut-actions">
+                            <button class="btn btn-outline-primary" data-on-click="viewWord(${word.id})" title="${translations.viewDetails || 'View Details'}">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-warning" data-on-click="editWord(${word.id})" title="${translations.editWord || 'Edit'}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" data-on-click="deleteWord(${word.id})" title="${translations.deleteWord || 'Delete'}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`);
         });
-        
+        UnifiedTable.renderRows(tableBody, rows);
+
         // Update stats
         const activeCount = words.filter(w => w.usage_count > 0).length;
         const unusedCount = words.filter(w => w.usage_count === 0).length;
@@ -317,31 +316,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function createPaginationContainer() {
+        // The server template renders the mount; this is only a fallback.
         const wordsTable = document.getElementById('wordsTable');
         if (!wordsTable) return null;
-        
-        const statCard = wordsTable.closest('.stat-card');
-        if (!statCard) return null;
-        
-        let container = statCard.querySelector('.pagination-container');
-        if (container) {
-            container.style.display = 'flex';
-            return container;
-        }
-        
+
+        const unit = wordsTable.closest('.ut');
+        if (!unit || !unit.parentNode) return null;
+
+        let container = unit.parentNode.querySelector('.pagination-container');
+        if (container) return container;
+
         container = document.createElement('div');
-        container.className = 'd-flex justify-content-between align-items-center mt-3 mb-3 pagination-container';
-        container.style.display = 'flex';
-        container.style.width = '100%';
-        container.style.clear = 'both';
-        
-        const tableWrapper = statCard.querySelector('.table-wrapper');
-        if (tableWrapper && tableWrapper.parentNode) {
-            tableWrapper.parentNode.insertBefore(container, tableWrapper.nextSibling);
-        } else {
-            statCard.appendChild(container);
-        }
-        
+        container.className = 'pagination-container';
+        unit.parentNode.insertBefore(container, unit.nextSibling);
         return container;
     }
     
@@ -357,16 +344,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (pendingFetch) pendingFetch.abort();
         const controller = new AbortController();
         pendingFetch = controller;
-        
+
         // Show loading state
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr><td colspan="6" class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">${translations.loading || 'Loading...'}</span>
-                    </div>
-                    <div class="mt-2 text-muted">${translations.loading || 'Loading...'}</div>
-                </td></tr>`;
+        if (tableBody && window.UnifiedTable) {
+            UnifiedTable.renderRows(tableBody, [
+                UnifiedTable.states.loading(COLUMN_COUNT, translations.loading || 'Loading...')
+            ]);
         }
         
         // Get API URL from page data or use default
@@ -405,29 +388,25 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(json => {
                 if (!tableBody) return;
-                
+
                 if (!json || json.success === false) {
-                    tableBody.innerHTML = `
-                        <tr><td colspan="6" class="text-center py-5 text-danger">
-                            <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
-                            <div>${translations.errorLoadingWords || 'Error loading words'}: ${json?.error || 'Invalid response'}</div>
-                        </td></tr>`;
+                    if (window.UnifiedTable) {
+                        UnifiedTable.renderRows(tableBody, [
+                            UnifiedTable.states.error(COLUMN_COUNT,
+                                `${translations.errorLoadingWords || 'Error loading words'}: ${json?.error || 'Invalid response'}`)
+                        ]);
+                    }
                     return;
                 }
-                
+
                 if (json.per_page) {
                     currentPerPage = json.per_page;
                     if (perPageSelect) perPageSelect.value = json.per_page;
                 }
-                
-                if (json.sort_by) {
-                    currentSort = json.sort_by;
-                    if (sortBySelect) sortBySelect.value = currentSort;
-                }
-                if (json.sort_order) {
-                    currentOrder = json.sort_order;
-                    if (sortOrderSelect) sortOrderSelect.value = currentOrder;
-                }
+
+                // The server decides the order; the headers show its answer.
+                if (json.sort_by) currentSort = json.sort_by;
+                if (json.sort_order) currentOrder = json.sort_order;
                 updateSortIcons();
                 
                 const words = json.words || [];
@@ -448,12 +427,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => {
                 if (err.name === 'AbortError') return;
                 console.error('Fetch error', err);
-                if (tableBody) {
-                    tableBody.innerHTML = `
-                        <tr><td colspan="6" class="text-center py-5 text-danger">
-                            <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
-                            <div>${translations.errorLoadingWords || 'Error loading words'}: ${err.message}</div>
-                        </td></tr>`;
+                if (tableBody && window.UnifiedTable) {
+                    UnifiedTable.renderRows(tableBody, [
+                        UnifiedTable.states.error(COLUMN_COUNT,
+                            `${translations.errorLoadingWords || 'Error loading words'}: ${err.message}`)
+                    ]);
                 }
             })
             .finally(() => { if (pendingFetch === controller) pendingFetch = null; });
@@ -465,13 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const start = ((json.page - 1) * json.per_page) + 1;
             const end = start + ((json.words || []).length) - 1;
             const total = json.total || 0;
-            const query = searchInput ? searchInput.value.trim() : '';
-            
-            if (query) {
-                infoEl.textContent = `Found ${total} result${total !== 1 ? 's' : ''} for "${query}" (${start}–${end})`;
-            } else {
-                infoEl.textContent = `${translations.showing} ${start}–${end} ${translations.of} ${total} ${translations.words}`;
-            }
+            infoEl.textContent = `${translations.showing} ${start}–${end} ${translations.of} ${total} ${translations.words}`;
         }
     }
     
@@ -479,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // send); the toolbar owns how that scope is drawn and announced. So this
     // reports the numbers and nothing else: it never enables or disables a
     // button, and it never names an action.
-    function updateSelection() {
+    function updateBulkButtons() {
         const checkboxes = document.querySelectorAll('.word-checkbox:checked');
         selectedWords.clear();
         checkboxes.forEach(cb => selectedWords.add(parseInt(cb.value)));
@@ -503,49 +475,28 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.word-checkbox').forEach(cb => {
             cb.checked = isChecked;
         });
-        updateSelection();
+        updateBulkButtons();
     }
     
     function selectAll() {
         document.querySelectorAll('.word-checkbox').forEach(cb => {
             cb.checked = true;
         });
-        updateSelection();
+        updateBulkButtons();
     }
     
     function selectNone() {
         document.querySelectorAll('.word-checkbox').forEach(cb => {
             cb.checked = false;
         });
-        updateSelection();
+        updateBulkButtons();
     }
     
     function applyFilters() {
         currentPage = 1;
         fetchPage(1);
     }
-    
-    function sortBy(field) {
-        if (currentSort === field) {
-            currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-        } else {
-            currentSort = field;
-            currentOrder = 'asc';
-        }
-        sortBySelect.value = currentSort;
-        sortOrderSelect.value = currentOrder;
-        updateSortIcons();
-        fetchPage(currentPage);
-    }
-    
-    function applySorting() {
-        currentSort = sortBySelect.value;
-        currentOrder = sortOrderSelect.value;
-        currentPage = 1;
-        updateSortIcons();
-        fetchPage(1);
-    }
-    
+
     function changePageSize() {
         currentPerPage = parseInt(perPageSelect.value);
         currentPage = 1;
@@ -755,13 +706,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(e => alert(translations.error + ': ' + e.message));
     };
     
-    window.updateSelection = updateSelection;
+    window.updateBulkButtons = updateBulkButtons;
+    // The selection path under its original name as well: the keyword and
+    // word pages share one contract name with the toolbar harness.
+    window.updateSelection = updateBulkButtons;
     window.toggleSelectAll = toggleSelectAll;
     window.selectAll = selectAll;
     window.selectNone = selectNone;
     window.applyFilters = applyFilters;
-    window.applySorting = applySorting;
-    window.sortBy = sortBy;
     window.changePageSize = changePageSize;
     window.clearSearch = clearSearch;
     window.bulkDelete = bulkDelete;

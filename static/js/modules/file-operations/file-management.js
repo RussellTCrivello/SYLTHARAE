@@ -43,8 +43,7 @@ const FileManagement = {
             'sourceFilter': 'source',
             'sideFilter': 'side',
             'fileTypeFilter': 'file_type',
-            'statusFilter': 'status',
-            'sortBy': 'sort'
+            'statusFilter': 'status'
         };
         
         Object.entries(filters).forEach(([elementId, paramName]) => {
@@ -93,7 +92,7 @@ const FileManagement = {
         }
         
         // Filter dropdowns - add change listeners
-        ['sourceFilter', 'sideFilter', 'fileTypeFilter', 'statusFilter', 'sortBy'].forEach(id => {
+        ['sourceFilter', 'sideFilter', 'fileTypeFilter', 'statusFilter'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 // Remove existing listeners to avoid duplicates
@@ -205,16 +204,21 @@ const FileManagement = {
     // ==================== FILTER MANAGEMENT ====================
     applyFilters() {
         const params = new URLSearchParams();
-        
+
         // Get all filter values
         const search = document.getElementById('smartSearch')?.value?.trim();
         const source = document.getElementById('sourceFilter')?.value;
         const side = document.getElementById('sideFilter')?.value;
         const fileType = document.getElementById('fileTypeFilter')?.value;
         const status = document.getElementById('statusFilter')?.value;
-        const sort = document.getElementById('sortBy')?.value || 'date_desc';
         const limit = document.getElementById('perPageFiles')?.value || '10';
-        
+
+        // The column sort is the table's own control: keep whatever the
+        // headers put in the URL (`sort` + `order`).
+        const currentParams = new URLSearchParams(window.location.search);
+        const sort = currentParams.get('sort');
+        const order = currentParams.get('order');
+
         // Add to params if not empty
         if (search) params.set('search', search);
         if (source) params.set('source', source);
@@ -222,6 +226,7 @@ const FileManagement = {
         if (fileType) params.set('file_type', fileType);
         if (status) params.set('status', status);
         if (sort) params.set('sort', sort);
+        if (order) params.set('order', order);
         if (limit) params.set('limit', limit);
         
         // Reset to first page when filtering
@@ -294,16 +299,18 @@ const FileManagement = {
     navigateToPage(targetPage) {
         // Get current URL parameters to preserve all filters
         const currentParams = new URLSearchParams(window.location.search);
-        
+
         // Get filter values from form inputs (preferred) or URL params (fallback)
         const search = document.getElementById('smartSearch')?.value?.trim() || currentParams.get('search') || '';
         const source = document.getElementById('sourceFilter')?.value || currentParams.get('source') || '';
         const side = document.getElementById('sideFilter')?.value || currentParams.get('side') || '';
         const fileType = document.getElementById('fileTypeFilter')?.value || currentParams.get('file_type') || '';
         const status = document.getElementById('statusFilter')?.value || currentParams.get('status') || '';
-        const sort = document.getElementById('sortBy')?.value || currentParams.get('sort') || 'date_desc';
+        // The column sort is the table's own control: carry the URL's choice.
+        const sort = currentParams.get('sort') || '';
+        const order = currentParams.get('order') || '';
         const limit = document.getElementById('perPageFiles')?.value || currentParams.get('limit') || '10';
-        
+
         // Build URL with filters
         const params = new URLSearchParams();
         if (search) params.set('search', search);
@@ -312,9 +319,10 @@ const FileManagement = {
         if (fileType) params.set('file_type', fileType);
         if (status) params.set('status', status);
         if (sort) params.set('sort', sort);
+        if (order) params.set('order', order);
         params.set('limit', limit);
         params.set('page', targetPage);
-        
+
         window.location.href = window.location.pathname + '?' + params.toString();
     },
     
