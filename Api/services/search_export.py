@@ -573,7 +573,7 @@ def _lookup_by_ids(path_ids: Sequence[int]) -> List[Dict[str, Any]]:
         LEFT JOIN sources s ON hc.source_id = s.id
         LEFT JOIN sides si ON hc.side_id = si.id
         WHERE p.id IN ({placeholders})
-        """,
+        """,  # nosec B608 # IN list of %s placeholders; the ids are bound parameters
         tuple(path_ids), fetch="all",
     ) or []
 

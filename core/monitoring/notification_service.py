@@ -216,8 +216,9 @@ class NotificationService:
             FROM alerts
             WHERE dismissed = FALSE AND recipient_user_id IS NULL
             ORDER BY created_at DESC
-            LIMIT {int(limit)}
-            """,
+            LIMIT %s
+            """,  # nosec B608 # ALERT_COLUMNS is a constant; the limit is a bound parameter
+            (int(limit),),
             fetch="all"
         )
 
@@ -248,7 +249,7 @@ class NotificationService:
             where.append("read = FALSE")
         params.append(int(limit))
         rows = execute_query(
-            f"SELECT {ALERT_COLUMNS} FROM alerts WHERE {' AND '.join(where)}"
+            f"SELECT {ALERT_COLUMNS} FROM alerts WHERE {' AND '.join(where)}"  # nosec B608 # ALERT_COLUMNS is a constant, the WHERE items are fixed fragments; values are bound parameters
             " ORDER BY created_at DESC, id DESC LIMIT %s", tuple(params), fetch="all")
         return [notification_from_row(r) for r in rows or []]
 
@@ -428,7 +429,7 @@ class NotificationService:
             ["(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"] * len(batch)
         )
         query = (
-            "INSERT INTO alerts (type, priority, title, message, file_id, file_name, "
+            "INSERT INTO alerts (type, priority, title, message, file_id, file_name, "  # nosec B608 # VALUES is a repeated fixed %s tuple, one per alert; values are bound parameters
             "file_path, event_date, metadata, created_at, read, dismissed) "
             f"VALUES {values_sql} "
             "RETURNING id, created_at"
@@ -568,7 +569,10 @@ class NotificationService:
         notification addressed to someone else is "not found" - it is
         neither changed nor confirmed to exist.
         """
-        assert column in ("read", "dismissed")
+        # An explicit check, not ``assert``: the column name is written into
+        # the SQL below, and asserts are removed under ``python -O``.
+        if column not in ("read", "dismissed"):
+            raise ValueError(f"unsupported alert flag column: {column!r}")
         # Pending notifications (negative temporary ids) are not in the
         # database yet; they are always system-wide.
         if notification_id < 0:
@@ -582,7 +586,7 @@ class NotificationService:
         from Api.utils import execute_query
 
         updated_row = execute_query(
-            f"UPDATE alerts SET {column} = TRUE WHERE id = %s AND {visibility_clause()}"
+            f"UPDATE alerts SET {column} = TRUE WHERE id = %s AND {visibility_clause()}"  # nosec B608 # column is checked against ('read', 'dismissed') above; visibility_clause() is constant; values bound
             " RETURNING id",
             (notification_id, for_user_id),
             fetch="one",
@@ -661,7 +665,7 @@ class NotificationService:
                 SELECT COUNT(*) AS total,
                        COUNT(*) FILTER (WHERE NOT read) AS unread
                 FROM alerts
-                WHERE dismissed = FALSE AND """ + visible,
+                WHERE dismissed = FALSE AND """ + visible,  # nosec B608 # visibility_clause() is a constant condition; the user id is a bound parameter
                 (for_user_id,),
                 fetch="one"
             )
@@ -673,9 +677,7 @@ class NotificationService:
                 """
                 SELECT type, COUNT(*)
                 FROM alerts
-                WHERE dismissed = FALSE AND """ + visible + """
-                GROUP BY type
-                """,
+                WHERE dismissed = FALSE AND """ + visible + " GROUP BY type",  # nosec B608 # visibility_clause() is a constant condition; the user id is a bound parameter
                 (for_user_id,),
                 fetch="all"
             ) or []:
@@ -685,9 +687,7 @@ class NotificationService:
                 """
                 SELECT priority, COUNT(*)
                 FROM alerts
-                WHERE dismissed = FALSE AND """ + visible + """
-                GROUP BY priority
-                """,
+                WHERE dismissed = FALSE AND """ + visible + " GROUP BY priority",  # nosec B608 # visibility_clause() is a constant condition; the user id is a bound parameter
                 (for_user_id,),
                 fetch="all"
             ) or []:
@@ -700,7 +700,7 @@ class NotificationService:
                 WHERE type = %s
                   AND dismissed = FALSE
                   AND event_date BETWEEN %s AND %s
-                  AND """ + visible,
+                  AND """ + visible,  # nosec B608 # visibility_clause() is a constant condition; values are bound parameters
                 (NotificationType.FUTURE_DATE.value, today, today + timedelta(days=30),
                  for_user_id),
                 fetch="one"
@@ -759,7 +759,7 @@ class NotificationService:
                   AND {visibility_clause()}
                 ORDER BY event_date ASC, id ASC
                 LIMIT 1000
-                """,
+                """,  # nosec B608 # ALERT_COLUMNS and visibility_clause() are constants; values are bound parameters
                 (NotificationType.FUTURE_DATE.value, today, end_date, for_user_id),
                 fetch="all"
             )

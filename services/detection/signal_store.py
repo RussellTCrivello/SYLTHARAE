@@ -262,7 +262,7 @@ def signals_for(cur, hash_id: int, reference_date: datetime.date, *,
                       "trigger": r[7], "job_id": r[8], "error": r[9],
                       "ran_at": r[10].isoformat() if r[10] else None,
                       "current_version": r[1] == current}
-    cur.execute(f"SELECT {SIGNAL_COLUMNS} FROM content_signals s"
+    cur.execute(f"SELECT {SIGNAL_COLUMNS} FROM content_signals s"  # nosec B608 # SIGNAL_COLUMNS is a module constant; values are bound parameters
                 " WHERE s.hash_id = %s AND s.detector = ANY(%s)"
                 " ORDER BY s.char_start, s.char_end, s.detector, s.signal_type, s.value",
                 (hash_id, list(wanted)))

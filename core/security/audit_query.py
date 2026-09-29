@@ -33,7 +33,7 @@ MAX_LIMIT = 200
 DEFAULT_LIMIT = 50
 MAX_ACTIONS = 500
 STATEMENT_TIMEOUT_MS = 5_000
-_ID = re.compile(r"^[1-9][0-9]{0,18}$")
+_ID = re.compile(r"^[1-9][0-9]{0,18}\Z")
 
 
 class AuditQueryError(Exception):
@@ -147,7 +147,7 @@ def list_entries(conn, filters: Dict[str, Any]) -> Dict[str, Any]:
         params.append(filters["before_id"])
     clause = (" WHERE " + " AND ".join(where)) if where else ""
     limit = filters["limit"]
-    rows = _read(conn, "SELECT id, user_id, username, action, resource, detail, ip_address,"
+    rows = _read(conn, "SELECT id, user_id, username, action, resource, detail, ip_address,"  # nosec B608 # filter columns from a fixed tuple; values are bound parameters
                        " created_at FROM audit_log" + clause + " ORDER BY id DESC LIMIT %s",
                  params + [limit + 1])
     has_more = len(rows) > limit

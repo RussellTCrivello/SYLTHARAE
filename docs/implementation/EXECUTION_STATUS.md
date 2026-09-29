@@ -125,6 +125,7 @@ parameterised SQL; no full-corpus browser loads.
 | M1 Audit Log viewer + m0024 | 3 471 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone); +26 tests (23 PG/API, 1 migration, 1 page wrapper, 1 translation template) |
 | M2 Detection page + m0025 | 3 497 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone); +26 tests (23 PG/API, 1 migration, 1 page wrapper, 1 translation template). An intermediate run had 30: `test_reference_docs_are_current`, stale because this work added `tools/perf/detection_admin_perf.py`; regenerated with `tools/docs/generate_reference.py`, test unchanged, full suite rerun |
 | Step 16 Analytics (keyness) + m0026 | 3 571 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone); +74 tests. Run 1 had 31: `test_reference_docs_are_current` (this step added `tools/verify/runtime_check_keyness.py` after the reference was generated) and `test_schema_reference_matches_the_migrated_database` (m0026 not yet in `DATABASE_SCHEMA.md`). Both files were regenerated with their own commands, and both tests pass (33 passed). Run 2, after a live-server session, had **156 failed + 4 errors** across unrelated subsystems: searches found nothing, `/file/<id>` returned 302 (the interface gate) or 404, rule notifications were missing. Run 3, with nothing changed, gave the result in this row. Every sampled failing file (e2e, rules/scenarios API, relations, original file view, saved searches, search after ingest, file navigation, criteria spine, record action surface: 162 tests) passes on its own. The server's ignored state files (`data/settings.json`, `data/search_history.json`) were ruled out by running with and without them. **Root cause not identified**; see "Defects found, not fixed" |
+| Bandit triage (PR #3 CI gate) | 3 588 | 29 | 97 | identical to the recorded list (`comm`: 0 new, 0 gone); +17 tests (`test_bandit_triage_fixes.py`, 14 of which fail on the pre-triage code). Run 1 had 30: `test_reference_docs_are_current`, stale because the removed duplicate `SearchService` methods had been listed twice in `docs/reference/python/Api.md`; regenerated with `tools/docs/generate_reference.py` (diff: the 2 duplicate lines), then the full suite was rerun |
 
 On the `294104e` run a 31st failure first appeared:
 `test_screen_inspector.py::...test_the_document_is_what_the_product_now_says`.
@@ -213,6 +214,23 @@ Start-up is now covered by the control run above. The packaging audit
 | Arabic notification strings (baseline): 5 msgstrs dropped their placeholder and meant something else (e.g. "Similar Files Detected: %(file_name)s" -> "filtering similar files"); duplicate-file and rule display strings were in no catalog | corrected / added (self-authored); guard test over every `translate()` string of `notification_display.py` | `test_every_display_string_is_in_every_catalog` |
 | Test data: zero-padded markers in 5 integration modules collided as hash ids once the shared test database grew | sha256 of the marker | the modules pass in any order in the full run |
 
+## Defects in this work found by the bandit triage (2026-09-28, PR #3)
+
+The CI bandit step failed on PR #3 (109 findings; main itself failed with 17).
+Every site was reviewed individually and the baseline was not regenerated.
+The full record, including the 110 inline justifications, is in
+[SECURITY.md, "Bandit triage of the intelligence layer"](../SECURITY.md#bandit-triage-of-the-intelligence-layer-2026-09-28).
+These defects were introduced by earlier steps of this work and are now fixed:
+
+| Defect | Introduced | Fix | Test |
+| --- | --- | --- | --- |
+| `SearchService` defined six methods twice, about 850 lines of dead code from a broken splice (the first `advanced_search` was the start of the Phase 0 edit joined to the tail of `full_text_search`). It showed in the generated API reference (two `simple_search`/`advanced_search` entries) | Phase 0 (`a6060b5`) | dead copies removed; the live copies (last definition wins, what every test and field run executed) are unchanged; the analyst-category filter now goes through the shared `filter_predicates` too | `test_no_method_is_defined_twice`, `test_search_uses_the_shared_analyst_category_predicate`; full regression |
+| Nine validators used `$`, which accepts a trailing newline (e.g. scenario identifiers that reach SQL composition; not exploitable) | Phase 0 through step 16 | `\Z` | `test_anchored_validators_match_the_whole_value` (9 cases) |
+| `_set_flag` guarded a column written into SQL with `assert` (removed by `python -O`) | step 11 (recipient-aware alerts) | explicit `ValueError` | `test_set_flag_rejects_an_unknown_column_without_relying_on_assert` |
+| The horizon inlined the reference date into the SQL text | step 10 | bound through `CROSS JOIN (SELECT %s::date AS r) ref` | `test_horizon_binds_the_reference_date`; `test_signal_explorer_pg.py` |
+| `LIMIT {int(limit)}` in `_fetch_notifications` | step 11 | bound parameter | `test_notification_service.py` |
+| B108: `runtime_provision.py` defaulted to a fixed `/tmp` path | step 10 | `tempfile.mkdtemp()` | - |
+
 ## Defects found, not fixed
 
 | Defect | Found by | Why not fixed now |
@@ -227,6 +245,8 @@ Start-up is now covered by the control run above. The packaging audit
 | Arabic catalog (baseline `0521aa5`): 4 msgstrs drop `{operation}` / `{category}` / `{word}` (e.g. "Files in "{category}" Category" -> "Files"), 4 are truncated at an escaped quote (end in a literal backslash). he/fa/hr only drop the English plural `{s}`, which is correct for those languages | catalog-wide placeholder scan during step 12 | word-list/category screens, outside step 12; belongs to step 18 (multilingual rendering), where they can be fixed and checked on the screens that use them |
 | Arabic catalog: `Side` is translated `الجوانب` ("sides", plural); it is now also a report column label | step 13 translation check (reuse of an existing msgid) | shared with existing pages; belongs with the other Arabic msgstr defects in step 18 |
 | Non-deterministic full-suite run: once (step 16, run 2, straight after a live `run_web.py` session in the same working tree) 156 tests failed as if content were invisible and interfaces gated; not reproduced by an unchanged rerun (29, the recorded OCR set) or by rerunning the failing files | step 16 regression | not reproducible on demand; state files ruled out. Candidates not yet tested: the suite writes `data/settings.json` in the working tree (it holds the test DB host), and a background thread from an earlier process might outlive it. Watch for recurrence; examine in the step 24 full-regression audit |
+| The CI bandit baseline gate cannot see new B608 sites in a file that already has a B608 baseline entry: bandit matches baseline entries by file/test/severity/confidence/message, not line or count (a scratch file with 1 baselined and 2 added sites passes `-b` with exit 0). `AUDIT_REPORT.md` and SECURITY.md said "fails on any new site"; SECURITY.md is corrected | bandit triage | a count-aware gate changes the CI contract; recorded for the step 25 security audit. Until then, new SQL in the baselined files is reviewed by hand (done for this branch) |
+| Test-order dependency: `test_notification_accuracy.py` (3 tests) fails when run after a particular ad-hoc selection of unit and integration modules, identically on `cce42b9` and with the triage fixes; it passes alone, with the other notification tests, and in the full suite | bandit triage (targeted run) | pre-existing isolation issue (shared notification-service state or shared test database), not a product defect; for the step 24 regression audit |
 | NARR-01: narrative templates have no plural forms ("1 terms"; wrong for Arabic's 6 and Croatian's 3 plural forms although the catalogs declare them) | review of the owner's narrative proposal | fixing it changes the `term_keyness@1` template meaning, so it needs a new template-set version; scheduled as the first item of step 17 |
 
 ## Open questions for the owner

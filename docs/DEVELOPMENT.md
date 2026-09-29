@@ -73,7 +73,11 @@ Run these before pushing. They are what the audit used:
     pip-audit -r requirements.txt
 
 Do not silence a warning just to get a clean run. Fix it, or justify it
-inline (`# noqa: <code> - reason`, `# nosec <id> - reason`).
+inline (`# noqa: <code> - reason`, `# nosec <id> # reason`). Put a second `#`
+before a nosec reason: bandit reads every word after `nosec` as a test id
+and logs a warning per word, but stops at the next `#`. Put the comment on a
+line inside the flagged expression (bandit ignores it on a later line of the
+same statement), never inside a multi-line SQL string.
 [AUDIT_REPORT.md](../AUDIT_REPORT.md) lists the known pre-existing findings.
 
 ## Commits, versions, releases

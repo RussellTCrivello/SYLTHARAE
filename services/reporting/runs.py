@@ -207,7 +207,7 @@ def submit_run(conn, *, user, report_id: Any, version: Any = None,
         raise RuntimeError(f"{definition.key}: datasets disagree on the criteria fingerprint")
     with _dict_cur(conn) as cur:
         cur.execute(
-            "INSERT INTO report_runs (report_id, report_version, definition_fingerprint,"
+            "INSERT INTO report_runs (report_id, report_version, definition_fingerprint,"  # nosec B608 # _RUN_COLUMNS is a constant; filters are fixed fragments with bound parameters
             " parameters, parameters_fingerprint, criteria_fingerprint, saved_search_id,"
             " requested_by, requester_username, requester_role, generator_version)"
             " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING " + _RUN_COLUMNS,
@@ -360,7 +360,7 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
 
     conn.rollback()
     with _dict_cur(conn) as cur:
-        cur.execute("UPDATE report_runs SET status = 'running', started_at = NOW(),"
+        cur.execute("UPDATE report_runs SET status = 'running', started_at = NOW(),"  # nosec B608 # _RUN_COLUMNS is a constant; filters are fixed fragments with bound parameters
                     " job_id = COALESCE(%s, job_id) WHERE id = %s AND status = 'queued'"
                     " RETURNING " + _RUN_COLUMNS, (job_id, run_id))
         run = cur.fetchone()
@@ -540,7 +540,7 @@ def _reconcile(conn, row: Dict[str, Any]) -> Dict[str, Any]:
         conn.rollback()
         return row
     with _dict_cur(conn) as cur:
-        cur.execute("UPDATE report_runs SET status = 'failed', finished_at = NOW(),"
+        cur.execute("UPDATE report_runs SET status = 'failed', finished_at = NOW(),"  # nosec B608 # _RUN_COLUMNS is a constant; filters are fixed fragments with bound parameters
                     " error = 'the report job ended without recording a result'"
                     " WHERE id = %s AND status IN ('queued', 'running')"
                     " RETURNING " + _RUN_COLUMNS, (row["id"],))
@@ -565,7 +565,7 @@ def _readable(row, user, registry) -> bool:
 def _fetch(conn, run_id: int, user, registry) -> Dict[str, Any]:
     conn.rollback()
     with _dict_cur(conn) as cur:
-        cur.execute("SELECT " + _RUN_COLUMNS + " FROM report_runs WHERE id = %s", (run_id,))
+        cur.execute("SELECT " + _RUN_COLUMNS + " FROM report_runs WHERE id = %s", (run_id,))  # nosec B608 # _RUN_COLUMNS is a constant; filters are fixed fragments with bound parameters
         row = cur.fetchone()
     conn.rollback()
     if not _readable(row, user, registry):
@@ -620,9 +620,9 @@ def list_runs(conn, *, user, all_users: bool = False, report_id: Optional[str] =
     clause = (" WHERE " + " AND ".join(where)) if where else ""
     conn.rollback()
     with _dict_cur(conn) as cur:
-        cur.execute("SELECT count(*) AS n FROM report_runs" + clause, params)
+        cur.execute("SELECT count(*) AS n FROM report_runs" + clause, params)  # nosec B608 # _RUN_COLUMNS is a constant; filters are fixed fragments with bound parameters
         total = cur.fetchone()["n"]
-        cur.execute("SELECT " + _RUN_COLUMNS + " FROM report_runs" + clause
+        cur.execute("SELECT " + _RUN_COLUMNS + " FROM report_runs" + clause  # nosec B608 # _RUN_COLUMNS is a constant; filters are fixed fragments with bound parameters
                     + " ORDER BY requested_at DESC, id DESC LIMIT %s OFFSET %s",
                     params + [limit, offset])
         rows = cur.fetchall()

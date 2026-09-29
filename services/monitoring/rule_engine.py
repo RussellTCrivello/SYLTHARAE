@@ -135,7 +135,7 @@ def _match_sql(definition, conds: List[str]) -> str:
     group = _group_key_sql(definition)
     if definition.unit == "content":
         candidates = (
-            "SELECT DISTINCT ON (s.hash_id) 'content:' || s.hash_id AS subject_key,"
+            "SELECT DISTINCT ON (s.hash_id) 'content:' || s.hash_id AS subject_key,"  # nosec B608 # fixed fragments from reviewed code and signal_query._where; values are bound parameters
             " 'content:' || s.hash_id AS group_key, s.*,"
             " count(*) OVER (PARTITION BY s.hash_id) AS matching_signals"
             f" FROM content_signals s WHERE {where}"
@@ -144,12 +144,12 @@ def _match_sql(definition, conds: List[str]) -> str:
                     " m.matching_signals)")
     else:
         candidates = (
-            f"SELECT {_SIGNAL_SUBJECT_SQL} AS subject_key,"
+            f"SELECT {_SIGNAL_SUBJECT_SQL} AS subject_key,"  # nosec B608 # fixed fragments from reviewed code and signal_query._where; values are bound parameters
             f" {group or _SIGNAL_SUBJECT_SQL} AS group_key, s.*"
             f" FROM content_signals s WHERE {where}")
         evidence = _evidence_sql("m")
     return (
-        "INSERT INTO rule_subject_ledger (rule_id, subject_key, hash_id, signal_id,"
+        "INSERT INTO rule_subject_ledger (rule_id, subject_key, hash_id, signal_id,"  # nosec B608 # fixed fragments from reviewed code and signal_query._where; values are bound parameters
         " rule_version, state, group_key, confidence, event_date_from, event_date_to,"
         " evidence, first_matched_at, matched_evaluation_id, state_changed_at)"
         " SELECT %s, m.subject_key, m.hash_id, m.id, %s, %s, m.group_key,"
@@ -199,7 +199,7 @@ def _scope_json(scope) -> Dict[str, Any]:
 
 def _subjects(cur, rule_id: int, group_key: Optional[str]) -> List[Dict[str, Any]]:
     cur.execute(
-        "SELECT subject_key, hash_id, signal_id, confidence, event_date_from, event_date_to,"
+        "SELECT subject_key, hash_id, signal_id, confidence, event_date_from, event_date_to,"  # nosec B608 # fixed fragments from reviewed code and signal_query._where; values are bound parameters
         " evidence, first_matched_at FROM rule_subject_ledger"
         " WHERE rule_id = %s AND state = 'pending'"
         + (" AND group_key = %s" if group_key is not None else "")

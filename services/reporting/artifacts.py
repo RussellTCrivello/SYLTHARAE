@@ -198,7 +198,7 @@ def _dataset_keys(conn, run_id: int) -> List[str]:
 
 def _existing(conn, run_id, fmt, dataset_key) -> Optional[Dict[str, Any]]:
     with _dict_cur(conn) as cur:
-        cur.execute("SELECT " + _ARTIFACT_COLUMNS + " FROM report_artifacts"
+        cur.execute("SELECT " + _ARTIFACT_COLUMNS + " FROM report_artifacts"  # nosec B608 # _ARTIFACT_COLUMNS is a constant, optional columns are fixed literals; values are bound parameters
                     " WHERE run_id = %s AND format = %s AND COALESCE(dataset_key, '') = %s"
                     " AND renderer_version = %s",
                     (run_id, fmt, dataset_key or "", renderers.RENDERERS[fmt]))
@@ -273,7 +273,7 @@ def create_artifact(conn, *, run_id: int, fmt: str, dataset_key: Optional[str],
                               generated_at=generated_at, job_id=job_id)
     with _dict_cur(conn) as cur:
         cur.execute(
-            "INSERT INTO report_artifacts (run_id, format, dataset_key, renderer_version,"
+            "INSERT INTO report_artifacts (run_id, format, dataset_key, renderer_version,"  # nosec B608 # _ARTIFACT_COLUMNS is a constant, optional columns are fixed literals; values are bound parameters
             " filename, media_type, byte_size, sha256, content, manifest, manifest_sha256,"
             " created_by, creator_username, creator_role, job_id)"
             " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -329,7 +329,7 @@ def run_artifact_job(get_connection: Callable, *, run_id: int, fmt: str,
 def list_artifacts(conn, run_id: int, *, user, registry=REGISTRY) -> List[Dict[str, Any]]:
     runs._fetch(conn, run_id, user, registry)
     with _dict_cur(conn) as cur:
-        cur.execute("SELECT " + _ARTIFACT_COLUMNS + " FROM report_artifacts"
+        cur.execute("SELECT " + _ARTIFACT_COLUMNS + " FROM report_artifacts"  # nosec B608 # _ARTIFACT_COLUMNS is a constant, optional columns are fixed literals; values are bound parameters
                     " WHERE run_id = %s ORDER BY id", (run_id,))
         rows = cur.fetchall()
     conn.rollback()
@@ -340,7 +340,7 @@ def _artifact_row(conn, artifact_id: int, user, registry, *, content: bool):
     columns = _ARTIFACT_COLUMNS + ", manifest" + (", content" if content else "")
     conn.rollback()
     with _dict_cur(conn) as cur:
-        cur.execute("SELECT " + columns + " FROM report_artifacts WHERE id = %s",
+        cur.execute("SELECT " + columns + " FROM report_artifacts WHERE id = %s",  # nosec B608 # _ARTIFACT_COLUMNS is a constant, optional columns are fixed literals; values are bound parameters
                     (artifact_id,))
         row = cur.fetchone()
     conn.rollback()

@@ -156,7 +156,7 @@ def main(pg_dir: str, contents: int = 20_000) -> None:
     compiled = sq._compile(Criteria(), scope)
     conds, params = sq._where(sq.parse_filter(Args()), compiled)
     with conn.cursor() as cur:
-        cur.execute("EXPLAIN (ANALYZE, BUFFERS OFF) SELECT s.id FROM content_signals s WHERE "
+        cur.execute("EXPLAIN (ANALYZE, BUFFERS OFF) SELECT s.id FROM content_signals s WHERE "  # nosec B608 # developer benchmark; conditions from signal_query._where, values bound
                     + " AND ".join(conds) + " ORDER BY s.date_from, s.date_to, s.hash_id,"
                     " s.char_start, s.id LIMIT 50", tuple(params))
         print("\nplan (explorer page, event_date order):")

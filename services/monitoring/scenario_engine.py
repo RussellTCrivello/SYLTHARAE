@@ -117,7 +117,7 @@ class Decision:
 def decision_sql(definition, scope, reference_date: datetime.date) -> Decision:
     pop = signal_query._compile(definition.criteria, scope)
     q = _Q()
-    q.add(f"WITH pop AS (SELECT DISTINCT hc.hash_id FROM {CANONICAL_FROM}"
+    q.add(f"WITH pop AS (SELECT DISTINCT hc.hash_id FROM {CANONICAL_FROM}"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
           f" WHERE ({pop.where_sql}) AND hc.hash_id IS NOT NULL)", pop.params)
 
     signal_conds = [c for c in definition.conditions if c.kind == "signal"]
@@ -154,7 +154,7 @@ def decision_sql(definition, scope, reference_date: datetime.date) -> Decision:
                   f" COALESCE(sig.unrec{i}, 0) AS unrec{i}, sig.sample{i} AS sample{i}")
         else:
             doc = signal_query._compile(c.criteria, scope)
-            q.add(f", EXISTS (SELECT 1 FROM {CANONICAL_FROM} WHERE hc.hash_id = pop.hash_id"
+            q.add(f", EXISTS (SELECT 1 FROM {CANONICAL_FROM} WHERE hc.hash_id = pop.hash_id"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
                   f" AND ({doc.where_sql})) AS f_{c.name}", doc.params)
     q.add(" FROM pop" + (" LEFT JOIN sig ON sig.hash_id = pop.hash_id" if signal_conds else "")
           + ")")
@@ -213,7 +213,7 @@ def decision_sql(definition, scope, reference_date: datetime.date) -> Decision:
                 + f" ELSE {empty} END")
 
     if all_matching:
-        outcomes = ("COALESCE(NULLIF(ARRAY(SELECT DISTINCT o FROM unnest(ARRAY["
+        outcomes = ("COALESCE(NULLIF(ARRAY(SELECT DISTINCT o FROM unnest(ARRAY["  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
                     + ", ".join(f"CASE WHEN {kcol[c.id]} THEN {_lit(c.outcome)} END"
                                 for c in cases)
                     + f"]::text[]) o WHERE o IS NOT NULL ORDER BY o), '{{}}'::text[]),"
@@ -236,7 +236,7 @@ def decision_sql(definition, scope, reference_date: datetime.date) -> Decision:
 
     if decisive_cases == "matched_cases":
         decisive_cases = matched
-    q.add(", e AS (SELECT hash_id, " + outcomes + " AS outcomes, " + matched
+    q.add(", e AS (SELECT hash_id, " + outcomes + " AS outcomes, " + matched  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
           + " AS matched_cases, " + decisive_cases + " AS decisive_cases, " + held + " AS conditions_held, " + samples
           + " AS sample_signal_ids, " + decisive("hi") + " AS ev_hi, " + decisive("best")
           + " AS ev_best, " + decisive("early") + " AS ev_early, " + decisive("n")
@@ -390,7 +390,7 @@ def _apply(cur, row, definition, decision, eid, now) -> Dict[str, Any]:
     sid, version = row["id"], row["version"]
     baseline = row["baselined_version"] < version and not definition.notify_existing
     default = decision.default_outcome
-    cur.execute("CREATE TEMP TABLE _scenario_out ON COMMIT DROP AS "
+    cur.execute("CREATE TEMP TABLE _scenario_out ON COMMIT DROP AS "  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
                 + decision.q.sql + " SELECT * FROM out", decision.q.params)
     population = cur.rowcount
     cur.execute("CREATE INDEX ON _scenario_out (hash_id)")
@@ -398,7 +398,7 @@ def _apply(cur, row, definition, decision, eid, now) -> Dict[str, Any]:
 
     # Contents whose outcome changed (or first left the default).
     cur.execute(
-        "WITH prev AS (" + _LATEST + "),"
+        "WITH prev AS (" + _LATEST + "),"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
         " cand AS (SELECT o.*, prev.outcomes AS prev_outcomes, " + _ENTERS_NOTIFY
         + " AS enters FROM _scenario_out o LEFT JOIN prev ON prev.hash_id = o.hash_id"
         " WHERE " + _CHANGES + "),"
@@ -420,7 +420,7 @@ def _apply(cur, row, definition, decision, eid, now) -> Dict[str, Any]:
          MAX_ALERTS_PER_EVALUATION, MAX_ALERTS_PER_EVALUATION, now])
     # Contents that left the population return to the default outcome.
     cur.execute(
-        "WITH prev AS (" + _LATEST + ")"
+        "WITH prev AS (" + _LATEST + ")"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
         " INSERT INTO scenario_outcomes (scenario_id, evaluation_id, scenario_version, hash_id,"
         " outcomes, matched_cases, previous_outcomes, delivery, evidence, recorded_at)"
         " SELECT %s, %s, %s, prev.hash_id, ARRAY[%s]::text[], '{}'::text[], prev.outcomes,"
@@ -442,7 +442,7 @@ def _apply(cur, row, definition, decision, eid, now) -> Dict[str, Any]:
 
 def _deliver(cur, row, definition, decision, eid, now, reference_date, counts) -> int:
     cur.execute(
-        "SELECT so.id, so.hash_id, so.outcomes, so.previous_outcomes, so.matched_cases,"
+        "SELECT so.id, so.hash_id, so.outcomes, so.previous_outcomes, so.matched_cases,"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
         " so.priority, so.priority_basis, so.evidence, fp.path_id, fp.file_name, fp.file_path"
         " FROM scenario_outcomes so LEFT JOIN LATERAL (SELECT p.id AS path_id, p.file_name,"
         f" p.file_path FROM {CANONICAL_FROM} WHERE hc.hash_id = so.hash_id"
@@ -528,7 +528,7 @@ def _missing_ids(cur, definition) -> List[str]:
             ids = sorted(set(getattr(crit, attr) or ()))
             if not ids:
                 continue
-            cur.execute(f"SELECT array_agg(x ORDER BY x) AS missing FROM unnest(%s::int[]) x"
+            cur.execute(f"SELECT array_agg(x ORDER BY x) AS missing FROM unnest(%s::int[]) x"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
                         f" WHERE NOT EXISTS (SELECT 1 FROM {table} t WHERE t.id = x)", (ids,))
             missing = cur.fetchone()["missing"]
             if missing:
@@ -542,18 +542,18 @@ def _report_sql(decision, scenario_id: int, reference_date: datetime.date) -> _Q
     default, notify = decision.default_outcome, decision.notify_outcomes
     pw, pp = decision.population.where_sql, list(decision.population.params)
     q.add(", prev AS (" + _LATEST + ")", (scenario_id,))
-    q.add(", cur AS (SELECT o.*, " + _ENTERS_NOTIFY + " AS enters, " + _CHANGES
+    q.add(", cur AS (SELECT o.*, " + _ENTERS_NOTIFY + " AS enters, " + _CHANGES  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
           + " AS changes FROM out o LEFT JOIN prev ON prev.hash_id = o.hash_id)",
           (notify, default, default))
     q.add(", nd AS (SELECT hash_id FROM cur WHERE outcomes <> ARRAY[%s]::text[])", (default,))
 
     def top(sql: str, params=()):
-        q.add("(SELECT jsonb_build_object('items', COALESCE(jsonb_agg(z ORDER BY z.n DESC,"
+        q.add("(SELECT jsonb_build_object('items', COALESCE(jsonb_agg(z ORDER BY z.n DESC,"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
               f" z.id) FILTER (WHERE z.r <= {DRY_RUN_TOP}), '[]'::jsonb), 'total', count(*),"
               f" 'truncated', count(*) > {DRY_RUN_TOP}) FROM (SELECT y.*, row_number() OVER"
               " (ORDER BY y.n DESC, y.id) AS r FROM (" + sql + ") y) z)", params)
 
-    q.add(" SELECT jsonb_build_object("
+    q.add(" SELECT jsonb_build_object("  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
           "'population', (SELECT count(*) FROM cur),"
           "'case_matches', (SELECT COALESCE(jsonb_object_agg(c, n), '{}'::jsonb) FROM"
           " (SELECT c, count(*) AS n FROM cur, unnest(matched_cases) c GROUP BY c) z),"
@@ -572,8 +572,8 @@ def _report_sql(decision, scenario_id: int, reference_date: datetime.date) -> _Q
           f" hc.hash_id = cur.hash_id AND ({pw})) >= %s),"
           "'sources', ",
           [notify] + pp + [reference_date - datetime.timedelta(days=VOLUME_WINDOW_DAYS)])
-    top("SELECT s.id, s.name, count(DISTINCT hc.hash_id) AS n FROM " + CANONICAL_FROM
-        + " JOIN sources s ON s.id = hc.source_id WHERE hc.hash_id IN (SELECT hash_id FROM nd)"
+    top("SELECT s.id, s.name, count(DISTINCT hc.hash_id) AS n FROM " + CANONICAL_FROM  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
+        + " JOIN sources s ON s.id = hc.source_id WHERE hc.hash_id IN (SELECT hash_id FROM nd)"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
         f" AND ({pw}) GROUP BY s.id, s.name", pp)
     q.add(", 'categories', ")
     top("SELECT c.id, w.word AS name, count(DISTINCT wh.hash_id) AS n FROM words_hashs wh"
@@ -581,7 +581,7 @@ def _report_sql(decision, scenario_id: int, reference_date: datetime.date) -> _Q
         " ON c.id = wc.category_id JOIN words w ON w.id = c.word_id"
         " WHERE wh.hash_id IN (SELECT hash_id FROM nd) GROUP BY c.id, w.word")
     q.add(", 'analyst_categories', ")
-    top("SELECT ac.id, ac.name, count(DISTINCT hc.hash_id) AS n FROM analyst_file_categories"
+    top("SELECT ac.id, ac.name, count(DISTINCT hc.hash_id) AS n FROM analyst_file_categories"  # nosec B608 # identifiers validated by scenario_model (^[a-z][a-z0-9_]{0,39}\Z) and re-checked by _lit; criteria SQL from the shared compiler; values are bound parameters
         " afc JOIN paths p ON p.id = afc.path_id JOIN hash_contexts hc ON hc.id = p.context_id"
         " JOIN analyst_categories ac ON ac.id = afc.category_id"
         f" WHERE hc.hash_id IN (SELECT hash_id FROM nd) AND ({pw}) GROUP BY ac.id, ac.name", pp)

@@ -718,8 +718,6 @@ Search Service - Enhanced Full-Text Search with PostgreSQL
   - `full_text_search(query: str, file_type: Optional[str] = None, source_id: Optional[int] = None, side_id: Optional[int] = None, date_from: Optional[str] = None...` *(static)* - Perform full-text search using PostgreSQL tsvector/tsquery.
   - `simple_search(query: str, limit: int = 100, offset: int = 0, analyst_scope: Optional[str] = None) -> Tuple[List[Dict[str, Any]], int]` *(static)* - Simple search using ILIKE for backward compatibility.
   - `advanced_search(query: str, file_type: Optional[str] = None, source_id: Optional[int] = None, side_id: Optional[int] = None, date_from: Optional[str] = None,...` *(static)* - Advanced search using Google-like algorithms (BM25, query expansion, fuzzy matching).
-  - `simple_search(query: str, limit: int = 100, offset: int = 0, analyst_scope: Optional[str] = None) -> Tuple[List[Dict[str, Any]], int]` *(static)* - Simple search using ILIKE for backward compatibility.
-  - `advanced_search(query: str, file_type: Optional[str] = None, source_id: Optional[int] = None, side_id: Optional[int] = None, date_from: Optional[str] = None,...` *(static)* - Advanced search using Google-like algorithms (BM25, query expansion, fuzzy matching).
   - `autocomplete(query: str, limit: int = 10) -> List[Dict[str, Any]]` *(static)* - Get autocomplete suggestions for a search query.
   - `get_search_suggestions(query: str, limit: int = 5) -> List[str]` *(static)* - Get search query suggestions (simpler version for quick suggestions).
 

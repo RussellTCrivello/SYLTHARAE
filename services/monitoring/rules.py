@@ -127,7 +127,7 @@ def _dict_cur(conn):
 
 
 def fetch_rule(cur, rule_id: int, *, for_update: bool = False) -> Optional[Dict[str, Any]]:
-    cur.execute(f"SELECT {RULE_COLUMNS} FROM {_FROM} WHERE r.id = %s"
+    cur.execute(f"SELECT {RULE_COLUMNS} FROM {_FROM} WHERE r.id = %s"  # nosec B608 # RULE_COLUMNS and _FROM are constants; filters are fixed fragments with bound parameters
                 + (" FOR UPDATE OF r" if for_update else ""), (rule_id,))
     row = cur.fetchone()
     return dict(row) if row is not None else None
@@ -238,7 +238,7 @@ def list_rules(conn, *, user_id: int, is_admin: bool, all_users: bool = False,
         params.append(user_id)
     if not include_archived:
         where.append("r.status <> 'archived'")
-    sql = (f"SELECT {RULE_COLUMNS} FROM {_FROM}"
+    sql = (f"SELECT {RULE_COLUMNS} FROM {_FROM}"  # nosec B608 # RULE_COLUMNS and _FROM are constants; filters are fixed fragments with bound parameters
            + (" WHERE " + " AND ".join(where) if where else "")
            + " ORDER BY lower(r.name), r.id LIMIT %s")
     try:

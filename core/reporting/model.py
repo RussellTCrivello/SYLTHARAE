@@ -93,8 +93,8 @@ TOKEN_LIMIT = "@limit"         # row_limit + 1, always last
 
 ROW_LIMIT_CEILING = 100_000
 
-_ID = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$")
-_HELP_TOPIC = re.compile(r"^[a-z][a-z0-9-]*(/[a-z][a-z0-9-]*)+$")
+_ID = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*\Z")
+_HELP_TOPIC = re.compile(r"^[a-z][a-z0-9-]*(/[a-z][a-z0-9-]*)+\Z")
 
 
 class ReportDefinitionError(ValueError):

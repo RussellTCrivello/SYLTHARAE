@@ -231,7 +231,7 @@ KINDS: Dict[str, Kind] = {k.name: k for k in (KEYNESS,)}
 # Declared analyses
 # ---------------------------------------------------------------------------
 
-_ID = re.compile(r"^[a-z][a-z0-9_]*$")
+_ID = re.compile(r"^[a-z][a-z0-9_]*\Z")
 
 
 @dataclass(frozen=True)

@@ -170,7 +170,7 @@ def explain(conn, filters):
         params.append(v)
     clause = (" WHERE " + " AND ".join(where)) if where else ""
     with conn.cursor() as cur:
-        cur.execute("EXPLAIN (FORMAT JSON) SELECT * FROM content_signal_runs" + clause
+        cur.execute("EXPLAIN (FORMAT JSON) SELECT * FROM content_signal_runs" + clause  # nosec B608 # developer benchmark; filter columns from a fixed tuple, values bound
                     + " ORDER BY ran_at DESC, hash_id DESC, detector LIMIT %s OFFSET %s",
                     params + [filters["limit"] + 1, filters["offset"]])
         plan = cur.fetchone()[0][0]["Plan"]

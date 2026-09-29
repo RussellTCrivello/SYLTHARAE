@@ -120,7 +120,7 @@ class SavedSearchRepository:
         with self._connect() as conn, conn.cursor(
                 cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                f"INSERT INTO saved_searches (owner_user_id, name, query, filters, criteria,"
+                f"INSERT INTO saved_searches (owner_user_id, name, query, filters, criteria,"  # nosec B608 # _COLUMNS is a module constant; values are bound parameters
                 f" criteria_fingerprint, criteria_schema_version, import_notes)"
                 f" VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING {_COLUMNS}",
                 (owner_user_id, name, query or "", psycopg2.extras.Json(filters),
@@ -133,7 +133,7 @@ class SavedSearchRepository:
     def get(self, search_id: int) -> Optional[Dict[str, Any]]:
         with self._connect() as conn, conn.cursor(
                 cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(f"SELECT {_COLUMNS} FROM saved_searches WHERE id = %s", (search_id,))
+            cur.execute(f"SELECT {_COLUMNS} FROM saved_searches WHERE id = %s", (search_id,))  # nosec B608 # _COLUMNS is a module constant; values are bound parameters
             row = cur.fetchone()
             return _row_to_public(row) if row else None
 
@@ -145,12 +145,12 @@ class SavedSearchRepository:
                 cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             if is_admin:
                 cur.execute(
-                    f"SELECT {_COLUMNS} FROM saved_searches"
+                    f"SELECT {_COLUMNS} FROM saved_searches"  # nosec B608 # _COLUMNS is a module constant; values are bound parameters
                     " WHERE owner_user_id = %s OR owner_user_id IS NULL"
                     " ORDER BY created_at ASC, id ASC", (user_id,))
             else:
                 cur.execute(
-                    f"SELECT {_COLUMNS} FROM saved_searches WHERE owner_user_id = %s"
+                    f"SELECT {_COLUMNS} FROM saved_searches WHERE owner_user_id = %s"  # nosec B608 # _COLUMNS is a module constant; values are bound parameters
                     " ORDER BY created_at ASC, id ASC", (user_id,))
             return [_row_to_public(r) for r in cur.fetchall()]
 
@@ -172,7 +172,7 @@ class SavedSearchRepository:
         with self._connect() as conn, conn.cursor(
                 cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                f"UPDATE saved_searches SET name = %s, query = %s, filters = %s,"
+                f"UPDATE saved_searches SET name = %s, query = %s, filters = %s,"  # nosec B608 # _COLUMNS is a module constant; values are bound parameters
                 f" criteria = %s, criteria_fingerprint = %s, criteria_schema_version = %s,"
                 f" import_notes = %s, updated_at = NOW()"
                 f" WHERE id = %s RETURNING {_COLUMNS}",

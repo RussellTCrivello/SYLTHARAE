@@ -100,7 +100,7 @@ def _coverage_counts(cur, versions):
         any_params.append(version or "")
     select.insert(1, "count(*) FILTER (WHERE " + " OR ".join(any_stale) + ") AS stale_any")
     # Parameter order follows the SQL text: SELECT list, then the JOINs.
-    cur.execute("SELECT " + ", ".join(select) + " FROM hashs h " + " ".join(joins)
+    cur.execute("SELECT " + ", ".join(select) + " FROM hashs h " + " ".join(joins)  # nosec B608 # aliases generated in code, detector names from the code registry, filter columns from a fixed tuple; values are bound parameters
                 + " WHERE " + redetection.HAS_TEXT,
                 any_params + select_params + join_params)
     return dict(cur.fetchone())
@@ -225,7 +225,7 @@ def list_runs(conn, filters: Dict[str, Any]) -> Dict[str, Any]:
             cur.execute(
                 # Page first, then look up one file per paged run: the file
                 # lookup must not run for every matching run.
-                "SELECT r.hash_id, r.detector, r.detector_ver, r.status, r.anchor_date,"
+                "SELECT r.hash_id, r.detector, r.detector_ver, r.status, r.anchor_date,"  # nosec B608 # aliases generated in code, detector names from the code registry, filter columns from a fixed tuple; values are bound parameters
                 " r.chars_total, r.chars_scanned, r.signal_count, r.trigger, r.job_id, r.error,"
                 " r.ran_at, p.path_id, p.file_name, p.path_count"
                 " FROM (SELECT * FROM content_signal_runs r" + clause

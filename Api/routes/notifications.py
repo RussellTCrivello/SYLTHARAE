@@ -196,7 +196,7 @@ def register_notification_routes(app):
             # an in-memory list capped at 10 000 entries.
             viewer = _viewer_id()
             row = execute_query(
-                f"SELECT {ALERT_COLUMNS} FROM alerts"
+                f"SELECT {ALERT_COLUMNS} FROM alerts"  # nosec B608 # ALERT_COLUMNS and visibility_clause() are constants; values are bound parameters
                 f" WHERE id = %s AND dismissed = FALSE AND {visibility_clause()}",
                 (notification_id, viewer),
                 fetch="one"

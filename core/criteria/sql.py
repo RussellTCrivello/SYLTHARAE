@@ -208,20 +208,20 @@ def literal_field_matches(value: str, *, case_sensitive: bool = False,
             case_sensitive=case_sensitive, whole_word=whole_word)
         table = "sources" if table_alias == "_search_source" else "sides"
         clauses.append(
-            f"EXISTS (SELECT 1 FROM {table} {table_alias} "
+            f"EXISTS (SELECT 1 FROM {table} {table_alias} "  # nosec B608 # fixed table/alias/column literals, whitelisted date columns and fixed operators; values are bound parameters
             f"WHERE {table_alias}.id = {id_column} AND {clause})")
         match_params.append(pattern)
     content_clause, content_pattern = text_match_clause(
         "cr.content", value, case_sensitive=case_sensitive, whole_word=whole_word)
     clauses.append(
-        "EXISTS (SELECT 1 FROM contents_raw cr "
+        "EXISTS (SELECT 1 FROM contents_raw cr "  # nosec B608 # fixed table/alias/column literals, whitelisted date columns and fixed operators; values are bound parameters
         f"WHERE cr.hash_id = h.id AND {content_clause})")
     match_params.append(content_pattern)
     if not case_sensitive:
         word_clause, word_pattern = text_match_clause(
             "w.word", value, case_sensitive=False, whole_word=whole_word)
         clauses.append(
-            "EXISTS (SELECT 1 FROM words_hashs _search_wp "
+            "EXISTS (SELECT 1 FROM words_hashs _search_wp "  # nosec B608 # fixed table/alias/column literals, whitelisted date columns and fixed operators; values are bound parameters
             "JOIN words w ON _search_wp.word_id = w.id "
             "WHERE _search_wp.hash_id = h.id AND "
             f"{word_clause})")
@@ -334,7 +334,7 @@ def filter_predicates(
     if category_ids:
         clause, bound = id_filter("wc.category_id", category_ids)
         conditions.append(
-            "EXISTS (SELECT 1 FROM words_hashs wp2 "
+            "EXISTS (SELECT 1 FROM words_hashs wp2 "  # nosec B608 # fixed table/alias/column literals, whitelisted date columns and fixed operators; values are bound parameters
             "JOIN words_categorys wc ON wp2.word_id = wc.word_id "
             f"WHERE wp2.hash_id = hc.hash_id AND {clause})")
         params.extend(bound)
@@ -342,7 +342,7 @@ def filter_predicates(
     if analyst_category_ids:
         placeholders = ",".join(["%s"] * len(analyst_category_ids))
         conditions.append(
-            "EXISTS (SELECT 1 FROM analyst_file_categories _afc2 "
+            "EXISTS (SELECT 1 FROM analyst_file_categories _afc2 "  # nosec B608 # fixed table/alias/column literals, whitelisted date columns and fixed operators; values are bound parameters
             "WHERE _afc2.path_id = p.id "
             f"AND _afc2.category_id IN ({placeholders}))")
         params.extend(analyst_category_ids)

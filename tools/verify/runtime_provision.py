@@ -16,6 +16,7 @@ import datetime
 import json
 import os
 import sys
+import tempfile
 import urllib.parse
 from pathlib import Path
 
@@ -111,4 +112,6 @@ def main(state_dir: str) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "/tmp/syltharae_runtime")
+    # Without an argument: a fresh private directory (mode 0700) rather than
+    # a fixed, predictable path in the shared temp directory (bandit B108).
+    main(sys.argv[1] if len(sys.argv) > 1 else tempfile.mkdtemp(prefix="syltharae_runtime_"))

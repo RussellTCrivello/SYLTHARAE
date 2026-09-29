@@ -108,7 +108,7 @@ def register_place_routes(app):
             if language:
                 name_filter += " AND n.language = %s"
                 params.append(language)
-            where.append("EXISTS (SELECT 1 FROM geo_place_names n WHERE n.place_id = p.id"
+            where.append("EXISTS (SELECT 1 FROM geo_place_names n WHERE n.place_id = p.id"  # nosec B608 # WHERE built from fixed fragments; validated q/language/feature_type/country are bound parameters
                          f" AND {name_filter})")
         elif language:
             where.append("EXISTS (SELECT 1 FROM geo_place_names n WHERE n.place_id = p.id"
@@ -123,9 +123,9 @@ def register_place_routes(app):
         clause = " AND ".join(where)
 
         def run(cur):
-            cur.execute(f"SELECT count(*) FROM geo_places p WHERE {clause}", params)
+            cur.execute(f"SELECT count(*) FROM geo_places p WHERE {clause}", params)  # nosec B608 # WHERE built from fixed fragments; validated q/language/feature_type/country are bound parameters
             total = cur.fetchone()[0]
-            cur.execute("SELECT p.id, p.place_key, p.label, p.feature_type, p.country_codes,"
+            cur.execute("SELECT p.id, p.place_key, p.label, p.feature_type, p.country_codes,"  # nosec B608 # WHERE built from fixed fragments; validated q/language/feature_type/country are bound parameters
                         " p.latitude, p.longitude FROM geo_places p WHERE " + clause +
                         " ORDER BY p.label, p.place_key LIMIT %s OFFSET %s",
                         params + [per_page, (page - 1) * per_page])
@@ -174,7 +174,7 @@ def register_place_routes(app):
                 scope_sql = (" AND EXISTS (SELECT 1 FROM hash_contexts hc WHERE"
                              " hc.hash_id = s.hash_id AND hc.source_id = ANY(%s))")
                 scope_params = [list(scope.allowed_source_ids)]
-            cur.execute("SELECT s.resolution, count(*), count(DISTINCT s.hash_id)"
+            cur.execute("SELECT s.resolution, count(*), count(DISTINCT s.hash_id)"  # nosec B608 # WHERE built from fixed fragments; validated q/language/feature_type/country are bound parameters
                         " FROM content_signal_places csp"
                         " JOIN content_signals s ON s.id = csp.signal_id"
                         " WHERE csp.place_id = %s" + scope_sql + " GROUP BY s.resolution",

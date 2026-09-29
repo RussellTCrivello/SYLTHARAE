@@ -78,7 +78,7 @@ MAX_CASE_PRIORITY = 1000
 MAX_LABEL_LENGTH = 120
 #: Identifiers of conditions, cases and outcomes: they appear in stored
 #: results and notifications, so they are plain and stable.
-_ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
+_ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,39}\Z")
 
 _DEFINITION_KEYS = {"schema_version", "criteria", "conditions", "cases", "outcomes",
                     "default_outcome", "strategy", "notify_existing"}

@@ -132,7 +132,7 @@ def _batch_words_for_blobs(blobs):
     if not all_ids:
         return {}
     placeholders = ','.join(['%s'] * len(all_ids))
-    rows = execute_query(f"SELECT id, word FROM words WHERE id IN ({placeholders})", list(all_ids), fetch="all")
+    rows = execute_query(f"SELECT id, word FROM words WHERE id IN ({placeholders})", list(all_ids), fetch="all")  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
     return {r[0]: r[1] for r in (rows or [])}
 
 
@@ -224,7 +224,7 @@ def fa_overview():
                 SELECT h.id FROM hashs h JOIN hash_contexts hc ON hc.hash_id = h.id
                 GROUP BY h.id HAVING {_RELATION_HAVING}
             ) relations
-        """, fetch="one")
+        """, fetch="one")  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
         counts['relations'] = rel[0] if rel else 0
 
         geo = execute_query("SELECT COUNT(DISTINCT place_name) FROM path_geo_mentions", fetch="one")
@@ -322,7 +322,7 @@ def fa_categories():
             LEFT JOIN keyword_stats ks ON ks.category_id = c.id
             LEFT JOIN file_stats fs ON fs.category_id = c.id
             {where}
-        """, tuple(params) if params else None, fetch="all")
+        """, tuple(params) if params else None, fetch="all")  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
 
         items = [
             {
@@ -369,7 +369,7 @@ def _keywords_query(where_sql, params, page, per_page):
         {where_sql}
         GROUP BY k.id, k.category_id, k.keyword, w.word
         ORDER BY file_count DESC, k.id ASC
-    """, tuple(params) if params else None, fetch="all")
+    """, tuple(params) if params else None, fetch="all")  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
     rows = rows or []
     blobs = [r[2] for r in rows]
     word_dict = _batch_words_for_blobs(blobs)
@@ -408,7 +408,7 @@ def _words_query(where_sql, params, page, per_page):
         {where_sql}
         GROUP BY wc.word_id, wc.category_id, w.word, wcat.word
         ORDER BY file_count DESC, w.word ASC
-    """, tuple(params) if params else None, fetch="all") or []
+    """, tuple(params) if params else None, fetch="all") or []  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
     items = [{
         'id': r[0], 'name': r[2], 'category_id': r[1], 'category_name': r[3],
         'file_count': r[4], 'occurrence_count': r[5],
@@ -532,7 +532,7 @@ def fa_titles():
             FROM hash_contexts hc JOIN paths p ON p.context_id = hc.id
             WHERE hc.hash_id IN ({placeholders})
             GROUP BY hc.hash_id
-        """, list(all_hash_ids), fetch="all") or []
+        """, list(all_hash_ids), fetch="all") or []  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
         file_count_by_hash = {r[0]: r[1] for r in file_count_rows}
 
         items = []
@@ -578,7 +578,7 @@ def fa_sources():
             GROUP BY s.id, s.name, s.job, s.country, s.city
             HAVING COUNT(DISTINCT p.id) > 0
             ORDER BY file_count DESC, s.name ASC
-        """, tuple(params) if params else None, fetch="all") or []
+        """, tuple(params) if params else None, fetch="all") or []  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
         items = [{'id': r[0], 'name': r[1], 'job': r[2], 'country': r[3], 'city': r[4], 'file_count': r[5]} for r in rows]
         page_items, pagination = _paginate_list(items, page, per_page)
         return jsonify({'success': True, 'data': page_items, 'pagination': pagination})
@@ -605,7 +605,7 @@ def fa_sides():
             GROUP BY si.id, si.name, si.importance
             HAVING COUNT(DISTINCT p.id) > 0
             ORDER BY file_count DESC, si.name ASC
-        """, tuple(params) if params else None, fetch="all") or []
+        """, tuple(params) if params else None, fetch="all") or []  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
         items = [{'id': r[0], 'name': r[1], 'importance': float(r[2]) if r[2] is not None else None, 'file_count': r[3]} for r in rows]
         page_items, pagination = _paginate_list(items, page, per_page)
         return jsonify({'success': True, 'data': page_items, 'pagination': pagination})
@@ -626,7 +626,7 @@ def _scoped_categories(dim_column, dim_id, page, per_page):
         WHERE {dim_column} = %s
         GROUP BY c.id, w.word
         ORDER BY file_count DESC, w.word ASC
-    """, (dim_id,), fetch="all") or []
+    """, (dim_id,), fetch="all") or []  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
     items = [{'id': r[0], 'name': r[1], 'file_count': r[2]} for r in rows]
     return _paginate_list(items, page, per_page)
 
@@ -657,7 +657,7 @@ def _scoped_keywords(dim_column, dim_id, page, per_page, category_id=None):
         {where}
         GROUP BY k.id, k.category_id, k.keyword, w.word
         ORDER BY file_count DESC, k.id ASC
-    """, tuple(params), fetch="all") or []
+    """, tuple(params), fetch="all") or []  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
     blobs = [r[2] for r in rows]
     word_dict = _batch_words_for_blobs(blobs)
     items = []
@@ -758,7 +758,7 @@ def fa_relations():
             GROUP BY h.id, h.hash
             HAVING {_RELATION_HAVING}
             ORDER BY file_count DESC, h.id ASC
-        """, fetch="all") or []
+        """, fetch="all") or []  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
 
         hash_ids = [r[0] for r in rows]
         contexts_by_hash = {}
@@ -773,7 +773,7 @@ def fa_relations():
                 WHERE hc.hash_id IN ({placeholders})
                 GROUP BY hc.hash_id, hc.source_id, s.name, hc.side_id, si.name
                 ORDER BY hc.hash_id
-            """, hash_ids, fetch="all") or []
+            """, hash_ids, fetch="all") or []  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
             for hid, sid, sname, sideid, sidename, fc in ctx_rows:
                 contexts_by_hash.setdefault(hid, []).append({
                     'source_id': sid, 'source_name': sname or 'Unknown',
@@ -878,14 +878,14 @@ def fa_rows():
                     JOIN words_categorys wc ON wc.word_id = wp.word_id
                     WHERE wp.hash_id = hc.hash_id AND wc.category_id = %s
                 ) {extra_where}
-            """
+            """  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
             params = [item_id] + extra_params
         elif facet == 'keyword':
             where = f"""
                 WHERE EXISTS (
                     SELECT 1 FROM keywords_hashs kp WHERE kp.hash_id = hc.hash_id AND kp.keyword_id = %s
                 ) {extra_where}
-            """
+            """  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
             params = [item_id] + extra_params
         elif facet == 'word':
             # A Category Word's presence in a file is category-agnostic
@@ -897,7 +897,7 @@ def fa_rows():
                 WHERE EXISTS (
                     SELECT 1 FROM words_hashs wp WHERE wp.hash_id = hc.hash_id AND wp.word_id = %s
                 ) {extra_where}
-            """
+            """  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
             params = [item_id] + extra_params
         elif facet == 'title':
             title_row = execute_query("SELECT hash_id FROM titles_content WHERE id = %s", (item_id,), fetch="one")
@@ -933,7 +933,7 @@ def fa_rows():
                 WHERE EXISTS (
                     SELECT 1 FROM path_geo_mentions pgm WHERE pgm.hash_id = hc.hash_id AND pgm.place_name = %s
                 ) {extra_where}
-            """
+            """  # nosec B608 # constant fragments, %s placeholder lists and column literals chosen in code; request values are bound parameters
             params = [place_name] + extra_params
         else:
             return jsonify({'success': False, 'error': f'Unknown facet: {facet}'}), 400

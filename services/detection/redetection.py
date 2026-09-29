@@ -70,7 +70,7 @@ def _select_sql(scope: str, versions: Dict[str, Optional[str]]):
                 " ORDER BY hash_id LIMIT %s", ())
     if scope == "stale":
         clause, params = _stale_clause(versions)
-        return ("SELECT h.id FROM hashs h WHERE h.id > %s AND " + HAS_TEXT + " AND " + clause +
+        return ("SELECT h.id FROM hashs h WHERE h.id > %s AND " + HAS_TEXT + " AND " + clause +  # nosec B608 # HAS_TEXT constant and a stale clause of fixed fragments; detector names and versions are bound parameters
                 " ORDER BY h.id LIMIT %s", params)
     raise ValueError(f"scope must be one of {SCOPES}")
 

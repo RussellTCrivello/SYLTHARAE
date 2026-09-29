@@ -77,8 +77,8 @@ CONFIDENCE_FILTER = temporal_intel.CONFIDENCE_LEVELS + (UNRECORDED,)
 LANGUAGE_FILTER = temporal_intel.LANGUAGES + (UNSPECIFIED,)
 CALENDARS = ("gregorian", "hijri", "jalali")
 ORIENTATION_FILTER = ("future", "present", "past", UNRECORDED)
-_METHOD_RE = re.compile(r"^[a-z][a-z0-9_.]{0,63}$")
-_PLACE_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*:[A-Za-z0-9_.-]+$")
+_METHOD_RE = re.compile(r"^[a-z][a-z0-9_.]{0,63}\Z")
+_PLACE_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*:[A-Za-z0-9_.-]+\Z")
 MAX_FILTER_VALUES = 100
 MAX_EVIDENCE_TEXT = 200
 
@@ -157,7 +157,7 @@ def _values(get_list: Callable[[str], List[str]], name: str, allowed=None,
     return tuple(sorted(set(raw)))
 
 
-_POSITIVE_INT_RE = re.compile(r"^[1-9][0-9]{0,17}$")
+_POSITIVE_INT_RE = re.compile(r"^[1-9][0-9]{0,17}\Z")
 
 
 def _positive_int(value: Any, name: str, message: Optional[str] = None) -> int:
@@ -316,7 +316,7 @@ def _where(f: SignalFilter, compiled: Optional[CompiledQuery], *,
             conds.append("s.date_from <= %s")
             params.append(f.event_to)
     if compiled is not None:
-        conds.append(f"EXISTS (SELECT 1 FROM {CANONICAL_FROM}"
+        conds.append(f"EXISTS (SELECT 1 FROM {CANONICAL_FROM}"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
                      f" WHERE hc.hash_id = s.hash_id AND ({compiled.where_sql}))")
         params.extend(compiled.params)
     return conds, params
@@ -366,7 +366,7 @@ def _documents(cur, hash_ids: Sequence[int], compiled: CompiledQuery) -> Dict[in
     if not hash_ids:
         return {}
     cur.execute(
-        "SELECT DISTINCT ON (hc.hash_id) hc.hash_id, p.id, p.file_name, hc.source_id,"
+        "SELECT DISTINCT ON (hc.hash_id) hc.hash_id, p.id, p.file_name, hc.source_id,"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
         " hc.side_id, COUNT(*) OVER (PARTITION BY hc.hash_id)"
         f" FROM {CANONICAL_FROM} WHERE hc.hash_id = ANY(%s) AND ({compiled.where_sql})"
         " ORDER BY hc.hash_id, p.id",
@@ -418,7 +418,7 @@ def _facets(cur, conds: List[str], params: List[Any]) -> Dict[str, List[Dict[str
     ``GROUPING SETS`` query, not one query per dimension."""
     cols = ", ".join(f"s.{d}" for d in _FACET_DIMENSIONS)
     sets = ", ".join(f"(s.{d})" for d in _FACET_DIMENSIONS)
-    cur.execute(f"SELECT {cols}, GROUPING({cols}), COUNT(*) FROM content_signals s"
+    cur.execute(f"SELECT {cols}, GROUPING({cols}), COUNT(*) FROM content_signals s"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
                 f" WHERE {' AND '.join(conds)} GROUP BY GROUPING SETS ({sets})", tuple(params))
     width = len(_FACET_DIMENSIONS)
     facets: Dict[str, List[Dict[str, Any]]] = {d: [] for d in _FACET_DIMENSIONS}
@@ -445,10 +445,10 @@ def explore(cur, f: SignalFilter, criteria: Criteria, scope: AccessScope,
     consistency = _begin_read(cur)
     conds, params = _where(f, compiled)
     where = " AND ".join(conds)
-    cur.execute(f"SELECT COUNT(*), COUNT(DISTINCT s.hash_id) FROM content_signals s"
+    cur.execute(f"SELECT COUNT(*), COUNT(DISTINCT s.hash_id) FROM content_signals s"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
                 f" WHERE {where}", tuple(params))
     total, contents = cur.fetchone()
-    cur.execute(f"SELECT {signal_store.SIGNAL_COLUMNS} FROM content_signals s WHERE {where}"
+    cur.execute(f"SELECT {signal_store.SIGNAL_COLUMNS} FROM content_signals s WHERE {where}"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
                 f" ORDER BY {EXPLORER_SORTS[sort]}, s.id ASC LIMIT %s OFFSET %s",
                 tuple(params) + (limit, offset))
     rows = cur.fetchall()
@@ -471,7 +471,7 @@ def signal_detail(cur, signal_id: int, scope: AccessScope,
     not exist *or* the caller may not see any occurrence (same answer)."""
     compiled = _compile(Criteria(), scope)
     consistency = _begin_read(cur)
-    cur.execute(f"SELECT {signal_store.SIGNAL_COLUMNS} FROM content_signals s WHERE s.id = %s"
+    cur.execute(f"SELECT {signal_store.SIGNAL_COLUMNS} FROM content_signals s WHERE s.id = %s"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
                 f" AND EXISTS (SELECT 1 FROM {CANONICAL_FROM}"
                 f" WHERE hc.hash_id = s.hash_id AND ({compiled.where_sql}))",
                 (signal_id,) + tuple(compiled.params))
@@ -489,10 +489,10 @@ def signal_detail(cur, signal_id: int, scope: AccessScope,
         "chars_total": r[3], "chars_scanned": r[4], "signal_count": r[5], "trigger": r[6],
         "job_id": r[7], "error": r[8], "ran_at": r[9].isoformat() if r[9] else None,
         "current_version": r[0] == versions.get(item["detector"])}
-    cur.execute(f"SELECT COUNT(*) FROM {CANONICAL_FROM} WHERE hc.hash_id = %s"
+    cur.execute(f"SELECT COUNT(*) FROM {CANONICAL_FROM} WHERE hc.hash_id = %s"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
                 f" AND ({compiled.where_sql})", (item["hash_id"],) + tuple(compiled.params))
     occurrence_total = cur.fetchone()[0]
-    cur.execute(f"SELECT p.id, p.file_name, p.file_path, hc.source_id, hc.side_id, p.file_date"
+    cur.execute(f"SELECT p.id, p.file_name, p.file_path, hc.source_id, hc.side_id, p.file_date"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
                 f" FROM {CANONICAL_FROM} WHERE hc.hash_id = %s AND ({compiled.where_sql})"
                 " ORDER BY p.id LIMIT %s",
                 (item["hash_id"],) + tuple(compiled.params) + (DETAIL_OCCURRENCE_LIMIT,))
@@ -514,12 +514,19 @@ def signal_detail(cur, signal_id: int, scope: AccessScope,
 
 
 def _bucket_sql() -> str:
-    return ("CASE WHEN s.date_to < %(r)s THEN"
+    """The horizon bucket of signal ``s`` relative to ``ref.r``, the reference
+    date. Queries using it join ``_REF_SQL``, which binds that date as a
+    parameter (no value is ever written into the SQL text)."""
+    return ("CASE WHEN s.date_to < ref.r THEN"
             " (CASE WHEN s.text_orientation = 'future' THEN 'overdue' ELSE 'past' END)"
-            " WHEN s.date_from < %(r)s + 7 THEN 'week'"
-            " WHEN s.date_from < %(r)s + 30 THEN 'month'"
-            " WHEN s.date_from < %(r)s + 90 THEN 'quarter'"
+            " WHEN s.date_from < ref.r + 7 THEN 'week'"
+            " WHEN s.date_from < ref.r + 30 THEN 'month'"
+            " WHEN s.date_from < ref.r + 90 THEN 'quarter'"
             " ELSE 'later' END")
+
+
+#: One-row relation carrying the reference date; takes one parameter.
+_REF_SQL = " CROSS JOIN (SELECT %s::date AS r) ref"
 
 
 def bucket_ranges(reference_date: datetime.date) -> List[Dict[str, Any]]:
@@ -561,12 +568,10 @@ def horizon(cur, f: SignalFilter, criteria: Criteria, scope: AccessScope,
     conds, params = _where(f, compiled)
     where = " AND ".join(conds + ["s.date_from IS NOT NULL"])
     bucket = _bucket_sql()
-    # psycopg2 cannot mix named and positional placeholders: the reference
-    # date is inlined as a typed literal from a validated datetime.date.
-    bucket = bucket.replace("%(r)s", f"DATE '{reference_date.isoformat()}'")
 
-    cur.execute(f"SELECT {bucket} AS b, COUNT(*), COUNT(DISTINCT s.hash_id)"
-                f" FROM content_signals s WHERE {where} GROUP BY b", tuple(params))
+    cur.execute(f"SELECT {bucket} AS b, COUNT(*), COUNT(DISTINCT s.hash_id)"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
+                f" FROM content_signals s{_REF_SQL} WHERE {where} GROUP BY b",
+                (reference_date,) + tuple(params))
     counts = {r[0]: (r[1], r[2]) for r in cur.fetchall()}
     summary = []
     for rng in bucket_ranges(reference_date):
@@ -577,16 +582,16 @@ def horizon(cur, f: SignalFilter, criteria: Criteria, scope: AccessScope,
     # Undated references that match the same filters (event window aside:
     # an undated signal cannot be inside or outside a date window).
     u_conds, u_params = _where(f, compiled, include_event_window=False)
-    cur.execute(f"SELECT s.resolution, COUNT(*) FROM content_signals s"
+    cur.execute(f"SELECT s.resolution, COUNT(*) FROM content_signals s"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
                 f" WHERE {' AND '.join(u_conds)} AND s.date_from IS NULL GROUP BY s.resolution",
                 tuple(u_params))
     undated = {r[0]: r[1] for r in cur.fetchall()}
 
-    cur.execute(f"SELECT {signal_store.SIGNAL_COLUMNS}, {bucket} AS b FROM content_signals s"
-                f" WHERE {where} AND {bucket} = ANY(%s)"
+    cur.execute(f"SELECT {signal_store.SIGNAL_COLUMNS}, {bucket} AS b FROM content_signals s"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
+                f"{_REF_SQL} WHERE {where} AND {bucket} = ANY(%s)"
                 " ORDER BY s.date_from ASC, s.date_to ASC, s.hash_id ASC, s.char_start ASC,"
                 " s.id ASC LIMIT %s OFFSET %s",
-                tuple(params) + (list(listed), limit, offset))
+                (reference_date,) + tuple(params) + (list(listed), limit, offset))
     rows = cur.fetchall()
     listed_total = sum(counts.get(b, (0, 0))[0] for b in listed)
     versions = _current_versions(cur)
@@ -617,7 +622,7 @@ def coverage(cur, compiled: CompiledQuery, current_version: Optional[str]) -> Di
     with its current version. Only ``current`` content contributes to the
     horizon; the rest is *not measured*, which is not the same as empty."""
     cur.execute(
-        "SELECT COUNT(*),"
+        "SELECT COUNT(*),"  # nosec B608 # constant column lists, whitelisted facets/sorts, WHERE from _where's fixed fragments and the shared criteria compiler; values are bound parameters
         " COUNT(*) FILTER (WHERE r.hash_id IS NULL),"
         " COUNT(*) FILTER (WHERE r.status = 'failed'),"
         " COUNT(*) FILTER (WHERE r.status <> 'failed' AND r.detector_ver IS DISTINCT FROM %s),"

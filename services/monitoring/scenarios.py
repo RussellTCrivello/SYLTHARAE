@@ -53,7 +53,7 @@ def _dict_cur(conn):
 
 
 def fetch_scenario(cur, scenario_id: int, *, for_update: bool = False) -> Optional[Dict[str, Any]]:
-    cur.execute(f"SELECT {SCENARIO_COLUMNS} FROM {_FROM} WHERE s.id = %s"
+    cur.execute(f"SELECT {SCENARIO_COLUMNS} FROM {_FROM} WHERE s.id = %s"  # nosec B608 # column lists and _FROM are constants, criteria SQL from the shared compiler; values are bound parameters
                 + (" FOR UPDATE OF s" if for_update else ""), (scenario_id,))
     return _as_dict(cur, cur.fetchone())
 
@@ -148,7 +148,7 @@ def list_scenarios(conn, *, user_id: int, is_admin: bool, all_users: bool = Fals
         params.append(user_id)
     if not include_archived:
         where.append("s.status <> 'archived'")
-    sql = (f"SELECT {SCENARIO_COLUMNS} FROM {_FROM}"
+    sql = (f"SELECT {SCENARIO_COLUMNS} FROM {_FROM}"  # nosec B608 # column lists and _FROM are constants, criteria SQL from the shared compiler; values are bound parameters
            + (" WHERE " + " AND ".join(where) if where else "")
            + " ORDER BY lower(s.name), s.id LIMIT %s")
     try:
@@ -296,9 +296,9 @@ def list_evaluations(conn, scenario_id: int, *, kind: Optional[str] = None, limi
     params: list = [scenario_id] + ([kind] if kind else [])
     try:
         with _dict_cur(conn) as cur:
-            cur.execute(f"SELECT count(*) AS n FROM scenario_evaluations WHERE {where}", params)
+            cur.execute(f"SELECT count(*) AS n FROM scenario_evaluations WHERE {where}", params)  # nosec B608 # column lists and _FROM are constants, criteria SQL from the shared compiler; values are bound parameters
             total = cur.fetchone()["n"]
-            cur.execute(f"SELECT {_EVALUATION_COLUMNS} FROM scenario_evaluations WHERE {where}"
+            cur.execute(f"SELECT {_EVALUATION_COLUMNS} FROM scenario_evaluations WHERE {where}"  # nosec B608 # column lists and _FROM are constants, criteria SQL from the shared compiler; values are bound parameters
                         " ORDER BY id DESC LIMIT %s OFFSET %s", params + [limit, offset])
             rows = [_evaluation_to_api(r) for r in cur.fetchall()]
     finally:
@@ -309,7 +309,7 @@ def list_evaluations(conn, scenario_id: int, *, kind: Optional[str] = None, limi
 def get_evaluation(conn, scenario_id: int, evaluation_id: int) -> Dict[str, Any]:
     try:
         with _dict_cur(conn) as cur:
-            cur.execute(f"SELECT {_EVALUATION_COLUMNS} FROM scenario_evaluations"
+            cur.execute(f"SELECT {_EVALUATION_COLUMNS} FROM scenario_evaluations"  # nosec B608 # column lists and _FROM are constants, criteria SQL from the shared compiler; values are bound parameters
                         " WHERE scenario_id = %s AND id = %s", (scenario_id, evaluation_id))
             row = cur.fetchone()
     finally:
@@ -351,7 +351,7 @@ def list_outcomes(conn, scenario_id: int, *, hash_id: Optional[int] = None,
         visible = compile_criteria(Criteria(), scope)
         doc_sql = (", d.path_id, d.file_name")
         doc_params = list(visible.params)
-        lateral = (f" LEFT JOIN LATERAL (SELECT p.id AS path_id, p.file_name FROM {CANONICAL_FROM}"
+        lateral = (f" LEFT JOIN LATERAL (SELECT p.id AS path_id, p.file_name FROM {CANONICAL_FROM}"  # nosec B608 # column lists and _FROM are constants, criteria SQL from the shared compiler; values are bound parameters
                    f" WHERE hc.hash_id = so.hash_id AND ({visible.where_sql})"
                    " ORDER BY p.id LIMIT 1) d ON TRUE")
     else:
@@ -366,10 +366,10 @@ def list_outcomes(conn, scenario_id: int, *, hash_id: Optional[int] = None,
     clause = " AND ".join(where)
     try:
         with _dict_cur(conn) as cur:
-            cur.execute(f"SELECT count(*) AS n FROM scenario_outcomes WHERE {clause}", params)
+            cur.execute(f"SELECT count(*) AS n FROM scenario_outcomes WHERE {clause}", params)  # nosec B608 # column lists and _FROM are constants, criteria SQL from the shared compiler; values are bound parameters
             total = cur.fetchone()["n"]
             cur.execute(
-                "SELECT so.id, so.evaluation_id, so.scenario_version, so.hash_id, so.outcomes,"
+                "SELECT so.id, so.evaluation_id, so.scenario_version, so.hash_id, so.outcomes,"  # nosec B608 # column lists and _FROM are constants, criteria SQL from the shared compiler; values are bound parameters
                 " so.matched_cases, so.previous_outcomes, so.delivery, so.priority,"
                 " so.priority_basis, so.evidence, so.recorded_at" + doc_sql
                 + " FROM (SELECT * FROM scenario_outcomes WHERE " + clause

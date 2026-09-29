@@ -93,7 +93,7 @@ class CompiledQuery:
     # ------------------------------------------------------------------
     def count_sql(self) -> Tuple[str, Tuple]:
         target = "DISTINCT hc.hash_id" if self.unit == "hash" else "DISTINCT p.id"
-        sql = f"SELECT COUNT({target}) FROM {CANONICAL_FROM} WHERE {self.where_sql}"
+        sql = f"SELECT COUNT({target}) FROM {CANONICAL_FROM} WHERE {self.where_sql}"  # nosec B608 # CANONICAL_FROM, compiler-built WHERE (fixed fragments with %s) and whitelisted ORDER BY; values are bound parameters
         return sql, self.params
 
     def ids_sql(self, limit: int, offset: int = 0) -> Tuple[str, Tuple]:
@@ -108,7 +108,7 @@ class CompiledQuery:
             # One row per content hash; order by the hash's earliest-ordered
             # path so the order is still meaningful and deterministic.
             sql = (
-                "SELECT hash_id FROM ("
+                "SELECT hash_id FROM ("  # nosec B608 # CANONICAL_FROM, compiler-built WHERE (fixed fragments with %s) and whitelisted ORDER BY; values are bound parameters
                 f" SELECT hc.hash_id AS hash_id, MIN(p.id) AS first_path"
                 f" FROM {CANONICAL_FROM} WHERE {self.where_sql}"
                 "  AND hc.hash_id IS NOT NULL"
@@ -116,7 +116,7 @@ class CompiledQuery:
                 ") matched ORDER BY hash_id ASC LIMIT %s OFFSET %s"
             )
         else:
-            sql = (f"SELECT p.id FROM {CANONICAL_FROM} WHERE {self.where_sql} "
+            sql = (f"SELECT p.id FROM {CANONICAL_FROM} WHERE {self.where_sql} "  # nosec B608 # CANONICAL_FROM, compiler-built WHERE (fixed fragments with %s) and whitelisted ORDER BY; values are bound parameters
                    f"ORDER BY {self.order_sql} LIMIT %s OFFSET %s")
         return sql, self.params + (limit, offset)
 
@@ -184,13 +184,13 @@ def compile_criteria(criteria: Criteria, scope: AccessScope) -> CompiledQuery:
         if criteria.keyword_logic == "OR":
             placeholders = ",".join(["%s"] * len(criteria.keywords))
             conditions.append(
-                "EXISTS (SELECT 1 FROM keywords_hashs _kh WHERE _kh.hash_id = hc.hash_id "
+                "EXISTS (SELECT 1 FROM keywords_hashs _kh WHERE _kh.hash_id = hc.hash_id "  # nosec B608 # CANONICAL_FROM, compiler-built WHERE (fixed fragments with %s) and whitelisted ORDER BY; values are bound parameters
                 f"AND _kh.keyword_id IN ({placeholders}))")
             params.extend(criteria.keywords)
         elif criteria.keyword_logic == "NOT":
             placeholders = ",".join(["%s"] * len(criteria.keywords))
             conditions.append(
-                "NOT EXISTS (SELECT 1 FROM keywords_hashs _kh WHERE _kh.hash_id = hc.hash_id "
+                "NOT EXISTS (SELECT 1 FROM keywords_hashs _kh WHERE _kh.hash_id = hc.hash_id "  # nosec B608 # CANONICAL_FROM, compiler-built WHERE (fixed fragments with %s) and whitelisted ORDER BY; values are bound parameters
                 f"AND _kh.keyword_id IN ({placeholders}))")
             params.extend(criteria.keywords)
         else:  # AND

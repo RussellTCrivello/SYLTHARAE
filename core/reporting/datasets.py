@@ -46,7 +46,7 @@ SEARCH_RESULTS_MATCHES_V1 = Dataset(
         Column("side_name", "text", False, "Side"),
     ),
     sql=(
-        "SELECT p.id AS path_id, p.file_name, p.file_type, p.file_date, "
+        "SELECT p.id AS path_id, p.file_name, p.file_type, p.file_date, "  # nosec B608 # module constants only (CANONICAL_FROM, keyness thresholds); values are bound parameters
         "hc.hash_id, rpt_src.name AS source_name, rpt_side.name AS side_name "
         f"FROM {CANONICAL_FROM} "
         "LEFT JOIN sources rpt_src ON rpt_src.id = hc.source_id "
@@ -69,7 +69,7 @@ SEARCH_RESULTS_COUNT_V1 = Dataset(
     semantics="exact",
     row_limit=1,
     columns=(Column("matched", "bigint", False, "Matching files"),),
-    sql=(f"SELECT COUNT(DISTINCT p.id) AS matched FROM {CANONICAL_FROM} "
+    sql=(f"SELECT COUNT(DISTINCT p.id) AS matched FROM {CANONICAL_FROM} "  # nosec B608 # module constants only (CANONICAL_FROM, keyness thresholds); values are bound parameters
          "WHERE {where} LIMIT %s"),
     sql_params=(TOKEN_CRITERIA, TOKEN_LIMIT),
     roles=_READERS,
@@ -94,7 +94,7 @@ SEARCH_RESULTS_COUNT_V1 = Dataset(
 KEYNESS_SIGNIFICANT_G2 = "15.13"
 
 _KEYNESS_CTES = (
-    "WITH rpt_target AS ("
+    "WITH rpt_target AS ("  # nosec B608 # module constants only (CANONICAL_FROM, keyness thresholds); values are bound parameters
     f" SELECT DISTINCT hc.hash_id FROM {CANONICAL_FROM}"
     " WHERE {where} AND hc.hash_id IS NOT NULL"
     "), rpt_visible AS ("
@@ -151,7 +151,7 @@ TERM_KEYNESS_RANKED_V1 = Dataset(
         Column("log_ratio", "numeric", False, "Log Ratio"),
     ),
     sql=(_KEYNESS_CTES
-         + "SELECT rpt_w.word AS term, rpt_g.a::bigint AS target_freq,"
+         + "SELECT rpt_w.word AS term, rpt_g.a::bigint AS target_freq,"  # nosec B608 # module constants only (CANONICAL_FROM, keyness thresholds); values are bound parameters
          " rpt_g.b::bigint AS reference_freq, rpt_g.g2, rpt_g.log_ratio"
          " FROM rpt_g JOIN words rpt_w ON rpt_w.id = rpt_g.word_id"
          f" WHERE rpt_g.dir = {_KEYNESS_DIRECTION}"
@@ -184,7 +184,7 @@ TERM_KEYNESS_TOTALS_V1 = Dataset(
         Column("significant_terms", "bigint", False, "Significant terms"),
     ),
     sql=(_KEYNESS_CTES
-         + "SELECT rpt_n.c::bigint AS target_tokens, rpt_n.d::bigint AS reference_tokens,"
+         + "SELECT rpt_n.c::bigint AS target_tokens, rpt_n.d::bigint AS reference_tokens,"  # nosec B608 # module constants only (CANONICAL_FROM, keyness thresholds); values are bound parameters
          " (SELECT COUNT(*) FROM rpt_target rpt_t2"
          " JOIN rpt_visible rpt_v2 ON rpt_v2.hash_id = rpt_t2.hash_id) AS target_contents,"
          " (SELECT COUNT(*) FROM rpt_visible rpt_v3 LEFT JOIN rpt_target rpt_t3"

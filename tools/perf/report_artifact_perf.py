@@ -91,7 +91,7 @@ def main(pg_dir: str, contents: int = 20_000) -> None:
           f"{statistics.median(timings):.1f} ms")
 
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        cur.execute("SELECT " + runs._RUN_COLUMNS + " FROM report_runs WHERE id = %s", (rid,))
+        cur.execute("SELECT " + runs._RUN_COLUMNS + " FROM report_runs WHERE id = %s", (rid,))  # nosec B608 # developer benchmark; _RUN_COLUMNS is a constant
         run_row = cur.fetchone()
     document = artifacts.run_document(conn, run_row)
     conn.rollback()
