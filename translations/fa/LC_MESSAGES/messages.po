@@ -12188,3 +12188,61 @@ msgstr "مقدار شناسایی‌شده"
 #: core/reporting/datasets.py
 msgid "Evidence sentence"
 msgstr "جملهٔ شاهد"
+
+# --- Entity & Place report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Entity & Place Report"
+msgstr "گزارش موجودیت‌ها و مکان‌ها"
+
+#: core/reporting/definitions.py
+msgid "Every gazetteer place detected in the matched documents, with its identified mentions and - kept separate - its ambiguous mentions, where the text could refer to this place or another. Ambiguity is never resolved for you: a place's identified counts come only from mentions the detector resolved to it."
+msgstr "هر مکان از واژه‌نامهٔ جغرافیایی که در پرونده‌های منطبق شناسایی شده، همراه با ارجاع‌های مشخص‌شده و - جدای از آنها - ارجاع‌های مبهمش، جایی که متن می‌تواند به این مکان یا مکان دیگری اشاره کند. ابهام هرگز به جای شما حل نمی‌شود: شمارش‌های مشخص‌شدهٔ هر مکان فقط از ارجاع‌هایی می‌آید که آشکارساز به آن نسبت داده است."
+
+#: core/reporting/definitions.py
+msgid "About the Entity & Place Report"
+msgstr "درباره گزارش موجودیت‌ها و مکان‌ها"
+
+#: core/reporting/definitions.py
+msgid "Lists every place from the gazetteer that the detector found in the matched documents, with how often it was identified and how often the mention stayed ambiguous - the text could mean this place or another one (Tripoli, Georgia). Ambiguous mentions are never counted as identified: you see both, side by side."
+msgstr "هر مکانی از واژه‌نامهٔ جغرافیایی را که آشکارساز در پرونده‌های منطبق یافته فهرست می‌کند، با تعداد دفعاتی که مشخص شده و تعدادی که ارجاع مبهم مانده - متن می‌تواند به این مکان یا مکان دیگر اشاره کند (طرابلس، گرجستان). ارجاع مبهم هرگز مشخص‌شده شمرده نمی‌شود: هر دو را کنار هم می‌بینید."
+
+#: core/reporting/datasets.py
+msgid "Place ID"
+msgstr "شناسه مکان"
+
+#: core/reporting/datasets.py
+msgid "Place"
+msgstr "مکان"
+
+#: core/reporting/datasets.py
+msgid "Feature type"
+msgstr "نوع مکان"
+
+#: core/reporting/datasets.py
+msgid "Countries"
+msgstr "کشورها"
+
+#: core/reporting/datasets.py
+msgid "Retired"
+msgstr "بازنشسته"
+
+#: core/reporting/datasets.py
+msgid "Contents (identified)"
+msgstr "محتواها (مشخص‌شده)"
+
+#: core/reporting/datasets.py
+msgid "Mentions (identified)"
+msgstr "ارجاع‌ها (مشخص‌شده)"
+
+#: core/reporting/datasets.py
+msgid "Contents (ambiguous)"
+msgstr "محتواها (مبهم)"
+
+#: core/reporting/datasets.py
+msgid "Mentions (ambiguous)"
+msgstr "ارجاع‌ها (مبهم)"
+
+#: core/reporting/datasets.py
+msgid "Mentions without confidence"
+msgstr "ارجاع‌های بدون اطمینان"

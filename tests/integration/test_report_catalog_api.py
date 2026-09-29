@@ -281,3 +281,54 @@ class TestOverHttp:
                     {"report_id": "horizon",
                      "parameters": {"criteria": {"text": corpus["word"]}}})
         assert bad.status_code == 400
+
+    def test_entity_place_run_keeps_ambiguity_over_http(self, app, corpus,
+                                                          sync_jobs, pg_db):
+        """The Entity & Place report over HTTP: candidates stay candidates."""
+        import hashlib as _hashlib
+        tag = corpus["tag"]
+        conn = connect(pg_db)
+        with conn, conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT hc.hash_id FROM paths p JOIN hash_contexts hc"
+                        " ON hc.id = p.context_id WHERE p.id = ANY(%s)",
+                        (corpus["paths"],))
+            hashes = [h for (h,) in cur.fetchall()]
+            cur.execute("SELECT content FROM contents_raw WHERE hash_id = %s"
+                        " ORDER BY chunk_seq LIMIT 1", (hashes[0],))
+            sentence = (cur.fetchone()[0] or "seed body")[:30]
+            cur.execute("INSERT INTO geo_places (place_key, label, feature_type,"
+                        " country_codes, source) VALUES (%s, %s, 'city', '{LY}',"
+                        " 'seed') RETURNING id", (f"kat:benghazi-{tag}", f"Benghazi {tag}"))
+            place_id = cur.fetchone()[0]
+            for i, (resolution, places) in enumerate([("identified", [place_id]),
+                                                      ("ambiguous", [place_id])]):
+                cur.execute(
+                    "INSERT INTO content_signals (hash_id, detector, detector_ver,"
+                    " signal_type, value, surface, char_start, char_end, resolution,"
+                    " evidence, dedup_key, method, confidence, confidence_basis,"
+                    " evidence_sentence, sentence_start, sentence_end)"
+                    " VALUES (%s, 'places', 'places-1.0.0+seed', 'place_mention',"
+                    " 'city', 'Benghazi', 0, 8, %s, '{}'::jsonb, %s, 'gazetteer',"
+                    " 'high', 'explicit', %s, 0, %s) RETURNING id",
+                    (hashes[0], resolution,
+                     _hashlib.sha256(f"kat-{tag}-ep-{i}".encode()).hexdigest(),
+                     sentence, len(sentence)))
+                signal_id = cur.fetchone()[0]
+                for pid in places:
+                    cur.execute("INSERT INTO content_signal_places (signal_id,"
+                                " place_id) VALUES (%s, %s)", (signal_id, pid))
+        conn.close()
+        c, _ = _analyst(app)
+        resp = _post(c, "/api/reports/runs",
+                     {"report_id": "entity_place",
+                      "parameters": {"criteria": {"text": corpus["word"]}}})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        run = resp.get_json()["run"]
+        rows = {r["place_label"]: r for r in c.get(
+            f"/api/reports/runs/{run['id']}/datasets/entity_place.mentions@1"
+            "?limit=20").get_json()["rows"]}
+        row = rows[f"Benghazi {tag}"]
+        assert row["identified_occurrences"] == 1
+        assert row["ambiguous_occurrences"] == 1, (
+            "the ambiguous candidate stays ambiguous over HTTP too")
+        assert row["unknown_confidence_occurrences"] == 0

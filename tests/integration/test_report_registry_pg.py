@@ -148,6 +148,58 @@ def corpus(pg_db, app):
             " 'someday', 'someday', 5, 12, 'ambiguous', '{}'::jsonb, %s)",
             (matched_hashes[0],
              _hashlib.sha256(f"{tag}-sig-undated".encode()).hexdigest()))
+
+        # Entity/Place corpus. Two places; one ambiguous mention keeps both
+        # as candidates (never picked); one identified mention of place A;
+        # one identified mention of place B whose confidence was never
+        # recorded (unprovenanced, not zero); one unresolved mention (no
+        # candidates: out of per-place attribution); place B is retired.
+        cur.execute(
+            "INSERT INTO geo_places (place_key, label, feature_type,"
+            " country_codes, source) VALUES (%s, %s, 'city', '{LY}', 'seed')"
+            " RETURNING id", (f"zz:tripoli-{tag}", f"Tripoli {tag}"))
+        place_a = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO geo_places (place_key, label, feature_type,"
+            " country_codes, source, retired) VALUES (%s, %s, 'country',"
+            " '{GE}', 'seed', TRUE) RETURNING id", (f"zz:georgia-{tag}", f"Georgia {tag}"))
+        place_b = cur.fetchone()[0]
+
+        def _place_signal(resolution, hash_id, with_conf, dedup_suffix, place_ids):
+            cur.execute(
+                "INSERT INTO content_signals (hash_id, detector, detector_ver,"
+                " signal_type, value, surface, char_start, char_end, resolution,"
+                " evidence, dedup_key, method, confidence, confidence_basis,"
+                " evidence_sentence, sentence_start, sentence_end)"
+                " VALUES (%s, 'places', 'places-1.0.0+seed', 'place_mention',"
+                " %s, %s, 0, 9, %s, '{}'::jsonb, %s, %s, %s, %s, %s, %s, %s)"
+                " RETURNING id",
+                (hash_id, "place", "PlaceName", resolution,
+                 _hashlib.sha256(f"{tag}-place-{dedup_suffix}".encode()).hexdigest(),
+                 # Provenance is all-or-nothing (m0018): a pre-provenance row
+                 # has no method, no confidence, no sentence at all.
+                 "gazetteer" if with_conf else None,
+                 "high" if with_conf else None,
+                 "explicit" if with_conf else None,
+                 _sentence if with_conf else None,
+                 0 if with_conf else None,
+                 len(_sentence) if with_conf else None))
+            signal_id = cur.fetchone()[0]
+            for pid in place_ids:
+                cur.execute("INSERT INTO content_signal_places (signal_id,"
+                            " place_id) VALUES (%s, %s)", (signal_id, pid))
+
+        _place_signal("identified", matched_hashes[0], True, "a1", [place_a])
+        _place_signal("identified", matched_hashes[1], False, "b1", [place_b])
+        _place_signal("ambiguous", matched_hashes[0], True, "amb", [place_a, place_b])
+        cur.execute(
+            "INSERT INTO content_signals (hash_id, detector, detector_ver,"
+            " signal_type, value, surface, char_start, char_end, resolution,"
+            " evidence, dedup_key)"
+            " VALUES (%s, 'places', 'places-1.0.0+seed', 'place_mention',"
+            " 'somewhere', 'Somewhere', 0, 9, 'unresolved', '{}'::jsonb, %s)",
+            (matched_hashes[0],
+             _hashlib.sha256(f"{tag}-place-unres".encode()).hexdigest()))
     yield {"conn": conn, "word": word, "tag": tag, "s1": s1, "s2": s2,
            "paths": paths, "cat_a": cat_a, "cat_b": cat_b,
            "keyword_id": keyword_id}
@@ -367,3 +419,33 @@ def test_a_different_reference_date_moves_the_buckets_not_the_rows(corpus):
     assert {r[0] for r in early} <= {r[0] for r in late}
     overdue = [r for r in late if r[5] == "overdue"]
     assert overdue and all(r[10] == "high" for r in overdue)
+
+
+def test_entity_place_preserves_ambiguity_and_unprovenanced_confidence(corpus):
+    tag = corpus["tag"]
+    values = REGISTRY.report("entity_place").normalize_parameters(
+        {"criteria": {"text": corpus["word"]}})
+    names, _, rows = _new_dataset(corpus, "entity_place.mentions@1", values)
+    assert names == [c.name for c in
+                     REGISTRY.dataset("entity_place.mentions@1").columns]
+    by_label = {r[1]: r for r in rows}
+    a = by_label[f"Tripoli {tag}"]
+    b = by_label[f"Georgia {tag}"]
+    # row: 0 id, 1 label, 2 feature, 3 countries, 4 retired,
+    #      5 ident_contents, 6 ident_occ, 7 amb_contents, 8 amb_occ,
+    #      9 unk_conf, 10 first_path_id, 11 first_file_name
+    assert a[2] == "city" and a[3] == "LY" and a[4] is False
+    assert a[5] == 1 and a[6] == 1, "only the resolved mention counts as identified"
+    assert a[7] == 1 and a[8] == 1, "the ambiguous mention is counted - separately"
+    assert a[9] == 0
+    assert b[4] is True, "a retired place is marked, not hidden"
+    assert b[5] == 1 and b[6] == 1
+    assert b[7] == 1 and b[8] == 1
+    assert b[9] == 1, "its unprovenanced mention is carried as unknown, not zero"
+    # Neither place absorbed the other's mention: ambiguity preserved.
+    assert a[6] + b[6] == 2
+    # The unresolved mention names no place: exactly two rows.
+    assert len(rows) == 2
+    # Representative documents: lowest matched path ids of each place (they
+    # may legitimately share the document that carries the ambiguity).
+    assert a[10] > 0 and b[10] > 0

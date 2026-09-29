@@ -133,6 +133,7 @@ tracked, so it ships in the `git archive` release anyway.
 | `keyword_intelligence@1` | keyword | admin, analyst, viewer | `keyword_intelligence.matches@1` (capped 1000, most contents first) |
 | `category_analysis@1` | category | admin, analyst, viewer | `category_analysis.summary@1` (capped 1000, most contents first) |
 | `horizon@1` | signal | admin, analyst, viewer | `horizon.signals@1` (capped 5000, event date soonest first; `as_of` reference date is a required recorded parameter) |
+| `entity_place@1` | place | admin, analyst, viewer | `entity_place.mentions@1` (capped 2000, most identified first) |
 
 `search_results@1` is the registry's reference definition: it needs no
 analytics and reuses the compiler end to end. The two step-17 families read
@@ -150,9 +151,14 @@ matched contents, bucketed by the Signal Explorer's *own* bucket definition -
 dataset, never restated - against the run's declared reference date (`as_of`),
 which is recorded with the run so the bucketing is reproducible; undated
 signals and purely past mentions stay out of the horizon exactly as on the
-page. The remaining catalog families (Entity/Place, Relationship,
-Latest/Change, Scenario Outcome, Comprehensive) are added only when their
-datasets exist and are verified.
+page. The Entity & Place family reads the gazetteer candidates
+(`content_signal_places`: one candidate = identified, several = ambiguous,
+kept and never picked), splitting identified from ambiguous per place -
+ambiguity is never resolved in SQL; unresolved mentions (no candidates) are
+out of per-place attribution by declaration; unprovenanced confidence is
+carried as unknown; retired places are marked, not hidden. The remaining
+catalog families (Relationship, Latest/Change, Scenario Outcome,
+Comprehensive) are added only when their datasets exist and are verified.
 
 ## Evidence
 
@@ -194,6 +200,14 @@ datasets exist and are verified.
   moves the buckets without dropping rows. Over HTTP: the run records
   `as_of`, buckets come back as declared, and a run without the reference
   date is refused (400) before anything executes.
+* Entity & Place (step 17): `test_report_catalog_entity_place.py` (11): the
+  dataset reads candidates not resolutions, identified/ambiguous are
+  distinct columns, unprovenanced confidence carried, place signals only.
+  PG (registry suite, 19): an ambiguous mention leaves both candidate
+  places with identical ambiguous counts and neither gains an identified
+  count; the unprovenanced mention lands in `unknown_confidence_occurrences`;
+  the unresolved mention appears in no row; the retired place is marked.
+  Over HTTP: identified 1 / ambiguous 1 for the same place.
 
 ## Limitations
 

@@ -12306,3 +12306,61 @@ msgstr "Otkrivena vrijednost"
 #: core/reporting/datasets.py
 msgid "Evidence sentence"
 msgstr "Rečenica dokaza"
+
+# --- Entity & Place report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Entity & Place Report"
+msgstr "Izvještaj o entitetima i mjestima"
+
+#: core/reporting/definitions.py
+msgid "Every gazetteer place detected in the matched documents, with its identified mentions and - kept separate - its ambiguous mentions, where the text could refer to this place or another. Ambiguity is never resolved for you: a place's identified counts come only from mentions the detector resolved to it."
+msgstr "Svako mjesto iz geografskog pojmovnika otkriveno u odgovarajućim dokumentima, s njegovim identificiranim spominjanjima i - odvojeno - dvosmislenim spominjanjima, kada tekst može upućivati na ovo mjesto ili na drugo. Dvosmislenost se nikada ne rješava umjesto vas: identificirani brojevi mjesta dolaze samo iz spominjanja koje je detektor pripisao tome mjestu."
+
+#: core/reporting/definitions.py
+msgid "About the Entity & Place Report"
+msgstr "O izvještaju o entitetima i mjestima"
+
+#: core/reporting/definitions.py
+msgid "Lists every place from the gazetteer that the detector found in the matched documents, with how often it was identified and how often the mention stayed ambiguous - the text could mean this place or another one (Tripoli, Georgia). Ambiguous mentions are never counted as identified: you see both, side by side."
+msgstr "Navodi svako mjesto iz pojmovnika koje je detektor pronašao u odgovarajućim dokumentima, koliko je puta identificirano i koliko je puta spominjanje ostalo dvosmisleno - tekst može značiti ovo mjesto ili neko drugo (Tripoli, Gruzija). Dvosmislena spominjanja nikada se ne broje kao identificirana: vidite oba, jedno uz drugo."
+
+#: core/reporting/datasets.py
+msgid "Place ID"
+msgstr "ID mjesta"
+
+#: core/reporting/datasets.py
+msgid "Place"
+msgstr "Mjesto"
+
+#: core/reporting/datasets.py
+msgid "Feature type"
+msgstr "Vrsta lokacije"
+
+#: core/reporting/datasets.py
+msgid "Countries"
+msgstr "Države"
+
+#: core/reporting/datasets.py
+msgid "Retired"
+msgstr "Povučeno"
+
+#: core/reporting/datasets.py
+msgid "Contents (identified)"
+msgstr "Sadržaji (identificirano)"
+
+#: core/reporting/datasets.py
+msgid "Mentions (identified)"
+msgstr "Spominjanja (identificirano)"
+
+#: core/reporting/datasets.py
+msgid "Contents (ambiguous)"
+msgstr "Sadržaji (dvosmisleno)"
+
+#: core/reporting/datasets.py
+msgid "Mentions (ambiguous)"
+msgstr "Spominjanja (dvosmisleno)"
+
+#: core/reporting/datasets.py
+msgid "Mentions without confidence"
+msgstr "Spominjanja bez pouzdanosti"

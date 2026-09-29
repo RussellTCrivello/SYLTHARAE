@@ -126,6 +126,25 @@ HORIZON_V1 = ReportDefinition(
     datasets=("horizon.signals@1",),
 )
 
+ENTITY_PLACE_V1 = ReportDefinition(
+    report_id="entity_place",
+    version=1,
+    title="Entity & Place Report",
+    description="Every gazetteer place detected in the matched documents, "
+                "with its identified mentions and - kept separate - its "
+                "ambiguous mentions, where the text could refer to this "
+                "place or another. Ambiguity is never resolved for you: a "
+                "place's identified counts come only from mentions the "
+                "detector resolved to it.",
+    help_topic="reports/entity-place",
+    unit="place",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("criteria", "criteria", "Search criteria", required=True),
+    ),
+    datasets=("entity_place.mentions@1",),
+)
+
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
@@ -133,6 +152,7 @@ REPORTS: Tuple[ReportDefinition, ...] = (
     KEYWORD_INTELLIGENCE_V1,
     CATEGORY_ANALYSIS_V1,
     HORIZON_V1,
+    ENTITY_PLACE_V1,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
@@ -181,5 +201,15 @@ HELP_TOPICS: Tuple[HelpTopic, ...] = (
                 "reference date you choose: overdue, this week, this month, "
                 "this quarter, and later. Undated references and purely "
                 "past mentions are not part of the horizon.",
+    ),
+    HelpTopic(
+        topic="reports/entity-place",
+        title="About the Entity & Place Report",
+        summary="Lists every place from the gazetteer that the detector "
+                "found in the matched documents, with how often it was "
+                "identified and how often the mention stayed ambiguous - "
+                "the text could mean this place or another one (Tripoli, "
+                "Georgia). Ambiguous mentions are never counted as "
+                "identified: you see both, side by side.",
     ),
 )

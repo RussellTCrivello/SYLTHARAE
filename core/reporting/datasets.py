@@ -17,6 +17,7 @@ from typing import Tuple
 
 from core.criteria.sql import CANONICAL_FROM
 from core.detection import horizon as _horizon
+from core.detection import place_intel as _places
 from core.detection import temporal_intel as _temporal
 from core.security.service import ALL_ROLES
 
@@ -454,6 +455,114 @@ HORIZON_SIGNALS_V1 = Dataset(
     criteria_param="criteria",
 )
 
+# ---------------------------------------------------------------------------
+# Entity / Place (step 17)
+#
+# One row per gazetteer place detected in the contents the criteria matched.
+# The candidates live in content_signal_places (one candidate = identified;
+# several = ambiguous, kept and never picked), so ambiguity is preserved
+# structurally: a place's identified counts come only from signals resolved
+# to it, and its ambiguous counts come from signals where it is merely a
+# candidate - neither is folded into the other, and nothing is silently
+# selected. place_mention signals that resolved to no place at all
+# (resolution 'unresolved') name no place and are out of per-place
+# attribution by declaration. Identified signals whose confidence was never
+# recorded (pre-m0018 rows) are counted in unknown_confidence_occurrences -
+# unknown, never zero. Retired gazetteer places are marked, not hidden.
+# The representative document is the lowest path id among the matched
+# occurrences of the place's signals (signals are content-derived).
+# ---------------------------------------------------------------------------
+
+_ENTITY_PLACE_FROM = (
+    "WITH rpt_base AS ("
+    " SELECT DISTINCT hc.hash_id AS hash_id FROM " + CANONICAL_FROM + " WHERE {where}"
+    "), rpt_hits AS ("
+    " SELECT rpt_csp.place_id,"
+    " COUNT(DISTINCT s.hash_id) FILTER (WHERE s.resolution = 'identified')"
+    "   AS ident_contents,"
+    " COUNT(*) FILTER (WHERE s.resolution = 'identified') AS ident_occ,"
+    " COUNT(DISTINCT s.hash_id) FILTER (WHERE s.resolution = 'ambiguous')"
+    "   AS amb_contents,"
+    " COUNT(*) FILTER (WHERE s.resolution = 'ambiguous') AS amb_occ,"
+    " COUNT(*) FILTER (WHERE s.resolution = 'identified'"
+    "                  AND s.confidence IS NULL) AS unk_conf"
+    " FROM content_signals s"
+    " JOIN content_signal_places rpt_csp ON rpt_csp.signal_id = s.id"
+    " JOIN rpt_base ON rpt_base.hash_id = s.hash_id"
+    " WHERE s.detector = '" + _places.DETECTOR_NAME + "'"
+    "   AND s.signal_type = '" + _places.SIGNAL_PLACE + "'"
+    " GROUP BY rpt_csp.place_id"
+    ") "
+)
+
+ENTITY_PLACE_MENTIONS_V1 = Dataset(
+    dataset_id="entity_place.mentions",
+    version=1,
+    description=(
+        "Every gazetteer place detected in the contents matched by the "
+        "criteria, with its identified mentions (signals resolved to this "
+        "place) and its ambiguous mentions (signals where this place is one "
+        "of the candidates - kept distinct, never merged with identified "
+        "and never silently selected), per distinct content and per signal "
+        "row. Mentions whose confidence was never recorded are counted "
+        "separately (unknown, not zero). Unresolved mentions that name no "
+        "place are out of per-place attribution. Retired places carry "
+        "their flag. The representative document is the lowest matched path "
+        "id of the place's signals. Capped: at most row_limit places, most "
+        "identified first; overflow is detected (row_limit + 1 fetched) and "
+        "recorded as truncation, never hidden."),
+    unit="place",
+    semantics="capped",
+    row_limit=2000,
+    columns=(
+        Column("place_id", "integer", False, "Place ID"),
+        Column("place_label", "text", False, "Place"),
+        Column("feature_type", "text", False, "Feature type"),
+        Column("country_codes", "text", False, "Countries"),
+        Column("retired", "boolean", False, "Retired"),
+        Column("identified_contents", "bigint", False, "Contents (identified)"),
+        Column("identified_occurrences", "bigint", False, "Mentions (identified)"),
+        Column("ambiguous_contents", "bigint", False, "Contents (ambiguous)"),
+        Column("ambiguous_occurrences", "bigint", False, "Mentions (ambiguous)"),
+        Column("unknown_confidence_occurrences", "bigint", False,
+               "Mentions without confidence"),
+        Column("first_path_id", "integer", False, "File ID"),
+        Column("first_file_name", "text", False, "File name"),
+    ),
+    sql=(_ENTITY_PLACE_FROM
+         + "SELECT rpt_g.id AS place_id, rpt_g.label AS place_label,"  # nosec B608 # module constants only (_ENTITY_PLACE_FROM, detector constants); values are bound parameters
+         " rpt_g.feature_type,"
+         " array_to_string(rpt_g.country_codes, ',') AS country_codes,"
+         " rpt_g.retired,"
+         " rpt_h.ident_contents::bigint AS identified_contents,"
+         " rpt_h.ident_occ::bigint AS identified_occurrences,"
+         " rpt_h.amb_contents::bigint AS ambiguous_contents,"
+         " rpt_h.amb_occ::bigint AS ambiguous_occurrences,"
+         " rpt_h.unk_conf::bigint AS unknown_confidence_occurrences,"
+         " rpt_doc.path_id AS first_path_id,"
+         " rpt_doc.file_name AS first_file_name"
+         " FROM rpt_hits rpt_h"
+         " JOIN geo_places rpt_g ON rpt_g.id = rpt_h.place_id"
+         " JOIN LATERAL ("
+         "  SELECT p.id AS path_id, p.file_name"
+         "  FROM paths p"
+         "  JOIN hash_contexts rpt_hc2 ON rpt_hc2.id = p.context_id"
+         "  WHERE rpt_hc2.hash_id IN ("
+         "   SELECT s2.hash_id FROM content_signals s2"
+         "   JOIN content_signal_places rpt_csp2 ON rpt_csp2.signal_id = s2.id"
+         "   WHERE rpt_csp2.place_id = rpt_h.place_id"
+         "     AND s2.hash_id IN (SELECT hash_id FROM rpt_base))"
+         "  ORDER BY p.id LIMIT 1"
+         " ) rpt_doc ON TRUE"
+         " ORDER BY rpt_h.ident_contents DESC, rpt_h.ident_occ DESC,"
+         " rpt_g.label, rpt_g.id"
+         " LIMIT %s"),
+    sql_params=(TOKEN_CRITERIA, TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("criteria",),
+    criteria_param="criteria",
+)
+
 DATASETS: Tuple[Dataset, ...] = (
     SEARCH_RESULTS_MATCHES_V1,
     SEARCH_RESULTS_COUNT_V1,
@@ -462,4 +571,5 @@ DATASETS: Tuple[Dataset, ...] = (
     KEYWORD_INTELLIGENCE_MATCHES_V1,
     CATEGORY_ANALYSIS_SUMMARY_V1,
     HORIZON_SIGNALS_V1,
+    ENTITY_PLACE_MENTIONS_V1,
 )
