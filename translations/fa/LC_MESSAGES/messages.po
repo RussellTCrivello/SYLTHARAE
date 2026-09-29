@@ -12246,3 +12246,37 @@ msgstr "ارجاع‌ها (مبهم)"
 #: core/reporting/datasets.py
 msgid "Mentions without confidence"
 msgstr "ارجاع‌های بدون اطمینان"
+
+# --- Content Relationships report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Content Relationships Report"
+msgstr "گزارش روابط محتوا"
+
+#: core/reporting/definitions.py
+msgid "Where the same content appears across your matched documents: each source-and-side context with its file occurrences, and how many other contexts and sources carry the identical content. Copies within one context are one context; a different source or side is a different context."
+msgstr "محتوای یکسان کجا در پرونده‌های منطبق شما ظاهر می‌شود: هر بافت منظر-وبا رخدادهای پرونده‌اش، و چند بافت و منبع دیگر همان محتوا را در بر دارند. نسخه‌ها درون یک بافت، یک بافت‌اند؛ منبع یا روی دیگر، بافتی دیگر است."
+
+#: core/reporting/definitions.py
+msgid "About the Content Relationships Report"
+msgstr "درباره گزارش روابط محتوا"
+
+#: core/reporting/definitions.py
+msgid "Shows which contents appear in more than one source or side: every context of the matched contents with its file count, and the number of sibling contexts and sibling sources sharing the identical content. Repeated copies in the same source-and-side are one context, not several."
+msgstr "نشان می‌دهد کدام محتواها در بیش از یک منبع یا روی ظاهر می‌شوند: هر بافت محتواهای منطبق با شمار پرونده‌هایش، و شمار بافت‌های خواهر و منابع خواهری که همان محتوا را در بر دارند. نسخه‌های تکراری در همان منبع-ورو، یک بافت‌اند نه چند بافت."
+
+#: core/reporting/datasets.py
+msgid "Context ID"
+msgstr "شناسه بافت"
+
+#: core/reporting/datasets.py
+msgid "Matched paths"
+msgstr "مسیرهای منطبق"
+
+#: core/reporting/datasets.py
+msgid "Sibling contexts"
+msgstr "بافت‌های خواهر"
+
+#: core/reporting/datasets.py
+msgid "Sibling sources"
+msgstr "منابع خواهر"

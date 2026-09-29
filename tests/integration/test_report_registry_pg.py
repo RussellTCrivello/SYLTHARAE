@@ -139,6 +139,16 @@ def corpus(pg_db, app):
                  '{"normalized": "seed"}',
                  _hashlib.sha256(f"{tag}-sig-{i}".encode()).hexdigest(),
                  _sentence, len(_sentence)))
+        # Relationship corpus: the tie content appears in a second context
+        # (source s2) and carries a second path in its own context.
+        tie_dup_path, _, _ = document(cur, source_id=s1, side_id=d1,
+                                      text="ignored", hash_id=tie_hash,
+                                      file_date=datetime.date(2026, 1, 1))
+        paths[s1].append(tie_dup_path)
+        tie_x_path, _, _ = document(cur, source_id=s2, side_id=d1,
+                                    text="ignored", hash_id=tie_hash,
+                                    file_date=datetime.date(2026, 1, 2))
+        paths[s2].append(tie_x_path)
         # An undated signal: never a bucket, not listed by the horizon.
         cur.execute(
             "INSERT INTO content_signals (hash_id, detector, detector_ver,"
@@ -247,7 +257,7 @@ def test_listing_matches_the_compiler_count_and_order_is_total(corpus):
     compiled = compile_criteria(from_dict(values["criteria"]), scope)
     with corpus["conn"].cursor() as cur:
         cur.execute(*compiled.count_sql())
-        assert cur.fetchone()[0] == counted[0] == len(rows) == 5
+        assert cur.fetchone()[0] == counted[0] == len(rows) == 7
     expected = sorted(sum(corpus["paths"].values(), []))
     assert sorted(r[0] for r in rows) == expected
     again = _execute(corpus["conn"], listing.bind(values, scope))[2]
@@ -257,7 +267,9 @@ def test_listing_matches_the_compiler_count_and_order_is_total(corpus):
     dates = [r[3] for r in rows]
     assert dates == sorted(dates, reverse=True)
     tied = [r[0] for r in rows if r[3] == datetime.date(2026, 1, 1)]
-    assert tied == sorted(tied) and len(tied) == 2
+    assert tied == sorted(tied) and len(tied) == 3, (
+        "three paths share the tie date: two occurrences of the tie content "
+        "plus the day's first document; the unique path id breaks the tie")
 
 
 def test_the_access_scope_restricts_rows_before_retrieval(corpus):
@@ -281,9 +293,9 @@ def test_overflow_is_visible_through_the_extra_row(corpus):
     small = dataclasses.replace(REGISTRY.dataset("search_results.matches@1"), row_limit=3)
     _, _, rows = _execute(corpus["conn"], small.bind(values, AccessScope.unrestricted()))
     assert len(rows) == 4 == small.row_limit + 1
-    exact = dataclasses.replace(small, row_limit=5)
+    exact = dataclasses.replace(small, row_limit=7)
     _, _, rows = _execute(corpus["conn"], exact.bind(values, AccessScope.unrestricted()))
-    assert len(rows) == 5 == exact.row_limit
+    assert len(rows) == 7 == exact.row_limit
 
 
 def test_a_hostile_phrase_is_data_not_sql(corpus):
@@ -358,11 +370,13 @@ def test_the_access_scope_narrows_the_new_datasets_before_retrieval(corpus):
     key_ds = REGISTRY.dataset("keyword_intelligence.matches@1")
     _, _, rows = _execute(corpus["conn"], key_ds.bind(values, only_s2))
     hit = next(r for r in rows if r[1] == f"kw{tag} common{tag}")
-    assert hit[3] == 2 and hit[4] == 4 and hit[5] == 0 and hit[6] == 2
+    # The tie content's second context (s2) matches the criteria too, so
+    # the s2 scope now sees 3 contents; the tie's unknown count rides along.
+    assert hit[3] == 3 and hit[4] == 4 and hit[5] == 1 and hit[6] == 3
     cat_ds = REGISTRY.dataset("category_analysis.summary@1")
     _, _, rows = _execute(corpus["conn"], cat_ds.bind(values, only_s2))
     a = next(r for r in rows if r[1] == f"catA{tag}")
-    assert a[4] == 2 and a[5] == 90 and a[7] == 2
+    assert a[4] == 3 and a[5] == 135 and a[6] == 0 and a[7] == 3
     _, _, rows = _execute(corpus["conn"], cat_ds.bind(
         values, AccessScope(user_id=1, role="viewer", allowed_source_ids=())))
     assert all(r[4] == 0 and r[8] is None for r in rows), (
@@ -449,3 +463,36 @@ def test_entity_place_preserves_ambiguity_and_unprovenanced_confidence(corpus):
     # Representative documents: lowest matched path ids of each place (they
     # may legitimately share the document that carries the ambiguity).
     assert a[10] > 0 and b[10] > 0
+
+
+def test_relationship_counts_contexts_not_path_rows(corpus):
+    """The tie content lives in two contexts; one of them carries two
+    matched paths. The report must answer in contexts, with multiplicity
+    kept as a column - never as extra relationship rows."""
+    values = REGISTRY.report("relationship").normalize_parameters(
+        {"criteria": {"text": corpus["word"]}})
+    names, _, rows = _new_dataset(corpus, "relationship.contexts@1", values)
+    assert names == [c.name for c in
+                     REGISTRY.dataset("relationship.contexts@1").columns]
+    # The duplicated tie content: exactly two context rows, whatever the
+    # number of path rows.
+    tie_rows = [r for r in rows if r[3] == "src_0" or r[3] == "src_1"]
+    tie_rows = [r for r in tie_rows if r[5] + r[4] > 0]
+    per_hash = {}
+    for r in rows:
+        per_hash.setdefault(r[1], []).append(r)
+    dup = max(per_hash.values(), key=len)
+    assert len(dup) == 2, (
+        "the same content in two (source, side) pairs is two relationship rows")
+    contexts = sorted(r[4] for r in dup)
+    assert contexts == [1, 2], (
+        "multiplicity inside a context stays a column: 2 paths + 1 path")
+    assert all(r[5] == 1 for r in dup), "each context sees exactly one sibling"
+    assert all(r[6] == 1 for r in dup), "the sibling is on the other source"
+    # A single-context content: repeated paths are not relationships.
+    singles = [rs for h, rs in per_hash.items() if len(rs) == 1]
+    assert singles and all(rs[0][5] == 0 for rs in singles), (
+        "a content in one context has zero sibling contexts")
+    # Ordered most cross-posted first.
+    sibs = [r[5] for r in rows]
+    assert sibs == sorted(sibs, reverse=True)

@@ -12364,3 +12364,37 @@ msgstr "Spominjanja (dvosmisleno)"
 #: core/reporting/datasets.py
 msgid "Mentions without confidence"
 msgstr "Spominjanja bez pouzdanosti"
+
+# --- Content Relationships report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Content Relationships Report"
+msgstr "Izvještaj o odnosima sadržaja"
+
+#: core/reporting/definitions.py
+msgid "Where the same content appears across your matched documents: each source-and-side context with its file occurrences, and how many other contexts and sources carry the identical content. Copies within one context are one context; a different source or side is a different context."
+msgstr "Gdje se isti sadržaj pojavljuje u vašim odgovarajućim dokumentima: svaki kontekst izvora i strane s pojavljivanjima datoteka te koliko drugih konteksta i izvora nosi identičan sadržaj. Kopije unutar jednog konteksta jedan su kontekst; drugi izvor ili strana drugi su kontekst."
+
+#: core/reporting/definitions.py
+msgid "About the Content Relationships Report"
+msgstr "O izvještaju o odnosima sadržaja"
+
+#: core/reporting/definitions.py
+msgid "Shows which contents appear in more than one source or side: every context of the matched contents with its file count, and the number of sibling contexts and sibling sources sharing the identical content. Repeated copies in the same source-and-side are one context, not several."
+msgstr "Prikazuje koji se sadržaji pojavljuju u više od jednog izvora ili strane: svaki kontekst odgovarajućih sadržaja s brojem datoteka te broj sestrinskih konteksta i sestrinskih izvora koji dijele identičan sadržaj. Ponovljene kopije u istom izvoru-i-strani jedan su kontekst, ne više njih."
+
+#: core/reporting/datasets.py
+msgid "Context ID"
+msgstr "ID konteksta"
+
+#: core/reporting/datasets.py
+msgid "Matched paths"
+msgstr "Odgovarajuće staze"
+
+#: core/reporting/datasets.py
+msgid "Sibling contexts"
+msgstr "Sestrinski konteksti"
+
+#: core/reporting/datasets.py
+msgid "Sibling sources"
+msgstr "Sestrinski izvori"

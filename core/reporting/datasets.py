@@ -563,6 +563,98 @@ ENTITY_PLACE_MENTIONS_V1 = Dataset(
     criteria_param="criteria",
 )
 
+
+# ---------------------------------------------------------------------------
+# Relationship (step 17)
+#
+# The context identity is the triple (hash_id, source_id, side_id), unique
+# in hash_contexts. One row per context among the matched contents: how many
+# matched file occurrences it carries (repeated identical triples are the
+# same context, not new relationships), and how many *other* contexts and
+# sources the same content appears in within the matched set - the
+# cross-posting relationship. Distinct contexts are counted, never raw path
+# rows. The representative document is the lowest matched path id of the
+# context. Capped: at most row_limit contexts, most cross-posted first;
+# overflow is detected (row_limit + 1 fetched) and recorded as truncation,
+# never hidden.
+# ---------------------------------------------------------------------------
+
+_RELATIONSHIP_FROM = (
+    "WITH rpt_paths AS ("
+    " SELECT p.id AS path_id, p.context_id, hc.hash_id AS hash_id"
+    f" FROM {CANONICAL_FROM} WHERE {{where}}"
+    "), rpt_hashes AS ("
+    " SELECT DISTINCT hash_id FROM rpt_paths"
+    "), rpt_sib AS ("
+    " SELECT hc.hash_id, COUNT(DISTINCT hc.id) AS ctx_all"
+    " FROM hash_contexts hc JOIN rpt_hashes ON rpt_hashes.hash_id = hc.hash_id"
+    " GROUP BY hc.hash_id"
+    ") "
+)
+
+RELATIONSHIP_CONTEXTS_V1 = Dataset(
+    dataset_id="relationship.contexts",
+    version=1,
+    description=(
+        "Every context (hash_id, source_id, side_id) of the contents the "
+        "criteria matched, with its matched file occurrences, and the "
+        "content's cross-posting relationship inside the matched set: the "
+        "number of other contexts carrying the same content and the number "
+        "of other sources among them. Contexts are counted distinctly - "
+        "repeated identical triples are one context, different sources or "
+        "sides are different contexts. The representative document is the "
+        "lowest matched path id of the context. Capped: at most row_limit "
+        "contexts, most cross-posted first; overflow is detected "
+        "(row_limit + 1 fetched) and recorded as truncation, never hidden."),
+    unit="context",
+    semantics="capped",
+    row_limit=5000,
+    columns=(
+        Column("context_id", "integer", False, "Context ID"),
+        Column("hash_id", "integer", False, "Content ID"),
+        Column("source_name", "text", False, "Source"),
+        Column("side_name", "text", False, "Side"),
+        Column("paths", "bigint", False, "Matched paths"),
+        Column("sibling_contexts", "bigint", False, "Sibling contexts"),
+        Column("sibling_sources", "bigint", False, "Sibling sources"),
+        Column("first_path_id", "integer", False, "File ID"),
+        Column("first_file_name", "text", False, "File name"),
+    ),
+    sql=(_RELATIONSHIP_FROM
+         + "SELECT hc.id AS context_id, hc.hash_id,"  # nosec B608 # module constants only (_RELATIONSHIP_FROM); values are bound parameters
+         " rpt_src.name AS source_name, rpt_side.name AS side_name,"
+         " (SELECT COUNT(*) FROM rpt_paths rp WHERE rp.context_id = hc.id"
+         " )::bigint AS paths,"
+         " (rpt_sib.ctx_all - 1)::bigint AS sibling_contexts,"
+         " (SELECT COUNT(DISTINCT hc2.source_id) FROM hash_contexts hc2"
+         "  JOIN rpt_hashes ON rpt_hashes.hash_id = hc2.hash_id"
+         "  WHERE hc2.hash_id = hc.hash_id"
+         "    AND hc2.source_id <> hc.source_id)::bigint AS sibling_sources,"
+         " rpt_doc.path_id AS first_path_id,"
+         " rpt_doc.file_name AS first_file_name"
+         " FROM rpt_hashes"
+         " JOIN hash_contexts hc ON hc.hash_id = rpt_hashes.hash_id"
+         " JOIN rpt_sib ON rpt_sib.hash_id = hc.hash_id"
+         " LEFT JOIN sources rpt_src ON rpt_src.id = hc.source_id"
+         " LEFT JOIN sides rpt_side ON rpt_side.id = hc.side_id"
+         " JOIN LATERAL ("
+         "  SELECT rp2.path_id, p2.file_name FROM rpt_paths rp2"
+         "  JOIN paths p2 ON p2.id = rp2.path_id"
+         "  WHERE rp2.context_id = hc.id ORDER BY rp2.path_id LIMIT 1"
+         " ) rpt_doc ON TRUE"
+         " ORDER BY (rpt_sib.ctx_all - 1) DESC,"
+         " (SELECT COUNT(DISTINCT hc2.source_id) FROM hash_contexts hc2"
+         "  JOIN rpt_hashes ON rpt_hashes.hash_id = hc2.hash_id"
+         "  WHERE hc2.hash_id = hc.hash_id"
+         "    AND hc2.source_id <> hc.source_id) DESC,"
+         " rpt_src.name, rpt_side.name, hc.hash_id"
+         " LIMIT %s"),
+    sql_params=(TOKEN_CRITERIA, TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("criteria",),
+    criteria_param="criteria",
+)
+
 DATASETS: Tuple[Dataset, ...] = (
     SEARCH_RESULTS_MATCHES_V1,
     SEARCH_RESULTS_COUNT_V1,
@@ -572,4 +664,5 @@ DATASETS: Tuple[Dataset, ...] = (
     CATEGORY_ANALYSIS_SUMMARY_V1,
     HORIZON_SIGNALS_V1,
     ENTITY_PLACE_MENTIONS_V1,
+    RELATIONSHIP_CONTEXTS_V1,
 )

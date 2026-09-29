@@ -145,6 +145,25 @@ ENTITY_PLACE_V1 = ReportDefinition(
     datasets=("entity_place.mentions@1",),
 )
 
+RELATIONSHIP_V1 = ReportDefinition(
+    report_id="relationship",
+    version=1,
+    title="Content Relationships Report",
+    description="Where the same content appears across your matched "
+                "documents: each source-and-side context with its file "
+                "occurrences, and how many other contexts and sources carry "
+                "the identical content. Copies within one context are one "
+                "context; a different source or side is a different "
+                "context.",
+    help_topic="reports/relationship",
+    unit="context",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("criteria", "criteria", "Search criteria", required=True),
+    ),
+    datasets=("relationship.contexts@1",),
+)
+
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
@@ -153,6 +172,7 @@ REPORTS: Tuple[ReportDefinition, ...] = (
     CATEGORY_ANALYSIS_V1,
     HORIZON_V1,
     ENTITY_PLACE_V1,
+    RELATIONSHIP_V1,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
@@ -201,6 +221,15 @@ HELP_TOPICS: Tuple[HelpTopic, ...] = (
                 "reference date you choose: overdue, this week, this month, "
                 "this quarter, and later. Undated references and purely "
                 "past mentions are not part of the horizon.",
+    ),
+    HelpTopic(
+        topic="reports/relationship",
+        title="About the Content Relationships Report",
+        summary="Shows which contents appear in more than one source or "
+                "side: every context of the matched contents with its file "
+                "count, and the number of sibling contexts and sibling "
+                "sources sharing the identical content. Repeated copies in "
+                "the same source-and-side are one context, not several.",
     ),
     HelpTopic(
         topic="reports/entity-place",

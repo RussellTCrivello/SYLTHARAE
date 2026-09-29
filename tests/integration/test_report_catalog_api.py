@@ -332,3 +332,77 @@ class TestOverHttp:
         assert row["ambiguous_occurrences"] == 1, (
             "the ambiguous candidate stays ambiguous over HTTP too")
         assert row["unknown_confidence_occurrences"] == 0
+
+    def test_relationship_run_counts_contexts_not_paths(self, app, corpus,
+                                                        sync_jobs, pg_db):
+        import uuid as _uuid
+        tag = _uuid.uuid4().hex[:8]
+        """The same content on two sources is two contexts; a duplicated
+        path inside one context adds multiplicity, not relationship rows."""
+        conn = connect(pg_db)
+        with conn, conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT hc.hash_id FROM paths p JOIN hash_contexts hc"
+                        " ON hc.id = p.context_id WHERE p.id = ANY(%s)",
+                        (corpus["paths"],))
+            hashes = [h for (h,) in cur.fetchall()]
+            cur.execute("SELECT id FROM hashs WHERE id = %s", (hashes[0],))
+            target = cur.fetchone()[0]
+            cur.execute("SELECT id FROM paths WHERE context_id IN"
+                        " (SELECT id FROM hash_contexts WHERE hash_id = %s)"
+                        " ORDER BY id LIMIT 1", (target,))
+            first_path = cur.fetchone()[0]
+            # A second occurrence of the same content on a different source:
+            # The corpus has one source; create the sibling source and find
+            # the content's own side.
+            cur.execute("INSERT INTO sources (name, job, importance, country,"
+                        " date_creation) VALUES (%s, 't', 0.5, 't', CURRENT_DATE)"
+                        " ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name"
+                        " RETURNING id", (f"rel_src_{tag}",))
+            other_source = cur.fetchone()[0]
+            cur.execute("SELECT side_id FROM hash_contexts WHERE hash_id = %s"
+                        " ORDER BY id LIMIT 1", (target,))
+            any_side = cur.fetchone()[0]
+            cur.execute("INSERT INTO paths (file_name, file_path, file_size,"
+                        " file_type, file_status, file_date, date_creation,"
+                        " context_id, processing_status)"
+                        " SELECT 'rel_' || nextval('paths_id_seq')::text,"
+                        " '/seed/rel', 10, 'pdf', 'Unread', CURRENT_DATE,"
+                        " CURRENT_DATE, hc.id, 'processed' FROM hash_contexts hc"
+                        " WHERE hc.hash_id = %s AND hc.source_id = %s"
+                        " AND hc.side_id = %s"
+                        " ON CONFLICT DO NOTHING RETURNING id",
+                        (target, other_source, any_side))
+            created = cur.fetchone()
+            if created is None:
+                cur.execute(
+                    "INSERT INTO hash_contexts (hash_id, source_id, side_id)"
+                    " VALUES (%s, %s, %s) ON CONFLICT (hash_id, source_id,"
+                    " side_id) DO UPDATE SET hash_id = EXCLUDED.hash_id"
+                    " RETURNING id", (target, other_source, any_side))
+                context_id = cur.fetchone()[0]
+                cur.execute(
+                    "INSERT INTO paths (file_name, file_path, file_size,"
+                    " file_type, file_status, file_date, date_creation,"
+                    " context_id, processing_status)"
+                    " VALUES ('rel_doc.pdf', '/seed/rel', 10, 'pdf', 'Unread',"
+                    " CURRENT_DATE, CURRENT_DATE, %s, 'processed') RETURNING id",
+                    (context_id,))
+        conn.close()
+        c, _ = _analyst(app)
+        resp = _post(c, "/api/reports/runs",
+                     {"report_id": "relationship",
+                      "parameters": {"criteria": {"text": corpus["word"]}}})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        run = resp.get_json()["run"]
+        rows = c.get(f"/api/reports/runs/{run['id']}/datasets/relationship.contexts@1"
+                     "?limit=20").get_json()["rows"]
+        # The context holding first_path carries its sibling on the other
+        # source; multiplicity never becomes extra rows.
+        with_ctx = [r for r in rows if r["sibling_contexts"] > 0]
+        assert with_ctx, "the cross-source content shows its sibling context"
+        assert all(r["sibling_sources"] >= 1 for r in with_ctx)
+        contexts = [(r["source_name"], r["side_name"]) for r in with_ctx]
+        assert len(contexts) == len(set(contexts)), (
+            "one row per (source, side) context - repeated triples never repeat")
+        assert rows[0]["sibling_contexts"] >= rows[-1]["sibling_contexts"], (
+            "most cross-posted first")

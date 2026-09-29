@@ -11950,3 +11950,37 @@ msgstr "אזכורים (דו-משמעיים)"
 #: core/reporting/datasets.py
 msgid "Mentions without confidence"
 msgstr "אזכורים ללא ודאות"
+
+# --- Content Relationships report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Content Relationships Report"
+msgstr "דוח קשרי תכנים"
+
+#: core/reporting/definitions.py
+msgid "Where the same content appears across your matched documents: each source-and-side context with its file occurrences, and how many other contexts and sources carry the identical content. Copies within one context are one context; a different source or side is a different context."
+msgstr "היכן אותו תוכן מופיע במסמכים התואמים שלך: כל הקשר של מקור וצד עם הופעות הקבצים שלו, וכמה הקשרים ומקורות אחרים נושאים את אותו תוכן בדיוק. עותקים בתוך הקשר אחד הם הקשר אחד; מקור או צד אחרים הם הקשר אחר."
+
+#: core/reporting/definitions.py
+msgid "About the Content Relationships Report"
+msgstr "על דוח קשרי תכנים"
+
+#: core/reporting/definitions.py
+msgid "Shows which contents appear in more than one source or side: every context of the matched contents with its file count, and the number of sibling contexts and sibling sources sharing the identical content. Repeated copies in the same source-and-side are one context, not several."
+msgstr "מציג אילו תכנים מופיעים ביותר ממקור או צד אחד: כל הקשר של התכנים התואמים עם מספר קבציו, ואת מספר ההקשרים האחים והמקורות האחים החולקים את אותו תוכן בדיוק. עותקים חוזרים באותו מקור-וצד הם הקשר אחד, לא כמה."
+
+#: core/reporting/datasets.py
+msgid "Context ID"
+msgstr "מזהה הקשר"
+
+#: core/reporting/datasets.py
+msgid "Matched paths"
+msgstr "נתיבים תואמים"
+
+#: core/reporting/datasets.py
+msgid "Sibling contexts"
+msgstr "הקשרים אחים"
+
+#: core/reporting/datasets.py
+msgid "Sibling sources"
+msgstr "מקורות אחים"

@@ -134,6 +134,7 @@ tracked, so it ships in the `git archive` release anyway.
 | `category_analysis@1` | category | admin, analyst, viewer | `category_analysis.summary@1` (capped 1000, most contents first) |
 | `horizon@1` | signal | admin, analyst, viewer | `horizon.signals@1` (capped 5000, event date soonest first; `as_of` reference date is a required recorded parameter) |
 | `entity_place@1` | place | admin, analyst, viewer | `entity_place.mentions@1` (capped 2000, most identified first) |
+| `relationship@1` | context | admin, analyst, viewer | `relationship.contexts@1` (capped 5000, most cross-posted first) |
 
 `search_results@1` is the registry's reference definition: it needs no
 analytics and reuses the compiler end to end. The two step-17 families read
@@ -156,9 +157,14 @@ page. The Entity & Place family reads the gazetteer candidates
 kept and never picked), splitting identified from ambiguous per place -
 ambiguity is never resolved in SQL; unresolved mentions (no candidates) are
 out of per-place attribution by declaration; unprovenanced confidence is
-carried as unknown; retired places are marked, not hidden. The remaining
-catalog families (Relationship, Latest/Change, Scenario Outcome,
-Comprehensive) are added only when their datasets exist and are verified.
+carried as unknown; retired places are marked, not hidden. The Relationship
+family counts *contexts* - the (hash_id, source_id, side_id) triple of
+`hash_contexts`: multiplicity inside a context stays a column (`paths`),
+repeated identical triples never become extra rows, a different source or
+side is a different context, and the cross-posting measure counts distinct
+sibling contexts and sibling sources within the matched set. The remaining
+catalog families (Latest/Change, Scenario Outcome, Comprehensive) are added
+only when their datasets exist and are verified.
 
 ## Evidence
 
@@ -208,6 +214,14 @@ Comprehensive) are added only when their datasets exist and are verified.
   count; the unprovenanced mention lands in `unknown_confidence_occurrences`;
   the unresolved mention appears in no row; the retired place is marked.
   Over HTTP: identified 1 / ambiguous 1 for the same place.
+* Relationship (step 17): `test_report_catalog_relationship.py` (8): rows
+  come from `hash_contexts`, sibling sources exclude the row's own source,
+  contexts capped and criteria-scoped. PG (registry suite, 21): one content
+  on two sources yields exactly two context rows with the path multiplicity
+  as a column (2 + 1); single-context contents have zero siblings; ordered
+  most cross-posted first. The suite's own first draft caught the dataset
+  driving from paths (duplicate rows per context) - fixed to drive from
+  contexts before landing. Over HTTP: sibling contexts/sources over a run.
 
 ## Limitations
 

@@ -12132,3 +12132,37 @@ msgstr "الذكر (ملتبس)"
 #: core/reporting/datasets.py
 msgid "Mentions without confidence"
 msgstr "ذكر بلا ثقة"
+
+# --- Content Relationships report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Content Relationships Report"
+msgstr "تقرير علاقات المحتوى"
+
+#: core/reporting/definitions.py
+msgid "Where the same content appears across your matched documents: each source-and-side context with its file occurrences, and how many other contexts and sources carry the identical content. Copies within one context are one context; a different source or side is a different context."
+msgstr "أين يظهر المحتوى نفسه عبر المستندات المطابقة: كل سياق مصدر وجه مع مرات ظهور ملفاته، وعدد السياقات والمصادر الأخرى التي تحمل المحتوى المطابق تمامًا. النسخ داخل السياق الواحد سياق واحد؛ والمصدر أو الجهة المختلفة سياق مختلف."
+
+#: core/reporting/definitions.py
+msgid "About the Content Relationships Report"
+msgstr "حول تقرير علاقات المحتوى"
+
+#: core/reporting/definitions.py
+msgid "Shows which contents appear in more than one source or side: every context of the matched contents with its file count, and the number of sibling contexts and sibling sources sharing the identical content. Repeated copies in the same source-and-side are one context, not several."
+msgstr "يعرض المحتويات التي تظهر في أكثر من مصدر أو جهة: كل سياق للمحتويات المطابقة مع عدد ملفاته، وعدد السياقات الشقيقة والمصادر الشقيقة التي تتشارك المحتوى المطابق تمامًا. النسخ المتكررة في المصدر والجهة نفسيهما سياق واحد لا أكثر."
+
+#: core/reporting/datasets.py
+msgid "Context ID"
+msgstr "معرّف السياق"
+
+#: core/reporting/datasets.py
+msgid "Matched paths"
+msgstr "المسارات المطابقة"
+
+#: core/reporting/datasets.py
+msgid "Sibling contexts"
+msgstr "السياقات الشقيقة"
+
+#: core/reporting/datasets.py
+msgid "Sibling sources"
+msgstr "المصادر الشقيقة"

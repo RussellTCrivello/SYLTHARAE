@@ -12117,3 +12117,37 @@ msgstr ""
 #: core/reporting/datasets.py
 msgid "Mentions without confidence"
 msgstr ""
+
+# --- Content Relationships report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Content Relationships Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Where the same content appears across your matched documents: each source-and-side context with its file occurrences, and how many other contexts and sources carry the identical content. Copies within one context are one context; a different source or side is a different context."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "About the Content Relationships Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Shows which contents appear in more than one source or side: every context of the matched contents with its file count, and the number of sibling contexts and sibling sources sharing the identical content. Repeated copies in the same source-and-side are one context, not several."
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Context ID"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Matched paths"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Sibling contexts"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Sibling sources"
+msgstr ""
