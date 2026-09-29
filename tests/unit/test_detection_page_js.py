@@ -19,4 +19,4 @@ def test_detection_page_renders_server_state_as_text():
     proc = subprocess.run(["node", "tests/js/detection_page_smoke.mjs"], cwd=ROOT,
                           capture_output=True, text=True, timeout=60)
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert proc.stdout.count("ok ") == 27, proc.stdout
+    assert proc.stdout.count("ok ") == 28, proc.stdout

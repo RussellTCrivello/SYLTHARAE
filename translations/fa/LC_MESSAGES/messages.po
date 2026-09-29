@@ -11848,3 +11848,7 @@ msgstr "شناسه‌های محتوا باید عدد صحیح مثبت باش�
 #: templates/Signals/detection.html
 msgid "Confirm that every content should be analysed again."
 msgstr "تأیید کنید که هر محتوا باید دوباره تحلیل شود."
+
+#: templates/Signals/detection.html
+msgid "Job %(id)s: %(status)s."
+msgstr "کار %(id)s: %(status)s."

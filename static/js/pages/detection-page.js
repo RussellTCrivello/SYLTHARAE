@@ -168,10 +168,13 @@ function readForm() {
 function jobLine(job) {
     const s = job.result_summary || {};
     const box = document.getElementById('redetectJob');
+    // No summary yet (queued/running): say only what is known - never zeros.
+    const known = ['processed', 'signals', 'failed'].every((k) => Number.isInteger(s[k]));
     box.replaceChildren(
-        el('span', { text: fmt(L.job_state, {
-            id: job.job_id, status: job.status,
-            processed: s.processed ?? 0, signals: s.signals ?? 0, failed: s.failed ?? 0 }) }),
+        el('span', { text: known
+            ? fmt(L.job_state, { id: job.job_id, status: job.status,
+                                 processed: s.processed, signals: s.signals, failed: s.failed })
+            : fmt(L.job_status_only, { id: job.job_id, status: job.status }) }),
         ' ',
         el('a', { href: `/operations/jobs/${encodeURIComponent(job.job_id)}`, text: L.open_job }));
     if (job.status === 'COMPLETED_WITH_WARNINGS') box.append(' ', el('span', { text: L.job_done_warnings }));

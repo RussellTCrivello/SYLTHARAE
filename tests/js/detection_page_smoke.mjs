@@ -162,6 +162,8 @@ const baseRoutes = (runsPages, extra = []) => [
   submit(byId.redetectForm); await tick(60);
   check('listed ids sent as numbers with the chosen detectors',
         JSON.stringify(posts(calls)[0].body) === JSON.stringify({ scope: 'hash_ids', detectors: ['temporal'], hash_ids: [12, 13, 14] }), posts(calls)[0].body);
+  check('a job without a summary states no counts', byId.redetectJob.textContent.startsWith('Job job-2: COMPLETED.')
+        && !/\b0\b/.test(byId.redetectJob.textContent), byId.redetectJob.textContent);
   byId.redetect_temporal.checked = false;
   submit(byId.redetectForm); await tick();
   check('no detector chosen is refused locally', posts(calls).length === 1 && byId.detectionError.textContent === LABELS.choose_detector);
