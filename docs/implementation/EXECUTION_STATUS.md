@@ -160,6 +160,31 @@ page's template.
 
 ## Defects found in the field (reported from the owner's Windows run after step 12)
 
+**2026-09-29 report (`/categories` -> 500, `ERR-20260929-000002`).**
+`GET /categories` raised ``jinja2.exceptions.UndefinedError:
+'record_table' is undefined`` on the owner's Windows run: the unified-table
+page calls the shared macro without importing it, and the route's own
+exception handler re-renders the same template, so the 500 surfaced twice in
+the log. The same audit found the identical missing import in
+``Category/category_words.html`` (the Words-in-Category page would have
+500ed the same way). Root cause: Stage 2 converted these two templates to
+the shared table macro without adding the Jinja import, and no test rendered
+the list pages - the screen audits check declarations, not renders. Fixed by
+adding ``{% from 'components/table.html' import record_table %}`` to both
+templates (two lines; nothing else touched). Guards added so the class
+cannot return: ``tests/unit/test_table_macro_imports.py`` (static: every
+``record_table`` caller imports it) and
+``tests/integration/test_list_pages_render.py`` (all nine unified-table
+list routes rendered through the real app, with a seeded document for the
+two conditional pages - 11 tests). The same owner log also records the
+production database applying migration 0027 cleanly ("schema now at version
+0027"), the first owner-environment verification of the report_baselines
+migration. Also fixed while writing the guard: the render test originally
+used a wrong file-types route (`/file-types`; the real route is
+`/files/types`) and expected a table on an empty /search - both test bugs,
+corrected before the fix.
+
+
 Startup logged `column "recipient_user_id" does not exist` against a
 database that had not received m0020. Two independent defects, plus the test
 fixture that hid the first one. The second report (the same day, after those

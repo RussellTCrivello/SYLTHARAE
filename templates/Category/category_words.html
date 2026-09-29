@@ -10,6 +10,8 @@
 {% from 'components/breadcrumbs.html' import breadcrumbs %}
 {% block breadcrumb %}{{ breadcrumbs(parent='categories_list', intermediate=[{'label': category.name, 'url': url_for('category_words', category_id=category.id)}], current=_('Words')) }}{% endblock %}
 
+{% from 'components/table.html' import record_table %}
+
 {% block content %}
 <div class="page-header">
     <div>
