@@ -177,8 +177,13 @@ narrative extension below, and recorded in the ledger.
 
 ## Where it sits in the plan
 
-* **NARR-01** (plural forms, template set v2): part of step 17, before new
-  kinds add more counted sentences.
+* **NARR-01** (plural forms, template set v2): **done** as the first item of
+  step 17 (`keyness@2`, `term_keyness@2`; v1 superseded, still runs and
+  renders). The design is in [ANALYTICS.md](ANALYTICS.md#counts-and-plurals-narr-01-step-17)
+  and the evidence in the ledger's step 17 row. M6 builds on it: a phrasing
+  variant of a plural sentence is a variant of both msgids, with the catalog's
+  Plural-Forms. The engine rejects a plural sentence rendered without
+  `ngettext`.
 * **Phrasing variants plus their management page:** manageability item **M6**,
   after step 17 (it needs the statements of the catalog reports to exist).
 * **Facets:** within the step-17 catalog reports.
