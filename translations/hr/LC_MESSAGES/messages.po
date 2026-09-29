@@ -10828,6 +10828,9 @@ msgstr "Zahtjev nije uspio"
 msgid "Query fingerprint"
 msgstr "Otisak upita"
 
+msgid "Query fingerprint %(fingerprint)s."
+msgstr "Otisak upita %(fingerprint)s."
+
 #: templates/Signals/signals.html
 #, python-format
 msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
@@ -12520,4 +12523,57 @@ msgstr "Prethodni ishodi"
 #: core/reporting/datasets.py
 msgid "Recorded at"
 msgstr "Vrijeme zabilježbe"
+
+# --- Multilingual artifact rendering (step 18) ---
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (exact)"
+msgstr "potpuno: %(count)s redaka (točno)"
+
+#: core/reporting/render.py
+msgid "shortened: the first %(count)s rows are included; more rows existed (%(kind)s at %(limit)s)"
+msgstr "skraćeno: uključeno je prvih %(count)s redaka; bilo je još redaka (%(kind)s kod %(limit)s)"
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (%(kind)s at %(limit)s, not reached)"
+msgstr "potpuno: %(count)s redaka (%(kind)s kod %(limit)s, granica nije dosegnuta)"
+
+#: core/reporting/render.py
+msgid "No rows."
+msgstr "Nema redaka."
+
+#: core/reporting/render.py
+msgid "(none)"
+msgstr "(ništa)"
+
+#: core/reporting/render.py
+msgid "measured"
+msgstr "izmjereno"
+
+#: core/reporting/render.py
+msgid "not measurable (%(reason)s)"
+msgstr "nemjerivo (%(reason)s)"
+
+#: core/reporting/render.py
+msgid "Analysis %(key)s, %(state)s; templates %(tpl)s@%(ver)s."
+msgstr "Analiza %(key)s, %(state)s; predlošci %(tpl)s@%(ver)s."
+
+#: core/reporting/render.py
+msgid "Field"
+msgstr "Polje"
+
+#: core/reporting/render.py
+msgid "Sheet"
+msgstr "List"
+
+#: core/reporting/render.py
+msgid "Semantics"
+msgstr "Semantika"
+
+#: core/reporting/render.py
+msgid "Row limit"
+msgstr "Ograničenje redaka"
+#: core/reporting/render.py
+msgid "Completeness"
+msgstr "Potpunost"
 

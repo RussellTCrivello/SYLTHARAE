@@ -10719,6 +10719,9 @@ msgstr "درخواست ناموفق بود"
 msgid "Query fingerprint"
 msgstr "اثر انگشت پرس‌وجو"
 
+msgid "Query fingerprint %(fingerprint)s."
+msgstr "اثر انگشت پرس‌وجو %(fingerprint)s."
+
 #: templates/Signals/signals.html
 #, python-format
 msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
@@ -12402,4 +12405,57 @@ msgstr "نتایج قبلی"
 #: core/reporting/datasets.py
 msgid "Recorded at"
 msgstr "زمان ثبت"
+
+# --- Multilingual artifact rendering (step 18) ---
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (exact)"
+msgstr "کامل: %(count)s ردیف (دقیق)"
+
+#: core/reporting/render.py
+msgid "shortened: the first %(count)s rows are included; more rows existed (%(kind)s at %(limit)s)"
+msgstr "کوتاه‌شده: %(count)s ردیف نخست گنجانده شده؛ ردیف‌های بیشتری وجود داشت (%(kind)s در %(limit)s)"
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (%(kind)s at %(limit)s, not reached)"
+msgstr "کامل: %(count)s ردیف (%(kind)s در %(limit)s، به سقف نرسید)"
+
+#: core/reporting/render.py
+msgid "No rows."
+msgstr "ردیفی نیست."
+
+#: core/reporting/render.py
+msgid "(none)"
+msgstr "(هیچ)"
+
+#: core/reporting/render.py
+msgid "measured"
+msgstr "اندازه‌گیری‌شده"
+
+#: core/reporting/render.py
+msgid "not measurable (%(reason)s)"
+msgstr "غیرقابل اندازه‌گیری (%(reason)s)"
+
+#: core/reporting/render.py
+msgid "Analysis %(key)s, %(state)s; templates %(tpl)s@%(ver)s."
+msgstr "تحلیل %(key)s، %(state)s؛ الگوها %(tpl)s@%(ver)s."
+
+#: core/reporting/render.py
+msgid "Field"
+msgstr "فیلد"
+
+#: core/reporting/render.py
+msgid "Sheet"
+msgstr "برگه"
+
+#: core/reporting/render.py
+msgid "Semantics"
+msgstr "معناشناسی"
+
+#: core/reporting/render.py
+msgid "Row limit"
+msgstr "سقف ردیف"
+#: core/reporting/render.py
+msgid "Completeness"
+msgstr "کامل بودن"
 

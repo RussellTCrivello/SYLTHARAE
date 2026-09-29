@@ -287,14 +287,15 @@ def register_report_artifact_routes(app):
         data = request.get_json(silent=True)
         if not isinstance(data, dict):
             return _error("VALIDATION_FAILED", "a JSON object is required", 400)
-        unknown = sorted(set(data) - {"format", "dataset_key"})
+        unknown = sorted(set(data) - {"format", "dataset_key", "language"})
         if unknown:
             return _error("VALIDATION_FAILED", f"unknown field(s): {', '.join(unknown)}", 400)
         user = current_user()
         try:
             with get_connection() as conn:
                 plan = files.request_artifact(conn, run_id, user=user, fmt=data.get("format"),
-                                              dataset_key=data.get("dataset_key"))
+                                              dataset_key=data.get("dataset_key"),
+                                              language=data.get("language"))
         except files.runs.ReportRunError as exc:
             return err(exc)
         if "existing" in plan:
@@ -312,6 +313,7 @@ def register_report_artifact_routes(app):
                 "report_artifact", source=f"reports:run:{run_id}:{spec['format']}",
                 options={"run_id": run_id, "format": spec["format"],
                          "dataset_key": spec["dataset_key"],
+                         "language": spec.get("language", "en"),
                          "creator_id": getattr(user, "id", None)},
                 created_by=getattr(user, "username", None) or "system")
         except Exception:
@@ -321,7 +323,9 @@ def register_report_artifact_routes(app):
         artifact = None
         if manager.synchronous:
             with get_connection() as conn:
-                found = files._existing(conn, run_id, spec["format"], spec["dataset_key"])
+                found = files._existing(conn, run_id, spec["format"],
+                                        spec["dataset_key"],
+                                        spec.get("language", "en"))
             artifact = files.artifact_to_api(found) if found else None
         return jsonify({"success": True, "existing": False, "artifact": artifact,
                         "job": job_to_api(current)}), (200 if manager.synchronous else 202)

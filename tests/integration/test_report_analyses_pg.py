@@ -277,13 +277,13 @@ def test_artifacts_carry_the_analysis_and_manifests_list_it(world):
         row = artifacts.artifact_for_download(conn, made["artifact"]["id"], user=world["analyst"])
         found[fmt] = row
         manifest = row["manifest"]
-        assert manifest["manifest_version"] == "report-manifest/2"
+        assert manifest["manifest_version"] == "report-manifest/3"
         [listed] = manifest["analyses"]
         assert listed["analysis_key"] == "term_keyness@2" and listed["state"] == "measured"
         assert listed["included"] is (fmt in ("json", "html"))
         assert listed["template_version"] == 2 and len(listed["template_fingerprint"]) == 64
     body = json.loads(bytes(found["json"]["content"]))
-    assert body["format"] == "report-json/2"
+    assert body["format"] == "report-json/3"
     [a] = body["analyses"]
     assert [t["voice"] for t in a["text"]] == ["measure", "finding", "confidence",
                                                "consequence", "caveat"]

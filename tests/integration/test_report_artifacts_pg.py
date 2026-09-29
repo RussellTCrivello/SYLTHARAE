@@ -105,7 +105,7 @@ def test_every_format_is_stored_with_its_digest_and_manifest(world):
         assert row["sha256"] == hashlib.sha256(content).hexdigest()
         assert row["byte_size"] == len(content)
         m = row["manifest"]
-        assert m["manifest_version"] == "report-manifest/2"
+        assert m["manifest_version"] == "report-manifest/3"
         assert m["artifact"] == dict(m["artifact"], format=fmt, sha256=row["sha256"],
                                      bytes=len(content),
                                      renderer_version=renderers.RENDERERS[fmt])
@@ -311,3 +311,54 @@ def test_truncation_is_stated_in_the_content_and_the_manifest(world):
     manifest = artifacts.build_manifest(doc, rendering, content_sha256="0" * 64, byte_size=1,
                                         creator={}, generated_at="t", job_id=None)
     assert manifest["truncated"] is True and manifest["row_count"] == 2
+
+
+def test_language_is_part_of_the_artifact(world):
+    """Step 18 over PostgreSQL: the language is explicit, validated, stored,
+    manifest-recorded and part of the rendering identity."""
+    conn = world["conn"]
+    rid = world["run"]["id"]
+
+    plan = artifacts.request_artifact(conn, rid, user=world["analyst"], fmt="html",
+                                      language="ar")
+    assert plan["create"]["language"] == "ar"
+    ar = artifacts.create_artifact(conn, run_id=rid, fmt="html", dataset_key=None,
+                                   creator_id=world["analyst"].id, language="ar")
+    assert ar["status"] == "created", ar
+    row = _row(world, ar["artifact"]["id"])
+    assert row["language"] == "ar"
+    assert row["manifest"]["artifact"]["language"] == "ar"
+    assert row["manifest"]["artifact"]["notes"]["language"] == "ar", \
+        "the manifest records the rendering's own language note"
+    assert b'dir="rtl"' in row["content"], "the Arabic rendering is RTL"
+
+    again = artifacts.request_artifact(conn, rid, user=world["analyst"], fmt="html",
+                                       language="ar")
+    assert "existing" in again and again["existing"]["id"] == ar["artifact"]["id"], \
+        "the same run, format and language reuses the artifact"
+
+    en_plan = artifacts.request_artifact(conn, rid, user=world["analyst"], fmt="html",
+                                         language="en")
+    if "create" in en_plan:
+        en = artifacts.create_artifact(conn, run_id=rid, fmt="html", dataset_key=None,
+                                       creator_id=world["analyst"].id, language="en")
+    else:
+        # An earlier test in this module already rendered this run's English
+        # HTML; the existing artifact IS the English rendering.
+        en = {"status": "existing", "artifact": en_plan["existing"]}
+    assert en["artifact"]["id"] != ar["artifact"]["id"], \
+        "a different language is a different rendering, never a reuse"
+    en_row = _row(world, en["artifact"]["id"])
+    assert en_row["language"] == "en" and en_row["content"] != row["content"]
+    assert b'dir="ltr"' in en_row["content"]
+
+    with pytest.raises(artifacts.ArtifactError) as exc:
+        artifacts.request_artifact(conn, rid, user=world["analyst"], fmt="html",
+                                   language="klingon")
+    assert exc.value.code == "VALIDATION_FAILED", \
+        "an unknown language is refused, never silently rendered as English"
+
+    listed = artifacts.list_artifacts(conn, rid, user=world["analyst"])
+    languages = {i["language"] for i in listed
+                 if i["id"] in (ar["artifact"]["id"], en["artifact"]["id"])}
+    assert languages == {"ar", "en"}, "the listing states each artifact's language"

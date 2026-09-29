@@ -173,3 +173,37 @@ def test_csrf_applies_to_artifact_creation(app, corpus, sync_jobs, monkeypatch):
     resp = _post(analyst, f"/api/reports/runs/{run['id']}/artifacts", {"format": "json"},
                  csrf=False)
     assert resp.status_code == 400
+
+
+def test_the_artifact_language_is_requested_over_http(app, corpus, sync_jobs):
+    """Step 18 over HTTP: the requester names the language; it is validated,
+    stored, and stated back on the artifact."""
+    analyst, _ = _login_new(app, "analyst")
+    run = _run(analyst, corpus)
+    rid = run["id"]
+
+    resp = _post(analyst, f"/api/reports/runs/{rid}/artifacts",
+                 {"format": "html", "language": "ar"})
+    assert resp.status_code == 200, resp.get_data(as_text=True)
+    body = resp.get_json()
+    assert body["existing"] is False and body["job"]["status"] == "COMPLETED"
+    assert body["artifact"]["language"] == "ar", "the artifact states its language"
+    aid = body["artifact"]["id"]
+    record = analyst.get(f"/api/reports/artifacts/{aid}").get_json()["artifact"]
+    assert record["manifest"]["artifact"]["language"] == "ar"
+    assert record["manifest"]["artifact"]["notes"]["language"] == "ar"
+
+    again = _post(analyst, f"/api/reports/runs/{rid}/artifacts",
+                  {"format": "html", "language": "ar"}).get_json()
+    assert again["existing"] is True and again["artifact"]["id"] == aid
+    other = _post(analyst, f"/api/reports/runs/{rid}/artifacts",
+                  {"format": "html", "language": "hr"}).get_json()
+    assert other["existing"] is False and other["artifact"]["id"] != aid, \
+        "a different language is a different file, never a reuse"
+
+    bad = _post(analyst, f"/api/reports/runs/{rid}/artifacts",
+                {"format": "html", "language": "klingon"})
+    assert bad.status_code == 400
+    detail = bad.get_json()["error"]
+    assert detail["code"] == "VALIDATION_FAILED", detail
+    assert "language must be one of" in detail["message"]

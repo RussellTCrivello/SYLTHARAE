@@ -51,10 +51,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 #: Renderer identity per format. Bump the number whenever the bytes a format
 #: produces for the same run would change.
 RENDERERS: Dict[str, str] = {
-    "json": "report-json/2",     # 2: analyses section
-    "csv": "report-csv/1",
-    "xlsx": "report-xlsx/1",
-    "html": "report-html/2",     # 2: analyses section
+    "json": "report-json/3",     # 3: language-aware (the language is stated)
+    "csv": "report-csv/1",       # data-only: headers are the declared column names
+    "xlsx": "report-xlsx/2",     # 2: chrome in the requested language
+    "html": "report-html/3",     # 3: language-aware (dir, numerals, vocabulary)
 }
 #: Formats whose content includes the run's analyses.
 WITH_ANALYSES = frozenset({"json", "html"})
@@ -67,8 +67,11 @@ MEDIA_TYPES: Dict[str, str] = {
 #: Formats that render exactly one dataset (``dataset_key`` required).
 SINGLE_DATASET = frozenset({"csv"})
 #: Declared but produced in a later step; refused with this reason.
-NOT_YET = {"pdf": "PDF is produced by the server-side multilingual renderer (step 18)",
-           "svg": "charts are produced by the multilingual renderer (step 18)"}
+NOT_YET = {"pdf": "PDF rendering is not implemented (the step 18 limitation stated "
+                  "in the docs): server-side PDF with shaped Arabic/Hebrew text and "
+                  "bundled fonts remains future work - a refusal, never an approximation",
+           "svg": "charts are not implemented yet (the step 18 limitation stated in "
+                  "the docs) - a refusal, never an approximation"}
 NULL_REPRESENTATION = {"json": "JSON null", "html": "the marked text (none)",
                        "csv": "empty cell (indistinguishable from empty text; the JSON "
                               "artifact of the same run is exact)",
@@ -116,14 +119,23 @@ def _dataset(document: Dict[str, Any], key: Optional[str]) -> Dict[str, Any]:
     raise RenderError(f"the run has no dataset {key!r}")
 
 
-def _completeness(ds: Dict[str, Any]) -> str:
+def _completeness(ds: Dict[str, Any], t) -> str:
+    # Pure chrome: the only substituted values are counts and limits, so
+    # local numerals apply to the whole phrase.
+    from core.reporting.i18n import local_digits
+
+    kind = "top-N" if ds["semantics"] == "top_n" else "capped"
     if ds["semantics"] == "exact":
-        return f"complete: {ds['row_count']} rows (exact)"
-    if ds["truncated"]:
-        kind = "top-N" if ds["semantics"] == "top_n" else "capped"
-        return (f"shortened: the first {ds['row_count']} rows are included; more rows "
-                f"existed ({kind} at {ds['row_limit']})")
-    return f"complete: {ds['row_count']} rows ({ds['semantics']} at {ds['row_limit']}, not reached)"
+        text = t.gettext("complete: %(count)s rows (exact)", count=ds["row_count"])
+    elif ds["truncated"]:
+        text = t.gettext("shortened: the first %(count)s rows are included; more rows "
+                         "existed (%(kind)s at %(limit)s)",
+                         count=ds["row_count"], kind=kind, limit=ds["row_limit"])
+    else:
+        text = t.gettext("complete: %(count)s rows (%(kind)s at %(limit)s, not reached)",
+                         count=ds["row_count"], kind=ds["semantics"],
+                         limit=ds["row_limit"])
+    return local_digits(text, t.language)
 
 
 def _provenance_pairs(document: Dict[str, Any]) -> List[Tuple[str, Any]]:
@@ -148,11 +160,19 @@ def _provenance_pairs(document: Dict[str, Any]) -> List[Tuple[str, Any]]:
     ]
 
 
-def _analysis_text(analysis: Dict[str, Any]) -> List[Dict[str, str]]:
+def _analysis_text(analysis: Dict[str, Any], t) -> List[Dict[str, str]]:
     from core.analytics.narrative import render as render_narrative, source_ngettext
+    from core.reporting.i18n import local_digits
 
-    return render_narrative(analysis["narrative"], lambda msgid: msgid,
-                            ngettext=source_ngettext)
+    def format_number(value):
+        text = f"{value:,}" if isinstance(value, int) else (
+            f"{value:,.2f}" if isinstance(value, float) else str(value))
+        return local_digits(text, t.language)
+
+    return render_narrative(analysis["narrative"], t.gettext,
+                            format_number=format_number,
+                            ngettext=(t.ngettext if t.language != "en"
+                                      else source_ngettext))
 
 
 def _cell_text(value: Any) -> str:
@@ -169,18 +189,21 @@ def _cell_text(value: Any) -> str:
 # Formats
 # ---------------------------------------------------------------------------
 
-def _render_json(document, dataset_key):
+def _render_json(document, dataset_key, t):
     body = {
         "format": RENDERERS["json"],
+        "language": t.language,
         "report": document["report"],
         "run": document["run"],
-        "datasets": [dict(ds, completeness=_completeness(ds)) for ds in document["datasets"]],
-        "analyses": [dict(a, text=_analysis_text(a)) for a in document.get("analyses", ())],
+        "datasets": [dict(ds, completeness=_completeness(ds, t))
+                     for ds in document["datasets"]],
+        "analyses": [dict(a, text=_analysis_text(a, t))
+                     for a in document.get("analyses", ())],
     }
     return canonical_json(body) + b"\n", {}
 
 
-def _render_csv(document, dataset_key):
+def _render_csv(document, dataset_key, t):
     from Api.services.document_intelligence import spreadsheet_safe_text
 
     ds = _dataset(document, dataset_key)
@@ -213,7 +236,7 @@ def _pin_zip(data: bytes, date_time: Tuple[int, int, int, int, int, int]) -> byt
     return out.getvalue()
 
 
-def _render_xlsx(document, dataset_key):
+def _render_xlsx(document, dataset_key, t):
     from openpyxl import Workbook
 
     from Api.services.document_intelligence import spreadsheet_safe_text
@@ -240,14 +263,15 @@ def _render_xlsx(document, dataset_key):
 
     workbook = Workbook()
     info = workbook.active
-    info.title = "Provenance"
-    info.append(["field", "value"])
+    info.title = t.gettext("Provenance")[:31]
+    info.append([t.gettext("Field"), t.gettext("Value")])
     for label, value in _provenance_pairs(document):
         info.append([label, cell(value)])
     info.append([])
-    info.append(["dataset", "sheet", "semantics", "row limit", "rows", "truncated",
-                 "completeness", "query fingerprint"])
-    used = {"Provenance"}
+    info.append([t.gettext("Dataset"), t.gettext("Sheet"), t.gettext("Semantics"),
+                 t.gettext("Row limit"), t.gettext("Rows"), t.gettext("Truncated"),
+                 t.gettext("Completeness"), t.gettext("Query fingerprint")])
+    used = {info.title}
     sheets = []
     for index, ds in enumerate(document["datasets"], start=1):
         base = re.sub(r"[\[\]\*\?/\\:]", "_", ds["dataset_key"].split("@")[0])[:26] or "data"
@@ -255,8 +279,9 @@ def _render_xlsx(document, dataset_key):
         used.add(name)
         sheets.append((name, ds))
         info.append([ds["dataset_key"], name, ds["semantics"], ds["row_limit"],
-                     ds["row_count"], "yes" if ds["truncated"] else "no",
-                     _completeness(ds), ds["query_fingerprint"]])
+                     ds["row_count"],
+                     t.gettext("yes") if ds["truncated"] else t.gettext("no"),
+                     _completeness(ds, t), ds["query_fingerprint"]])
     for name, ds in sheets:
         sheet = workbook.create_sheet(name)
         names = [c["name"] for c in ds["columns"]]
@@ -300,37 +325,46 @@ _HTML_STYLE = (
     "font-weight:600}.fp{font-family:monospace;font-size:.85em}")
 
 
-def _render_html(document, dataset_key):
+def _render_html(document, dataset_key, t):
+    from core.reporting.i18n import is_rtl
+
     e = lambda v: html.escape(_cell_text(v), quote=True)   # noqa: E731
     run, report = document["run"], document["report"]
-    parts = ["<!DOCTYPE html>", '<html lang="en" dir="ltr"><head><meta charset="utf-8">',
+    language = t.language
+    direction = "rtl" if is_rtl(language) else "ltr"
+    parts = ["<!DOCTYPE html>",
+             f'<html lang="{e(language)}" dir="{direction}"><head><meta charset="utf-8">',
              '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; '
              'style-src \'unsafe-inline\'">',
              f"<title>{e(report.get('title') or run['report_key'])} - run {e(run['id'])}</title>",
              f"<style>{_HTML_STYLE}</style></head><body>",
              f"<h1>{e(report.get('title') or run['report_key'])}</h1>",
-             "<h2>Provenance</h2><table><tbody>"]
+             f"<h2>{e(t.gettext('Provenance'))}</h2><table><tbody>"]
     for label, value in _provenance_pairs(document):
         shown = ('<span class="none">(none)</span>' if value is None
                  else f'<bdi class="fp">{e(value)}</bdi>')
         parts.append(f"<tr><th scope=\"row\">{e(label)}</th><td>{shown}</td></tr>")
     parts.append("</tbody></table>")
     for a in document.get("analyses", ()):
-        parts.append(f"<h2>{e(a.get('title') or a['analysis_key'])}</h2>")
-        state = ("measured" if a["state"] == "measured"
-                 else f"not measurable ({a['reason']})")
-        parts.append(f"<p>Analysis <bdi class=\"fp\">{e(a['analysis_key'])}</bdi>, {e(state)}; "
-                     f"templates <bdi class=\"fp\">{e(a['template_set'])}@"
-                     f"{e(a['template_version'])}</bdi>.</p><dl>")
-        for voice in _analysis_text(a):
+        parts.append(f"<h2><bdi>{e(a.get('title') or a['analysis_key'])}</bdi></h2>")
+        state = (t.gettext("measured") if a["state"] == "measured"
+                 else t.gettext("not measurable (%(reason)s)", reason=a["reason"]))
+        sentence = t.gettext(
+            "Analysis %(key)s, %(state)s; templates %(tpl)s@%(ver)s.",
+            key=a["analysis_key"], state=state,
+            tpl=a["template_set"], ver=a["template_version"])
+        parts.append(f"<p><bdi>{e(sentence)}</bdi></p><dl>")
+        for voice in _analysis_text(a, t):
             parts.append(f"<dt>{e(voice['voice'].capitalize())}</dt><dd><bdi>{e(voice['text'])}"
                          "</bdi></dd>")
         parts.append("</dl>")
     for ds in document["datasets"]:
         cls = ' class="short"' if ds["truncated"] else ""
         parts.append(f"<h2><bdi>{e(ds['dataset_key'])}</bdi></h2>")
-        parts.append(f"<p{cls}>{e(_completeness(ds))}. Query fingerprint "
-                     f"<span class=\"fp\">{e(ds['query_fingerprint'])}</span>.</p>")
+        fp_sentence = t.gettext("Query fingerprint %(fingerprint)s.",
+                                fingerprint=str(ds["query_fingerprint"]))
+        parts.append(f"<p{cls}>{e(_completeness(ds, t))}. "
+                     f"{e(fp_sentence)}</p>")
         parts.append("<table><thead><tr>")
         for column in ds["columns"]:
             parts.append(f"<th scope=\"col\" title=\"{e(column['name'])}\">"
@@ -345,7 +379,8 @@ def _render_html(document, dataset_key):
                              else f"<td><bdi>{e(value)}</bdi></td>")
             parts.append("</tr>")
         if not ds["rows"]:
-            parts.append(f"<tr><td colspan=\"{max(1, len(names))}\">No rows.</td></tr>")
+            parts.append(f"<tr><td colspan=\"{max(1, len(names))}\">"
+                         f"{e(t.gettext('No rows.'))}</td></tr>")
         parts.append("</tbody></table>")
     parts.append("</body></html>\n")
     return "\n".join(parts).encode("utf-8"), {}
@@ -373,15 +408,32 @@ def check_request(document_datasets: List[str], fmt: Any, dataset_key: Any) -> T
     return fmt, None
 
 
-def render(document: Dict[str, Any], fmt: str, dataset_key: Optional[str] = None) -> Rendering:
+def render(document: Dict[str, Any], fmt: str, dataset_key: Optional[str] = None,
+           language: str = "en") -> Rendering:
+    """Render one run document. ``language`` is part of the rendering -
+    explicit, validated (an unknown language is refused, never silently
+    rendered as English) and recorded in the notes; a missing catalog
+    entry falls back to the msgid and is counted there."""
+    from core.reporting.i18n import reader_for
+
     fmt, dataset_key = check_request([d["dataset_key"] for d in document["datasets"]],
                                      fmt, dataset_key)
-    content, notes = _RENDER[fmt](document, dataset_key)
+    try:
+        t = reader_for(language)
+    except ValueError as exc:
+        raise RenderError(str(exc)) from None
+    content, notes = _RENDER[fmt](document, dataset_key, t)
     run = document["run"]
     filename = safe_filename("report", run["report_id"], f"v{run['report_version']}",
                              f"run{run['id']}",
-                             dataset_key.split("@")[0] if dataset_key else None) + "." + fmt
-    notes = dict(notes, null_representation=NULL_REPRESENTATION[fmt])
+                             dataset_key.split("@")[0] if dataset_key else None,
+                             t.language) + "." + fmt
+    notes = dict(notes, null_representation=NULL_REPRESENTATION[fmt],
+                 language=t.language)
+    if fmt != "csv":
+        # A data-only CSV carries no renderer chrome, so it has no
+        # fallback to report; every chrome-bearing format states its own.
+        notes["translation_fallbacks"] = t.fallbacks
     return Rendering(content=content, format=fmt, renderer_version=RENDERERS[fmt],
                      media_type=MEDIA_TYPES[fmt], filename=filename,
                      dataset_key=dataset_key, notes=notes)

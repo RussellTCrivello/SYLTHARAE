@@ -596,7 +596,9 @@ class JobManager:
 
             return run_artifact_job(get_connection, run_id=options["run_id"],
                                     fmt=options["format"], dataset_key=options.get("dataset_key"),
-                                    creator_id=options["creator_id"], job_id=record["job_id"],
+                                    creator_id=options["creator_id"],
+                                    language=options.get("language", "en"),
+                                    job_id=record["job_id"],
                                     progress_cb=progress_cb)
         raise ValueError(f"Unknown job type: {job_type}")
 

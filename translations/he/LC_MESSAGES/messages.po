@@ -10423,6 +10423,9 @@ msgstr "הבקשה נכשלה"
 msgid "Query fingerprint"
 msgstr "טביעת האצבע של השאילתה"
 
+msgid "Query fingerprint %(fingerprint)s."
+msgstr "טביעת האצבע של השאילתה %(fingerprint)s."
+
 #: templates/Signals/signals.html
 #, python-format
 msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
@@ -12106,4 +12109,57 @@ msgstr "תוצאות קודמות"
 #: core/reporting/datasets.py
 msgid "Recorded at"
 msgstr "מועד רישום"
+
+# --- Multilingual artifact rendering (step 18) ---
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (exact)"
+msgstr "מלא: %(count)s שורות (מדויק)"
+
+#: core/reporting/render.py
+msgid "shortened: the first %(count)s rows are included; more rows existed (%(kind)s at %(limit)s)"
+msgstr "מקוצר: נכללות %(count)s השורות הראשונות; היו עוד שורות (%(kind)s ב־%(limit)s)"
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (%(kind)s at %(limit)s, not reached)"
+msgstr "מלא: %(count)s שורות (%(kind)s ב־%(limit)s, התקרה לא הושגה)"
+
+#: core/reporting/render.py
+msgid "No rows."
+msgstr "אין שורות."
+
+#: core/reporting/render.py
+msgid "(none)"
+msgstr "(ללא)"
+
+#: core/reporting/render.py
+msgid "measured"
+msgstr "נמדד"
+
+#: core/reporting/render.py
+msgid "not measurable (%(reason)s)"
+msgstr "בלתי ניתן למדידה (%(reason)s)"
+
+#: core/reporting/render.py
+msgid "Analysis %(key)s, %(state)s; templates %(tpl)s@%(ver)s."
+msgstr "ניתוח %(key)s, %(state)s; תבניות %(tpl)s@%(ver)s."
+
+#: core/reporting/render.py
+msgid "Field"
+msgstr "שדה"
+
+#: core/reporting/render.py
+msgid "Sheet"
+msgstr "גיליון"
+
+#: core/reporting/render.py
+msgid "Semantics"
+msgstr "סמנטיקה"
+
+#: core/reporting/render.py
+msgid "Row limit"
+msgstr "מגבלת שורות"
+#: core/reporting/render.py
+msgid "Completeness"
+msgstr "שלמות"
 

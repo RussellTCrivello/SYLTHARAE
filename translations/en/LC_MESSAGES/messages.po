@@ -11191,6 +11191,9 @@ msgstr ""
 msgid "Query fingerprint"
 msgstr ""
 
+msgid "Query fingerprint %(fingerprint)s."
+msgstr ""
+
 #: templates/Signals/signals.html
 #, python-format
 msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
@@ -12272,5 +12275,58 @@ msgstr ""
 
 #: core/reporting/datasets.py
 msgid "Recorded at"
+msgstr ""
+
+# --- Multilingual artifact rendering (step 18) ---
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (exact)"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "shortened: the first %(count)s rows are included; more rows existed (%(kind)s at %(limit)s)"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (%(kind)s at %(limit)s, not reached)"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "No rows."
+msgstr ""
+
+#: core/reporting/render.py
+msgid "(none)"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "measured"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "not measurable (%(reason)s)"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "Analysis %(key)s, %(state)s; templates %(tpl)s@%(ver)s."
+msgstr ""
+
+#: core/reporting/render.py
+msgid "Field"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "Sheet"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "Semantics"
+msgstr ""
+
+#: core/reporting/render.py
+msgid "Row limit"
+msgstr ""
+#: core/reporting/render.py
+msgid "Completeness"
 msgstr ""
 

@@ -10585,6 +10585,9 @@ msgstr "فشل الطلب"
 msgid "Query fingerprint"
 msgstr "بصمة الاستعلام"
 
+msgid "Query fingerprint %(fingerprint)s."
+msgstr "بصمة الاستعلام %(fingerprint)s."
+
 #: templates/Signals/signals.html
 #, python-format
 msgid "Only the first %(n)s sources and sides by name are listed. Use a saved search to filter by others."
@@ -12288,4 +12291,57 @@ msgstr "النتائج السابقة"
 #: core/reporting/datasets.py
 msgid "Recorded at"
 msgstr "وقت التسجيل"
+
+# --- Multilingual artifact rendering (step 18) ---
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (exact)"
+msgstr "مكتمل: %(count)s صفوف (دقيق)"
+
+#: core/reporting/render.py
+msgid "shortened: the first %(count)s rows are included; more rows existed (%(kind)s at %(limit)s)"
+msgstr "مختصر: الصفوف %(count)s الأولى مدرجة؛ كانت هناك صفوف أكثر (%(kind)s عند %(limit)s)"
+
+#: core/reporting/render.py
+msgid "complete: %(count)s rows (%(kind)s at %(limit)s, not reached)"
+msgstr "مكتمل: %(count)s صفوف (%(kind)s عند %(limit)s، لم يُبلغ الحد)"
+
+#: core/reporting/render.py
+msgid "No rows."
+msgstr "لا صفوف."
+
+#: core/reporting/render.py
+msgid "(none)"
+msgstr "(بلا)"
+
+#: core/reporting/render.py
+msgid "measured"
+msgstr "مقاس"
+
+#: core/reporting/render.py
+msgid "not measurable (%(reason)s)"
+msgstr "غير قابل للقياس (%(reason)s)"
+
+#: core/reporting/render.py
+msgid "Analysis %(key)s, %(state)s; templates %(tpl)s@%(ver)s."
+msgstr "التحليل %(key)s، %(state)s؛ القوالب %(tpl)s@%(ver)s."
+
+#: core/reporting/render.py
+msgid "Field"
+msgstr "الحقل"
+
+#: core/reporting/render.py
+msgid "Sheet"
+msgstr "الورقة"
+
+#: core/reporting/render.py
+msgid "Semantics"
+msgstr "الدلالة"
+
+#: core/reporting/render.py
+msgid "Row limit"
+msgstr "حد الصفوف"
+#: core/reporting/render.py
+msgid "Completeness"
+msgstr "الاكتمال"
 
