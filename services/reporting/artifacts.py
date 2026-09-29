@@ -104,7 +104,7 @@ def run_document(conn, run_row: Dict[str, Any], registry=REGISTRY) -> Dict[str, 
                   "criteria_parameter": None}
     with _dict_cur(conn) as cur:
         cur.execute("SELECT dataset_key, dataset_fingerprint, query_fingerprint, semantics,"
-                    " row_limit, row_count, truncated, columns, rows"
+                    " row_limit, row_count, truncated, columns, rows, baseline"
                     " FROM report_run_datasets WHERE run_id = %s ORDER BY position",
                     (run_row["id"],))
         datasets = [dict(r) for r in cur.fetchall()]
@@ -156,9 +156,11 @@ def build_manifest(document: Dict[str, Any], rendering, *, content_sha256: str,
                 "runner_version": run["generator_version"]},
         "snapshot": {"id": run["snapshot"], "taken_at": run["snapshot_at"],
                      "isolation": run["isolation_level"]},
-        "datasets": [{k: ds[k] for k in ("dataset_key", "dataset_fingerprint",
-                                         "query_fingerprint", "semantics", "row_limit",
-                                         "row_count", "truncated", "columns")}
+        "datasets": [dict({k: ds[k] for k in ("dataset_key", "dataset_fingerprint",
+                                              "query_fingerprint", "semantics", "row_limit",
+                                              "row_count", "truncated", "columns")},
+                          **({"baseline": ds["baseline"]}
+                             if ds.get("baseline") is not None else {}))
                      for ds in document["datasets"]],
         "analyses": [dict({k: a[k] for k in ("analysis_key", "analysis_fingerprint", "kind",
                                               "state", "reason", "inputs", "template_set",

@@ -2,8 +2,10 @@
 
 Covers migration 0027's schema and the behaviours the Latest/Change reports
 depend on: per-reader isolation, monotonic advance (a stale client cannot
-un-see rows), the absent-row shape of "never viewed", and the classification
-that turns a baseline into the three states the report must distinguish.
+un-see rows), and the absent-row shape of "never viewed". The
+classification into the three states the Latest report distinguishes is
+the dataset's own SQL (``latest.entries@1``), verified against this store
+in ``tests/integration/test_report_registry_pg.py``.
 """
 
 import datetime
@@ -13,7 +15,6 @@ import pytest
 
 from core.reporting.baselines import (
     baseline_key,
-    classify_rows,
     get_baseline,
     record_baseline,
 )
@@ -123,38 +124,3 @@ class TestTheBaselineStore:
             "a parameter that shapes the view is part of the identity")
         assert baseline_key(fingerprint, {"a": 1, "b": 2}) == \
             baseline_key(fingerprint, {"b": 2, "a": 1}), "order-insensitive"
-
-
-class TestTheClassification:
-    BASELINE = {"last_seen_at": None, "last_max_id": 100}
-
-    def _row(self, path_id, created=None):
-        return {"path_id": path_id, "date_creation": created}
-
-    def test_without_a_baseline_everything_is_new(self):
-        rows = classify_rows((self._row(1), self._row(5000)), None)
-        assert all(r["view_state"] == "new_since_last_view" for r in rows)
-
-    def test_rows_are_split_at_the_recorded_progress(self):
-        rows = classify_rows((self._row(50), self._row(100), self._row(101)),
-                             self.BASELINE)
-        assert [r["view_state"] for r in rows] == [
-            "previously_seen", "previously_seen", "new_since_last_view"]
-
-    def test_recently_created_is_reported_alongside_not_instead(self):
-        today = datetime.date.today()
-        old = today - datetime.timedelta(days=90)
-        rows = classify_rows(
-            (self._row(30, today), self._row(40, old), self._row(101, today)),
-            self.BASELINE)
-        assert rows[0]["view_state"] == "previously_seen"
-        assert rows[0]["recently_created"] is True, (
-            "seen recently does not stop being recently created")
-        assert rows[1]["recently_created"] is False
-        assert rows[2]["view_state"] == "new_since_last_view"
-        assert rows[2]["recently_created"] is True
-
-    def test_never_measured_creation_is_not_recent(self):
-        rows = classify_rows((self._row(30, None),), self.BASELINE)
-        assert "recently_created" not in rows[0] or \
-            rows[0]["recently_created"] is False

@@ -164,6 +164,25 @@ RELATIONSHIP_V1 = ReportDefinition(
     datasets=("relationship.contexts@1",),
 )
 
+LATEST_V1 = ReportDefinition(
+    report_id="latest",
+    version=1,
+    title="Latest Entries Report",
+    description="The matched documents, newest first, read per viewer: "
+                "each row states whether you had already seen it - "
+                "previously seen, or new since your last view of this "
+                "same view - and whether it was ingested within the last "
+                "30 days. Running the report records how far you have "
+                "read, so the next run shows what arrived since.",
+    help_topic="reports/latest",
+    unit="path",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("criteria", "criteria", "Search criteria", required=True),
+    ),
+    datasets=("latest.entries@1",),
+)
+
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
@@ -173,6 +192,7 @@ REPORTS: Tuple[ReportDefinition, ...] = (
     HORIZON_V1,
     ENTITY_PLACE_V1,
     RELATIONSHIP_V1,
+    LATEST_V1,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
@@ -221,6 +241,17 @@ HELP_TOPICS: Tuple[HelpTopic, ...] = (
                 "reference date you choose: overdue, this week, this month, "
                 "this quarter, and later. Undated references and purely "
                 "past mentions are not part of the horizon.",
+    ),
+    HelpTopic(
+        topic="reports/latest",
+        title="About the Latest Entries Report",
+        summary="Lists the matched documents newest first and tells you, "
+                "per row, whether it is new since you last looked at this "
+                "view or something you have already seen. Recently "
+                "ingested documents are marked alongside, whatever their "
+                "reading state: a document can be both. Your progress is "
+                "kept per view, per reader - two readers never share it, "
+                "and it never moves backwards.",
     ),
     HelpTopic(
         topic="reports/relationship",

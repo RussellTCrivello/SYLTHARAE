@@ -11984,3 +11984,34 @@ msgstr "הקשרים אחים"
 #: core/reporting/datasets.py
 msgid "Sibling sources"
 msgstr "מקורות אחים"
+
+# --- Latest Entries report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Latest Entries Report"
+msgstr "דוח הרשומות האחרונות"
+
+#: core/reporting/definitions.py
+msgid "The matched documents, newest first, read per viewer: each row states whether you had already seen it - previously seen, or new since your last view of this same view - and whether it was ingested within the last 30 days. Running the report records how far you have read, so the next run shows what arrived since."
+msgstr "המסמכים התואמים, החדשים ביותר ראשונים, נקראים לכל קורא: כל שורה מציינת אם כבר ראית אותו - כבר נראה, או חדש מאז הצפייה האחרונה שלך בתצוגה זו עצמה - ואם נקלט ב־30 הימים האחרונים. הרצת הדוח רושמת עד כמה קראת, ולכן ההרצה הבאה מציגה מה הגיע מאז."
+
+#: core/reporting/definitions.py
+msgid "About the Latest Entries Report"
+msgstr "אודות דוח הרשומות האחרונות"
+
+#: core/reporting/definitions.py
+msgid "Lists the matched documents newest first and tells you, per row, whether it is new since you last looked at this view or something you have already seen. Recently ingested documents are marked alongside, whatever their reading state: a document can be both. Your progress is kept per view, per reader - two readers never share it, and it never moves backwards."
+msgstr "מציג את המסמכים התואמים החדשים ביותר ראשונים ואומר לך, לכל שורה, אם הוא חדש מאז שהסתכלת לאחרונה בתצוגה זו או דבר שכבר ראית. מסמכים שנקלטו לאחרונה מסומנים לצד זאת, ללא קשר למצב הקריאה: מסמך יכול להיות שניהם. ההתקדמות שלך נשמרת לכל תצוגה ולכל קורא - שני קוראים לעולם אינם חולקים אותה, והיא לעולם אינה חוזרת אחורה."
+
+#: core/reporting/datasets.py
+msgid "File size"
+msgstr "גודל הקובץ"
+
+#: core/reporting/datasets.py
+msgid "View state"
+msgstr "מצב צפייה"
+
+#: core/reporting/datasets.py
+msgid "Recently created"
+msgstr "נוצר לאחרונה"
+

@@ -54,6 +54,7 @@ import psycopg2.extras
 from core.analytics.kinds import AnalysisError
 from core.criteria.model import sha256_hex
 from core.reporting import REGISTRY
+from core.reporting.baselines import record_baseline
 from core.reporting.model import ReportParameterError
 from core.reporting.registry import ReportNotFound
 
@@ -331,11 +332,13 @@ def _finish(conn, run_id: int, status: str, *, error: Optional[str] = None,
             cur.execute(
                 "INSERT INTO report_run_datasets (run_id, position, dataset_key,"
                 " dataset_fingerprint, query_fingerprint, semantics, row_limit, row_count,"
-                " truncated, columns, rows) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                " truncated, columns, rows, baseline)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (run_id, position, ds["dataset_key"], ds["dataset_fingerprint"],
                  ds["query_fingerprint"], ds["semantics"], ds["row_limit"], ds["row_count"],
                  ds["truncated"], psycopg2.extras.Json(ds["columns"]),
-                 psycopg2.extras.Json(ds["rows"])))
+                 psycopg2.extras.Json(ds["rows"]),
+                 psycopg2.extras.Json(ds["baseline"]) if ds.get("baseline") is not None else None))
         snapshot = snapshot or {}
         cur.execute(
             "UPDATE report_runs SET status = %s, error = %s, refusal_reason = %s,"
@@ -387,6 +390,10 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
     results: List[Dict[str, Any]] = []
     analyses: List[Dict[str, Any]] = []
     snapshot: Dict[str, Any] = {}
+    # A viewer dataset (Latest) records, on its own block, what the reader
+    # had seen as THIS run's snapshot found it - and after the snapshot
+    # transaction closes, the baseline is advanced to what the run showed.
+    baseline_work: Optional[tuple] = None
     total = len(definition.datasets)
     try:
         with _dict_cur(conn) as cur:
@@ -422,6 +429,19 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
                         raise _RunFailed(f"{key}: criteria fingerprint differs from the "
                                          "one recorded at submission")
                     results.append(_read_dataset(cur, dataset, bound))
+                    if dataset.progress_column is not None and bound.progress_key:
+                        cur.execute(
+                            "SELECT last_max_id FROM report_baselines"
+                            " WHERE user_id = %s AND criteria_hash = %s",
+                            (user["id"], bound.progress_key))
+                        seen = cur.fetchone()
+                        before = (int(seen["last_max_id"])
+                                  if seen and seen["last_max_id"] is not None else None)
+                        results[-1]["baseline"] = {
+                            "criteria_hash": bound.progress_key,
+                            "last_max_id_before": before}
+                        baseline_work = (user["id"], bound.progress_key,
+                                         dataset.progress_column, results[-1])
                     if progress_cb:
                         progress_cb({"percent": int(100 * (index + 1) / total),
                                      "current_phase": f"Report dataset {key}",
@@ -449,6 +469,29 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
     if refusal is not None:
         _finish(conn, run_id, "refused", refusal=refusal, snapshot=snapshot)
         return outcome("refused", refusal=refusal)
+    if baseline_work is not None:
+        reader_id, view_key, column, block = baseline_work
+        # The reader has now been shown these rows: advance their baseline
+        # to the furthest id actually shown (monotonic - never backwards).
+        # Failing to record is not allowed to fail the run, but it is named
+        # on the run: the reader may see rows again as new, never un-see.
+        try:
+            if block["rows"]:
+                advanced = record_baseline(reader_id, view_key,
+                                           max(int(r[column]) for r in block["rows"]),
+                                           conn=conn)
+            else:
+                advanced = {"last_max_id": block["baseline"]["last_max_id_before"]}
+            conn.commit()
+            block["baseline"] = dict(block["baseline"],
+                                     advanced_to=advanced["last_max_id"],
+                                     baseline_recorded=True)
+        except Exception:
+            conn.rollback()
+            logger.exception("report run %s: baseline advance failed", run_id)
+            block["baseline"] = dict(block["baseline"], advanced_to=None,
+                                     baseline_recorded=False,
+                                     reason="baseline_advance_failed")
     _finish(conn, run_id, "completed", snapshot=snapshot, datasets=results,
             analyses=analyses)
     return dict(outcome("completed", datasets=[
@@ -578,7 +621,7 @@ def get_run(conn, run_id: int, *, user, registry=REGISTRY) -> Dict[str, Any]:
     row = _fetch(conn, run_id, user, registry)
     with _dict_cur(conn) as cur:
         cur.execute("SELECT position, dataset_key, dataset_fingerprint, query_fingerprint,"
-                    " semantics, row_limit, row_count, truncated, columns"
+                    " semantics, row_limit, row_count, truncated, columns, baseline"
                     " FROM report_run_datasets WHERE run_id = %s ORDER BY position", (run_id,))
         datasets = [dict(r) for r in cur.fetchall()]
     conn.rollback()
@@ -650,7 +693,7 @@ def dataset_rows(conn, run_id: int, dataset_key: str, *, user, limit: int = 100,
     offset = max(0, int(offset))
     with _dict_cur(conn) as cur:
         cur.execute(
-            "SELECT d.dataset_key, d.semantics, d.row_limit, d.row_count, d.truncated, d.columns,"
+            "SELECT d.dataset_key, d.semantics, d.row_limit, d.row_count, d.truncated, d.columns, d.baseline,"
             " COALESCE((SELECT jsonb_agg(e.value ORDER BY e.ordinality)"
             "           FROM jsonb_array_elements(d.rows) WITH ORDINALITY AS e(value, ordinality)"
             "           WHERE e.ordinality > %s AND e.ordinality <= %s), '[]'::jsonb) AS rows"

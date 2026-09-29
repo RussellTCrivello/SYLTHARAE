@@ -60,66 +60,29 @@ def get_baseline(user_id: int, key: str) -> Optional[Dict[str, Any]]:
     return {"last_seen_at": row[0], "last_max_id": int(row[1] or 0)}
 
 
-def record_baseline(user_id: int, key: str, max_id: int) -> Dict[str, Any]:
+def record_baseline(user_id: int, key: str, max_id: int,
+                    conn=None) -> Dict[str, Any]:
     """Advance the reader's baseline to ``max_id`` - never backwards.
 
     A concurrent second session with a smaller id must not un-see rows the
     first session already recorded, so the upsert keeps the greater id and
-    the newer timestamp. Returns the row as it now stands.
+    the newer timestamp. Returns the row as it now stands. ``conn``, when
+    given, is used instead of the pooled helper (the report runner advances
+    the baseline on its own connection, after the run's read-only snapshot
+    transaction has closed).
     """
-    row = execute_query(
-        """
-        INSERT INTO report_baselines (user_id, criteria_hash, last_seen_at, last_max_id)
-        VALUES (%s, %s, NOW(), %s)
-        ON CONFLICT (user_id, criteria_hash) DO UPDATE
-        SET last_seen_at = NOW(),
-            last_max_id = GREATEST(report_baselines.last_max_id, EXCLUDED.last_max_id)
-        RETURNING last_seen_at, last_max_id
-        """,
-        (user_id, key, int(max_id)),
-        fetch="one",
-    )
+    sql = (
+        "INSERT INTO report_baselines (user_id, criteria_hash, last_seen_at,"
+        " last_max_id) VALUES (%s, %s, NOW(), %s)"
+        " ON CONFLICT (user_id, criteria_hash) DO UPDATE"
+        " SET last_seen_at = NOW(),"
+        "     last_max_id = GREATEST(report_baselines.last_max_id,"
+        " EXCLUDED.last_max_id)"
+        " RETURNING last_seen_at, last_max_id")
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute(sql, (user_id, key, int(max_id)))
+            row = cur.fetchone()
+    else:
+        row = execute_query(sql, (user_id, key, int(max_id)), fetch="one")
     return {"last_seen_at": row[0], "last_max_id": int(row[1] or 0)}
-
-
-def classify_rows(rows: Tuple[Dict[str, Any], ...], baseline: Optional[Dict[str, Any]],
-                  created_within_days: int = 30,
-                  now_id_floor: int = 0) -> Tuple[Dict[str, Any], ...]:
-    """Attach ``view_state`` to each row of a Latest listing.
-
-    ``rows`` carry ``path_id`` and, when the row has it, ``date_creation``.
-    The states are exactly the three the report must distinguish:
-
-    * ``new_since_last_view`` - beyond the reader's recorded progress
-      (everything, when the reader has no baseline yet - first view of this
-      view is new by definition, and is *not* read as "zero seen");
-    * ``previously_seen``     - at or before the recorded progress;
-    * ``recently_created``    - ingested within the window, regardless of
-      reading progress (a recently-created row the reader already saw is
-      both; ``recently_created`` is reported alongside, not instead).
-
-    Pure function: no database access, no baseline mutation.
-    """
-    import datetime
-
-    seen_floor = baseline["last_max_id"] if baseline else None
-    today = datetime.date.today()
-    window_start = today - datetime.timedelta(days=created_within_days)
-    classified = []
-    for row in rows:
-        item = dict(row)
-        path_id = int(item.get("path_id") or 0)
-        item["view_state"] = (
-            "previously_seen"
-            if seen_floor is not None and path_id <= seen_floor
-            else "new_since_last_view")
-        created = item.get("date_creation")
-        if created:
-            if hasattr(created, "date"):
-                created = created.date()
-            if isinstance(created, datetime.date) and created >= window_start:
-                item["recently_created"] = True
-            else:
-                item["recently_created"] = False
-        classified.append(item)
-    return tuple(classified)

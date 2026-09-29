@@ -236,7 +236,11 @@ def test_every_dataset_executes_with_its_declared_shape(corpus, key):
              if any(p.name == "as_of" for p in report.parameters) else {})
     values = report.normalize_parameters(
         {"criteria": {"text": corpus["word"]}, **extra})
-    names, types, rows = _execute(corpus["conn"], ds.bind(values, AccessScope.unrestricted()))
+    # A viewer dataset is bound per reader (fail-closed without one); a
+    # plain integer exercises the viewer path for latest.entries@1 without
+    # affecting any other dataset's binding.
+    scope = AccessScope.unrestricted(user_id=1)
+    names, types, rows = _execute(corpus["conn"], ds.bind(values, scope))
     assert names == [c.name for c in ds.columns]
     for column, oid in zip(ds.columns, types):
         assert oid in COLUMN_TYPES[column.type], (key, column.name, oid)
@@ -463,6 +467,82 @@ def test_entity_place_preserves_ambiguity_and_unprovenanced_confidence(corpus):
     # Representative documents: lowest matched path ids of each place (they
     # may legitimately share the document that carries the ambiguity).
     assert a[10] > 0 and b[10] > 0
+
+
+def test_latest_classifies_per_reader_inside_one_snapshot(corpus):
+    """The per-viewer dataset: everything new for a reader without a
+    baseline (an absent row, never zero), the split exactly at the
+    reader's recorded progress afterwards, arrivals beyond it new and
+    nothing else re-marked, another reader's progress independent, and
+    recency a property of the data reported alongside - not instead of -
+    reading progress."""
+    from core.reporting.baselines import record_baseline
+
+    conn = corpus["conn"]
+    ds = REGISTRY.dataset("latest.entries@1")
+    report = REGISTRY.report("latest")
+    values = report.normalize_parameters({"criteria": {"text": corpus["word"]}})
+    with conn, conn.cursor() as cur:
+        cur.execute("INSERT INTO users (username, password_hash, role)"
+                    " VALUES (%s, 'x', 'analyst') RETURNING id",
+                    (f"rl_{corpus['tag']}",))
+        reader = cur.fetchone()[0]
+    scope = AccessScope.unrestricted(user_id=reader)
+
+    def _rows(bound):
+        names, _, rows = _execute(conn, bound)
+        return names, rows
+
+    names, rows1 = _rows(ds.bind(values, scope))
+    path_id, view_state, recent = (names.index("path_id"),
+                                   names.index("view_state"),
+                                   names.index("recently_created"))
+    assert len(rows1) == 7, "the same matched set the search listing counts"
+    assert all(r[view_state] == "new_since_last_view" for r in rows1), (
+        "no baseline yet: a first view is new by definition, not 'zero seen'")
+    # Newest first by creation, ties broken by the unique path id.
+    pairs = [(r[names.index("date_creation")], r[path_id]) for r in rows1]
+    assert pairs == sorted(pairs, key=lambda t: (t[0], t[1]), reverse=True)
+    # Every seeded path was created today (the seeder stamps CURRENT_DATE):
+    # recently created is reported alongside, whatever the reading state.
+    assert all(r[recent] is True for r in rows1)
+
+    # Reading the view advances this reader: now everything is previously
+    # seen, split exactly at the recorded progress.
+    bound = ds.bind(values, scope)
+    record_baseline(reader, bound.progress_key,
+                    max(r[path_id] for r in rows1), conn=conn)
+    _, rows2 = _rows(ds.bind(values, scope))
+    assert all(r[view_state] == "previously_seen" for r in rows2)
+
+    # One arrival: exactly it is new; nothing else is re-marked.
+    with conn, conn.cursor() as cur:
+        fresh_pid = document(cur, source_id=corpus["s1"], side_id=side(cur),
+                             text=f"{corpus['word']} fresh after baseline")[0]
+    _, rows3 = _rows(ds.bind(values, scope))
+    assert len(rows3) == 8
+    states = {r[path_id]: r[view_state] for r in rows3}
+    assert states[fresh_pid] == "new_since_last_view"
+    assert sum(1 for v in states.values() if v == "new_since_last_view") == 1
+
+    # Another reader's progress is their own: all new for them.
+    with conn, conn.cursor() as cur:
+        cur.execute("INSERT INTO users (username, password_hash, role)"
+                    " VALUES (%s, 'x', 'analyst') RETURNING id",
+                    (f"rl2_{corpus['tag']}",))
+        reader_b = cur.fetchone()[0]
+    _, rows_b = _rows(ds.bind(values, AccessScope.unrestricted(user_id=reader_b)))
+    assert all(r[view_state] == "new_since_last_view" for r in rows_b)
+
+    # Recency is the data, not the reading: an old creation date drops out
+    # of recently_created for every reader alike.
+    with conn, conn.cursor() as cur:
+        cur.execute("UPDATE paths SET date_creation = %s WHERE id = %s",
+                    (datetime.date(2025, 6, 1), fresh_pid))
+    _, rows4 = _rows(ds.bind(values, scope))
+    by_id = {r[path_id]: r for r in rows4}
+    assert by_id[fresh_pid][recent] is False
+    assert all(r[recent] is True for pid, r in by_id.items() if pid != fresh_pid)
 
 
 def test_relationship_counts_contexts_not_path_rows(corpus):

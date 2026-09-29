@@ -12166,3 +12166,34 @@ msgstr "السياقات الشقيقة"
 #: core/reporting/datasets.py
 msgid "Sibling sources"
 msgstr "المصادر الشقيقة"
+
+# --- Latest Entries report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Latest Entries Report"
+msgstr "تقرير أحدث الإدخالات"
+
+#: core/reporting/definitions.py
+msgid "The matched documents, newest first, read per viewer: each row states whether you had already seen it - previously seen, or new since your last view of this same view - and whether it was ingested within the last 30 days. Running the report records how far you have read, so the next run shows what arrived since."
+msgstr "المستندات المطابقة، الأحدث أولاً، تُقرأ لكل قارئ: كل صف يوضح ما إذا كنت قد رأيته من قبل - سبب رؤيته، أو جديد منذ آخر عرض لنفس العرض هذا - وما إذا تم إدخاله خلال الثلاثين يوماً الأخيرة. يؤدي تشغيل التقرير إلى تسجيل المدى الذي قرأته، لذا يُظهر التشغيل التالي ما وصل منذ ذلك الحين."
+
+#: core/reporting/definitions.py
+msgid "About the Latest Entries Report"
+msgstr "حول تقرير أحدث الإدخالات"
+
+#: core/reporting/definitions.py
+msgid "Lists the matched documents newest first and tells you, per row, whether it is new since you last looked at this view or something you have already seen. Recently ingested documents are marked alongside, whatever their reading state: a document can be both. Your progress is kept per view, per reader - two readers never share it, and it never moves backwards."
+msgstr "يسرد المستندات المطابقة الأحدث أولاً ويخبرك، لكل صف، بما إذا كان جديداً منذ آخر مرة نظرت فيها إلى هذا العرض أو شيئاً رأيته بالفعل. تُوسم المستندات المدخلة حديثاً بالتوازي، مهما كانت حالة قراءتها: يمكن أن يكون المستند كلا الأمرين. يُحتفظ بتقدمك لكل عرض ولكل قارئ - لا يتشارك قارآن في تقدمهما أبداً، ولا يتراجع أبداً."
+
+#: core/reporting/datasets.py
+msgid "File size"
+msgstr "حجم الملف"
+
+#: core/reporting/datasets.py
+msgid "View state"
+msgstr "حالة المشاهدة"
+
+#: core/reporting/datasets.py
+msgid "Recently created"
+msgstr "أُنشئ حديثاً"
+

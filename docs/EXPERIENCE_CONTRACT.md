@@ -77,10 +77,10 @@ Counted from the catalogs the build ships - the Babel catalogs under `translatio
 
 | Language | Catalog entries | Source strings | Translated | Fallback | Missing | Coverage | Of which translated |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ar` | 3570 | 3209 | 3200 | 9 | 0 | 100.0% | 99.7% |
-| `fa` | 3570 | 3209 | 3202 | 7 | 0 | 100.0% | 99.8% |
-| `he` | 3570 | 3209 | 3196 | 13 | 0 | 100.0% | 99.6% |
-| `hr` | 3326 | 3209 | 3126 | 23 | 60 | 98.1% | 97.4% |
+| `ar` | 3577 | 3216 | 3207 | 9 | 0 | 100.0% | 99.7% |
+| `fa` | 3577 | 3216 | 3209 | 7 | 0 | 100.0% | 99.8% |
+| `he` | 3577 | 3216 | 3203 | 13 | 0 | 100.0% | 99.6% |
+| `hr` | 3333 | 3216 | 3134 | 22 | 60 | 98.1% | 97.5% |
 
 ### Coverage per screen
 
@@ -89,12 +89,12 @@ The strings a screen's contract asks for, and how many of them a language actual
 | Interface | Keys | ar | fa | he | hr |
 | --- | --- | --- | --- | --- | --- |
 | `dashboard` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
-| `file_library` | 32 | 90.6% (0 by key) | 90.6% (0 by key) | 90.6% (0 by key) | 84.4% (0 by key) |
+| `file_library` | 32 | 90.6% (0 by key) | 90.6% (0 by key) | 90.6% (0 by key) | 90.6% (0 by key) |
 | `search` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
 | `sources` | 19 | 94.7% (0 by key) | 94.7% (0 by key) | 94.7% (0 by key) | 94.7% (0 by key) |
 | `sides` | 16 | 93.8% (0 by key) | 93.8% (0 by key) | 93.8% (0 by key) | 93.8% (0 by key) |
-| `keywords` | 21 | 71.4% (0 by key) | 71.4% (0 by key) | 71.4% (0 by key) | 61.9% (0 by key) |
-| `words` | 19 | 78.9% (0 by key) | 73.7% (0 by key) | 73.7% (0 by key) | 68.4% (0 by key) |
+| `keywords` | 21 | 71.4% (0 by key) | 71.4% (0 by key) | 71.4% (0 by key) | 71.4% (0 by key) |
+| `words` | 19 | 78.9% (0 by key) | 73.7% (0 by key) | 73.7% (0 by key) | 73.7% (0 by key) |
 | `categories` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
 | `email_words` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
 | `analyst_categorization` | 5 | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) | 80.0% (0 by key) |
@@ -130,5 +130,5 @@ These have a contract derived from the registry, so they work: they have an iden
 
 Every contract passes the declarative checks: no SQL, no imports, no calls, no authorisation decisions, destructive actions carry a confirmation, bulk actions require a selection, and no key holds two different source strings.
 
-_Generated from 31 contracts, 3209 source strings and 5 catalogs._
+_Generated from 31 contracts, 3216 source strings and 5 catalogs._
 <!-- END GENERATED EXPERIENCE CONTRACT -->

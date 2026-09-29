@@ -14490,3 +14490,34 @@ msgstr ""
 #: core/reporting/datasets.py
 msgid "Sibling sources"
 msgstr ""
+
+# --- Latest Entries report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Latest Entries Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "The matched documents, newest first, read per viewer: each row states whether you had already seen it - previously seen, or new since your last view of this same view - and whether it was ingested within the last 30 days. Running the report records how far you have read, so the next run shows what arrived since."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "About the Latest Entries Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Lists the matched documents newest first and tells you, per row, whether it is new since you last looked at this view or something you have already seen. Recently ingested documents are marked alongside, whatever their reading state: a document can be both. Your progress is kept per view, per reader - two readers never share it, and it never moves backwards."
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "File size"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "View state"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Recently created"
+msgstr ""
+

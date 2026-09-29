@@ -135,6 +135,7 @@ tracked, so it ships in the `git archive` release anyway.
 | `horizon@1` | signal | admin, analyst, viewer | `horizon.signals@1` (capped 5000, event date soonest first; `as_of` reference date is a required recorded parameter) |
 | `entity_place@1` | place | admin, analyst, viewer | `entity_place.mentions@1` (capped 2000, most identified first) |
 | `relationship@1` | context | admin, analyst, viewer | `relationship.contexts@1` (capped 5000, most cross-posted first) |
+| `latest@1` | path | admin, analyst, viewer | `latest.entries@1` (capped 5000, newest first; read per viewer - every row states this reader's view state, and running it advances the reader's baseline) |
 
 `search_results@1` is the registry's reference definition: it needs no
 analytics and reuses the compiler end to end. The two step-17 families read
@@ -162,9 +163,19 @@ family counts *contexts* - the (hash_id, source_id, side_id) triple of
 `hash_contexts`: multiplicity inside a context stays a column (`paths`),
 repeated identical triples never become extra rows, a different source or
 side is a different context, and the cross-posting measure counts distinct
-sibling contexts and sibling sources within the matched set. The remaining
-catalog families (Latest/Change, Scenario Outcome, Comprehensive) are added
-only when their datasets exist and are verified.
+sibling contexts and sibling sources within the matched set. The Latest family is
+read *per viewer*: the dataset's SQL joins this reader's ``report_baselines``
+row - bound from the authenticated scope, keyed to the view's criteria
+fingerprint, never from a request value - inside the run's own snapshot,
+and classifies every row exactly three ways: recently created (a property
+of the data), previously seen (at or before this reader's recorded
+progress), and new since the last view (beyond it; a reader without a
+baseline has no row, never a zero). Running the report advances the
+reader's baseline to the furthest row actually shown - monotonically - and
+the run records the baseline it used (before and after) beside its rows,
+so stored runs keep the classification they were read with. The remaining
+catalog families (Change, Scenario Outcome, Comprehensive) are added only
+when their datasets exist and are verified.
 
 ## Evidence
 
@@ -222,6 +233,19 @@ only when their datasets exist and are verified.
   most cross-posted first. The suite's own first draft caught the dataset
   driving from paths (duplicate rows per context) - fixed to drive from
   contexts before landing. Over HTTP: sibling contexts/sources over a run.
+* Latest (step 17): `test_report_catalog_latest.py` (13): the baseline join
+  is bound (never interpolated), the viewer tokens are declared together
+  and need a criteria view, a scope without a reader is refused (fail
+  closed), the view key is derived from the criteria fingerprint, rows are
+  classified against the reader's progress, newest first with a unique
+  tie-breaker. PG (registry suite, 23): no baseline = all new (absent row,
+  not zero); the split is exactly at the recorded progress; one arrival is
+  new and nothing else is re-marked; another reader's progress is
+  independent; recency follows the creation date, reported alongside the
+  reading state. PG (runs suite): a run records the baseline it used
+  (`last_max_id_before` absent = null, never zero) and advances it to the
+  furthest row shown; stored rows keep their original view state. Over
+  HTTP: first run all new and recorded, second run previously seen.
 
 ## Limitations
 

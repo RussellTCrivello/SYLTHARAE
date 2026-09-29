@@ -12280,3 +12280,34 @@ msgstr "بافت‌های خواهر"
 #: core/reporting/datasets.py
 msgid "Sibling sources"
 msgstr "منابع خواهر"
+
+# --- Latest Entries report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Latest Entries Report"
+msgstr "گزارش آخرین ورودی‌ها"
+
+#: core/reporting/definitions.py
+msgid "The matched documents, newest first, read per viewer: each row states whether you had already seen it - previously seen, or new since your last view of this same view - and whether it was ingested within the last 30 days. Running the report records how far you have read, so the next run shows what arrived since."
+msgstr "سندهای منطبق، جدیدترین اول، برای هر خواننده خوانده می‌شود: هر ردیف بیان می‌کند که آیا قبلاً دیده‌اید - دیده‌شده، یا جدید از آخرین بازدیدتان از همین نما - و آیا در ۳۰ روز گذشته وارد شده است. اجرای گزارش پیشرفت شما را ثبت می‌کند، بنابراین اجرای بعدی نشان می‌دهد چه چیزی از آن زمان رسیده است."
+
+#: core/reporting/definitions.py
+msgid "About the Latest Entries Report"
+msgstr "درباره گزارش آخرین ورودی‌ها"
+
+#: core/reporting/definitions.py
+msgid "Lists the matched documents newest first and tells you, per row, whether it is new since you last looked at this view or something you have already seen. Recently ingested documents are marked alongside, whatever their reading state: a document can be both. Your progress is kept per view, per reader - two readers never share it, and it never moves backwards."
+msgstr "سندهای منطبق را جدیدترین اول فهرست می‌کند و به شما می‌گوید، برای هر ردیف، آیا از آخرین باری که به این نما نگاه کردید جدید است یا چیزی که قبلاً دیده‌اید. سندهای تازه‌وارد در کنار آن علامت‌گذاری می‌شوند، صرف‌نظر از وضعیت خواندن: یک سند می‌تواند هر دو باشد. پیشرفت شما برای هر نما و هر خواننده نگه داشته می‌شود - دو خواننده هرگز آن را به اشتراک نمی‌گذارند و هرگز به عقب برنمی‌گردد."
+
+#: core/reporting/datasets.py
+msgid "File size"
+msgstr "اندازه فایل"
+
+#: core/reporting/datasets.py
+msgid "View state"
+msgstr "وضعیت مشاهده"
+
+#: core/reporting/datasets.py
+msgid "Recently created"
+msgstr "به‌تازگی ایجادشده"
+

@@ -21,7 +21,8 @@ from core.detection import place_intel as _places
 from core.detection import temporal_intel as _temporal
 from core.security.service import ALL_ROLES
 
-from .model import TOKEN_CRITERIA, TOKEN_LIMIT, TOKEN_SCOPE, Column, Dataset
+from .model import (TOKEN_CRITERIA, TOKEN_LIMIT, TOKEN_SCOPE,
+                   TOKEN_VIEWER_ID, TOKEN_VIEWER_KEY, Column, Dataset)
 
 _READERS = tuple(ALL_ROLES)
 
@@ -655,6 +656,76 @@ RELATIONSHIP_CONTEXTS_V1 = Dataset(
     criteria_param="criteria",
 )
 
+# --- Latest Entries report (step 17) ----------------------------------------
+# Read per viewer: the SQL joins this reader's baseline row (bound from the
+# authenticated scope, keyed to this view's fingerprint) and classifies every
+# row against it *inside the run's snapshot*. The three states the Latest
+# report must distinguish are exactly: recently created (a property of the
+# data), previously seen (at or before this reader's recorded progress), and
+# new since the last view (beyond it - everything, when the reader has no
+# baseline yet: a first view is new by definition and is never read as
+# "zero seen"). "Never viewed" is an absent baseline row, never a zero id.
+LATEST_ENTRIES_V1 = Dataset(
+    dataset_id="latest.entries",
+    version=1,
+    description=(
+        "The matched file occurrences, newest first, read per viewer: each "
+        "row states whether this reader had already seen it (previously "
+        "seen / new since the last view, against the reader's recorded "
+        "progress for this view) and whether it was ingested within the "
+        "last 30 days (recently created, a property of the data reported "
+        "alongside reading progress, not instead of it). Capped: at most "
+        "row_limit rows; overflow is detected (row_limit + 1 fetched) and "
+        "recorded as truncation, never hidden. Running the report advances "
+        "the reader's baseline to the furthest row actually shown - "
+        "monotonically, never backwards."),
+    unit="path",
+    semantics="capped",
+    row_limit=5000,
+    columns=(
+        # paths.context_id is NOT NULL with a foreign key to hash_contexts,
+        # whose source_id/side_id are NOT NULL foreign keys; report_baselines
+        # is LEFT JOINed - an absent row is "never viewed", not a zero.
+        Column("path_id", "integer", False, "File ID"),
+        Column("file_name", "text", False, "File name"),
+        Column("file_type", "text", False, "File type"),
+        Column("file_size", "bigint", False, "File size"),
+        Column("file_status", "text", False, "Status"),
+        Column("file_date", "date", False, "File date"),
+        Column("date_creation", "date", False, "Created"),
+        Column("source_name", "text", False, "Source"),
+        Column("side_name", "text", False, "Side"),
+        Column("view_state", "text", False, "View state"),
+        Column("recently_created", "boolean", False, "Recently created"),
+    ),
+    sql=(
+        "WITH rpt_base AS ("
+        f"    SELECT DISTINCT p.id AS path_id FROM {CANONICAL_FROM} "
+        "    WHERE {where} "
+        ")"
+        " SELECT p.id AS path_id, p.file_name, p.file_type, p.file_size,"
+        " p.file_status, p.file_date, p.date_creation,"
+        " rpt_src.name AS source_name, rpt_side.name AS side_name,"
+        " CASE WHEN rpt_bl.last_max_id IS NULL THEN 'new_since_last_view'"
+        "      WHEN p.id <= rpt_bl.last_max_id THEN 'previously_seen'"
+        "      ELSE 'new_since_last_view' END AS view_state,"
+        " (p.date_creation >= CURRENT_DATE - 30) AS recently_created"
+        " FROM rpt_base"
+        " JOIN paths p ON p.id = rpt_base.path_id"
+        " LEFT JOIN hash_contexts rpt_hc ON rpt_hc.id = p.context_id"
+        " LEFT JOIN sources rpt_src ON rpt_src.id = rpt_hc.source_id"
+        " LEFT JOIN sides rpt_side ON rpt_side.id = rpt_hc.side_id"
+        " LEFT JOIN report_baselines rpt_bl"
+        "     ON rpt_bl.user_id = %s AND rpt_bl.criteria_hash = %s"
+        " ORDER BY p.date_creation DESC, p.id DESC"
+        " LIMIT %s"),  # nosec B608 # module constants only (CANONICAL_FROM); values are bound parameters
+    sql_params=(TOKEN_CRITERIA, TOKEN_VIEWER_ID, TOKEN_VIEWER_KEY, TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("criteria",),
+    criteria_param="criteria",
+    progress_column="path_id",
+)
+
 DATASETS: Tuple[Dataset, ...] = (
     SEARCH_RESULTS_MATCHES_V1,
     SEARCH_RESULTS_COUNT_V1,
@@ -665,4 +736,5 @@ DATASETS: Tuple[Dataset, ...] = (
     HORIZON_SIGNALS_V1,
     ENTITY_PLACE_MENTIONS_V1,
     RELATIONSHIP_CONTEXTS_V1,
+    LATEST_ENTRIES_V1,
 )

@@ -91,6 +91,13 @@ SQL_SLOTS: Tuple[str, ...] = ("where", "order", "scope")
 TOKEN_CRITERIA = "@criteria"   # params of the compiled {where}
 TOKEN_SCOPE = "@scope"         # params of the {scope} predicate
 TOKEN_LIMIT = "@limit"         # row_limit + 1, always last
+#: The reader's identity and view key, for datasets whose rows mean
+#: something per reader (Latest: what this reader has already seen). Both
+#: are bound from code - the authenticated requester and the view's
+#: baseline key - never from a request value; see ``Dataset.bind``.
+TOKEN_VIEWER_ID = "@viewer_id"
+TOKEN_VIEWER_KEY = "@viewer_key"
+_VIEWER_TOKENS = (TOKEN_VIEWER_ID, TOKEN_VIEWER_KEY)
 
 ROW_LIMIT_CEILING = 100_000
 
@@ -274,6 +281,9 @@ class BoundQuery:
     fetch_limit: int               # row_limit + 1
     criteria_fingerprint: Optional[str] = None
     notes: Tuple[str, ...] = ()
+    #: The reader's baseline key, when the dataset is read per viewer; the
+    #: SQL itself reads the baseline row inside the run's snapshot.
+    progress_key: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -292,6 +302,14 @@ class Dataset:
     criteria_param: Optional[str] = None  # which parameter feeds {where}/{order}
     scope_column: Optional[str] = None    # column the {scope} slot restricts
     unscoped_reason: Optional[str] = None
+    #: Which column records the reader's progress (Latest: the path id the
+    #: reader has read up to). Declared only on viewer datasets; the runner
+    #: advances that reader's baseline to the maximum of this column over
+    #: the rows actually shown. Runtime recording behaviour, not data shape,
+    #: so it is deliberately not part of ``semantic()``: the fingerprints of
+    #: released versions stay stable, and what a run recorded is kept on
+    #: the run itself (``report_run_datasets.baseline``).
+    progress_column: Optional[str] = None
 
     def __post_init__(self) -> None:
         _check(bool(_ID.match(self.dataset_id or "")),
@@ -322,10 +340,29 @@ class Dataset:
                f"{self.dataset_id}: SQL must end with 'LIMIT %s' (bound to row_limit + 1)")
         for token in tokens:
             if token.startswith("@"):
-                _check(token in (TOKEN_CRITERIA, TOKEN_SCOPE, TOKEN_LIMIT),
+                _check(token in (TOKEN_CRITERIA, TOKEN_SCOPE, TOKEN_LIMIT)
+                       + _VIEWER_TOKENS,
                        f"{self.dataset_id}: unknown token {token!r}")
+        # Viewer tokens: both or neither, always over a criteria view (the
+        # baseline's identity is that view's fingerprint), and progress
+        # recording only makes sense for a declared viewer dataset.
+        has_id = TOKEN_VIEWER_ID in tokens
+        has_key = TOKEN_VIEWER_KEY in tokens
+        _check(has_id == has_key,
+               f"{self.dataset_id}: {TOKEN_VIEWER_ID} and {TOKEN_VIEWER_KEY} "
+               "are declared together")
+        if has_id:
+            _check(self.criteria_param is not None,
+                   f"{self.dataset_id}: viewer tokens need criteria_param - "
+                   "the reader's baseline is keyed to one view's fingerprint")
+        if self.progress_column is not None:
+            _check(has_id,
+                   f"{self.dataset_id}: progress_column requires the viewer tokens")
+            _check(any(c.name == self.progress_column for c in self.columns),
+                   f"{self.dataset_id}: progress_column must be a declared column")
         plain = [t for t in tokens if not t.startswith("@")]
-        _check(sql.replace("%%", "").count("%s") == len(plain) + 1,
+        viewer_n = sum(1 for t in tokens if t in _VIEWER_TOKENS)
+        _check(sql.replace("%%", "").count("%s") == len(plain) + viewer_n + 1,
                f"{self.dataset_id}: %s count does not match sql_params")
         _check(set(plain) <= set(self.parameters),
                f"{self.dataset_id}: sql_params use undeclared parameters "
@@ -425,6 +462,23 @@ class Dataset:
             else:
                 fills["scope"] = f"{self.scope_column} = ANY(%s)"
                 slot_params[TOKEN_SCOPE] = (list(scope.allowed_source_ids),)
+        progress_key = None
+        if TOKEN_VIEWER_ID in self.sql_params:
+            # The reader is the authenticated requester the scope already
+            # carries - never a request value. The view key is derived
+            # here, purely, from the criteria fingerprint plus the
+            # parameters that shape the view (the criteria parameter
+            # itself excluded: its content is the fingerprint).
+            if not isinstance(scope.user_id, int):
+                raise ReportParameterError(
+                    f"{self.dataset_id}: a reader identity is required - "
+                    "this dataset is read per viewer")
+            from .baselines import baseline_key
+            shaping = {k: v for k, v in values.items()
+                       if k != self.criteria_param}
+            progress_key = baseline_key(criteria_fp, shaping)
+            slot_params[TOKEN_VIEWER_ID] = (scope.user_id,)
+            slot_params[TOKEN_VIEWER_KEY] = (progress_key,)
         sql = self.sql.format(**fills) if fills else self.sql
         params: List[Any] = []
         for token in self.sql_params:
@@ -436,7 +490,8 @@ class Dataset:
                 params.append(values.get(token))
         return BoundQuery(sql=" ".join(sql.split()), params=tuple(params),
                           fetch_limit=self.row_limit + 1,
-                          criteria_fingerprint=criteria_fp, notes=notes)
+                          criteria_fingerprint=criteria_fp, notes=notes,
+                          progress_key=progress_key)
 
 
 # ---------------------------------------------------------------------------

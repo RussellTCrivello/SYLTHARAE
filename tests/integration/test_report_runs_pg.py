@@ -288,3 +288,67 @@ def test_visibility_owner_admin_and_not_others(world):
     assert info.value.status == 403
     everyone = runs.list_runs(conn, user=world["admin"], all_users=True, limit=200)
     assert run["id"] in [r["id"] for r in everyone["items"]]
+
+
+def test_latest_run_records_and_advances_the_readers_baseline(world):
+    """The Latest report is read per viewer: the run records what the
+    reader had seen as its snapshot found it, advances the baseline to the
+    furthest row actually shown (never backwards), and the rows stored with
+    the run keep the classification they were read with."""
+    conn = world["conn"]
+
+    def _dataset_rows(run_id, user):
+        page = runs.dataset_rows(conn, run_id, "latest.entries@1", user=user)
+        return page["baseline"], page["rows"]
+
+    # First run: this reader has never viewed this view - an absent
+    # baseline, never a zero.
+    run1, out1 = _run(world, report_id="latest")
+    assert out1["status"] == "completed", out1
+    base1, rows1 = _dataset_rows(run1["id"], world["analyst"])
+    assert base1["baseline_recorded"] is True
+    assert base1["last_max_id_before"] is None, (
+        "never viewed is an absent row, not zero")
+    assert base1["advanced_to"] == max(r["path_id"] for r in rows1)
+    assert rows1 and all(r["view_state"] == "new_since_last_view" for r in rows1)
+    with conn, conn.cursor() as cur:
+        cur.execute("SELECT last_max_id FROM report_baselines"
+                    " WHERE user_id = %s AND criteria_hash = %s",
+                    (world["analyst"].id, base1["criteria_hash"]))
+        assert cur.fetchone()[0] == base1["advanced_to"]
+
+    # Second run: same view, same reader - everything previously seen, and
+    # the run records the baseline it actually used.
+    run2, out2 = _run(world, report_id="latest")
+    assert out2["status"] == "completed", out2
+    base2, rows2 = _dataset_rows(run2["id"], world["analyst"])
+    assert base2["last_max_id_before"] == base1["advanced_to"]
+    assert rows2 and all(r["view_state"] == "previously_seen" for r in rows2)
+
+    # The rows stored with the first run keep what they said then: a later
+    # baseline never rewrites a completed run (reproducibility).
+    base1b, rows1b = _dataset_rows(run1["id"], world["analyst"])
+    assert all(r["view_state"] == "new_since_last_view" for r in rows1b)
+    assert base1b["advanced_to"] == base1["advanced_to"]
+
+    # A new document arrives; the next run shows exactly it as new and
+    # advances this reader to it.
+    with conn, conn.cursor() as cur:
+        fresh_pid = document(cur, source_id=world["source"], side_id=world["side"],
+                             text=f"run {world['word']} fresh after baseline")[0]
+    run3, out3 = _run(world, report_id="latest")
+    assert out3["status"] == "completed", out3
+    base3, rows3 = _dataset_rows(run3["id"], world["analyst"])
+    states = {r["path_id"]: r["view_state"] for r in rows3}
+    assert states[fresh_pid] == "new_since_last_view"
+    assert sum(1 for v in states.values() if v == "new_since_last_view") == 1, (
+        "only the arrival is new; nothing else is re-marked")
+    assert base3["advanced_to"] == fresh_pid
+
+    # Reader isolation: another reader's first view of the same view is
+    # all new - progress is per reader, never shared.
+    run4, out4 = _run(world, user=world["admin"], report_id="latest")
+    assert out4["status"] == "completed", out4
+    base4, rows4 = _dataset_rows(run4["id"], world["admin"])
+    assert base4["last_max_id_before"] is None
+    assert all(r["view_state"] == "new_since_last_view" for r in rows4)

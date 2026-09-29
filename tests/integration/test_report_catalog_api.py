@@ -406,3 +406,38 @@ class TestOverHttp:
             "one row per (source, side) context - repeated triples never repeat")
         assert rows[0]["sibling_contexts"] >= rows[-1]["sibling_contexts"], (
             "most cross-posted first")
+
+    def test_latest_run_is_read_per_viewer_over_http(self, app, corpus,
+                                                     sync_jobs, pg_db):
+        """Over HTTP: the reader's first view of a view is all new, the run
+        records the baseline it used and advances it, and the next run
+        marks the same rows previously seen."""
+        c, _ = _analyst(app)
+        resp = _post(c, "/api/reports/runs",
+                     {"report_id": "latest",
+                      "parameters": {"criteria": {"text": corpus["word"]}}})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        run = resp.get_json()["run"]
+        page = c.get(f"/api/reports/runs/{run['id']}"
+                     "/datasets/latest.entries@1?limit=50").get_json()
+        assert page["rows"], "the corpus matches the criteria"
+        assert all(r["view_state"] == "new_since_last_view"
+                   for r in page["rows"])
+        assert page["baseline"]["last_max_id_before"] is None, (
+            "never viewed is an absent row, not a zero")
+        assert page["baseline"]["baseline_recorded"] is True
+        assert page["baseline"]["advanced_to"] == max(
+            r["path_id"] for r in page["rows"])
+        # The same reader, the same view, again: previously seen.
+        resp2 = _post(c, "/api/reports/runs",
+                      {"report_id": "latest",
+                       "parameters": {"criteria": {"text": corpus["word"]}}})
+        assert resp2.status_code == 200, resp2.get_data(as_text=True)
+        run2 = resp2.get_json()["run"]
+        page2 = c.get(f"/api/reports/runs/{run2['id']}"
+                      "/datasets/latest.entries@1?limit=50").get_json()
+        assert page2["rows"]
+        assert all(r["view_state"] == "previously_seen"
+                   for r in page2["rows"])
+        assert page2["baseline"]["last_max_id_before"] == \
+            page["baseline"]["advanced_to"]
