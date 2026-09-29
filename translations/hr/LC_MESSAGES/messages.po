@@ -12192,3 +12192,75 @@ msgid_plural "%(unknown_rows)s word records without a count were left out of eve
 msgstr[0] "%(unknown_rows)s zapis riječi bez broja izostavljen je iz svih zbrojeva."
 msgstr[1] "%(unknown_rows)s zapisa riječi bez broja izostavljena su iz svih zbrojeva."
 msgstr[2] "%(unknown_rows)s zapisa riječi bez broja izostavljeno je iz svih zbrojeva."
+
+# --- Keyword Intelligence & Category Analysis (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Keyword Intelligence Report"
+msgstr "Obavještajni izvještaj o ključnim riječima"
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Every keyword with the number of matched contents that contain it, how often it occurs in them, and the category it belongs to. The matched set is the contents your criteria select; keywords come from the whole collection."
+msgstr "Svaka ključna riječ s brojem odgovarajućih sadržaja koje sadrži, koliko se puta pojavljuje u njima i kategoriji kojoj pripada. Odgovarajući skup su sadržaji koje odabiru vaši kriteriji; ključne riječi dolaze iz cijele zbirke."
+
+#: core/reporting/definitions.py
+msgid "About the Keyword Intelligence Report"
+msgstr "O obavještajnom izvještaju o ključnim riječima"
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Shows each keyword's reach within the contents your criteria matched: how many contents contain it, how often it occurs, and its category. Keywords are listed even when nothing matches them."
+msgstr "Prikazuje doseg svake ključne riječi unutar sadržaja koje su vaši kriteriji označili: koliko sadržaja je sadrži, koliko se puta pojavljuje i njenu kategoriju. Ključne riječi navode se čak i kada im ništa ne odgovara."
+
+#: core/reporting/definitions.py
+msgid "Category Analysis Report"
+msgstr "Izvještaj analize kategorija"
+
+#: core/reporting/definitions.py
+msgid "Every category with the contents in the matched set that contain any of its words, the occurrences counted, and the category's share of the matched set. Categories overlap when a word belongs to several categories, so shares can sum to more than 100%."
+msgstr "Svaka kategorija sa sadržajima u odgovarajućem skupu koji sadrže barem jednu od njenih riječi, izbrojanim pojavljivanjima i udjelu kategorije u odgovarajućem skupu. Kategorije se preklapaju kada ista riječ pripada više kategorija, pa zbroj udjela može premašiti 100 %."
+
+#: core/reporting/definitions.py
+msgid "About the Category Analysis Report"
+msgstr "O izvještaju analize kategorija"
+
+#: core/reporting/definitions.py
+msgid "Shows, for each category, how many of the matched contents contain at least one of its words, how often those words occur, and the share of the matched set. Because categories can share words, contents are counted in every category that applies and shares are per category, not a partition."
+msgstr "Za svaku kategoriju prikazuje koliko odgovarajućih sadržaja sadrži barem jednu od njenih riječi, koliko se te riječi pojavljuju i udio u odgovarajućem skupu. Budući da kategorije mogu dijeliti riječi, sadržaji se broje u svakoj kategoriji na koju se odnose, a udjeli se računaju po svakoj kategoriji posebno i nisu potpuna podjela."
+
+#: core/reporting/datasets.py
+msgid "Keyword pattern"
+msgstr "Obrazac ključne riječi"
+
+
+
+
+
+#: core/reporting/datasets.py
+msgid "Category ID"
+msgstr "ID kategorije"
+
+#: core/reporting/datasets.py
+msgid "Words in category"
+msgstr "Riječi u kategoriji"
+
+#: core/reporting/datasets.py
+msgid "Keywords in category"
+msgstr "Ključne riječi u kategoriji"
+
+#: core/reporting/datasets.py
+msgid "Matching contents"
+msgstr "Odgovarajući sadržaji"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in matched contents"
+msgstr "Pojavljivanja u odgovarajućim sadržajima"
+
+#: core/reporting/datasets.py
+msgid "Contents in the matched set"
+msgstr "Sadržaji u odgovarajućem skupu"
+
+#: core/reporting/datasets.py
+msgid "Share of the matched set"
+msgstr "Udio u odgovarajućem skupu"

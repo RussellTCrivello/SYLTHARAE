@@ -11778,3 +11778,75 @@ msgid "%(unknown_rows)s word record without a count was left out of every total.
 msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
 msgstr[0] "רשומת מילה אחת ללא ספירה הושמטה מכל הסכומים."
 msgstr[1] "%(unknown_rows)s רשומות מילים ללא ספירה הושמטו מכל הסכומים."
+
+# --- Keyword Intelligence & Category Analysis (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Keyword Intelligence Report"
+msgstr "דוח מודיעין מילות מפתח"
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Every keyword with the number of matched contents that contain it, how often it occurs in them, and the category it belongs to. The matched set is the contents your criteria select; keywords come from the whole collection."
+msgstr "כל מילת מפתח עם מספר התכנים התואמים שהיא מופיעה בהם, כמה פעמים היא מופיעה בהם והקטגוריה שאליה היא שייכת. הקבוצה התואמת היא התכנים שהקריטריונים שלך בוחרים; מילות המפתח מגיעות מהאוסף כולו."
+
+#: core/reporting/definitions.py
+msgid "About the Keyword Intelligence Report"
+msgstr "על דוח מודיעין מילות מפתח"
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Shows each keyword's reach within the contents your criteria matched: how many contents contain it, how often it occurs, and its category. Keywords are listed even when nothing matches them."
+msgstr "מציג את היקף ההופעה של כל מילת מפתח בתוך התכנים שהקריטריונים שלך התאימו: כמה תכנים מכילים אותה, כמה פעמים היא מופיעה ומהי הקטגוריה שלה. מילות המפתח מופיעות ברשימה גם כשדבר לא תואם להן."
+
+#: core/reporting/definitions.py
+msgid "Category Analysis Report"
+msgstr "דוח ניתוח קטגוריות"
+
+#: core/reporting/definitions.py
+msgid "Every category with the contents in the matched set that contain any of its words, the occurrences counted, and the category's share of the matched set. Categories overlap when a word belongs to several categories, so shares can sum to more than 100%."
+msgstr "כל קטגוריה עם התכנים בקבוצה התואמת שמכילים לפחות אחת ממילותיה, מספר ההופעות שנספר, ונתח הקטגוריה מהקבוצה התואמת. קטגוריות חופפות כשאותה מילה שייכת לכמה קטגוריות, ולכן סכום הנתחים עשוי לעלות על 100%."
+
+#: core/reporting/definitions.py
+msgid "About the Category Analysis Report"
+msgstr "על דוח ניתוח קטגוריות"
+
+#: core/reporting/definitions.py
+msgid "Shows, for each category, how many of the matched contents contain at least one of its words, how often those words occur, and the share of the matched set. Because categories can share words, contents are counted in every category that applies and shares are per category, not a partition."
+msgstr "מציג לכל קטגוריה כמה מהתכנים התואמים מכילים לפחות מילה אחת ממילותיה, כמה פעמים מילים אלה מופיעות, ואת הנתח מהקבוצה התואמת. מכיוון שקטגוריות עשויות לשתף מילים, תכנים נספרים בכל קטגוריה שחלה עליהם, והנתחים מחושבים לכל קטגוריה בנפרד ואינם חלוקה שלמה."
+
+#: core/reporting/datasets.py
+msgid "Keyword pattern"
+msgstr "תבנית מילת המפתח"
+
+
+
+
+
+#: core/reporting/datasets.py
+msgid "Category ID"
+msgstr "מזהה קטגוריה"
+
+#: core/reporting/datasets.py
+msgid "Words in category"
+msgstr "מילים בקטגוריה"
+
+#: core/reporting/datasets.py
+msgid "Keywords in category"
+msgstr "מילות מפתח בקטגוריה"
+
+#: core/reporting/datasets.py
+msgid "Matching contents"
+msgstr "תכנים תואמים"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in matched contents"
+msgstr "הופעות בתכנים התואמים"
+
+#: core/reporting/datasets.py
+msgid "Contents in the matched set"
+msgstr "תכנים בקבוצה התואמת"
+
+#: core/reporting/datasets.py
+msgid "Share of the matched set"
+msgstr "נתח מהקבוצה התואמת"

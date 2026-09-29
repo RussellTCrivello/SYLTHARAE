@@ -12074,3 +12074,75 @@ msgid "%(unknown_rows)s word record without a count was left out of every total.
 msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
 msgstr[0] "%(unknown_rows)s رکورد واژهٔ بدون شمارش از همهٔ جمع‌ها کنار گذاشته شد."
 msgstr[1] "%(unknown_rows)s رکورد واژهٔ بدون شمارش از همهٔ جمع‌ها کنار گذاشته شدند."
+
+# --- Keyword Intelligence & Category Analysis (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Keyword Intelligence Report"
+msgstr "گزارش هوش واژه‌های کلیدی"
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Every keyword with the number of matched contents that contain it, how often it occurs in them, and the category it belongs to. The matched set is the contents your criteria select; keywords come from the whole collection."
+msgstr "هر واژه کلیدی همراه با شمار محتواهای منطبقی که آن را در بر دارند، شمار رخدادهای آن در آنها، و دسته‌ای که به آن تعلق دارد. مجموعه منطبق، محتواهایی است که معیارهای شما برمی‌گزینند؛ واژه‌های کلیدی از کل مجموعه می‌آیند."
+
+#: core/reporting/definitions.py
+msgid "About the Keyword Intelligence Report"
+msgstr "درباره گزارش هوش واژه‌های کلیدی"
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Shows each keyword's reach within the contents your criteria matched: how many contents contain it, how often it occurs, and its category. Keywords are listed even when nothing matches them."
+msgstr "گستره هر واژه کلیدی را درون محتواهای منطبق با معیارهای شما نشان می‌دهد: چند محتوا آن را در بر دارند، چند بار رخ داده و دسته آن چیست. واژه‌های کلیدی حتی وقتی هیچ چیز با آنها مطابقت ندارد فهرست می‌شوند."
+
+#: core/reporting/definitions.py
+msgid "Category Analysis Report"
+msgstr "گزارش تحلیل دسته‌ها"
+
+#: core/reporting/definitions.py
+msgid "Every category with the contents in the matched set that contain any of its words, the occurrences counted, and the category's share of the matched set. Categories overlap when a word belongs to several categories, so shares can sum to more than 100%."
+msgstr "هر دسته همراه با محتواهایی از مجموعه منطبق که دست‌کم یکی از واژه‌های آن را در بر دارند، شمار رخدادهای شمرده‌شده، و سهم دسته از مجموعه منطبق. دسته‌ها هنگامی هم‌پوشانی دارند که یک واژه به چند دسته تعلق داشته باشد؛ پس مجموع سهم‌ها ممکن است از ۱۰۰٪ فراتر رود."
+
+#: core/reporting/definitions.py
+msgid "About the Category Analysis Report"
+msgstr "درباره گزارش تحلیل دسته‌ها"
+
+#: core/reporting/definitions.py
+msgid "Shows, for each category, how many of the matched contents contain at least one of its words, how often those words occur, and the share of the matched set. Because categories can share words, contents are counted in every category that applies and shares are per category, not a partition."
+msgstr "برای هر دسته نشان می‌دهد چند محتوای منطبق دست‌کم یکی از واژه‌های آن را در بر دارند، آن واژه‌ها چند بار رخ داده‌اند و سهم از مجموعه منطبق چقدر است. چون دسته‌ها ممکن است واژه‌هایی مشترک داشته باشند، محتواها در هر دسته که بر آنها منطبق شود شمرده می‌شوند و سهم‌ها برای هر دسته جداگانه محاسبه می‌شود و یک تقسیم کامل نیستند."
+
+#: core/reporting/datasets.py
+msgid "Keyword pattern"
+msgstr "الگوی واژه کلیدی"
+
+
+
+
+
+#: core/reporting/datasets.py
+msgid "Category ID"
+msgstr "شناسه دسته"
+
+#: core/reporting/datasets.py
+msgid "Words in category"
+msgstr "واژه‌ها در دسته"
+
+#: core/reporting/datasets.py
+msgid "Keywords in category"
+msgstr "واژه‌های کلیدی در دسته"
+
+#: core/reporting/datasets.py
+msgid "Matching contents"
+msgstr "محتواهای منطبق"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in matched contents"
+msgstr "رخدادها در محتواهای منطبق"
+
+#: core/reporting/datasets.py
+msgid "Contents in the matched set"
+msgstr "محتواها در مجموعه منطبق"
+
+#: core/reporting/datasets.py
+msgid "Share of the matched set"
+msgstr "سهم از مجموعه منطبق"

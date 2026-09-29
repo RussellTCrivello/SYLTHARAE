@@ -49,6 +49,7 @@ UNITS: Tuple[str, ...] = (
     "hash",            # one distinct content (hashs.id)
     "context",         # one (hash_id, source_id, side_id) context
     "term",            # one word / keyword
+    "keyword",         # one keywords.row: a named pattern of words
     "source",
     "side",
     "category",

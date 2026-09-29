@@ -202,9 +202,175 @@ TERM_KEYNESS_TOTALS_V1 = Dataset(
     scope_column="rpt_hc.source_id",
 )
 
+# ---------------------------------------------------------------------------
+# Keyword Intelligence (step 17)
+#
+# One row per keyword: the keyword's reach inside the *contents* the
+# criteria matched. keywords_hashs is the content-level store
+# (hash_id, keyword_id, word_count, UNIQUE (hash_id, keyword_id)) - the
+# same content identity the criteria compiler uses - so this dataset
+# counts distinct contents and sums the stored per-content counts. A
+# keyword whose stored pattern is unreadable fails the query loudly (the
+# storage is either JSON from pack_int_list or a legacy blob that
+# scripts/repair_data.py rewrites); a count that was never measured
+# (word_count IS NULL) is never read as a zero - it is carried in
+# unknown_count_rows.
+# ---------------------------------------------------------------------------
+
+_KEYWORD_INTELLIGENCE_FROM = (
+    "WITH rpt_base AS ("
+    " SELECT DISTINCT hc.hash_id AS hash_id FROM " + CANONICAL_FROM + " WHERE {where}"
+    "), rpt_corpus AS ("
+    " SELECT COUNT(*) AS n FROM rpt_base"
+    "), rpt_hits AS ("
+    " SELECT rpt_kh.keyword_id, COUNT(*) AS contents,"
+    " COALESCE(SUM(rpt_kh.word_count), 0) AS occurrences,"
+    " COUNT(*) FILTER (WHERE rpt_kh.word_count IS NULL) AS unknown_count_rows"
+    " FROM keywords_hashs rpt_kh"
+    " JOIN rpt_base ON rpt_base.hash_id = rpt_kh.hash_id"
+    " GROUP BY rpt_kh.keyword_id"
+    ") "
+)
+
+KEYWORD_INTELLIGENCE_MATCHES_V1 = Dataset(
+    dataset_id="keyword_intelligence.matches",
+    version=1,
+    description=(
+        "Every keyword, with the number of contents matched by the criteria "
+        "that contain it, the total of the stored per-content counts, and "
+        "the count of contents whose stored count is unknown (word_count IS "
+        "NULL - excluded from the sum, never read as zero). The keyword "
+        "pattern is its words joined with single spaces in pattern order. "
+        "Capped: at most row_limit keywords, most widespread first; "
+        "overflow is detected (row_limit + 1 fetched) and recorded as "
+        "truncation, never hidden."),
+    unit="keyword",
+    semantics="capped",
+    row_limit=1000,
+    columns=(
+        Column("keyword_id", "integer", False, "Keyword ID"),
+        Column("label", "text", False, "Keyword pattern"),
+        Column("category_name", "text", False, "Category"),
+        Column("contents", "bigint", False, "Matching contents"),
+        Column("occurrences", "bigint", False, "Occurrences in matched contents"),
+        Column("unknown_count_rows", "bigint", False, "Word records without a count"),
+        Column("corpus_contents", "bigint", False, "Contents in the matched set"),
+    ),
+    sql=(_KEYWORD_INTELLIGENCE_FROM
+         + "SELECT rpt_k.id AS keyword_id, rpt_lbl.label, rpt_cw.word AS category_name,"  # nosec B608 # module constants only (_KEYWORD_INTELLIGENCE_FROM); values are bound parameters
+         " COALESCE(rpt_h.contents, 0)::bigint AS contents,"
+         " COALESCE(rpt_h.occurrences, 0)::bigint AS occurrences,"
+         " COALESCE(rpt_h.unknown_count_rows, 0)::bigint AS unknown_count_rows,"
+         " rpt_corpus.n::bigint AS corpus_contents"
+         " FROM keywords rpt_k"
+         " JOIN categorys rpt_c ON rpt_c.id = rpt_k.category_id"
+         " JOIN words rpt_cw ON rpt_cw.id = rpt_c.word_id"
+         " CROSS JOIN rpt_corpus"
+         " LEFT JOIN rpt_hits rpt_h ON rpt_h.keyword_id = rpt_k.id"
+         " LEFT JOIN LATERAL ("
+         "  SELECT COALESCE(string_agg(rpt_w.word, ' ' ORDER BY rpt_t.ord), '') AS label"
+         "  FROM jsonb_array_elements_text(convert_from(rpt_k.keyword, 'UTF8')::jsonb)"
+         "   WITH ORDINALITY AS rpt_t(word_id, ord)"
+         "  JOIN words rpt_w ON rpt_w.id = rpt_t.word_id::int"
+         " ) rpt_lbl ON TRUE"
+         " ORDER BY rpt_h.contents DESC NULLS LAST, rpt_lbl.label, rpt_h.keyword_id"
+         " LIMIT %s"),
+    sql_params=(TOKEN_CRITERIA, TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("criteria",),
+    criteria_param="criteria",
+)
+
+# ---------------------------------------------------------------------------
+# Category Analysis (step 17)
+#
+# One row per category: which of the *contents* the criteria matched contain
+# at least one of the category's words. The base is hash-level (the same
+# words_hashs x words_categorys join the criteria compiler uses for its
+# category clause), and contents are counted distinctly - two occurrences of
+# one content are one content. Categories overlap by design (one word may
+# belong to several categories), so shares are per category against the same
+# matched set and their sum may exceed 100%; the share is NULL when the
+# matched set is empty - an unknown share, never zero.
+# ---------------------------------------------------------------------------
+
+_CATEGORY_ANALYSIS_FROM = (
+    "WITH rpt_base AS ("
+    " SELECT DISTINCT hc.hash_id AS hash_id FROM " + CANONICAL_FROM + " WHERE {where}"
+    "), rpt_corpus AS ("
+    " SELECT COUNT(*) AS n FROM rpt_base"
+    "), rpt_hits AS ("
+    " SELECT rpt_wc.category_id,"
+    " COUNT(DISTINCT rpt_wh.hash_id) AS contents,"
+    " COALESCE(SUM(rpt_wh.word_count), 0) AS occurrences,"
+    " COUNT(*) FILTER (WHERE rpt_wh.word_count IS NULL) AS unknown_count_rows"
+    " FROM words_hashs rpt_wh"
+    " JOIN rpt_base ON rpt_base.hash_id = rpt_wh.hash_id"
+    " JOIN words_categorys rpt_wc ON rpt_wc.word_id = rpt_wh.word_id"
+    " GROUP BY rpt_wc.category_id"
+    ") "
+)
+
+CATEGORY_ANALYSIS_SUMMARY_V1 = Dataset(
+    dataset_id="category_analysis.summary",
+    version=1,
+    description=(
+        "Every category with: its number of member words and keywords; the "
+        "distinct contents matched by the criteria that contain at least one "
+        "member word; the total of the stored per-content counts of those "
+        "words (word_count IS NULL rows are excluded from the sum and "
+        "carried in unknown_count_rows, never read as zero); the size of the "
+        "matched set; and the category's share of it (contents / matched "
+        "set), NULL when the matched set is empty. Categories overlap when a "
+        "word belongs to several categories, so contents are counted in "
+        "every category that applies and shares are not a partition. "
+        "Capped: at most row_limit categories, most widespread first; "
+        "overflow is detected (row_limit + 1 fetched) and recorded as "
+        "truncation, never hidden."),
+    unit="category",
+    semantics="capped",
+    row_limit=1000,
+    columns=(
+        Column("category_id", "integer", False, "Category ID"),
+        Column("category_name", "text", False, "Category"),
+        Column("member_words", "bigint", False, "Words in category"),
+        Column("keywords", "bigint", False, "Keywords in category"),
+        Column("contents", "bigint", False, "Matching contents"),
+        Column("occurrences", "bigint", False, "Occurrences in matched contents"),
+        Column("unknown_count_rows", "bigint", False, "Word records without a count"),
+        Column("corpus_contents", "bigint", False, "Contents in the matched set"),
+        Column("content_share", "numeric", True, "Share of the matched set"),
+    ),
+    sql=(_CATEGORY_ANALYSIS_FROM
+         + "SELECT rpt_c.id AS category_id, rpt_w.word AS category_name,"  # nosec B608 # module constants only (_CATEGORY_ANALYSIS_FROM); values are bound parameters
+         " (SELECT COUNT(*) FROM words_categorys rpt_wc2"
+         "  WHERE rpt_wc2.category_id = rpt_c.id)::bigint AS member_words,"
+         " (SELECT COUNT(*) FROM keywords rpt_k2"
+         "  WHERE rpt_k2.category_id = rpt_c.id)::bigint AS keywords,"
+         " COALESCE(rpt_h.contents, 0)::bigint AS contents,"
+         " COALESCE(rpt_h.occurrences, 0)::bigint AS occurrences,"
+         " COALESCE(rpt_h.unknown_count_rows, 0)::bigint AS unknown_count_rows,"
+         " rpt_corpus.n::bigint AS corpus_contents,"
+         " CASE WHEN rpt_corpus.n > 0"
+         "  THEN COALESCE(rpt_h.contents, 0)::float8 / rpt_corpus.n"
+         "  ELSE NULL END AS content_share"
+         " FROM categorys rpt_c"
+         " JOIN words rpt_w ON rpt_w.id = rpt_c.word_id"
+         " CROSS JOIN rpt_corpus"
+         " LEFT JOIN rpt_hits rpt_h ON rpt_h.category_id = rpt_c.id"
+         " ORDER BY COALESCE(rpt_h.contents, 0) DESC, rpt_w.word, rpt_c.id"
+         " LIMIT %s"),
+    sql_params=(TOKEN_CRITERIA, TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("criteria",),
+    criteria_param="criteria",
+)
+
 DATASETS: Tuple[Dataset, ...] = (
     SEARCH_RESULTS_MATCHES_V1,
     SEARCH_RESULTS_COUNT_V1,
     TERM_KEYNESS_RANKED_V1,
     TERM_KEYNESS_TOTALS_V1,
+    KEYWORD_INTELLIGENCE_MATCHES_V1,
+    CATEGORY_ANALYSIS_SUMMARY_V1,
 )

@@ -14284,3 +14284,75 @@ msgid "%(unknown_rows)s word record without a count was left out of every total.
 msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
 msgstr[0] ""
 msgstr[1] ""
+
+# --- Keyword Intelligence & Category Analysis (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Keyword Intelligence Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Every keyword with the number of matched contents that contain it, how often it occurs in them, and the category it belongs to. The matched set is the contents your criteria select; keywords come from the whole collection."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "About the Keyword Intelligence Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Shows each keyword's reach within the contents your criteria matched: how many contents contain it, how often it occurs, and its category. Keywords are listed even when nothing matches them."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Category Analysis Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Every category with the contents in the matched set that contain any of its words, the occurrences counted, and the category's share of the matched set. Categories overlap when a word belongs to several categories, so shares can sum to more than 100%."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "About the Category Analysis Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Shows, for each category, how many of the matched contents contain at least one of its words, how often those words occur, and the share of the matched set. Because categories can share words, contents are counted in every category that applies and shares are per category, not a partition."
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Keyword pattern"
+msgstr ""
+
+
+
+
+
+#: core/reporting/datasets.py
+msgid "Category ID"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Words in category"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Keywords in category"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Matching contents"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Occurrences in matched contents"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Contents in the matched set"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Share of the matched set"
+msgstr ""

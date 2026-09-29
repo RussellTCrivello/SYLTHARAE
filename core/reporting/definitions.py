@@ -72,10 +72,47 @@ TERM_KEYNESS_ANALYSIS_V2 = dataclasses.replace(TERM_KEYNESS_ANALYSIS_V1, version
 TERM_KEYNESS_V2 = dataclasses.replace(TERM_KEYNESS_V1, version=2,
                                       analyses=("term_keyness@2",), status="active")
 
+KEYWORD_INTELLIGENCE_V1 = ReportDefinition(
+    report_id="keyword_intelligence",
+    version=1,
+    title="Keyword Intelligence Report",
+    description="Every keyword with the number of matched contents that "
+                "contain it, how often it occurs in them, and the category "
+                "it belongs to. The matched set is the contents your "
+                "criteria select; keywords come from the whole collection.",
+    help_topic="reports/keyword-intelligence",
+    unit="keyword",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("criteria", "criteria", "Search criteria", required=True),
+    ),
+    datasets=("keyword_intelligence.matches@1",),
+)
+
+CATEGORY_ANALYSIS_V1 = ReportDefinition(
+    report_id="category_analysis",
+    version=1,
+    title="Category Analysis Report",
+    description="Every category with the contents in the matched set that "
+                "contain any of its words, the occurrences counted, and the "
+                "category's share of the matched set. Categories overlap "
+                "when a word belongs to several categories, so shares can "
+                "sum to more than 100%.",
+    help_topic="reports/category-analysis",
+    unit="category",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("criteria", "criteria", "Search criteria", required=True),
+    ),
+    datasets=("category_analysis.summary@1",),
+)
+
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
     TERM_KEYNESS_V2,
+    KEYWORD_INTELLIGENCE_V1,
+    CATEGORY_ANALYSIS_V1,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
@@ -97,5 +134,22 @@ HELP_TOPICS: Tuple[HelpTopic, ...] = (
         summary="Compares how often each word occurs in the documents you "
                 "selected with the rest of the collection you may see, and "
                 "lists the words whose difference is statistically reliable.",
+    ),
+    HelpTopic(
+        topic="reports/keyword-intelligence",
+        title="About the Keyword Intelligence Report",
+        summary="Shows each keyword's reach within the contents your "
+                "criteria matched: how many contents contain it, how often "
+                "it occurs, and its category. Keywords are listed even when "
+                "nothing matches them.",
+    ),
+    HelpTopic(
+        topic="reports/category-analysis",
+        title="About the Category Analysis Report",
+        summary="Shows, for each category, how many of the matched contents "
+                "contain at least one of its words, how often those words "
+                "occur, and the share of the matched set. Because categories "
+                "can share words, contents are counted in every category "
+                "that applies and shares are per category, not a partition.",
     ),
 )

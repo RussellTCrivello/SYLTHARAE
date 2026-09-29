@@ -130,10 +130,22 @@ tracked, so it ships in the `git archive` release anyway.
 | Report | Unit | Roles | Datasets |
 | --- | --- | --- | --- |
 | `search_results@1` | path | admin, analyst, viewer | `search_results.matches@1` (capped 5000, criteria-compiled order), `search_results.count@1` (exact) |
+| `keyword_intelligence@1` | keyword | admin, analyst, viewer | `keyword_intelligence.matches@1` (capped 1000, most contents first) |
+| `category_analysis@1` | category | admin, analyst, viewer | `category_analysis.summary@1` (capped 1000, most contents first) |
 
-This is the registry's reference definition: it needs no analytics and reuses
-the compiler end to end. The other nine catalog reports (step 17) are added
-only when their datasets exist and are verified.
+`search_results@1` is the registry's reference definition: it needs no
+analytics and reuses the compiler end to end. The two step-17 families read
+the content-identity stores the compiler itself uses: Keyword Intelligence
+aggregates `keywords_hashs` (one row per keyword, its decoded pattern, its
+category, distinct matched contents, summed counts with the never-measured
+counts carried separately) and Category Analysis aggregates
+`words_hashs` x `words_categorys` (one row per category; categories overlap
+when a word belongs to several, so contents count in every category that
+applies, shares are per category against the same matched set - their sum
+may exceed 100% - and the share is NULL over an empty matched set: unknown,
+never zero). The remaining catalog families (Horizon, Entity/Place,
+Relationship, Latest/Change, Scenario Outcome, Comprehensive) are added only
+when their datasets exist and are verified.
 
 ## Evidence
 
@@ -141,21 +153,41 @@ only when their datasets exist and are verified.
   passes all three validations and the CLI; each validation rule, SQL rule,
   parameter rule and lock rule has a negative control; fingerprint
   stability and sensitivity; binding keeps hostile input in parameters.
-* `tests/integration/test_report_registry_pg.py` (6 tests, PostgreSQL): every
+* `tests/integration/test_report_registry_pg.py` (10 tests, PostgreSQL): every
   registered dataset executes with its declared column names and order;
   column type OIDs match the declaration; no NULL in non-nullable columns;
   the listing equals the compiler's own count; order is total (a date tie is
   broken by id); the access scope restricts rows in SQL; the `row_limit + 1`
   overflow row is visible; a hostile phrase is data. Negative control run
-  by hand: declaring `file_date` as `text` fails on OID 1082.
+  by hand: declaring `file_date` as `text` fails on OID 1082. The step-17
+  additions assert: every keyword listed over the matched set including the
+  zero-presence one (a measured zero), the never-measured count carried in
+  `unknown_count_rows`, the decoded pattern in stored word order,
+  distinct-content counts with overlap preserved (contents count in every
+  category that applies; per-category shares summing beyond 100%), the empty
+  matched set yielding measured zeros and a NULL share, the access scope
+  narrowing both new datasets before retrieval, and the capped overflow row.
+* `tests/unit/test_report_catalog_keyword_category.py` (14): the two
+  definitions' contracts (units, roles, datasets, capped semantics, the
+  nullable share, access through the criteria compiler, hostile phrase bound
+  as data, content-level stores only) and the full-registry validation.
+* `tests/integration/test_report_catalog_api.py` (6, over HTTP): both
+  definitions listed with their contracts; runs submitted through
+  `POST /api/reports/runs` execute on one snapshot with the expected rows
+  (decoded pattern, overlap, unknown share); viewer role reads but may not
+  write; the JSON artifact, its manifest (report id/version/unit, criteria
+  fingerprint, snapshot, per-dataset row counts) and the offline
+  verification agree.
 
 ## Limitations
 
 * **Nullability is checked empirically.** Tests assert that no NULL appears
   in non-nullable columns of the seeded result; they do not derive
-  nullability from the plan. Every column of the two current datasets is
-  NOT NULL through foreign keys (see comments in `datasets.py`), so there is
-  no nullable column to negative-control yet.
+  nullability from the plan. Every column of `search_results` and
+  `keyword_intelligence.matches` is NOT NULL through foreign keys (see
+  comments in `datasets.py`); `category_analysis.summary.content_share` is
+  the first declared-nullable column (NULL over an empty matched set) and is
+  covered by an executed assertion rather than a negative control.
 * **The compiler's semantics are not in the dataset fingerprint.** The
   fingerprint pins the declared SQL (including `CANONICAL_FROM`, which is
   interpolated). A change inside `compile_criteria` is not pinned here; each

@@ -11960,3 +11960,75 @@ msgstr[2] "استُبعد سجلا كلمات بلا عدد من كل المجا
 msgstr[3] "استُبعدت %(unknown_rows)s سجلات كلمات بلا عدد من كل المجاميع."
 msgstr[4] "استُبعد %(unknown_rows)s سجل كلمات بلا عدد من كل المجاميع."
 msgstr[5] "استُبعد %(unknown_rows)s سجلًا للكلمات بلا عدد من كل المجاميع."
+
+# --- Keyword Intelligence & Category Analysis (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Keyword Intelligence Report"
+msgstr "تقرير ذكاء الكلمات المفتاحية"
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Every keyword with the number of matched contents that contain it, how often it occurs in them, and the category it belongs to. The matched set is the contents your criteria select; keywords come from the whole collection."
+msgstr "كل كلمة مفتاحية مع عدد المحتويات المطابقة التي تحتويها، وعدد مرات ورودها فيها، والفئة التي تنتمي إليها. المجموعة المطابقة هي المحتويات التي تحددها معاييرك؛ وتأتي الكلمات المفتاحية من المجموعة بأكملها."
+
+#: core/reporting/definitions.py
+msgid "About the Keyword Intelligence Report"
+msgstr "حول تقرير ذكاء الكلمات المفتاحية"
+
+#: core/reporting/definitions.py
+#: core/reporting/definitions.py
+msgid "Shows each keyword's reach within the contents your criteria matched: how many contents contain it, how often it occurs, and its category. Keywords are listed even when nothing matches them."
+msgstr "يعرض مدى كل كلمة مفتاحية داخل المحتويات التي طابقتها معاييرك: كم محتوى يحتويها، وكم مرة وردت، وفئتها. تُدرج الكلمات المفتاحية حتى عندما لا يطابقها شيء."
+
+#: core/reporting/definitions.py
+msgid "Category Analysis Report"
+msgstr "تقرير تحليل الفئات"
+
+#: core/reporting/definitions.py
+msgid "Every category with the contents in the matched set that contain any of its words, the occurrences counted, and the category's share of the matched set. Categories overlap when a word belongs to several categories, so shares can sum to more than 100%."
+msgstr "كل فئة مع المحتويات في المجموعة المطابقة التي تحتوي أيًّا من كلماتها، وعدد الورود المحسوب، وحصة الفئة من المجموعة المطابقة. تتداخل الفئات عندما تنتمي الكلمة نفسها إلى عدة فئات، لذا قد يتجاوز مجموع الحصص 100%."
+
+#: core/reporting/definitions.py
+msgid "About the Category Analysis Report"
+msgstr "حول تقرير تحليل الفئات"
+
+#: core/reporting/definitions.py
+msgid "Shows, for each category, how many of the matched contents contain at least one of its words, how often those words occur, and the share of the matched set. Because categories can share words, contents are counted in every category that applies and shares are per category, not a partition."
+msgstr "يعرض لكل فئة عدد المحتويات المطابقة التي تحتوي كلمة واحدة من كلماتها على الأقل، وعدد مرات ورود تلك الكلمات، والحصة من المجموعة المطابقة. ولأن الفئات قد تتشارك الكلمات، تُحسب المحتويات في كل فئة تنطبق عليها، والحصص تُحسب لكل فئة على حدة وليست تقسيماً كاملاً."
+
+#: core/reporting/datasets.py
+msgid "Keyword pattern"
+msgstr "نمط الكلمة المفتاحية"
+
+
+
+
+
+#: core/reporting/datasets.py
+msgid "Category ID"
+msgstr "معرّف الفئة"
+
+#: core/reporting/datasets.py
+msgid "Words in category"
+msgstr "الكلمات في الفئة"
+
+#: core/reporting/datasets.py
+msgid "Keywords in category"
+msgstr "الكلمات المفتاحية في الفئة"
+
+#: core/reporting/datasets.py
+msgid "Matching contents"
+msgstr "المحتويات المطابقة"
+
+#: core/reporting/datasets.py
+msgid "Occurrences in matched contents"
+msgstr "مرات الورود في المحتويات المطابقة"
+
+#: core/reporting/datasets.py
+msgid "Contents in the matched set"
+msgstr "المحتويات في المجموعة المطابقة"
+
+#: core/reporting/datasets.py
+msgid "Share of the matched set"
+msgstr "الحصة من المجموعة المطابقة"
