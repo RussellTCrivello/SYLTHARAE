@@ -441,3 +441,40 @@ class TestOverHttp:
                    for r in page2["rows"])
         assert page2["baseline"]["last_max_id_before"] == \
             page["baseline"]["advanced_to"]
+
+    def test_rename_is_visible_to_the_change_report_over_http(
+            self, app, corpus, sync_jobs, pg_db):
+        """The revision writer is the single source of 'modified': renaming
+        a file through the operation the UI uses writes the log, the
+        report shows the transition with its previous and current values,
+        and the reader's next run marks it seen."""
+        path_id = corpus["paths"][0]
+        c, _ = _analyst(app)
+        resp = _post(c, f"/api/file/{path_id}/rename",
+                     {"new_name": "renamed_evidence"})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        params = {"report_id": "change",
+                  "parameters": {"criteria": {"text": corpus["word"]}}}
+        resp = _post(c, "/api/reports/runs", params)
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        run = resp.get_json()["run"]
+        page = c.get(f"/api/reports/runs/{run['id']}"
+                     "/datasets/change.modified@1?limit=10").get_json()
+        assert page["rows"], "the rename is a recorded modification"
+        row = page["rows"][0]
+        assert row["path_id"] == path_id
+        assert row["current_value"] == "renamed_evidence"
+        assert row["previous_value"], (
+            "the previous name comes from the revision log")
+        assert row["previous_value"] != row["current_value"]
+        added = c.get(f"/api/reports/runs/{run['id']}"
+                      "/datasets/change.added@1?limit=50").get_json()
+        assert added["rows"], "the first view of the view adds the set"
+        # Seen is seen: the same reader's next run re-marks nothing.
+        resp2 = _post(c, "/api/reports/runs", params)
+        assert resp2.status_code == 200, resp2.get_data(as_text=True)
+        run2 = resp2.get_json()["run"]
+        page2 = c.get(f"/api/reports/runs/{run2['id']}"
+                      "/datasets/change.modified@1?limit=10").get_json()
+        assert page2["rows"] == [], (
+            "the reader's watermark marked the event seen")

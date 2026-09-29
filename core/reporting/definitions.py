@@ -183,6 +183,26 @@ LATEST_V1 = ReportDefinition(
     datasets=("latest.entries@1",),
 )
 
+CHANGE_V1 = ReportDefinition(
+    report_id="change",
+    version=1,
+    title="Change Report",
+    description="What changed in the matched set since you last looked at "
+                "this view: documents added since then, and - from the "
+                "revision log - recorded modifications and removals, each "
+                "with the time it was detected, the values before the "
+                "change and the values after it. A state with nothing to "
+                "report is an empty list, which is a measurement, not an "
+                "unknown.",
+    help_topic="reports/change",
+    unit="path",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("criteria", "criteria", "Search criteria", required=True),
+    ),
+    datasets=("change.added@1", "change.modified@1", "change.removed@1"),
+)
+
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
@@ -193,6 +213,7 @@ REPORTS: Tuple[ReportDefinition, ...] = (
     ENTITY_PLACE_V1,
     RELATIONSHIP_V1,
     LATEST_V1,
+    CHANGE_V1,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
@@ -241,6 +262,18 @@ HELP_TOPICS: Tuple[HelpTopic, ...] = (
                 "reference date you choose: overdue, this week, this month, "
                 "this quarter, and later. Undated references and purely "
                 "past mentions are not part of the horizon.",
+    ),
+    HelpTopic(
+        topic="reports/change",
+        title="About the Change Report",
+        summary="Shows what changed in the matched set since you last ran "
+                "this view: added documents, and recorded modifications "
+                "and removals with the moment each was detected, what the "
+                "values were before, and what they became. Your watermark "
+                "is kept per view, per reader, and never moves backwards; "
+                "running the report marks its events seen. Removals appear "
+                "when a removal operation records them - until then the "
+                "empty list means none were recorded.",
     ),
     HelpTopic(
         topic="reports/latest",

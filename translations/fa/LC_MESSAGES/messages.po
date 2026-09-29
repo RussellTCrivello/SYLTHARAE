@@ -12311,3 +12311,41 @@ msgstr "وضعیت مشاهده"
 msgid "Recently created"
 msgstr "به‌تازگی ایجادشده"
 
+# --- Change Report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Change Report"
+msgstr "گزارش تغییرات"
+
+#: core/reporting/definitions.py
+msgid "What changed in the matched set since you last looked at this view: documents added since then, and - from the revision log - recorded modifications and removals, each with the time it was detected, the values before the change and the values after it. A state with nothing to report is an empty list, which is a measurement, not an unknown."
+msgstr "چه چیزی در مجموعه منطبق از آخرین باری که به این نما نگاه کردید تغییر کرده است: سندهای افزوده‌شده از آن زمان، و از دفتر بازبینی‌ها - تغییرات و حذف‌های ثبت‌شده، هر یک با زمان تشخیص، مقادیر قبل از تغییر و مقادیر پس از آن. حالتی که چیزی برای گزارش ندارد فهرستی خالی است، که یک اندازه‌گیری است، نه ناشناخته."
+
+#: core/reporting/definitions.py
+msgid "About the Change Report"
+msgstr "درباره گزارش تغییرات"
+
+#: core/reporting/definitions.py
+msgid "Shows what changed in the matched set since you last ran this view: added documents, and recorded modifications and removals with the moment each was detected, what the values were before, and what they became. Your watermark is kept per view, per reader, and never moves backwards; running the report marks its events seen. Removals appear when a removal operation records them - until then the empty list means none were recorded."
+msgstr "نشان می‌دهد چه چیزی در مجموعه منطبق از آخرین اجرای این نما تغییر کرده: سندهای افزوده‌شده، و تغییرات و حذف‌های ثبت‌شده با لحظه تشخیص هر یک، مقادیر قبل، و آنچه پس از آن شده است. نشانه آب شما برای هر نما و هر خواننده نگه داشته می‌شود و هرگز به عقب برنمی‌گردد؛ اجرای گزارش رویدادهایش را دیده‌شده علامت می‌زند. حذف‌ها وقتی ظاهر می‌شوند که یک عملیات حذف آن‌ها را ثبت کند - تا آن هنگام فهرست خالی یعنی هیچ حذفی ثبت نشده است."
+
+#: core/reporting/datasets.py
+msgid "Change kind"
+msgstr "نوع تغییر"
+
+#: core/reporting/datasets.py
+msgid "Detected at"
+msgstr "زمان تشخیص"
+
+#: core/reporting/datasets.py
+msgid "Previous value"
+msgstr "مقدار قبلی"
+
+#: core/reporting/datasets.py
+msgid "Current value"
+msgstr "مقدار فعلی"
+
+#: core/reporting/datasets.py
+msgid "Revision"
+msgstr "بازبینی"
+

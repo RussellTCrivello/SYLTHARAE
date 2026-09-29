@@ -352,3 +352,93 @@ def test_latest_run_records_and_advances_the_readers_baseline(world):
     base4, rows4 = _dataset_rows(run4["id"], world["admin"])
     assert base4["last_max_id_before"] is None
     assert all(r["view_state"] == "new_since_last_view" for r in rows4)
+
+
+def test_change_run_advances_one_watermark_for_all_its_datasets(world):
+    """The Change report's three datasets are one view: one baseline read,
+    one advance. A recorded modification shows exactly once; the second
+    run marks it seen; same-day additions stay visible (the ingestion
+    event's resolution is a date); and an empty view still records that it
+    was viewed - the id watermark holds, the time watermark moves."""
+    conn = world["conn"]
+
+    def _blocks(run_id, user):
+        return {key: runs.dataset_rows(conn, run_id, key, user=user)
+                for key in ("change.added@1", "change.modified@1",
+                            "change.removed@1")}
+
+    from core.criteria.access import scope_for
+
+    # A reader of their own: the view watermark is shared by Latest and
+    # Change when the view is the same (one baseline per distinct view,
+    # not per report), and earlier tests in this module ran Latest.
+    with conn, conn.cursor() as cur:
+        cur.execute("INSERT INTO users (username, password_hash, role)"
+                    " VALUES (%s, 'x', 'analyst') RETURNING id",
+                    (f"rr_change_{_U}",))
+        reader = SimpleNamespace(id=cur.fetchone()[0], role="analyst",
+                                 username=f"rr_change_{_U}",
+                                 has_role=lambda *roles: False)
+
+    bound = REGISTRY.dataset("search_results.count@1").bind(
+        {"criteria": {"text": world["word"]}}, scope_for(world["analyst"]))
+    with conn.cursor() as cur:
+        cur.execute(bound.sql, bound.params)
+        matched = cur.fetchone()[0]
+    conn.rollback()
+
+    run1, out1 = _run(world, user=reader, report_id="change")
+    assert out1["status"] == "completed", out1
+    b1 = _blocks(run1["id"], reader)
+    keys = {b["baseline"]["criteria_hash"] for b in b1.values()}
+    assert len(keys) == 1, "the three states share one view watermark"
+    assert b1["change.added@1"]["row_count"] == matched, (
+        "first view: the whole matched set is added")
+    assert b1["change.modified@1"]["row_count"] == 0
+    assert b1["change.removed@1"]["row_count"] == 0
+    base1 = b1["change.added@1"]["baseline"]
+    assert base1["last_max_id_before"] is None, "never viewed is not zero"
+    assert base1["baseline_recorded"] is True
+    assert base1["advanced_to"] == max(
+        r["path_id"] for r in b1["change.added@1"]["rows"]), (
+        "advanced to the furthest row actually shown")
+
+    # A recorded modification after the watermark, through the single
+    # writer the operations use.
+    from services.changes import record_path_revision
+
+    record_path_revision(world["paths"][0], "modified",
+                         old_values={"file_name": "before.txt"},
+                         new_values={"file_name": "after.txt"})
+    run2, out2 = _run(world, user=reader, report_id="change")
+    assert out2["status"] == "completed", out2
+    b2 = _blocks(run2["id"], reader)
+    assert b2["change.modified@1"]["row_count"] == 1
+    row = b2["change.modified@1"]["rows"][0]
+    assert row["path_id"] == world["paths"][0]
+    assert row["previous_value"] == "before.txt"
+    assert row["current_value"] == "after.txt"
+    assert b2["change.modified@1"]["baseline"]["last_max_id_before"] == \
+        base1["advanced_to"]
+
+    # Seen is seen: the modification does not re-mark; same-day additions
+    # remain visible (date granularity is the ingestion event's own).
+    run3, out3 = _run(world, user=reader, report_id="change")
+    assert out3["status"] == "completed", out3
+    b3 = _blocks(run3["id"], reader)
+    assert b3["change.modified@1"]["row_count"] == 0
+    assert b3["change.added@1"]["row_count"] == matched
+
+    # An empty view (criteria matching nothing = a different view key) is
+    # still a view: recorded, with the id watermark kept and the time
+    # watermark moved - the reader is not re-shown anything for it.
+    run4 = runs.submit_run(conn, user=reader, report_id="change",
+                           parameters={"criteria": {"text": f"zqq_none_{_U}"}})
+    out4 = runs.execute_run(conn, run4["id"])
+    assert out4["status"] == "completed", out4
+    b4 = _blocks(run4["id"], reader)
+    assert b4["change.added@1"]["row_count"] == 0
+    base4 = b4["change.added@1"]["baseline"]
+    assert base4["baseline_recorded"] is True
+    assert base4["last_max_id_before"] is None
+    assert base4["advanced_to"] == 0, "viewed and saw nothing - not a zero measurement"

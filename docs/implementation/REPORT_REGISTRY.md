@@ -136,6 +136,7 @@ tracked, so it ships in the `git archive` release anyway.
 | `entity_place@1` | place | admin, analyst, viewer | `entity_place.mentions@1` (capped 2000, most identified first) |
 | `relationship@1` | context | admin, analyst, viewer | `relationship.contexts@1` (capped 5000, most cross-posted first) |
 | `latest@1` | path | admin, analyst, viewer | `latest.entries@1` (capped 5000, newest first; read per viewer - every row states this reader's view state, and running it advances the reader's baseline) |
+| `change@1` | path | admin, analyst, viewer | `change.added@1` + `change.modified@1` + `change.removed@1` (each capped 5000; read per viewer against one shared watermark - added from the ingestion date, modified/removed from the revision log with previous and current values) |
 
 `search_results@1` is the registry's reference definition: it needs no
 analytics and reuses the compiler end to end. The two step-17 families read
@@ -173,9 +174,20 @@ progress), and new since the last view (beyond it; a reader without a
 baseline has no row, never a zero). Running the report advances the
 reader's baseline to the furthest row actually shown - monotonically - and
 the run records the baseline it used (before and after) beside its rows,
-so stored runs keep the classification they were read with. The remaining
-catalog families (Change, Scenario Outcome, Comprehensive) are added only
-when their datasets exist and are verified.
+so stored runs keep the classification they were read with. The Change
+family reads the same watermark with all three of its datasets - added is
+measured from ``paths.date_creation`` (the ingestion event, date
+resolution), modified and removed from the append-only ``path_revisions``
+log (migration 0029), one row per recorded event with the detection time,
+the previous values and the values after the change; a removed row has no
+current value, which is not an empty string. The watermark is kept per
+distinct view, not per report: Latest and Change of the same view advance
+the same reader progress, so "what changed since you last looked" answers
+for the set you looked at, however you looked at it. No removal operation
+exists yet, so an empty removed list is today's honest measurement; the
+log and its report are ready for the operation that will record removals.
+The remaining catalog families (Scenario Outcome, Comprehensive) are added
+only when their datasets exist and are verified.
 
 ## Evidence
 
@@ -246,7 +258,21 @@ when their datasets exist and are verified.
   (`last_max_id_before` absent = null, never zero) and advances it to the
   furthest row shown; stored rows keep their original view state. Over
   HTTP: first run all new and recorded, second run previously seen.
-
+* Change (step 17): `test_report_catalog_change.py` (14): the three states
+  share one view watermark, a scope without a reader is refused, the
+  revision log is the only source of modified/removed, the added state is
+  measured from the ingestion date pinned to UTC, previous/current values
+  are declared nullable (unknown, never an empty string), the writer
+  refuses unknown kinds. PG (registry suite, 28): first view shows every
+  state in full; previous/current values from the log, newest event first;
+  a removed row carries its previous values and no current value; the
+  watermark is per reader (a fresh reader sees everything); after the
+  watermark, seen events are not re-marked and an event recorded later is
+  shown exactly once. PG (runs suite): one run advances one watermark for
+  all three datasets; a rename through the operation writes the log and
+  the run shows it; an empty view records viewed-with-nothing, not zero.
+  Over HTTP: rename through the file operation is visible to the report,
+  and the next run marks it seen.
 ## Limitations
 
 * **Nullability is checked empirically.** Tests assert that no NULL appears

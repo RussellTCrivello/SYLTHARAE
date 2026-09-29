@@ -12182,3 +12182,41 @@ msgstr ""
 msgid "Recently created"
 msgstr ""
 
+# --- Change Report (step 17) ---
+
+#: core/reporting/definitions.py
+msgid "Change Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "What changed in the matched set since you last looked at this view: documents added since then, and - from the revision log - recorded modifications and removals, each with the time it was detected, the values before the change and the values after it. A state with nothing to report is an empty list, which is a measurement, not an unknown."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "About the Change Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Shows what changed in the matched set since you last ran this view: added documents, and recorded modifications and removals with the moment each was detected, what the values were before, and what they became. Your watermark is kept per view, per reader, and never moves backwards; running the report marks its events seen. Removals appear when a removal operation records them - until then the empty list means none were recorded."
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Change kind"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Detected at"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Previous value"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Current value"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Revision"
+msgstr ""
+

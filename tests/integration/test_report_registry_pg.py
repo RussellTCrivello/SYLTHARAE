@@ -149,6 +149,18 @@ def corpus(pg_db, app):
                                     text="ignored", hash_id=tie_hash,
                                     file_date=datetime.date(2026, 1, 2))
         paths[s2].append(tie_x_path)
+        # Change corpus: recorded modification history (migration 0029)
+        # on two matched occurrences. previous/current values mirror the
+        # rename writer's shape; changed_at is NOW() by default.
+        for i, (pid, before, after) in enumerate((
+                (paths[s1][0], "report_before_a.txt", "report_after_a.txt"),
+                (paths[s2][0], "report_before_b.txt", "report_after_b.txt"))):
+            cur.execute(
+                "INSERT INTO path_revisions (path_id, change_kind,"
+                " old_values, new_values)"
+                " VALUES (%s, 'modified', %s::jsonb, %s::jsonb)",
+                (pid, f'{{"file_name": "{before}", "file_path": "/seed/before"}}',
+                 f'{{"file_name": "{after}", "file_path": "/seed/after"}}'))
         # An undated signal: never a bucket, not listed by the horizon.
         cur.execute(
             "INSERT INTO content_signals (hash_id, detector, detector_ver,"
@@ -244,7 +256,10 @@ def test_every_dataset_executes_with_its_declared_shape(corpus, key):
     assert names == [c.name for c in ds.columns]
     for column, oid in zip(ds.columns, types):
         assert oid in COLUMN_TYPES[column.type], (key, column.name, oid)
-    assert rows, f"guard: {key} returned nothing, so the checks below are empty"
+    assert rows or key == "change.removed@1", (
+        f"guard: {key} returned nothing, so the checks below are empty "
+        "- the removed state is empty by expectation until a removal "
+        "operation records events (the report test seeds one)")
     for column_index, column in enumerate(ds.columns):
         if not column.nullable:
             assert all(row[column_index] is not None for row in rows), (key, column.name)
@@ -543,6 +558,120 @@ def test_latest_classifies_per_reader_inside_one_snapshot(corpus):
     by_id = {r[path_id]: r for r in rows4}
     assert by_id[fresh_pid][recent] is False
     assert all(r[recent] is True for pid, r in by_id.items() if pid != fresh_pid)
+
+
+def test_change_reports_the_three_states_per_reader(corpus):
+    """The Change report: added / modified / removed since this reader last
+    saw the view. First view shows every state in full (no watermark is
+    never a zero); the watermark is one per reader and view; a new event
+    after it is shown again and nothing else is re-marked; the removed
+    state reports the previous values and no current value."""
+    from core.reporting.baselines import record_baseline
+
+    conn = corpus["conn"]
+    ds_added = REGISTRY.dataset("change.added@1")
+    ds_modified = REGISTRY.dataset("change.modified@1")
+    ds_removed = REGISTRY.dataset("change.removed@1")
+    values = REGISTRY.report("change").normalize_parameters(
+        {"criteria": {"text": corpus["word"]}})
+    with conn, conn.cursor() as cur:
+        cur.execute("INSERT INTO users (username, password_hash, role)"
+                    " VALUES (%s, 'x', 'analyst') RETURNING id",
+                    (f"rc_{corpus['tag']}",))
+        reader = cur.fetchone()[0]
+        cur.execute("INSERT INTO users (username, password_hash, role)"
+                    " VALUES (%s, 'x', 'analyst') RETURNING id",
+                    (f"rc2_{corpus['tag']}",))
+        reader_b = cur.fetchone()[0]
+    scope = AccessScope.unrestricted(user_id=reader)
+
+    def _rows(ds, sc=scope):
+        return _execute(conn, ds.bind(values, sc))[2]
+
+    def _col(rows, names, name):
+        return [r[names.index(name)] for r in rows]
+
+    # First view: every state in full.
+    added = _execute(conn, ds_added.bind(values, scope))
+    names_a, rows_added = added[0], added[2]
+    corpus_ids = {pid for ids in corpus["paths"].values() for pid in ids}
+    assert corpus_ids <= set(_col(rows_added, names_a, "path_id")), (
+        "the whole matched set, no baseline yet - nothing held back")
+    assert set(_col(rows_added, names_a, "change_kind")) == {"added"}
+    assert all(v is None for v in
+               _col(rows_added, names_a, "previous_value")), (
+        "an added row has no previous value - NULL, never an empty string")
+    assert _col(rows_added, names_a, "current_value") == \
+        _col(rows_added, names_a, "file_name")
+    rows_modified = _execute(conn, ds_modified.bind(values, scope))[2]
+    names_m = _execute(conn, ds_modified.bind(values, scope))[0]
+    assert len(rows_modified) == 2
+    assert _col(rows_modified, names_m, "previous_value") == [
+        "report_before_b.txt", "report_before_a.txt"], "newest event first"
+    assert _col(rows_modified, names_m, "current_value") == [
+        "report_after_b.txt", "report_after_a.txt"]
+    assert all(v is not None for v in
+               _col(rows_modified, names_m, "detected_at"))
+    assert _execute(conn, ds_removed.bind(values, scope))[2] == []
+
+    # A recorded removal (on a ghost occurrence created here so the corpus
+    # counts above stay untouched): previous values, no current value.
+    with conn, conn.cursor() as cur:
+        ghost_pid = document(cur, source_id=corpus["s1"], side_id=side(cur),
+                             text=f"{corpus['word']} ghost for removal")[0]
+        cur.execute(
+            "INSERT INTO path_revisions (path_id, change_kind, old_values,"
+            " new_values) VALUES (%s, 'removed', %s::jsonb, %s::jsonb)"
+            " RETURNING id",
+            (ghost_pid, '{"file_name": "ghost.txt", "file_path": "/seed/ghost"}',
+             '{"reason": "seed removal event"}'))
+        removed_rev = cur.fetchone()[0]
+    rows_removed = _execute(conn, ds_removed.bind(values, scope))[2]
+    names_r = _execute(conn, ds_removed.bind(values, scope))[0]
+    assert len(rows_removed) == 1
+    assert rows_removed[0][names_r.index("revision_id")] == removed_rev
+    assert rows_removed[0][names_r.index("previous_value")] == "ghost.txt"
+    assert rows_removed[0][names_r.index("current_value")] is None, (
+        "a removed row has no current value - not an empty string")
+    # The new occurrence is added for a fresh reader, together with the
+    # removal: another reader's watermark is their own.
+    scope_b = AccessScope.unrestricted(user_id=reader_b)
+    rows_added_b = _execute(conn, ds_added.bind(values, scope_b))[2]
+    ids_b = set(_col(rows_added_b, names_a, "path_id"))
+    assert ghost_pid in ids_b and corpus_ids <= ids_b, (
+        "a fresh reader sees every occurrence - corpus and ghost alike - "
+        "their watermark is their own")
+
+    # Reading the view moves this reader's watermark: modifications and
+    # removals already seen are not re-marked; same-day additions remain
+    # visible (date granularity is the ingestion event's own resolution);
+    # the old-dated occurrence drops out.
+    key = ds_added.bind(values, scope).progress_key
+    record_baseline(reader, key, max(r[names_a.index("path_id")]
+                                     for r in rows_added_b), conn=conn)
+    conn.commit()  # the watermark's NOW() is this transaction's start time;
+    # a later event must be recorded in a LATER transaction to be newer.
+    assert _execute(conn, ds_modified.bind(values, scope))[2] == []
+    assert _execute(conn, ds_removed.bind(values, scope))[2] == []
+    rows_added_2 = _execute(conn, ds_added.bind(values, scope))[2]
+    assert ghost_pid in set(_col(rows_added_2, names_a, "path_id"))
+    assert all(str(v)[:10] == str(datetime.date.today())
+               for v in _col(rows_added_2, names_a, "detected_at")), (
+        "after the watermark: same-day additions remain visible (the "
+        "ingestion event's own resolution is a date) - older ones drop out")
+
+    # An event after the watermark is shown again - exactly it.
+    with conn, conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO path_revisions (path_id, change_kind, old_values,"
+            " new_values) VALUES (%s, 'modified', %s::jsonb, %s::jsonb)",
+            (corpus["paths"][corpus["s1"]][0],
+             '{"file_name": "later_before.txt"}',
+             '{"file_name": "later_after.txt"}'))
+    rows_modified_2 = _execute(conn, ds_modified.bind(values, scope))[2]
+    assert len(rows_modified_2) == 1
+    assert rows_modified_2[0][names_m.index("previous_value")] == \
+        "later_before.txt"
 
 
 def test_relationship_counts_contexts_not_path_rows(corpus):

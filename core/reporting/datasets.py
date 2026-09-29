@@ -726,6 +726,141 @@ LATEST_ENTRIES_V1 = Dataset(
     progress_column="path_id",
 )
 
+# --- Change Report (step 17) ------------------------------------------------
+# What changed in a view since this reader last saw it. *Added* is measured
+# from paths.date_creation (the ingestion event); *modified* and *removed*
+# are read from the path_revisions log (migration 0029) - the only place
+# previous values exist. All three datasets are viewer datasets over the
+# same view key: the watermark is this reader's last_seen_at (a time
+# watermark - a path has no "modification id"), pinned to UTC for
+# reproducibility; a reader without a baseline has seen nothing, so every
+# state shows in full - never read as a zero. An empty result is a measured
+# "nothing changed", not an unknown.
+_CHANGE_FROM = (
+    "FROM path_revisions rpt_rev "
+    "JOIN paths p ON p.id = rpt_rev.path_id "
+    "LEFT JOIN hash_contexts hc ON p.context_id = hc.id "
+    "LEFT JOIN hashs h ON hc.hash_id = h.id "
+    "LEFT JOIN report_baselines rpt_bl"
+    "     ON rpt_bl.user_id = %s AND rpt_bl.criteria_hash = %s "
+    "LEFT JOIN sources rpt_src ON rpt_src.id = hc.source_id "
+    "LEFT JOIN sides rpt_side ON rpt_side.id = hc.side_id "
+    "WHERE rpt_rev.change_kind = '{kind}' "
+    "AND rpt_rev.changed_at > COALESCE(rpt_bl.last_seen_at,"
+    " to_timestamp(0)) "
+    "AND {where} "
+    "ORDER BY rpt_rev.changed_at DESC, rpt_rev.id DESC "
+    "LIMIT %s"
+)
+
+_CHANGE_COLUMNS = (
+    Column("path_id", "integer", False, "File ID"),
+    Column("file_name", "text", False, "File name"),
+    Column("file_type", "text", False, "File type"),
+    Column("file_size", "bigint", False, "File size"),
+    Column("source_name", "text", False, "Source"),
+    Column("side_name", "text", False, "Side"),
+    Column("change_kind", "text", False, "Change kind"),
+    Column("detected_at", "timestamptz", False, "Detected at"),
+    # A revision's JSON carries whichever fields that operation changed;
+    # a future operation may record no file_name, so these stay nullable
+    # by declaration - unknown, never an empty string.
+    Column("previous_value", "text", True, "Previous value"),
+    Column("current_value", "text", True, "Current value"),
+)
+
+CHANGE_ADDED_V1 = Dataset(
+    dataset_id="change.added",
+    version=1,
+    description=(
+        "File occurrences of the matched set ingested since this reader "
+        "last viewed this view (everything, when they never have - a first "
+        "view shows the full matched set as added, not as a zero). One row "
+        "per occurrence, newest first. Capped: at most row_limit rows; "
+        "overflow is detected (row_limit + 1 fetched) and recorded as "
+        "truncation, never hidden. Running the report advances the "
+        "reader's watermark."),
+    unit="path",
+    semantics="capped",
+    row_limit=5000,
+    columns=_CHANGE_COLUMNS,
+    sql=(
+        "WITH rpt_base AS ("
+        f"    SELECT DISTINCT p.id AS path_id FROM {CANONICAL_FROM} "
+        "    WHERE {where} "
+        ") "
+        " SELECT p.id AS path_id, p.file_name, p.file_type, p.file_size,"
+        " rpt_src.name AS source_name, rpt_side.name AS side_name,"
+        " 'added' AS change_kind,"
+        " p.date_creation::timestamptz AS detected_at,"
+        " NULL::text AS previous_value, p.file_name AS current_value"
+        " FROM rpt_base"
+        " JOIN paths p ON p.id = rpt_base.path_id"
+        " LEFT JOIN hash_contexts rpt_hc ON rpt_hc.id = p.context_id"
+        " LEFT JOIN sources rpt_src ON rpt_src.id = rpt_hc.source_id"
+        " LEFT JOIN sides rpt_side ON rpt_side.id = rpt_hc.side_id"
+        " LEFT JOIN report_baselines rpt_bl"
+        "     ON rpt_bl.user_id = %s AND rpt_bl.criteria_hash = %s"
+        " WHERE rpt_bl.last_seen_at IS NULL"
+        "    OR p.date_creation >="
+        " (rpt_bl.last_seen_at AT TIME ZONE 'UTC')::date"
+        " ORDER BY p.date_creation DESC, p.id DESC"
+        " LIMIT %s"),  # nosec B608 # module constants only (CANONICAL_FROM); values are bound parameters
+    sql_params=(TOKEN_CRITERIA, TOKEN_VIEWER_ID, TOKEN_VIEWER_KEY, TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("criteria",),
+    criteria_param="criteria",
+    progress_column="path_id",
+)
+
+
+def _change_revision_dataset(dataset_id, kind, description):
+    return Dataset(
+        dataset_id=dataset_id,
+        version=1,
+        description=description,
+        unit="path",
+        semantics="capped",
+        row_limit=5000,
+        columns=(Column("revision_id", "bigint", False, "Revision"),)
+                + _CHANGE_COLUMNS,
+        sql=("SELECT rpt_rev.id AS revision_id, p.id AS path_id,"
+             " p.file_name, p.file_type, p.file_size,"
+             " rpt_src.name AS source_name, rpt_side.name AS side_name,"
+             " rpt_rev.change_kind AS change_kind,"
+             " rpt_rev.changed_at AS detected_at,"
+             " rpt_rev.old_values->>'file_name' AS previous_value,"
+             " rpt_rev.new_values->>'file_name' AS current_value "
+             + _CHANGE_FROM.replace("{kind}", kind)),  # nosec B608 # fixed fragments, kind from the module constant pair; values are bound parameters
+        sql_params=(TOKEN_VIEWER_ID, TOKEN_VIEWER_KEY, TOKEN_CRITERIA,
+                    TOKEN_LIMIT),
+        roles=_READERS,
+        parameters=("criteria",),
+        criteria_param="criteria",
+        progress_column="path_id",
+    )
+
+
+CHANGE_MODIFIED_V1 = _change_revision_dataset(
+    "change.modified", "modified",
+    "Recorded modifications of the matched set's occurrences since this "
+    "reader last viewed this view - one row per revision event from the "
+    "append-only path_revisions log, with the detection time, the previous "
+    "values and the values after the change. Everything the log holds, "
+    "when the reader never has. Capped: at most row_limit rows, newest "
+    "event first; overflow is detected and recorded as truncation, never "
+    "hidden. Running the report advances the reader's watermark.")
+
+CHANGE_REMOVED_V1 = _change_revision_dataset(
+    "change.removed", "removed",
+    "Recorded removals of the matched set's occurrences since this reader "
+    "last viewed this view, from the same append-only log: the previous "
+    "values as they were, the detection time, and no current value - a "
+    "removed row has none, which is not the same as an empty string. No "
+    "removal operation exists yet, so an empty result is the honest "
+    "measurement today. Capped: at most row_limit rows, newest event "
+    "first; overflow is detected and recorded as truncation, never hidden.")
+
 DATASETS: Tuple[Dataset, ...] = (
     SEARCH_RESULTS_MATCHES_V1,
     SEARCH_RESULTS_COUNT_V1,
@@ -737,4 +872,7 @@ DATASETS: Tuple[Dataset, ...] = (
     ENTITY_PLACE_MENTIONS_V1,
     RELATIONSHIP_CONTEXTS_V1,
     LATEST_ENTRIES_V1,
+    CHANGE_ADDED_V1,
+    CHANGE_MODIFIED_V1,
+    CHANGE_REMOVED_V1,
 )

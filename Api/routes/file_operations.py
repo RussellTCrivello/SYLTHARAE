@@ -29,6 +29,7 @@ from flask import Blueprint, jsonify, request
 
 from Api.utils import execute_query, get_query_cache
 from core.security.disclosure import note_disclosure
+from core.security.flask_ext import current_user
 from core.security.rate_limit import limiter, INTERACTIVE_READ_LIMIT
 
 logger = logging.getLogger(__name__)
@@ -132,6 +133,33 @@ def rename_file(file_id: int):
         (new_name, new_path, file_id),
         fetch=None,
     )
+    # The Change report can only answer "what was it before?" if the
+    # previous values are recorded: one revision per rename, with the actor.
+    try:
+        from services.changes import record_path_revision
+        actor = current_user()
+        record_path_revision(
+            file_id, 'modified',
+            old_values={'file_name': old_name, 'file_path': old_path},
+            new_values={'file_name': new_name, 'file_path': new_path},
+            actor_id=getattr(actor, 'id', None))
+    except Exception:
+        # The rename itself succeeded; a lost revision must not fail the
+        # user's operation - but it is never swallowed: the failure lands
+        # in the audit log with the file, so the gap is answerable.
+        logger.exception("Revision recording failed for file %s", file_id)
+        try:
+            from core.security.service import get_auth_service
+            user = current_user()
+            get_auth_service().audit(
+                "PATH_REVISION_FAILED", user_id=getattr(user, "id", None),
+                username=getattr(user, "username", None),
+                resource=f"file:{file_id}",
+                detail={"error": "revision recording failed"},
+                ip_address=request.remote_addr)
+        except Exception:
+            logger.exception("Audit of the failed revision failed for file %s",
+                             file_id)
     _clear_cache()
     note_disclosure(kind='file_rename', scope=f'file:{file_id}', unit='file',
                     row_count=1, file_ids=[file_id], detail={'from': old_name, 'to': new_name})

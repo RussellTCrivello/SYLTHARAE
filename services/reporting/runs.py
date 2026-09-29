@@ -390,10 +390,13 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
     results: List[Dict[str, Any]] = []
     analyses: List[Dict[str, Any]] = []
     snapshot: Dict[str, Any] = {}
-    # A viewer dataset (Latest) records, on its own block, what the reader
-    # had seen as THIS run's snapshot found it - and after the snapshot
-    # transaction closes, the baseline is advanced to what the run showed.
-    baseline_work: Optional[tuple] = None
+    # Viewer datasets (Latest; every dataset of the Change report) record,
+    # on their own block, what the reader had seen as THIS run's snapshot
+    # found it - and after the snapshot transaction closes, each view's
+    # baseline is advanced to what the run showed. Datasets of one
+    # definition can share a view (the Change report's three datasets do):
+    # they read the same baseline and are advanced together, once.
+    baseline_work: Dict[str, Dict[str, Any]] = {}
     total = len(definition.datasets)
     try:
         with _dict_cur(conn) as cur:
@@ -430,18 +433,23 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
                                          "one recorded at submission")
                     results.append(_read_dataset(cur, dataset, bound))
                     if dataset.progress_column is not None and bound.progress_key:
-                        cur.execute(
-                            "SELECT last_max_id FROM report_baselines"
-                            " WHERE user_id = %s AND criteria_hash = %s",
-                            (user["id"], bound.progress_key))
-                        seen = cur.fetchone()
-                        before = (int(seen["last_max_id"])
-                                  if seen and seen["last_max_id"] is not None else None)
+                        if bound.progress_key not in baseline_work:
+                            cur.execute(
+                                "SELECT last_max_id FROM report_baselines"
+                                " WHERE user_id = %s AND criteria_hash = %s",
+                                (user["id"], bound.progress_key))
+                            seen = cur.fetchone()
+                            before = (int(seen["last_max_id"])
+                                      if seen and seen["last_max_id"] is not None
+                                      else None)
+                            baseline_work[bound.progress_key] = {
+                                "user_id": user["id"], "before": before,
+                                "column": dataset.progress_column, "blocks": []}
+                        entry = baseline_work[bound.progress_key]
                         results[-1]["baseline"] = {
                             "criteria_hash": bound.progress_key,
-                            "last_max_id_before": before}
-                        baseline_work = (user["id"], bound.progress_key,
-                                         dataset.progress_column, results[-1])
+                            "last_max_id_before": entry["before"]}
+                        entry["blocks"].append(results[-1])
                     if progress_cb:
                         progress_cb({"percent": int(100 * (index + 1) / total),
                                      "current_phase": f"Report dataset {key}",
@@ -469,29 +477,31 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
     if refusal is not None:
         _finish(conn, run_id, "refused", refusal=refusal, snapshot=snapshot)
         return outcome("refused", refusal=refusal)
-    if baseline_work is not None:
-        reader_id, view_key, column, block = baseline_work
+    for view_key, entry in baseline_work.items():
         # The reader has now been shown these rows: advance their baseline
         # to the furthest id actually shown (monotonic - never backwards).
+        # A view read as empty is still a view: recording keeps the id and
+        # moves last_seen_at, so a Change view does not re-show its events.
         # Failing to record is not allowed to fail the run, but it is named
         # on the run: the reader may see rows again as new, never un-see.
+        column, blocks = entry["column"], entry["blocks"]
+        shown = [int(r[column]) for b in blocks for r in b["rows"]]
         try:
-            if block["rows"]:
-                advanced = record_baseline(reader_id, view_key,
-                                           max(int(r[column]) for r in block["rows"]),
-                                           conn=conn)
-            else:
-                advanced = {"last_max_id": block["baseline"]["last_max_id_before"]}
+            advanced = record_baseline(
+                entry["user_id"], view_key,
+                max(shown) if shown else (entry["before"] or 0), conn=conn)
             conn.commit()
-            block["baseline"] = dict(block["baseline"],
-                                     advanced_to=advanced["last_max_id"],
-                                     baseline_recorded=True)
+            for block in blocks:
+                block["baseline"] = dict(block["baseline"],
+                                         advanced_to=advanced["last_max_id"],
+                                         baseline_recorded=True)
         except Exception:
             conn.rollback()
             logger.exception("report run %s: baseline advance failed", run_id)
-            block["baseline"] = dict(block["baseline"], advanced_to=None,
-                                     baseline_recorded=False,
-                                     reason="baseline_advance_failed")
+            for block in blocks:
+                block["baseline"] = dict(block["baseline"], advanced_to=None,
+                                         baseline_recorded=False,
+                                         reason="baseline_advance_failed")
     _finish(conn, run_id, "completed", snapshot=snapshot, datasets=results,
             analyses=analyses)
     return dict(outcome("completed", datasets=[
