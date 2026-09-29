@@ -94,6 +94,10 @@
                 <summary>{{ _('Provenance') }}</summary>
                 <dl id="runProvenance" class="row small mb-0 mt-2"></dl>
             </details>
+            <section id="runAnalyses" class="mb-3 d-none" aria-labelledby="runAnalysesTitle">
+                <h3 class="fs-6 mb-1" id="runAnalysesTitle">{{ _('Analyses') }}</h3>
+                <div id="runAnalysisList"></div>
+            </section>
             <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
                 <label class="small" for="runDatasetSelect">{{ _('Dataset') }}</label>
                 <select class="form-select form-select-sm w-auto" id="runDatasetSelect"></select>
@@ -169,6 +173,13 @@
     "prov_generator": _('Generator'), "prov_job": _('Job'),
     "prov_requested": _('Requested'), "prov_started": _('Started'), "prov_finished": _('Finished'),
     "prov_query_fp": _('Query fingerprint'),
+    "analyses": _('Analyses'),
+    "voice_measure": _('Measure'), "voice_finding": _('Finding'),
+    "voice_confidence": _('Confidence'), "voice_consequence": _('Consequence'),
+    "voice_caveat": _('Caveat'),
+    "analysis_measured": _('Measured'),
+    "analysis_not_measurable": _('Not measurable'),
+    "analysis_meta": _('Analysis %(key)s, templates %(templates)s'),
     "job_running": _('Job %(id)s: %(status)s...'), "job_done": _('Job %(id)s finished: %(status)s.'),
     "job_timeout": _('Job %(id)s is still running; refresh the runs list later.'),
     "page": _('%(from)s-%(to)s of %(total)s'), "previous": _('Previous'), "next": _('Next'),

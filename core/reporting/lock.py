@@ -14,7 +14,7 @@ import argparse
 import json
 import sys
 
-from .registry import LOCK_PATH, REGISTRY, read_lock
+from .registry import LOCK_PATH, REGISTRY, SINGULAR, read_lock
 
 
 def write_new_entries(path: str = LOCK_PATH) -> int:
@@ -27,13 +27,13 @@ def write_new_entries(path: str = LOCK_PATH) -> int:
             print(f"refused: {problem}", file=sys.stderr)
         return 1
     added = 0
-    for section in ("datasets", "reports"):
+    for section in ("datasets", "analyses", "reports"):
         pinned = lock.setdefault(section, {})
         for key, fp in current[section].items():
             if key not in pinned:
                 pinned[key] = fp
                 added += 1
-                print(f"pinned {section[:-1]} {key} {fp[:12]}")
+                print(f"pinned {SINGULAR[section]} {key} {fp[:12]}")
         lock[section] = dict(sorted(pinned.items()))
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(lock, fh, indent=2, sort_keys=True)
@@ -48,7 +48,8 @@ def check() -> int:
     for problem in problems:
         print(problem, file=sys.stderr)
     print(f"{len(REGISTRY.reports)} report version(s), {len(REGISTRY.datasets)} "
-          f"dataset version(s): {len(problems)} problem(s)")
+          f"dataset version(s), {len(REGISTRY.analyses)} analysis version(s): "
+          f"{len(problems)} problem(s)")
     return 1 if problems else 0
 
 

@@ -32,8 +32,10 @@ from typing import Dict, Iterable, List, Mapping, Optional, Tuple
 
 from core.security.service import ALL_ROLES
 
+from core.analytics.kinds import Analysis
+
 from .datasets import DATASETS
-from .definitions import HELP_TOPICS, REPORTS
+from .definitions import ANALYSES, HELP_TOPICS, REPORTS
 from .model import Dataset, HelpTopic, ReportDefinition
 
 LOCK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -45,6 +47,9 @@ TRANSLATED_LANGUAGES: Tuple[str, ...] = ("ar", "he", "fa", "hr")
 _PLACEHOLDER = re.compile(r"%\([a-z_]+\)[sd]|\{[a-z_]*\}")
 
 
+SINGULAR = {"datasets": "dataset", "analyses": "analysis", "reports": "report"}
+
+
 class ReportNotFound(LookupError):
     pass
 
@@ -54,6 +59,7 @@ class ReportRegistry:
     reports: Tuple[ReportDefinition, ...]
     datasets: Tuple[Dataset, ...]
     help_topics: Tuple[HelpTopic, ...]
+    analyses: Tuple[Analysis, ...] = ()
 
     # ------------------------------------------------------------ lookup
     def dataset(self, key: str) -> Dataset:
@@ -81,17 +87,33 @@ class ReportRegistry:
     def visible_to(self, role: Optional[str]) -> Tuple[ReportDefinition, ...]:
         return tuple(r for r in self.active() if role in r.roles)
 
+    def analysis(self, key: str) -> Analysis:
+        for a in self.analyses:
+            if a.key == key:
+                return a
+        raise ReportNotFound(f"no analysis {key!r}")
+
     def help_topic(self, topic: str) -> Optional[HelpTopic]:
         return next((h for h in self.help_topics if h.topic == topic), None)
 
     def dataset_fingerprints(self) -> Dict[str, str]:
         return {ds.key: ds.fingerprint() for ds in self.datasets}
 
+    def analysis_fingerprints(self) -> Dict[str, str]:
+        ds_fp = self.dataset_fingerprints()
+        return {a.key: a.fingerprint(ds_fp) for a in self.analyses}
+
+    def report_fingerprint(self, report: ReportDefinition) -> str:
+        return report.fingerprint(self.dataset_fingerprints(), self.analysis_fingerprints())
+
     def fingerprints(self) -> Dict[str, Dict[str, str]]:
         ds_fp = self.dataset_fingerprints()
+        an_fp = self.analysis_fingerprints()
         return {
             "datasets": dict(sorted(ds_fp.items())),
-            "reports": dict(sorted((r.key, r.fingerprint(ds_fp)) for r in self.reports)),
+            "analyses": dict(sorted(an_fp.items())),
+            "reports": dict(sorted((r.key, r.fingerprint(ds_fp, an_fp))
+                                   for r in self.reports)),
         }
 
     def translation_keys(self) -> Tuple[str, ...]:
@@ -102,6 +124,9 @@ class ReportRegistry:
             keys.extend(c.label for c in ds.columns)
         for h in self.help_topics:
             keys.extend((h.title, h.summary))
+        for a in self.analyses:
+            keys.append(a.title)
+            keys.extend(a.kind_obj.templates.msgids())
         return tuple(dict.fromkeys(keys))
 
     # ------------------------------------------------------------ validation
@@ -172,10 +197,46 @@ class ReportRegistry:
             for p in r.parameters:
                 if p.name not in used:
                     problems.append(f"{r.key}: parameter {p.name!r} is read by no dataset")
+        problems.extend(self._validate_analyses(known_ds))
         for key in sorted(set(known_ds) - referenced):
             problems.append(f"dataset {key} is used by no report")
         for topic in sorted(topics - used_topics):
             problems.append(f"help topic {topic!r} is used by no report")
+        return problems
+
+    def _validate_analyses(self, known_ds: Mapping[str, Dataset]) -> List[str]:
+        problems = _duplicates("analysis", [a.key for a in self.analyses])
+        known = {a.key: a for a in self.analyses}
+        used = set()
+        for r in self.reports:
+            for key in r.analyses:
+                a = known.get(key)
+                if a is None:
+                    problems.append(f"{r.key}: analysis {key!r} is not registered")
+                    continue
+                used.add(key)
+                for role, ds_key in sorted(a.inputs.items()):
+                    if ds_key not in r.datasets:
+                        problems.append(f"{r.key}: analysis {key} reads {ds_key} ({role}), "
+                                        "which the report does not read")
+                for name in a.kind_obj.parameters:
+                    if r.parameter(name) is None:
+                        problems.append(f"{r.key}: analysis {key} needs parameter {name!r}")
+        for a in self.analyses:
+            for role, ds_key in sorted(a.inputs.items()):
+                spec = a.kind_obj.inputs[role]
+                ds = known_ds.get(ds_key)
+                if ds is None:
+                    problems.append(f"analysis {a.key}: input {role} {ds_key!r} is not registered")
+                    continue
+                if ds.semantics not in spec.semantics:
+                    problems.append(f"analysis {a.key}: input {role} must be "
+                                    f"{'/'.join(spec.semantics)}, {ds_key} is {ds.semantics}")
+                missing = [c for c in spec.columns if c not in [x.name for x in ds.columns]]
+                if missing:
+                    problems.append(f"analysis {a.key}: input {role} {ds_key} lacks {missing}")
+        for key in sorted(set(known) - used):
+            problems.append(f"analysis {key} is used by no report")
         return problems
 
     def validate_translations(self, translations_dir: str = TRANSLATIONS_DIR,
@@ -217,19 +278,19 @@ class ReportRegistry:
         lock = read_lock() if lock is None else lock
         current = self.fingerprints()
         problems: List[str] = []
-        for section in ("datasets", "reports"):
+        for section in ("datasets", "analyses", "reports"):
             pinned = dict(lock.get(section, {}))
             for key, fp in current[section].items():
                 if key not in pinned:
-                    problems.append(f"{section[:-1]} {key} is not pinned: run "
+                    problems.append(f"{SINGULAR[section]} {key} is not pinned: run "
                                     "`python -m core.reporting.lock --write`")
                 elif pinned[key] != fp:
                     problems.append(
-                        f"{section[:-1]} {key} changed meaning (fingerprint "
+                        f"{SINGULAR[section]} {key} changed meaning (fingerprint "
                         f"{pinned[key][:12]} -> {fp[:12]}): declare a new version "
                         "instead of editing a released one")
             for key in sorted(set(pinned) - set(current[section])):
-                problems.append(f"{section[:-1]} {key} is pinned but no longer "
+                problems.append(f"{SINGULAR[section]} {key} is pinned but no longer "
                                 "registered: released versions must stay")
         return problems
 
@@ -245,9 +306,10 @@ def _duplicates(kind: str, keys: List[str]) -> List[str]:
 
 def read_lock(path: str = LOCK_PATH) -> Dict[str, Dict[str, str]]:
     if not os.path.exists(path):
-        return {"datasets": {}, "reports": {}}
+        return {"datasets": {}, "analyses": {}, "reports": {}}
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
 
-REGISTRY = ReportRegistry(reports=REPORTS, datasets=DATASETS, help_topics=HELP_TOPICS)
+REGISTRY = ReportRegistry(reports=REPORTS, datasets=DATASETS, help_topics=HELP_TOPICS,
+                          analyses=ANALYSES)

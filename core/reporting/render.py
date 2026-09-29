@@ -25,6 +25,14 @@ using the repository's existing guard (``spreadsheet_safe_text``). Characters
 XLSX cannot store (C0 controls) are replaced with U+FFFD and counted; the
 count is reported, never silent.
 
+Analyses (step 16): JSON and HTML carry every stored analysis of the run -
+its state, measures, rows and the five-voice narrative. The narrative is
+stored as template references; it is rendered here from the reviewed msgids
+(English until the multilingual renderer of step 18) and the JSON also keeps
+the references, so the text can be re-rendered in any catalog language. CSV
+renders one dataset and XLSX the datasets; the manifest of every artifact
+lists the run's analyses and says whether the artifact includes them.
+
 PDF and SVG charts are multilingual rendering (step 18) and are not produced
 here; asking for them is refused, not approximated.
 """
@@ -43,11 +51,13 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 #: Renderer identity per format. Bump the number whenever the bytes a format
 #: produces for the same run would change.
 RENDERERS: Dict[str, str] = {
-    "json": "report-json/1",
+    "json": "report-json/2",     # 2: analyses section
     "csv": "report-csv/1",
     "xlsx": "report-xlsx/1",
-    "html": "report-html/1",
+    "html": "report-html/2",     # 2: analyses section
 }
+#: Formats whose content includes the run's analyses.
+WITH_ANALYSES = frozenset({"json", "html"})
 MEDIA_TYPES: Dict[str, str] = {
     "json": "application/json",
     "csv": "text/csv",
@@ -138,6 +148,12 @@ def _provenance_pairs(document: Dict[str, Any]) -> List[Tuple[str, Any]]:
     ]
 
 
+def _analysis_text(analysis: Dict[str, Any]) -> List[Dict[str, str]]:
+    from core.analytics.narrative import render as render_narrative
+
+    return render_narrative(analysis["narrative"], lambda msgid: msgid)
+
+
 def _cell_text(value: Any) -> str:
     if value is None:
         return ""
@@ -158,6 +174,7 @@ def _render_json(document, dataset_key):
         "report": document["report"],
         "run": document["run"],
         "datasets": [dict(ds, completeness=_completeness(ds)) for ds in document["datasets"]],
+        "analyses": [dict(a, text=_analysis_text(a)) for a in document.get("analyses", ())],
     }
     return canonical_json(body) + b"\n", {}
 
@@ -297,6 +314,17 @@ def _render_html(document, dataset_key):
                  else f'<bdi class="fp">{e(value)}</bdi>')
         parts.append(f"<tr><th scope=\"row\">{e(label)}</th><td>{shown}</td></tr>")
     parts.append("</tbody></table>")
+    for a in document.get("analyses", ()):
+        parts.append(f"<h2>{e(a.get('title') or a['analysis_key'])}</h2>")
+        state = ("measured" if a["state"] == "measured"
+                 else f"not measurable ({a['reason']})")
+        parts.append(f"<p>Analysis <bdi class=\"fp\">{e(a['analysis_key'])}</bdi>, {e(state)}; "
+                     f"templates <bdi class=\"fp\">{e(a['template_set'])}@"
+                     f"{e(a['template_version'])}</bdi>.</p><dl>")
+        for voice in _analysis_text(a):
+            parts.append(f"<dt>{e(voice['voice'].capitalize())}</dt><dd><bdi>{e(voice['text'])}"
+                         "</bdi></dd>")
+        parts.append("</dl>")
     for ds in document["datasets"]:
         cls = ' class="short"' if ds["truncated"] else ""
         parts.append(f"<h2><bdi>{e(ds['dataset_key'])}</bdi></h2>")

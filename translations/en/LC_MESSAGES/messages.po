@@ -11723,3 +11723,175 @@ msgstr ""
 #: core/reporting/definitions.py
 msgid "Lists the files that match your criteria at one moment, states how many matched in total and says so when the list is shortened."
 msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Distinctive Terms Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Which words the selected documents use more (or less) often than the rest of the collection, with how sure that is."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Used more often in the selection"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Used less often in the selection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Term"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the selection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Occurrences in the rest of the collection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Log-likelihood (G2)"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Log Ratio"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Counted words in the selection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Counted words in the rest of the collection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Contents in the selection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Contents in the rest of the collection"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Word records without a count"
+msgstr ""
+
+#: core/reporting/datasets.py
+msgid "Significant terms"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "About the Distinctive Terms Report"
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Compares how often each word occurs in the documents you selected with the rest of the collection you may see, and lists the words whose difference is statistically reliable."
+msgstr ""
+
+#: core/reporting/definitions.py
+msgid "Distinctive terms"
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words. Next step: open the documents that contain the top terms."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Next step: widen the criteria, or check that the matching documents were processed."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages. %(unknown_rows)s word records without a count were left out of every total. Next step: open the documents that contain the top terms."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "No statistical test was performed."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Only terms with G2 of at least %(critical)s count as findings (p < 0.0001; %(source)s). Every term in the vocabulary is tested, so the weaker significance levels are not treated as findings."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Any difference between the selection and the collection is not in word frequency at this level; categories, sources or dates may show one."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "No conclusion can be drawn from this section."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "These terms characterise the selection against the rest of the collection. They show where it differs, not why: read the documents that contain them before drawing conclusions."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "The matching contents are the whole visible collection, so there is no reference to compare them with."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "No visible content matches the criteria, so there is nothing to compare."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "The matching contents have no counted words, so keyness cannot be measured."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "No term reaches G2 %(critical)s: at this level the selection's word frequencies do not differ from the rest of the collection."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s). The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) compares word frequencies in the selected contents with the other visible contents."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used more often in the selection, highest G2 first."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare %(target_tokens)s counted words in %(target_contents)s selected contents with %(reference_tokens)s words in the other %(reference_contents)s visible contents. Listed: the %(shown)s terms used less often in the selection, highest G2 first."
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Analyses"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Measure"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Finding"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Consequence"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Caveat"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Measured"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Not measurable"
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "Analysis %(key)s, templates %(templates)s"
+msgstr ""

@@ -150,6 +150,8 @@ class Parameter:
     minimum: Optional[int] = None
     maximum: Optional[int] = None
     max_length: Optional[int] = None
+    #: msgids shown for ``choices`` (same order); prose, not in the fingerprint.
+    choice_labels: Tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         _check(bool(re.match(r"^[a-z][a-z0-9_]*$", self.name or "")),
@@ -164,6 +166,11 @@ class Parameter:
                    f"parameter {self.name!r}: enum needs two or more distinct choices")
         else:
             _check(not self.choices, f"parameter {self.name!r}: choices apply to enum only")
+        if self.choice_labels:
+            _check(len(self.choice_labels) == len(self.choices),
+                   f"parameter {self.name!r}: one choice label per choice")
+            for label in self.choice_labels:
+                _msgid(label, f"parameter {self.name!r} choice label")
         if self.type != "integer":
             _check(self.minimum is None and self.maximum is None,
                    f"parameter {self.name!r}: minimum/maximum apply to integer only")
@@ -327,16 +334,21 @@ class Dataset:
         by_criteria = self.criteria_param is not None
         by_scope = self.scope_column is not None
         by_reason = bool(self.unscoped_reason and self.unscoped_reason.strip())
-        _check(by_criteria + by_scope + by_reason == 1,
+        # A criteria dataset may also declare scope_column: the compiler
+        # scopes the rows the criteria select, and {scope} restricts rows the
+        # dataset reads *outside* the criteria (a reference corpus).
+        _check(by_reason != (by_criteria or by_scope),
                f"{self.dataset_id}: declare exactly one of criteria_param, "
-               "scope_column or unscoped_reason")
+               "scope_column or unscoped_reason (a criteria dataset may add "
+               "scope_column for rows outside its criteria)")
         if by_criteria:
             _check(self.criteria_param in self.parameters,
                    f"{self.dataset_id}: criteria_param must be one of its parameters")
             _check("where" in slots and tokens.count(TOKEN_CRITERIA) == 1,
                    f"{self.dataset_id}: criteria datasets need {{where}} and {TOKEN_CRITERIA}")
-            _check("scope" not in slots and TOKEN_SCOPE not in tokens,
-                   f"{self.dataset_id}: the compiler already applies the access scope")
+            _check(by_scope or ("scope" not in slots and TOKEN_SCOPE not in tokens),
+                   f"{self.dataset_id}: the compiler already applies the access scope; "
+                   "declare scope_column only for rows outside the criteria")
         else:
             _check("where" not in slots and "order" not in slots
                    and TOKEN_CRITERIA not in tokens,
@@ -442,6 +454,7 @@ class ReportDefinition:
     parameters: Tuple[Parameter, ...]
     datasets: Tuple[str, ...]      # dataset keys "id@version"
     status: str = "active"         # active | superseded
+    analyses: Tuple[str, ...] = ()  # analysis keys "id@version" (core.analytics)
 
     def __post_init__(self) -> None:
         _check(bool(_ID.match(self.report_id or "")) and "." not in self.report_id,
@@ -462,6 +475,11 @@ class ReportDefinition:
         for key in self.datasets:
             _check(bool(re.fullmatch(r"[a-z0-9_.]+@\d+", key)),
                    f"{self.report_id}: dataset reference {key!r} must be 'id@version'")
+        _check(len(set(self.analyses)) == len(self.analyses),
+               f"{self.report_id}: analyses must be distinct")
+        for key in self.analyses:
+            _check(bool(re.fullmatch(r"[a-z0-9_]+@\d+", key)),
+                   f"{self.report_id}: analysis reference {key!r} must be 'id@version'")
         _check(self.status in ("active", "superseded"),
                f"{self.report_id}: status must be active or superseded")
 
@@ -472,16 +490,24 @@ class ReportDefinition:
     def parameter(self, name: str) -> Optional[Parameter]:
         return next((p for p in self.parameters if p.name == name), None)
 
-    def semantic(self, dataset_fingerprints: Mapping[str, str]) -> Dict[str, Any]:
-        return {
+    def semantic(self, dataset_fingerprints: Mapping[str, str],
+                 analysis_fingerprints: Optional[Mapping[str, str]] = None) -> Dict[str, Any]:
+        out = {
             "report_id": self.report_id, "version": self.version,
             "unit": self.unit, "roles": sorted(self.roles),
             "parameters": [p.semantic() for p in self.parameters],
             "datasets": [[key, dataset_fingerprints.get(key)] for key in self.datasets],
         }
+        # Only when present, so reports without analyses keep the
+        # fingerprints they were released with.
+        if self.analyses:
+            fps = analysis_fingerprints or {}
+            out["analyses"] = [[key, fps.get(key)] for key in self.analyses]
+        return out
 
-    def fingerprint(self, dataset_fingerprints: Mapping[str, str]) -> str:
-        return sha256_hex(self.semantic(dataset_fingerprints))
+    def fingerprint(self, dataset_fingerprints: Mapping[str, str],
+                    analysis_fingerprints: Optional[Mapping[str, str]] = None) -> str:
+        return sha256_hex(self.semantic(dataset_fingerprints, analysis_fingerprints))
 
     def normalize_parameters(self, supplied: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
         """Validate every supplied value; unknown names are refused, never
@@ -493,7 +519,11 @@ class ReportDefinition:
         return {p.name: p.normalize(supplied.get(p.name)) for p in self.parameters}
 
     def translation_keys(self) -> Tuple[str, ...]:
-        return (self.title, self.description) + tuple(p.label for p in self.parameters)
+        keys = [self.title, self.description]
+        for p in self.parameters:
+            keys.append(p.label)
+            keys.extend(p.choice_labels)
+        return tuple(keys)
 
 
 @dataclass(frozen=True)

@@ -54,7 +54,8 @@ from services.reporting import runs
 
 logger = logging.getLogger(__name__)
 
-MANIFEST_VERSION = "report-manifest/1"
+#: 2: records the run's analyses (key, fingerprint, state, template set).
+MANIFEST_VERSION = "report-manifest/2"
 MAX_ARTIFACT_BYTES = 64 * 1024 * 1024
 
 _ARTIFACT_COLUMNS = (
@@ -107,12 +108,23 @@ def run_document(conn, run_row: Dict[str, Any], registry=REGISTRY) -> Dict[str, 
                     " FROM report_run_datasets WHERE run_id = %s ORDER BY position",
                     (run_row["id"],))
         datasets = [dict(r) for r in cur.fetchall()]
+    conn.rollback()
+    analyses = []
+    for a in runs.run_analyses(conn, run_row["id"]):
+        try:
+            title = registry.analysis(a["analysis_key"]).title
+        except ReportNotFound:
+            title = None
+        analyses.append(dict({k: a[k] for k in (
+            "analysis_key", "analysis_fingerprint", "kind", "state", "reason", "inputs",
+            "measures", "rows", "narrative", "template_set", "template_version")},
+            title=title))
     run_fields = {k: api[k] for k in (
         "id", "report_id", "report_version", "report_key", "definition_fingerprint",
         "parameters", "parameters_fingerprint", "criteria_fingerprint", "saved_search_id",
         "requester_username", "requester_role", "job_id", "snapshot", "snapshot_at",
         "isolation_level", "generator_version", "requested_at", "started_at", "finished_at")}
-    return {"report": report, "run": run_fields, "datasets": datasets}
+    return {"report": report, "run": run_fields, "datasets": datasets, "analyses": analyses}
 
 
 def build_manifest(document: Dict[str, Any], rendering, *, content_sha256: str,
@@ -148,6 +160,12 @@ def build_manifest(document: Dict[str, Any], rendering, *, content_sha256: str,
                                          "query_fingerprint", "semantics", "row_limit",
                                          "row_count", "truncated", "columns")}
                      for ds in document["datasets"]],
+        "analyses": [dict({k: a[k] for k in ("analysis_key", "analysis_fingerprint", "kind",
+                                              "state", "reason", "inputs", "template_set",
+                                              "template_version")},
+                          template_fingerprint=a["narrative"].get("template_fingerprint"),
+                          included=rendering.format in renderers.WITH_ANALYSES)
+                     for a in document.get("analyses", ())],
         "row_count": sum(ds["row_count"] for ds in document["datasets"]
                          if rendering.dataset_key in (None, ds["dataset_key"])),
         "truncated": any(ds["truncated"] for ds in document["datasets"]

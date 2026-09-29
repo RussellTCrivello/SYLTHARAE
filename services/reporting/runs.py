@@ -24,7 +24,10 @@ requester:
    prefix and records that more rows existed. The cursor's columns must be
    exactly the declared columns, and a non-nullable column must not be NULL -
    a mismatch fails the run rather than storing something the definition
-   does not describe. Results are written in a separate transaction, once.
+   does not describe. The report's declared **analyses** are then computed
+   from the rows just read (pure functions, no further query) - an analysis
+   whose inputs contradict its contract fails the run. Results and analyses
+   are written in a separate transaction, once.
 3. **Read** (:func:`get_run`, :func:`list_runs`, :func:`dataset_rows`). A run
    is visible to its requester and to administrators, and only while the
    reader's role is still allowed by the report. Rows are paged in SQL.
@@ -48,6 +51,7 @@ import psycopg2
 import psycopg2.errors
 import psycopg2.extras
 
+from core.analytics.kinds import AnalysisError
 from core.criteria.model import sha256_hex
 from core.reporting import REGISTRY
 from core.reporting.model import ReportParameterError
@@ -56,7 +60,9 @@ from core.reporting.registry import ReportNotFound
 logger = logging.getLogger(__name__)
 
 #: Recorded on every run; bump when the execution semantics change.
-GENERATOR_VERSION = "report-runner/1"
+#: 2: declared analyses (core.analytics) are computed from the run's dataset
+#: rows and stored with the run (m0026).
+GENERATOR_VERSION = "report-runner/2"
 ISOLATION = "repeatable read, read only"
 #: Per statement, inside the run's transaction.
 RUN_STATEMENT_TIMEOUT_MS = 120_000
@@ -124,7 +130,7 @@ def visible_definitions(role: Optional[str], registry=REGISTRY):
 
 
 def definition_fingerprint(definition, registry=REGISTRY) -> str:
-    return definition.fingerprint(registry.dataset_fingerprints())
+    return registry.report_fingerprint(definition)
 
 
 # ---------------------------------------------------------------------------
@@ -286,11 +292,41 @@ def _read_dataset(cur, dataset, bound) -> Dict[str, Any]:
     }
 
 
+def compute_analyses(definition, results: List[Dict[str, Any]], parameters: Dict[str, Any],
+                     registry=REGISTRY) -> List[Dict[str, Any]]:
+    """The definition's analyses over the dataset results just read, in
+    declaration order. Pure: no query. Raises ``AnalysisError`` when an
+    input contradicts the analysis contract."""
+    by_key = {r["dataset_key"]: r for r in results}
+    fingerprints = registry.analysis_fingerprints()
+    out = []
+    for key in definition.analyses:
+        analysis = registry.analysis(key)
+        result = analysis.compute(by_key, parameters or {})
+        result["analysis_fingerprint"] = fingerprints[key]
+        result["inputs"] = dict(analysis.inputs)
+        out.append(result)
+    return out
+
+
 def _finish(conn, run_id: int, status: str, *, error: Optional[str] = None,
             refusal: Optional[str] = None, snapshot: Optional[Dict[str, Any]] = None,
-            datasets: Optional[List[Dict[str, Any]]] = None) -> None:
+            datasets: Optional[List[Dict[str, Any]]] = None,
+            analyses: Optional[List[Dict[str, Any]]] = None) -> None:
     conn.rollback()
     with conn.cursor() as cur:
+        for position, an in enumerate(analyses or ()):
+            cur.execute(
+                "INSERT INTO report_run_analyses (run_id, position, analysis_key,"
+                " analysis_fingerprint, kind, state, reason, inputs, measures, rows, narrative,"
+                " template_set, template_version)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (run_id, position, an["analysis_key"], an["analysis_fingerprint"], an["kind"],
+                 an["state"], an["reason"], psycopg2.extras.Json(an["inputs"]),
+                 psycopg2.extras.Json(jsonable(an["measures"])),
+                 psycopg2.extras.Json(jsonable(an["rows"])),
+                 psycopg2.extras.Json(an["narrative"]), an["narrative"]["template_set"],
+                 an["narrative"]["template_version"]))
         for position, ds in enumerate(datasets or ()):
             cur.execute(
                 "INSERT INTO report_run_datasets (run_id, position, dataset_key,"
@@ -349,6 +385,7 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
         return outcome("failed", error=error)
 
     results: List[Dict[str, Any]] = []
+    analyses: List[Dict[str, Any]] = []
     snapshot: Dict[str, Any] = {}
     total = len(definition.datasets)
     try:
@@ -389,8 +426,9 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
                         progress_cb({"percent": int(100 * (index + 1) / total),
                                      "current_phase": f"Report dataset {key}",
                                      "files_processed": index + 1, "files_total": total})
+                analyses = compute_analyses(definition, results, run["parameters"], registry)
         conn.rollback()
-    except _RunFailed as exc:
+    except (_RunFailed, AnalysisError) as exc:
         conn.rollback()
         _finish(conn, run_id, "failed", error=str(exc))
         return outcome("failed", error=str(exc))
@@ -411,10 +449,12 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
     if refusal is not None:
         _finish(conn, run_id, "refused", refusal=refusal, snapshot=snapshot)
         return outcome("refused", refusal=refusal)
-    _finish(conn, run_id, "completed", snapshot=snapshot, datasets=results)
-    return outcome("completed", datasets=[
+    _finish(conn, run_id, "completed", snapshot=snapshot, datasets=results,
+            analyses=analyses)
+    return dict(outcome("completed", datasets=[
         {k: r[k] for k in ("dataset_key", "row_count", "truncated", "semantics")}
-        for r in results])
+        for r in results]), analyses=[
+        {k: a[k] for k in ("analysis_key", "state", "reason")} for a in analyses])
 
 
 def run_report_job(get_connection: Callable, *, run_id: int, job_id: Optional[str] = None,
@@ -542,7 +582,20 @@ def get_run(conn, run_id: int, *, user, registry=REGISTRY) -> Dict[str, Any]:
                     " FROM report_run_datasets WHERE run_id = %s ORDER BY position", (run_id,))
         datasets = [dict(r) for r in cur.fetchall()]
     conn.rollback()
-    return dict(run_to_api(row, registry=registry), datasets=datasets)
+    return dict(run_to_api(row, registry=registry), datasets=datasets,
+                analyses=run_analyses(conn, run_id))
+
+
+def run_analyses(conn, run_id: int) -> List[Dict[str, Any]]:
+    """A run's stored analyses (template references, not prose) in order.
+    The caller must already have checked the reader may see the run."""
+    with _dict_cur(conn) as cur:
+        cur.execute("SELECT position, analysis_key, analysis_fingerprint, kind, state, reason,"
+                    " inputs, measures, rows, narrative, template_set, template_version"
+                    " FROM report_run_analyses WHERE run_id = %s ORDER BY position", (run_id,))
+        rows = [dict(r) for r in cur.fetchall()]
+    conn.rollback()
+    return rows
 
 
 def list_runs(conn, *, user, all_users: bool = False, report_id: Optional[str] = None,

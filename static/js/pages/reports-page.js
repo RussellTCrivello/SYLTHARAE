@@ -267,7 +267,8 @@ function plainInput(param) {
     if (param.type === 'enum') {
         input = el('select', { class: 'form-select form-select-sm', id });
         if (!param.required) input.append(el('option', { value: '', text: L.none }));
-        for (const choice of param.choices) input.append(el('option', { value: choice, text: choice }));
+        param.choices.forEach((choice, i) => input.append(
+            el('option', { value: choice, text: (param.choice_labels || [])[i] || choice })));
         if (param.default !== null) input.value = param.default;
     } else if (param.type === 'boolean') {
         input = el('input', { class: 'form-check-input ms-2', type: 'checkbox', id });
@@ -302,6 +303,11 @@ async function renderDefinition() {
         list.append(el('li', {}, el('code', { text: ds.key }), ` - ${semanticsText(ds)}`));
     }
     about.append(el('div', { class: 'mt-1', text: L.datasets }), list);
+    if ((def.analyses || []).length) {
+        const alist = el('ul', { class: 'mb-0 text-muted' });
+        for (const a of def.analyses) alist.append(el('li', {}, `${a.title} `, el('code', { text: a.key })));
+        about.append(el('div', { class: 'mt-1', text: L.analyses }), alist);
+    }
     for (const param of def.parameters) {
         const built = param.type === 'criteria' ? await criteriaInput(param) : plainInput(param);
         state.readers.push(built.read);
@@ -427,6 +433,29 @@ function provenance(run) {
     for (const ds of run.datasets || []) add(`${L.prov_query_fp} ${ds.dataset_key}`, ds.query_fingerprint, true);
 }
 
+function analyses(run) {
+    // The narrative is rendered by the server from reviewed templates in the
+    // reader's language; the page shows it verbatim, voice by voice.
+    const list = clear('runAnalysisList');
+    const items = run.analyses || [];
+    show('runAnalyses', items.length > 0);
+    for (const a of items) {
+        const section = el('section', { class: 'mb-3' });
+        const stateText = a.state === 'measured' ? L.analysis_measured : L.analysis_not_measurable;
+        section.append(
+            el('h4', { class: 'fs-6 mb-1', text: `${a.title} · ${stateText}` }),
+            el('div', { class: 'small text-muted mb-1', dir: 'ltr',
+                text: fmt(L.analysis_meta, { key: a.analysis_key, templates: `${a.template_set}@${a.template_version}` }) }));
+        const dl = el('dl', { class: 'row small mb-0' });
+        for (const voice of a.text || []) {
+            dl.append(el('dt', { class: 'col-sm-2', text: L[`voice_${voice.voice}`] || voice.voice }),
+                el('dd', { class: 'col-sm-10', dir: 'auto', text: voice.text }));
+        }
+        section.append(dl);
+        list.append(section);
+    }
+}
+
 async function openRun(id) {
     const body = await api('GET', `/api/reports/runs/${encodeURIComponent(id)}`);
     const run = body.run;
@@ -438,6 +467,7 @@ async function openRun(id) {
     const tone = { completed: 'text-success', failed: 'text-danger', refused: 'text-warning' }[run.status] || 'text-muted';
     outcome.append(el('div', { class: tone, text: outcomeText(run) }));
     provenance(run);
+    analyses(run);
     const select = clear('runDatasetSelect');
     for (const ds of run.datasets || []) {
         select.append(el('option', { value: ds.dataset_key, text: `${ds.dataset_key} (${ds.row_count})` }));

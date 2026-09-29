@@ -86,10 +86,35 @@ def definition_to_api(definition, registry, *, can_run=False):
         "description": _(definition.description), "unit": definition.unit,
         "help_topic": definition.help_topic,
         "help": ({"title": _(topic.title), "summary": _(topic.summary)} if topic else None),
-        "parameters": [dict(p.semantic(), label=_(p.label)) for p in definition.parameters],
+        "parameters": [dict(p.semantic(), label=_(p.label),
+                            choice_labels=[_(c) for c in p.choice_labels])
+                       for p in definition.parameters],
         "datasets": datasets,
+        "analyses": [{"key": key, "title": _(registry.analysis(key).title),
+                      "kind": registry.analysis(key).kind} for key in definition.analyses],
         "can_run": bool(can_run),
     }
+
+
+def analysis_to_api(analysis, registry):
+    """A stored analysis with its narrative rendered in the caller's language
+    from the stored template references (the references are returned too)."""
+    from flask_babel import format_decimal, gettext as _
+
+    from core.analytics.narrative import render as render_narrative
+    from core.reporting.registry import ReportNotFound
+
+    def number(value):
+        if isinstance(value, int):
+            return format_decimal(value)
+        return format_decimal(value, format="#,##0.00")
+
+    try:
+        title = _(registry.analysis(analysis["analysis_key"]).title)
+    except ReportNotFound:
+        title = analysis["analysis_key"]
+    return dict(analysis, title=title,
+                text=render_narrative(analysis["narrative"], _, number))
 
 
 def register_report_routes(app):
@@ -201,6 +226,7 @@ def register_report_routes(app):
                 run = store.get_run(conn, run_id, user=current_user())
         except store.ReportRunError as exc:
             return err(exc)
+        run["analyses"] = [analysis_to_api(a, REGISTRY) for a in run.get("analyses", ())]
         return jsonify({"success": True, "run": run})
 
     @app.route("/api/reports/runs/<int:run_id>/datasets/<dataset_key>", methods=["GET"])
