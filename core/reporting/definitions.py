@@ -8,6 +8,7 @@ datasets and analytics exist - see docs/implementation/EXECUTION_STATUS.md.
 
 from __future__ import annotations
 
+import dataclasses
 from typing import Tuple
 
 from core.analytics.kinds import Analysis
@@ -58,15 +59,28 @@ TERM_KEYNESS_V1 = ReportDefinition(
     ),
     datasets=("term_keyness.ranked@1", "term_keyness.totals@1"),
     analyses=("term_keyness@1",),
+    # Superseded by v2 (NARR-01 plural-aware narrative); kept so v1 runs stay
+    # interpretable and their narratives keep rendering.
+    status="superseded",
 )
+
+#: Same datasets and measures as v1; only the narrative changes (keyness@2:
+#: one count per sentence, plurals through the catalogs' Plural-Forms).
+TERM_KEYNESS_ANALYSIS_V2 = dataclasses.replace(TERM_KEYNESS_ANALYSIS_V1, version=2,
+                                               kind_version=2)
+
+TERM_KEYNESS_V2 = dataclasses.replace(TERM_KEYNESS_V1, version=2,
+                                      analyses=("term_keyness@2",), status="active")
 
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
+    TERM_KEYNESS_V2,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
     TERM_KEYNESS_ANALYSIS_V1,
+    TERM_KEYNESS_ANALYSIS_V2,
 )
 
 HELP_TOPICS: Tuple[HelpTopic, ...] = (

@@ -50,13 +50,20 @@ Analytical measures: pure, deterministic functions over counts.
 Deterministic, versioned narrative templates (five voices).
 
 - **class `NarrativeError`**(ValueError) - _undocumented_
+- **class `Plural`** - A sentence whose wording follows a count: ``ngettext(singular, plural,
+  - `msgids(self) -> Tuple[str, str]`
 - **class `TemplateSet`** - _undocumented_
   - `key(self) -> str` *(property)*
   - `fingerprint(self) -> str`
   - `msgids(self) -> Tuple[str, ...]`
-  - `compose(self, choices: Sequence[Tuple[str, Mapping[str, Any]]]) -> Dict[str, Any]` - Stored narrative for ``choices`` = one ``(sentence_key, params)``
+  - `singular_msgids(self) -> Tuple[str, ...]` - The catalog keys: plain msgids and plural singulars (a plural
+  - `plurals(self) -> Tuple[Plural, ...]`
+  - `plural_msgids(self) -> Tuple[Tuple[str, str], ...]` - (singular, plural) pairs: the catalog entries that need msgid_plural.
+  - `compose(self, choices: Sequence[Union[Choice, Sequence[Choice]]]) -> Dict[str, Any]` - Stored narrative for ``choices``: per voice, in voice order, one
 - `placeholders(msgid: str) -> Tuple[str, ...]`
-- `render(narrative: Mapping[str, Any], gettext: Callable[[str], str], format_number: Callable[[Any], str] = None) -> List[Dict[str, str]]` - Text of a stored narrative in the caller's language: each msgid is
+- `sentence_placeholders(sentence: Sentence) -> Tuple[str, ...]`
+- `source_ngettext(singular: str, plural: str, n: int) -> str` - The msgids' own language (English, nplurals=2, plural=(n != 1)), for
+- `render(narrative: Mapping[str, Any], gettext: Callable[[str], str], format_number: Optional[Callable[[Any], str]] = None, ngettext: Optional[Callable[[str, s...` - Text of a stored narrative in the caller's language: each msgid is
 
 ### `core/analytics/thresholds.py`
 
@@ -1186,6 +1193,7 @@ The report registry: one place that knows which reports exist.
   - `report_fingerprint(self, report: ReportDefinition) -> str`
   - `fingerprints(self) -> Dict[str, Dict[str, str]]`
   - `translation_keys(self) -> Tuple[str, ...]`
+  - `translation_plurals(self) -> Tuple[Any, ...]` - Plural sentences (``narrative.Plural``) of every analysis kind:
   - `validate(self) -> List[str]`
   - `validate_translations(self, translations_dir: str = TRANSLATIONS_DIR, languages: Iterable[str] = TRANSLATED_LANGUAGES) -> List[str]`
   - `validate_lock(self, lock: Optional[Mapping[str, Mapping[str, str]]] = None) -> List[str]`

@@ -12137,3 +12137,58 @@ msgstr "Nije mjerljivo"
 #: templates/Reports/reports.html
 msgid "Analysis %(key)s, templates %(templates)s"
 msgstr "Analiza %(key)s, predlošci %(templates)s"
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the selected contents with those of the other visible contents."
+msgstr "Ključnost (G2) i logaritamski omjer uspoređuju učestalosti riječi u odabranim sadržajima s onima u ostalim vidljivim sadržajima."
+
+#: core/analytics/kinds.py
+msgid "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. Contents in the rest of the collection: %(reference_contents)s; counted words: %(reference_tokens)s."
+msgstr "Sadržaji u odabiru: %(target_contents)s; prebrojene riječi: %(target_tokens)s. Sadržaji u ostatku zbirke: %(reference_contents)s; prebrojene riječi: %(reference_tokens)s."
+
+#: core/analytics/kinds.py
+msgid "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "Najjači je „%(top_term)s”: G2 %(top_g2)s, logaritamski omjer %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words."
+msgstr "Ključnost uspoređuje pohranjene oblike riječi. Ne spaja fleksije, sinonime ni jezike, pa odabir na drugom jeziku od zbirke pokazuje svoje funkcionalne riječi."
+
+#: core/analytics/kinds.py
+msgid "Next step: open the documents that contain the top terms."
+msgstr "Sljedeći korak: otvorite dokumente koji sadrže najistaknutije pojmove."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used more often in the selection."
+msgid_plural "Listed: %(shown)s terms used more often in the selection, highest G2 first."
+msgstr[0] "Navedeno: %(shown)s pojam češće korišten u odabiru, poredano od najvećeg G2."
+msgstr[1] "Navedeno: %(shown)s pojma češće korištena u odabiru, poredano od najvećeg G2."
+msgstr[2] "Navedeno: %(shown)s pojmova češće korištenih u odabiru, poredano od najvećeg G2."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used less often in the selection."
+msgid_plural "Listed: %(shown)s terms used less often in the selection, highest G2 first."
+msgstr[0] "Navedeno: %(shown)s pojam rjeđe korišten u odabiru, poredano od najvećeg G2."
+msgstr[1] "Navedeno: %(shown)s pojma rjeđe korištena u odabiru, poredano od najvećeg G2."
+msgstr[2] "Navedeno: %(shown)s pojmova rjeđe korištenih u odabiru, poredano od najvećeg G2."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "%(significant)s pojam koristi se u odabiru značajno češće nego u ostatku zbirke (G2 najmanje %(critical)s)."
+msgstr[1] "%(significant)s pojma koriste se u odabiru značajno češće nego u ostatku zbirke (G2 najmanje %(critical)s)."
+msgstr[2] "%(significant)s pojmova koristi se u odabiru značajno češće nego u ostatku zbirke (G2 najmanje %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "%(significant)s pojam koristi se u odabiru značajno rjeđe nego u ostatku zbirke (G2 najmanje %(critical)s)."
+msgstr[1] "%(significant)s pojma koriste se u odabiru značajno rjeđe nego u ostatku zbirke (G2 najmanje %(critical)s)."
+msgstr[2] "%(significant)s pojmova koristi se u odabiru značajno rjeđe nego u ostatku zbirke (G2 najmanje %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(unknown_rows)s word record without a count was left out of every total."
+msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
+msgstr[0] "%(unknown_rows)s zapis riječi bez broja izostavljen je iz svih zbrojeva."
+msgstr[1] "%(unknown_rows)s zapisa riječi bez broja izostavljena su iz svih zbrojeva."
+msgstr[2] "%(unknown_rows)s zapisa riječi bez broja izostavljeno je iz svih zbrojeva."

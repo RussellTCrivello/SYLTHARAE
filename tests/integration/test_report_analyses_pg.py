@@ -4,7 +4,7 @@
   access scope (a content with two contexts counts once; NULL counts are
   unknown, not zero; the reference corpus is access-scoped);
 * SQL G2/Log Ratio (used to rank) equal the reference implementation;
-* a run of ``term_keyness@1`` stores its analysis (m0026) with the registry
+* a run of ``term_keyness@2`` (the active version) stores its analysis (m0026) with the registry
   fingerprint, five voices and template version; the stored narrative is
   template references and renders deterministically;
 * not-measurable is stored as such, with its reason;
@@ -25,7 +25,7 @@ import psycopg2
 import pytest
 
 from core.analytics import measures
-from core.analytics.narrative import render
+from core.analytics.narrative import render, source_ngettext
 from core.criteria.compiler import AccessScope
 from core.reporting import REGISTRY
 from services.reporting import artifacts, runs
@@ -132,9 +132,10 @@ def test_the_reference_corpus_is_access_scoped(world):
 
 # ------------------------------------------------------------------ runs
 
-def _run(world, direction="over", registry=REGISTRY):
+def _run(world, direction="over", registry=REGISTRY, version=None):
     conn = world["conn"]
     run = runs.submit_run(conn, user=world["analyst"], report_id="term_keyness",
+                          version=version,
                           parameters={"criteria": {"text": world["marker"]},
                                       "direction": direction}, registry=registry)
     return run, runs.execute_run(conn, run["id"], job_id=None, registry=registry)
@@ -143,18 +144,22 @@ def _run(world, direction="over", registry=REGISTRY):
 def test_a_run_stores_its_analysis(world):
     run, out = _run(world)
     assert out["status"] == "completed", out
-    assert out["analyses"] == [{"analysis_key": "term_keyness@1", "state": "measured",
+    assert out["analyses"] == [{"analysis_key": "term_keyness@2", "state": "measured",
                                 "reason": None}]
     got = runs.get_run(world["conn"], run["id"], user=world["analyst"])
     assert got["generator_version"] == "report-runner/2"
     [a] = got["analyses"]
-    assert a["analysis_fingerprint"] == REGISTRY.analysis_fingerprints()["term_keyness@1"]
-    assert a["template_set"] == "keyness" and a["template_version"] == 1
+    assert a["analysis_fingerprint"] == REGISTRY.analysis_fingerprints()["term_keyness@2"]
+    assert a["template_set"] == "keyness" and a["template_version"] == 2
     assert a["inputs"] == {"ranked": "term_keyness.ranked@1", "totals": "term_keyness.totals@1"}
     assert [v["voice"] for v in a["narrative"]["voices"]] == [
         "measure", "finding", "confidence", "consequence", "caveat"]
-    assert all("msgid" in v and "params" in v and "text" not in v
-               for v in a["narrative"]["voices"]), "stored as references, never prose"
+    assert a["narrative"]["format"] == 2
+    sentences = [s for v in a["narrative"]["voices"] for s in v["sentences"]]
+    assert all("msgid" in s and "params" in s and "text" not in s
+               for s in sentences), "stored as references, never prose"
+    assert all("text" not in v for v in a["narrative"]["voices"])
+    assert any("msgid_plural" in s for s in sentences), "counts are plural sentences"
     # Every stored row agrees with the stored totals under the reference
     # implementation - the run's own evidence is self-consistent.
     c, d = a["measures"]["target_tokens"], a["measures"]["reference_tokens"]
@@ -163,7 +168,8 @@ def test_a_run_stores_its_analysis(world):
             measures.log_likelihood(row["target_freq"], row["reference_freq"], c, d), rel=1e-12)
     assert world["alpha"] in [r["term"] for r in a["rows"]]
     # Rendering from the record is deterministic.
-    assert render(a["narrative"], lambda s: s) == render(a["narrative"], lambda s: s)
+    assert render(a["narrative"], lambda s: s, ngettext=source_ngettext) == render(
+        a["narrative"], lambda s: s, ngettext=source_ngettext)
 
 
 def test_a_run_with_nothing_to_compare_stores_not_measurable(world):
@@ -195,6 +201,28 @@ def test_a_disagreement_fails_the_run_and_stores_nothing(world, monkeypatch):
 
 # ------------------------------------------------------------------ database
 
+def test_the_superseded_version_still_runs_and_stores_its_released_record(world):
+    """NARR-01 superseded term_keyness@1; it must stay runnable on request and
+    store exactly the record shape it was released with (format 1: one
+    sentence per voice, no plurals), and both formats render."""
+    run, out = _run(world, version=1)
+    assert out["status"] == "completed", out
+    assert out["analyses"][0]["analysis_key"] == "term_keyness@1"
+    [a] = runs.get_run(world["conn"], run["id"], user=world["analyst"])["analyses"]
+    assert a["template_version"] == 1 and "format" not in a["narrative"]
+    assert all(set(v) == {"voice", "key", "msgid", "params"} for v in a["narrative"]["voices"])
+    assert a["analysis_fingerprint"] == REGISTRY.analysis_fingerprints()["term_keyness@1"]
+    v1_text = render(a["narrative"], lambda s: s)          # format 1 needs no ngettext
+    run2, _ = _run(world)                                   # the active version
+    [b] = runs.get_run(world["conn"], run2["id"], user=world["analyst"])["analyses"]
+    assert b["template_version"] == 2
+    v2_text = render(b["narrative"], lambda s: s, ngettext=source_ngettext)
+    # Same measures, different wording: only the narrative changed.
+    assert a["measures"] == b["measures"] and a["rows"] == b["rows"]
+    assert [t["voice"] for t in v1_text] == [t["voice"] for t in v2_text]
+    assert v1_text != v2_text
+
+
 def test_analyses_are_write_once_checked_and_follow_their_run(world):
     run, out = _run(world)
     conn = world["conn"]
@@ -223,7 +251,7 @@ def test_analyses_are_write_once_checked_and_follow_their_run(world):
             cur.execute("INSERT INTO report_run_analyses (run_id, position, analysis_key,"
                         " analysis_fingerprint, kind, state, reason, inputs, measures, rows,"
                         " narrative, template_set, template_version) VALUES"
-                        " (%s, 9, 'term_keyness@1', %s, 'keyness', 'measured', NULL, '{}',"
+                        " (%s, 9, 'term_keyness@2', %s, 'keyness', 'measured', NULL, '{}',"
                         " '{}', '[]', %s, 'k', 1)", (run["id"], "a" * 64, voices))
     conn.rollback()
     with conn.cursor() as cur:
@@ -251,15 +279,16 @@ def test_artifacts_carry_the_analysis_and_manifests_list_it(world):
         manifest = row["manifest"]
         assert manifest["manifest_version"] == "report-manifest/2"
         [listed] = manifest["analyses"]
-        assert listed["analysis_key"] == "term_keyness@1" and listed["state"] == "measured"
+        assert listed["analysis_key"] == "term_keyness@2" and listed["state"] == "measured"
         assert listed["included"] is (fmt in ("json", "html"))
-        assert listed["template_version"] == 1 and len(listed["template_fingerprint"]) == 64
+        assert listed["template_version"] == 2 and len(listed["template_fingerprint"]) == 64
     body = json.loads(bytes(found["json"]["content"]))
     assert body["format"] == "report-json/2"
     [a] = body["analyses"]
     assert [t["voice"] for t in a["text"]] == ["measure", "finding", "confidence",
                                                "consequence", "caveat"]
-    assert a["narrative"]["voices"][0]["msgid"], "references kept next to the text"
+    assert a["narrative"]["voices"][0]["sentences"][0]["msgid"], \
+        "references kept next to the text"
     page = bytes(found["html"]["content"]).decode("utf-8")
     assert "Distinctive terms" in page and "<dt>Finding</dt>" in page
     assert world["alpha"] in page

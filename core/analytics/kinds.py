@@ -21,13 +21,13 @@ from __future__ import annotations
 
 import math
 import re
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Mapping, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Mapping, Tuple
 
 from core.criteria.model import sha256_hex
 
 from . import measures, thresholds
-from .narrative import TemplateSet
+from .narrative import Plural, TemplateSet
 
 MEASURED = "measured"
 NOT_MEASURABLE = "not_measurable"
@@ -124,6 +124,63 @@ KEYNESS_TEMPLATES = TemplateSet("keyness", 1, {
         "total. Next step: open the documents that contain the top terms."),
     "caveat.not_measurable": (
         "Next step: widen the criteria, or check that the matching documents were processed."),
+}, record_format=1)
+
+#: keyness@2 (NARR-01): the same analysis, but every count that a noun agrees
+#: with is its own plural sentence (ngettext), sizes are plural-neutral
+#: "label: value" statements, and a voice may be several whole sentences.
+#: Unchanged sentences keep their v1 msgids (and translations).
+_V1 = KEYNESS_TEMPLATES.sentences
+KEYNESS_TEMPLATES_V2 = TemplateSet("keyness", 2, {
+    "measure.method": (
+        "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the "
+        "selected contents with those of the other visible contents."),
+    "measure.sizes": (
+        "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. "
+        "Contents in the rest of the collection: %(reference_contents)s; counted words: "
+        "%(reference_tokens)s."),
+    "measure.listed_over": Plural(
+        "Listed: %(shown)s term used more often in the selection.",
+        "Listed: %(shown)s terms used more often in the selection, highest G2 first.",
+        "shown"),
+    "measure.listed_under": Plural(
+        "Listed: %(shown)s term used less often in the selection.",
+        "Listed: %(shown)s terms used less often in the selection, highest G2 first.",
+        "shown"),
+    "measure.not_measurable": _V1["measure.not_measurable"],
+    "finding.significant_over": Plural(
+        "%(significant)s term is used significantly more often in the selection than in "
+        "the rest of the collection (G2 of at least %(critical)s).",
+        "%(significant)s terms are used significantly more often in the selection than in "
+        "the rest of the collection (G2 of at least %(critical)s).",
+        "significant"),
+    "finding.significant_under": Plural(
+        "%(significant)s term is used significantly less often in the selection than in "
+        "the rest of the collection (G2 of at least %(critical)s).",
+        "%(significant)s terms are used significantly less often in the selection than in "
+        "the rest of the collection (G2 of at least %(critical)s).",
+        "significant"),
+    "finding.strongest": (
+        "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."),
+    "finding.none": _V1["finding.none"],
+    "finding.no_target": _V1["finding.no_target"],
+    "finding.no_target_tokens": _V1["finding.no_target_tokens"],
+    "finding.no_reference": _V1["finding.no_reference"],
+    "confidence.threshold": _V1["confidence.threshold"],
+    "confidence.not_measurable": _V1["confidence.not_measurable"],
+    "consequence.significant": _V1["consequence.significant"],
+    "consequence.none": _V1["consequence.none"],
+    "consequence.not_measurable": _V1["consequence.not_measurable"],
+    "caveat.word_forms": (
+        "Keyness compares stored word forms. It does not merge inflections, synonyms or "
+        "languages, so a selection in another language than the collection shows its "
+        "function words."),
+    "caveat.unknown_counts": Plural(
+        "%(unknown_rows)s word record without a count was left out of every total.",
+        "%(unknown_rows)s word records without a count were left out of every total.",
+        "unknown_rows"),
+    "caveat.next_step": "Next step: open the documents that contain the top terms.",
+    "caveat.not_measurable": _V1["caveat.not_measurable"],
 })
 
 
@@ -133,7 +190,8 @@ def _close(sql_value, reference) -> bool:
     return math.isclose(float(sql_value), reference, rel_tol=_CROSS_CHECK_REL_TOL, abs_tol=1e-9)
 
 
-def _keyness(inputs: Mapping[str, Dict[str, Any]], params: Mapping[str, Any]) -> Dict[str, Any]:
+def _keyness(inputs: Mapping[str, Dict[str, Any]], params: Mapping[str, Any],
+             narrate: Callable[..., Dict[str, Any]]) -> Dict[str, Any]:
     direction = params.get("direction") or "over"
     [totals] = inputs["totals"]["rows"]
     ranked = inputs["ranked"]
@@ -141,7 +199,6 @@ def _keyness(inputs: Mapping[str, Dict[str, Any]], params: Mapping[str, Any]) ->
     target_contents = int(totals["target_contents"])
     reference_contents = int(totals["reference_contents"])
     unknown = int(totals["unknown_count_rows"])
-    T = KEYNESS_TEMPLATES
     base = {"direction": direction, "target_tokens": c, "reference_tokens": d,
             "target_contents": target_contents, "reference_contents": reference_contents,
             "unknown_count_rows": unknown}
@@ -155,10 +212,7 @@ def _keyness(inputs: Mapping[str, Dict[str, Any]], params: Mapping[str, Any]) ->
         reason = "no_reference"
     if reason:
         return {"state": NOT_MEASURABLE, "reason": reason, "measures": base, "rows": [],
-                "narrative": T.compose([
-                    ("measure.not_measurable", {}), (f"finding.{reason}", {}),
-                    ("confidence.not_measurable", {}), ("consequence.not_measurable", {}),
-                    ("caveat.not_measurable", {})])}
+                "narrative": narrate(reason=reason)}
 
     rows = []
     for r in ranked["rows"]:
@@ -185,6 +239,24 @@ def _keyness(inputs: Mapping[str, Dict[str, Any]], params: Mapping[str, Any]) ->
         raise AnalysisError("keyness: more significant terms listed than counted")
     measures_out = dict(base, shown=len(rows), significant_terms=significant,
                         critical_value=critical.value, listing_truncated=ranked["truncated"])
+    return {"state": MEASURED, "reason": None, "measures": measures_out, "rows": rows,
+            "narrative": narrate(reason=None, direction=direction, measures=measures_out,
+                                 rows=rows, critical=critical)}
+
+
+def _not_measurable_choices(reason: str) -> list:
+    return [("measure.not_measurable", {}), (f"finding.{reason}", {}),
+            ("confidence.not_measurable", {}), ("consequence.not_measurable", {}),
+            ("caveat.not_measurable", {})]
+
+
+def _narrate_keyness_v1(reason, direction=None, measures=None, rows=None, critical=None):
+    """keyness@1 wording, unchanged since release (record format 1)."""
+    T = KEYNESS_TEMPLATES
+    if reason:
+        return T.compose(_not_measurable_choices(reason))
+    m = measures
+    significant, unknown = m["significant_terms"], m["unknown_count_rows"]
     if significant and rows:
         top = rows[0]
         finding = (f"finding.significant_{direction}",
@@ -197,34 +269,83 @@ def _keyness(inputs: Mapping[str, Dict[str, Any]], params: Mapping[str, Any]) ->
         consequence = ("consequence.none", {})
     caveat = (("caveat.unknown_counts", {"unknown_rows": unknown}) if unknown
               else ("caveat.default", {}))
-    return {"state": MEASURED, "reason": None, "measures": measures_out, "rows": rows,
-            "narrative": T.compose([
-                (f"measure.{direction}", {"target_tokens": c, "target_contents": target_contents,
-                                          "reference_tokens": d,
-                                          "reference_contents": reference_contents,
-                                          "shown": len(rows)}),
-                finding,
-                ("confidence.threshold", {"critical": critical.value, "source": critical.source}),
-                consequence, caveat])}
+    return T.compose([
+        (f"measure.{direction}", {"target_tokens": m["target_tokens"],
+                                  "target_contents": m["target_contents"],
+                                  "reference_tokens": m["reference_tokens"],
+                                  "reference_contents": m["reference_contents"],
+                                  "shown": m["shown"]}),
+        finding,
+        ("confidence.threshold", {"critical": critical.value, "source": critical.source}),
+        consequence, caveat])
+
+
+def _narrate_keyness_v2(reason, direction=None, measures=None, rows=None, critical=None):
+    """keyness@2 wording: one count per sentence, plurals through ngettext."""
+    T = KEYNESS_TEMPLATES_V2
+    if reason:
+        return T.compose(_not_measurable_choices(reason))
+    m = measures
+    significant, unknown = m["significant_terms"], m["unknown_count_rows"]
+    measure = [("measure.method", {}),
+               ("measure.sizes", {"target_contents": m["target_contents"],
+                                  "target_tokens": m["target_tokens"],
+                                  "reference_contents": m["reference_contents"],
+                                  "reference_tokens": m["reference_tokens"]}),
+               (f"measure.listed_{direction}", {"shown": m["shown"]})]
+    if significant and rows:
+        top = rows[0]
+        finding = [(f"finding.significant_{direction}",
+                    {"significant": significant, "critical": critical.value}),
+                   ("finding.strongest", {"top_term": top["term"],
+                                          "top_g2": round(top["g2"], 2),
+                                          "top_log_ratio": round(top["log_ratio"], 2)})]
+        consequence = ("consequence.significant", {})
+    else:
+        finding = [("finding.none", {"critical": critical.value})]
+        consequence = ("consequence.none", {})
+    caveat = [("caveat.word_forms", {})]
+    if unknown:
+        caveat.append(("caveat.unknown_counts", {"unknown_rows": unknown}))
+    caveat.append(("caveat.next_step", {}))
+    return T.compose([
+        measure, finding,
+        ("confidence.threshold", {"critical": critical.value, "source": critical.source}),
+        consequence, caveat])
+
+
+_KEYNESS_INPUTS = {
+    "ranked": InputRole(("top_n",), ("term", "target_freq", "reference_freq", "g2",
+                                     "log_ratio")),
+    "totals": InputRole(("exact",), ("target_tokens", "reference_tokens",
+                                     "target_contents", "reference_contents",
+                                     "unknown_count_rows", "significant_terms")),
+}
+_KEYNESS_THRESHOLDS = (thresholds.LL_P05, thresholds.LL_P01, thresholds.LL_P001,
+                       thresholds.LL_P0001)
 
 
 KEYNESS = Kind(
     name="keyness", version=1,
-    inputs={
-        "ranked": InputRole(("top_n",), ("term", "target_freq", "reference_freq", "g2",
-                                         "log_ratio")),
-        "totals": InputRole(("exact",), ("target_tokens", "reference_tokens",
-                                         "target_contents", "reference_contents",
-                                         "unknown_count_rows", "significant_terms")),
-    },
-    thresholds=(thresholds.LL_P05, thresholds.LL_P01, thresholds.LL_P001,
-                thresholds.LL_P0001),
+    inputs=_KEYNESS_INPUTS,
+    thresholds=_KEYNESS_THRESHOLDS,
     templates=KEYNESS_TEMPLATES,
-    compute=_keyness,
+    compute=lambda inputs, params: _keyness(inputs, params, _narrate_keyness_v1),
     parameters=("direction",),
 )
 
-KINDS: Dict[str, Kind] = {k.name: k for k in (KEYNESS,)}
+KEYNESS_V2 = Kind(
+    name="keyness", version=2,
+    inputs=_KEYNESS_INPUTS,
+    thresholds=_KEYNESS_THRESHOLDS,
+    templates=KEYNESS_TEMPLATES_V2,
+    compute=lambda inputs, params: _keyness(inputs, params, _narrate_keyness_v2),
+    parameters=("direction",),
+)
+
+#: Kinds by "name@version". Released versions stay: stored analyses name the
+#: kind version that produced them.
+KINDS: Dict[str, Kind] = {f"{k.name}@{k.version}": k for k in (KEYNESS, KEYNESS_V2)}
 
 
 # ---------------------------------------------------------------------------
@@ -242,15 +363,17 @@ class Analysis:
     inputs: Mapping[str, str]          # role -> dataset key "id@version"
     description: str                   # reviewer prose
     title: str                         # msgid shown as the section heading
+    kind_version: int = 1              # which released version of the kind
 
     def __post_init__(self) -> None:
         if not _ID.match(self.analysis_id or ""):
             raise ValueError(f"analysis id {self.analysis_id!r} must be snake_case")
         if not isinstance(self.version, int) or self.version < 1:
             raise ValueError(f"{self.analysis_id}: version must be an integer >= 1")
-        kind = KINDS.get(self.kind)
+        kind = KINDS.get(f"{self.kind}@{self.kind_version}")
         if kind is None:
-            raise ValueError(f"{self.analysis_id}: unknown kind {self.kind!r}")
+            raise ValueError(f"{self.analysis_id}: unknown kind {self.kind!r} "
+                             f"version {self.kind_version!r}")
         if set(self.inputs) != set(kind.inputs):
             raise ValueError(f"{self.analysis_id}: inputs must be exactly the roles "
                              f"{sorted(kind.inputs)} of kind {kind.name}")
@@ -263,7 +386,7 @@ class Analysis:
 
     @property
     def kind_obj(self) -> Kind:
-        return KINDS[self.kind]
+        return KINDS[f"{self.kind}@{self.kind_version}"]
 
     def semantic(self, dataset_fingerprints: Mapping[str, str]) -> Dict[str, Any]:
         return {"analysis_id": self.analysis_id, "version": self.version,

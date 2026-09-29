@@ -99,7 +99,7 @@ def definition_to_api(definition, registry, *, can_run=False):
 def analysis_to_api(analysis, registry):
     """A stored analysis with its narrative rendered in the caller's language
     from the stored template references (the references are returned too)."""
-    from flask_babel import format_decimal, gettext as _
+    from flask_babel import format_decimal, get_translations, gettext as _
 
     from core.analytics.narrative import render as render_narrative
     from core.reporting.registry import ReportNotFound
@@ -114,7 +114,12 @@ def analysis_to_api(analysis, registry):
     except ReportNotFound:
         title = analysis["analysis_key"]
     return dict(analysis, title=title,
-                text=render_narrative(analysis["narrative"], _, number))
+                # The raw catalog lookup, not flask_babel.ngettext: that one
+                # formats with {"num": n} itself; render fills the named
+                # parameters (numbers through the locale) after choosing the
+                # plural form by the catalog's Plural-Forms.
+                text=render_narrative(analysis["narrative"], _, number,
+                                      ngettext=get_translations().ngettext))
 
 
 def register_report_routes(app):

@@ -11728,3 +11728,53 @@ msgstr "לא ניתן למדידה"
 #: templates/Reports/reports.html
 msgid "Analysis %(key)s, templates %(templates)s"
 msgstr "ניתוח %(key)s, תבניות %(templates)s"
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the selected contents with those of the other visible contents."
+msgstr "מדד הבולטות (G2) והיחס הלוגריתמי משווים את שכיחויות המילים בתכנים שנבחרו לאלה שבתכנים הגלויים האחרים."
+
+#: core/analytics/kinds.py
+msgid "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. Contents in the rest of the collection: %(reference_contents)s; counted words: %(reference_tokens)s."
+msgstr "תכנים בבחירה: %(target_contents)s; מילים שנספרו: %(target_tokens)s. תכנים בשאר האוסף: %(reference_contents)s; מילים שנספרו: %(reference_tokens)s."
+
+#: core/analytics/kinds.py
+msgid "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "החזק ביותר הוא „%(top_term)s”: G2 %(top_g2)s, יחס לוגריתמי %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words."
+msgstr "מדד הבולטות משווה צורות מילים שמורות. הוא אינו מאחד נטיות, מילים נרדפות או שפות, ולכן בחירה בשפה שונה מזו של האוסף תציג את מילות התפקיד שלה."
+
+#: core/analytics/kinds.py
+msgid "Next step: open the documents that contain the top terms."
+msgstr "הצעד הבא: פתח את המסמכים המכילים את המונחים המובילים."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used more often in the selection."
+msgid_plural "Listed: %(shown)s terms used more often in the selection, highest G2 first."
+msgstr[0] "מפורט: מונח אחד שבשימוש תדיר יותר בבחירה."
+msgstr[1] "מפורטים: %(shown)s מונחים שבשימוש תדיר יותר בבחירה, מה-G2 הגבוה ביותר."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used less often in the selection."
+msgid_plural "Listed: %(shown)s terms used less often in the selection, highest G2 first."
+msgstr[0] "מפורט: מונח אחד שבשימוש נדיר יותר בבחירה."
+msgstr[1] "מפורטים: %(shown)s מונחים שבשימוש נדיר יותר בבחירה, מה-G2 הגבוה ביותר."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "מונח אחד משמש בבחירה באופן מובהק יותר מאשר בשאר האוסף (G2 של לפחות %(critical)s)."
+msgstr[1] "%(significant)s מונחים משמשים בבחירה באופן מובהק יותר מאשר בשאר האוסף (G2 של לפחות %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "מונח אחד משמש בבחירה באופן מובהק פחות מאשר בשאר האוסף (G2 של לפחות %(critical)s)."
+msgstr[1] "%(significant)s מונחים משמשים בבחירה באופן מובהק פחות מאשר בשאר האוסף (G2 של לפחות %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(unknown_rows)s word record without a count was left out of every total."
+msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
+msgstr[0] "רשומת מילה אחת ללא ספירה הושמטה מכל הסכומים."
+msgstr[1] "%(unknown_rows)s רשומות מילים ללא ספירה הושמטו מכל הסכומים."

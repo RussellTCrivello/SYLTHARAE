@@ -11895,3 +11895,53 @@ msgstr ""
 #: templates/Reports/reports.html
 msgid "Analysis %(key)s, templates %(templates)s"
 msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the selected contents with those of the other visible contents."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. Contents in the rest of the collection: %(reference_contents)s; counted words: %(reference_tokens)s."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Next step: open the documents that contain the top terms."
+msgstr ""
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used more often in the selection."
+msgid_plural "Listed: %(shown)s terms used more often in the selection, highest G2 first."
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used less often in the selection."
+msgid_plural "Listed: %(shown)s terms used less often in the selection, highest G2 first."
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/analytics/kinds.py
+msgid "%(unknown_rows)s word record without a count was left out of every total."
+msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
+msgstr[0] ""
+msgstr[1] ""

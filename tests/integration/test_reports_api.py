@@ -248,8 +248,9 @@ def test_keyness_run_returns_its_analysis_rendered_in_the_callers_language(
     conn.close()
     analyst, _ = _login_new(app, "analyst")
     defs = analyst.get("/api/reports/definitions").get_json()["items"]
-    tk = next(d for d in defs if d["key"] == "term_keyness@1")
-    assert tk["analyses"] == [{"key": "term_keyness@1", "title": "Distinctive terms",
+    tk = next(d for d in defs if d["key"] == "term_keyness@2")
+    assert "term_keyness@1" not in [d["key"] for d in defs], "superseded: not offered"
+    assert tk["analyses"] == [{"key": "term_keyness@2", "title": "Distinctive terms",
                                "kind": "keyness"}]
     direction = next(p for p in tk["parameters"] if p["name"] == "direction")
     assert direction["choices"] == ["over", "under"] and direction["default"] == "over"
@@ -279,6 +280,21 @@ def test_keyness_run_returns_its_analysis_rendered_in_the_callers_language(
         assert f"kapi{_U}" in ar["text"][1]["text"], "parameters survive translation"
         assert ar["narrative"] == a["narrative"], "one stored record, many languages"
         assert all(x["text"] != y["text"] for x, y in zip(ar["text"], english))
+        # NARR-01: the stored v2 record carries plural sentences; the Arabic
+        # rendering chose its forms from the catalog, never English's.
+        assert ar["narrative"]["format"] == 2
+        # The superseded v1 is still runnable on request and renders from its
+        # own (format 1) record in the caller's language.
+        resp = _post(analyst, "/api/reports/runs", {
+            "report_id": "term_keyness", "version": 1,
+            "parameters": {"criteria": {"text": marker}}})
+        assert resp.status_code == 200, resp.get_data(as_text=True)
+        old = resp.get_json()["run"]
+        assert old["status"] == "completed", old
+        ar_v1 = analyst.get(f"/api/reports/runs/{old['id']}").get_json()["run"]["analyses"][0]
+        assert ar_v1["analysis_key"] == "term_keyness@1" and "format" not in ar_v1["narrative"]
+        assert ar_v1["text"][2]["text"].startswith("لا تُعدّ نتيجةً")
+        assert f"kapi{_U}" in ar_v1["text"][1]["text"]
     finally:
         analyst.get("/set_language/en")
         admin_client.get("/set_language/en")

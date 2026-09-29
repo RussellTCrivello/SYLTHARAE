@@ -11890,3 +11890,73 @@ msgstr "غير قابل للقياس"
 #: templates/Reports/reports.html
 msgid "Analysis %(key)s, templates %(templates)s"
 msgstr "التحليل %(key)s، القوالب %(templates)s"
+
+#: core/analytics/kinds.py
+msgid "Log-likelihood keyness (G2) and Log Ratio compare the word frequencies of the selected contents with those of the other visible contents."
+msgstr "يقارن مقياس التميّز (G2) والنسبة اللوغاريتمية تكرارات الكلمات في المحتويات المختارة بتكراراتها في المحتويات المرئية الأخرى."
+
+#: core/analytics/kinds.py
+msgid "Contents in the selection: %(target_contents)s; counted words: %(target_tokens)s. Contents in the rest of the collection: %(reference_contents)s; counted words: %(reference_tokens)s."
+msgstr "المحتويات في التحديد: %(target_contents)s؛ الكلمات المعدودة: %(target_tokens)s. المحتويات في بقية المجموعة: %(reference_contents)s؛ الكلمات المعدودة: %(reference_tokens)s."
+
+#: core/analytics/kinds.py
+msgid "The strongest is \"%(top_term)s\": G2 %(top_g2)s, Log Ratio %(top_log_ratio)s."
+msgstr "أقواها «%(top_term)s»: G2 %(top_g2)s، النسبة اللوغاريتمية %(top_log_ratio)s."
+
+#: core/analytics/kinds.py
+msgid "Keyness compares stored word forms. It does not merge inflections, synonyms or languages, so a selection in another language than the collection shows its function words."
+msgstr "يقارن مقياس التميّز صيغ الكلمات المخزّنة. لا يدمج التصريفات أو المرادفات أو اللغات، لذا يُظهر تحديدٌ بلغة غير لغة المجموعة كلماتِه الوظيفية."
+
+#: core/analytics/kinds.py
+msgid "Next step: open the documents that contain the top terms."
+msgstr "الخطوة التالية: افتح الوثائق التي تحتوي على المصطلحات الأعلى."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used more often in the selection."
+msgid_plural "Listed: %(shown)s terms used more often in the selection, highest G2 first."
+msgstr[0] "المدرج: %(shown)s مصطلح مستخدم أكثر في التحديد."
+msgstr[1] "المدرج: مصطلح واحد مستخدم أكثر في التحديد."
+msgstr[2] "المدرج: مصطلحان مستخدمان أكثر في التحديد، الأعلى G2 أولاً."
+msgstr[3] "المدرج: %(shown)s مصطلحات مستخدمة أكثر في التحديد، الأعلى G2 أولاً."
+msgstr[4] "المدرج: %(shown)s مصطلح مستخدم أكثر في التحديد، الأعلى G2 أولاً."
+msgstr[5] "المدرج: %(shown)s مصطلحًا مستخدمًا أكثر في التحديد، الأعلى G2 أولاً."
+
+#: core/analytics/kinds.py
+msgid "Listed: %(shown)s term used less often in the selection."
+msgid_plural "Listed: %(shown)s terms used less often in the selection, highest G2 first."
+msgstr[0] "المدرج: %(shown)s مصطلح مستخدم أقل في التحديد."
+msgstr[1] "المدرج: مصطلح واحد مستخدم أقل في التحديد."
+msgstr[2] "المدرج: مصطلحان مستخدمان أقل في التحديد، الأعلى G2 أولاً."
+msgstr[3] "المدرج: %(shown)s مصطلحات مستخدمة أقل في التحديد، الأعلى G2 أولاً."
+msgstr[4] "المدرج: %(shown)s مصطلح مستخدم أقل في التحديد، الأعلى G2 أولاً."
+msgstr[5] "المدرج: %(shown)s مصطلحًا مستخدمًا أقل في التحديد، الأعلى G2 أولاً."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly more often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "لا يُستخدم أي مصطلح (%(significant)s) في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[1] "مصطلح واحد يُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[2] "مصطلحان يُستخدمان في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[3] "%(significant)s مصطلحات تُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[4] "%(significant)s مصطلح يُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[5] "%(significant)s مصطلحًا تُستخدم في التحديد أكثر بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(significant)s term is used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgid_plural "%(significant)s terms are used significantly less often in the selection than in the rest of the collection (G2 of at least %(critical)s)."
+msgstr[0] "لا يُستخدم أي مصطلح (%(significant)s) في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[1] "مصطلح واحد يُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[2] "مصطلحان يُستخدمان في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[3] "%(significant)s مصطلحات تُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[4] "%(significant)s مصطلح يُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+msgstr[5] "%(significant)s مصطلحًا تُستخدم في التحديد أقل بدلالة إحصائية من بقية المجموعة (G2 لا يقل عن %(critical)s)."
+
+#: core/analytics/kinds.py
+msgid "%(unknown_rows)s word record without a count was left out of every total."
+msgid_plural "%(unknown_rows)s word records without a count were left out of every total."
+msgstr[0] "استُبعد %(unknown_rows)s سجل كلمات بلا عدد من كل المجاميع."
+msgstr[1] "استُبعد سجل كلمات واحد بلا عدد من كل المجاميع."
+msgstr[2] "استُبعد سجلا كلمات بلا عدد من كل المجاميع."
+msgstr[3] "استُبعدت %(unknown_rows)s سجلات كلمات بلا عدد من كل المجاميع."
+msgstr[4] "استُبعد %(unknown_rows)s سجل كلمات بلا عدد من كل المجاميع."
+msgstr[5] "استُبعد %(unknown_rows)s سجلًا للكلمات بلا عدد من كل المجاميع."

@@ -10,28 +10,33 @@ from core.criteria.compiler import AccessScope
 from core.reporting import REGISTRY, Parameter, ReportDefinitionError, ReportRegistry
 from core.reporting.registry import read_lock
 
-KEYNESS = REGISTRY.report("term_keyness")
-ANALYSIS = REGISTRY.analysis("term_keyness@1")
+KEYNESS = REGISTRY.report("term_keyness")          # the active version (2)
+ANALYSIS = REGISTRY.analysis("term_keyness@2")
+# Released v1 stays registered: a registry without it would be refusing a
+# removed released version, which is not what these tests are about.
+KEYNESS_V1 = REGISTRY.report("term_keyness", 1)
+ANALYSIS_V1 = REGISTRY.analysis("term_keyness@1")
 RANKED = REGISTRY.dataset("term_keyness.ranked@1")
 TOTALS = REGISTRY.dataset("term_keyness.totals@1")
 TOPIC = REGISTRY.help_topic(KEYNESS.help_topic)
 
 
 def _registry(report=KEYNESS, datasets=(RANKED, TOTALS), analyses=(ANALYSIS,)):
-    return ReportRegistry(reports=(report,), datasets=tuple(datasets),
-                          help_topics=(TOPIC,), analyses=tuple(analyses))
+    return ReportRegistry(reports=(KEYNESS_V1, report), datasets=tuple(datasets),
+                          help_topics=(TOPIC,), analyses=(ANALYSIS_V1,) + tuple(analyses))
 
 
 def test_the_shipped_keyness_wiring_is_valid():
     assert _registry().validate() == []
-    assert KEYNESS.analyses == ("term_keyness@1",)
+    assert KEYNESS.version == 2 and KEYNESS.analyses == ("term_keyness@2",)
+    assert KEYNESS_V1.status == "superseded" and KEYNESS_V1.analyses == ("term_keyness@1",)
 
 
 @pytest.mark.parametrize("build, expected", [
-    (lambda: _registry(analyses=()), "analysis 'term_keyness@1' is not registered"),
+    (lambda: _registry(analyses=()), "analysis 'term_keyness@2' is not registered"),
     (lambda: _registry(report=dataclasses.replace(KEYNESS, analyses=())),
-     "analysis term_keyness@1 is used by no report"),
-    (lambda: _registry(analyses=(ANALYSIS, ANALYSIS)), "duplicate analysis term_keyness@1"),
+     "analysis term_keyness@2 is used by no report"),
+    (lambda: _registry(analyses=(ANALYSIS, ANALYSIS)), "duplicate analysis term_keyness@2"),
     (lambda: _registry(report=dataclasses.replace(
         KEYNESS, parameters=(KEYNESS.parameters[0],))),
      "needs parameter 'direction'"),
@@ -69,24 +74,35 @@ def test_reports_without_analyses_keep_their_released_fingerprint():
 
 def test_the_report_fingerprint_covers_its_analyses():
     fp = REGISTRY.report_fingerprint(KEYNESS)
-    assert fp == read_lock()["reports"]["term_keyness@1"]
+    assert fp == read_lock()["reports"]["term_keyness@2"]
     changed = REGISTRY.analysis_fingerprints()
-    changed["term_keyness@1"] = "f" * 64
+    changed["term_keyness@2"] = "f" * 64
     assert KEYNESS.fingerprint(REGISTRY.dataset_fingerprints(), changed) != fp
 
 
 def test_editing_a_released_analysis_fails_the_lock(monkeypatch):
     lock = read_lock()
-    edited = dataclasses.replace(ANALYSIS, inputs={"ranked": RANKED.key, "totals": RANKED.key})
-    reg = dataclasses.replace(REGISTRY, analyses=(edited,))
-    problems = reg.validate_lock(lock)
-    assert any("analysis term_keyness@1 changed meaning" in p for p in problems), problems
-    assert any("report term_keyness@1 changed meaning" in p for p in problems), problems
+    for analysis in (ANALYSIS_V1, ANALYSIS):
+        edited = dataclasses.replace(analysis, inputs={"ranked": RANKED.key,
+                                                       "totals": RANKED.key})
+        others = tuple(a for a in REGISTRY.analyses if a.key != analysis.key)
+        reg = dataclasses.replace(REGISTRY, analyses=others + (edited,))
+        problems = reg.validate_lock(lock)
+        key = analysis.key
+        assert any(f"analysis {key} changed meaning" in p for p in problems), problems
+        assert any(f"report {key} changed meaning" in p for p in problems), problems
 
 
 def test_every_template_msgid_is_in_the_translation_gate():
     keys = set(REGISTRY.translation_keys())
-    assert set(ANALYSIS.kind_obj.templates.msgids()) <= keys
+    for analysis in (ANALYSIS_V1, ANALYSIS):
+        templates = analysis.kind_obj.templates
+        assert set(templates.singular_msgids()) <= keys
+        # Plural sentences are checked as msgid/msgid_plural pairs, not as
+        # two separate keys (a catalog looks a plural up by its singular).
+        assert {p.msgids() for p in templates.plurals()} <= {
+            p.msgids() for p in REGISTRY.translation_plurals()}
+    assert ANALYSIS.kind_obj.templates.plurals(), "keyness@2 has plural sentences"
     assert ANALYSIS.title in keys
     assert set(KEYNESS.parameter("direction").choice_labels) <= keys
 

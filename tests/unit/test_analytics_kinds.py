@@ -210,4 +210,4 @@ def test_analysis_fingerprint_covers_kind_thresholds_templates_and_inputs():
     semantic = ANALYSIS.semantic(fps)
     assert semantic["kind"]["thresholds"]["ll_p0001"] == 15.13
     assert semantic["kind"]["templates"] == KEYNESS_TEMPLATES.fingerprint()
-    assert set(KINDS) == {"keyness"}
+    assert set(KINDS) == {"keyness@1", "keyness@2"}

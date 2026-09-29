@@ -68,10 +68,11 @@ def main(base, state_dir):
             time.sleep(0.5)
         return {}
 
-    def run(sources):
-        status, body = call("POST", "/api/reports/runs",
-                            {"report_id": "term_keyness",
-                             "parameters": {"criteria": {"sources": sources}}})
+    def run(sources, version=None):
+        req = {"report_id": "term_keyness", "parameters": {"criteria": {"sources": sources}}}
+        if version is not None:
+            req["version"] = version
+        status, body = call("POST", "/api/reports/runs", req)
         check(status == 202, f"POST keyness run -> {status} (202, job)")
         job = wait(body["job"]["job_id"])
         check(job.get("status") == "COMPLETED", f"report_run job -> {job.get('status')}")
@@ -79,10 +80,11 @@ def main(base, state_dir):
 
     call("GET", "/set_language/en")
     status, defs = call("GET", "/api/reports/definitions")
-    keyness = [d for d in defs.get("items", []) if d["key"] == "term_keyness@1"]
+    keyness = [d for d in defs.get("items", []) if d["key"] == "term_keyness@2"]
     check(status == 200 and keyness and keyness[0]["analyses"]
-          and keyness[0]["analyses"][0]["key"] == "term_keyness@1",
-          "definitions list term_keyness@1 with its analysis")
+          and keyness[0]["analyses"][0]["key"] == "term_keyness@2"
+          and not [d for d in defs.get("items", []) if d["key"] == "term_keyness@1"],
+          "definitions list term_keyness@2 with its analysis (v1 superseded, not offered)")
 
     rid = run([ids["source_alpha"]])
     _, got = call("GET", f"/api/reports/runs/{rid}")
@@ -109,6 +111,11 @@ def main(base, state_dir):
           "five voices in order, each with text")
     check("15.13" in text_en[2]["text"] or "15.13" in json.dumps(analysis["narrative"]),
           "the confidence voice cites the 15.13 threshold")
+    # NARR-01: one listed term is "1 term", never "1 terms".
+    check(analysis["narrative"].get("format") == 2
+          and "Listed: 1 term used more often in the selection." in text_en[0]["text"]
+          and "1 terms" not in json.dumps(text_en),
+          f"plural-aware English measure voice: {text_en[0]['text']!r}")
 
     call("GET", "/set_language/ar")
     try:
@@ -122,6 +129,18 @@ def main(base, state_dir):
     check(all(a["text"] != b["text"] for a, b in zip(analysis_ar["text"], text_en))
           and any("\u0600" <= ch <= "\u06ff" for ch in analysis_ar["text"][1]["text"]),
           "every voice is rendered differently, in Arabic script")
+    check("مصطلح واحد" in analysis_ar["text"][0]["text"],
+          "Arabic uses its own 'one term' form (catalog Plural-Forms, nplurals=6)")
+
+    old = run([ids["source_alpha"]], version=1)
+    _, got_old = call("GET", f"/api/reports/runs/{old}")
+    [analysis_v1] = got_old["run"]["analyses"]
+    save("run_v1", got_old["run"])
+    check(analysis_v1["analysis_key"] == "term_keyness@1"
+          and "format" not in analysis_v1["narrative"]
+          and analysis_v1["measures"] == analysis["measures"]
+          and [v["voice"] for v in analysis_v1["text"]] == VOICES,
+          "superseded term_keyness@1 still runs on request and renders its format-1 record")
 
     both = run([ids["source_alpha"], ids["source_beta"]])
     _, got = call("GET", f"/api/reports/runs/{both}")
@@ -147,7 +166,7 @@ def main(base, state_dir):
             status, raw, _ = owner.request("GET", f"/api/reports/artifacts/{item['id']}/download")
             doc = json.loads(raw)
             save("artifact_json", doc)
-            check(status == 200 and doc["analyses"][0]["analysis_key"] == "term_keyness@1"
+            check(status == 200 and doc["analyses"][0]["analysis_key"] == "term_keyness@2"
                   and [v["voice"] for v in doc["analyses"][0]["text"]] == VOICES,
                   "the JSON artifact carries the analysis and its five voices")
     save("manifests", manifests)

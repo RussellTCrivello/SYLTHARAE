@@ -149,9 +149,10 @@ def _provenance_pairs(document: Dict[str, Any]) -> List[Tuple[str, Any]]:
 
 
 def _analysis_text(analysis: Dict[str, Any]) -> List[Dict[str, str]]:
-    from core.analytics.narrative import render as render_narrative
+    from core.analytics.narrative import render as render_narrative, source_ngettext
 
-    return render_narrative(analysis["narrative"], lambda msgid: msgid)
+    return render_narrative(analysis["narrative"], lambda msgid: msgid,
+                            ngettext=source_ngettext)
 
 
 def _cell_text(value: Any) -> str:

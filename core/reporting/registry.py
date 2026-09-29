@@ -28,7 +28,7 @@ import json
 import os
 import re
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from core.security.service import ALL_ROLES
 
@@ -126,8 +126,17 @@ class ReportRegistry:
             keys.extend((h.title, h.summary))
         for a in self.analyses:
             keys.append(a.title)
-            keys.extend(a.kind_obj.templates.msgids())
+            keys.extend(a.kind_obj.templates.singular_msgids())
         return tuple(dict.fromkeys(keys))
+
+    def translation_plurals(self) -> Tuple[Any, ...]:
+        """Plural sentences (``narrative.Plural``) of every analysis kind:
+        catalog entries with msgid_plural and one form per plural class."""
+        seen: Dict[Tuple[str, str], Any] = {}
+        for a in self.analyses:
+            for p in a.kind_obj.templates.plurals():
+                seen.setdefault(p.msgids(), p)
+        return tuple(seen.values())
 
     # ------------------------------------------------------------ validation
     def validate(self) -> List[str]:
@@ -251,6 +260,12 @@ class ReportRegistry:
         for key in keys:
             if template.get(key) is None:
                 problems.append(f"msgid {key!r} is missing from messages.pot")
+        plurals = self.translation_plurals()
+        for p in plurals:
+            entry = template.get(p.singular)
+            if entry is None or not isinstance(entry.id, tuple) or entry.id[1] != p.plural:
+                problems.append(f"plural msgid {p.singular!r} / {p.plural!r} is missing "
+                                "from messages.pot")
         for lang in ("en",) + tuple(languages):
             path = os.path.join(translations_dir, lang, "LC_MESSAGES", "messages.po")
             with open(path, "rb") as fh:
@@ -260,6 +275,8 @@ class ReportRegistry:
                 if message is None:
                     problems.append(f"[{lang}] msgid {key!r} is missing")
                     continue
+                if message.pluralizable:
+                    continue            # checked below as a plural entry
                 if lang == "en":
                     continue
                 if message.fuzzy:
@@ -272,6 +289,7 @@ class ReportRegistry:
                 if sorted(_PLACEHOLDER.findall(message.string)) != sorted(
                         _PLACEHOLDER.findall(key)):
                     problems.append(f"[{lang}] {key!r} placeholders differ")
+            problems.extend(_plural_problems(lang, catalog, plurals))
         return problems
 
     def validate_lock(self, lock: Optional[Mapping[str, Mapping[str, str]]] = None) -> List[str]:
@@ -293,6 +311,42 @@ class ReportRegistry:
                 problems.append(f"{SINGULAR[section]} {key} is pinned but no longer "
                                 "registered: released versions must stay")
         return problems
+
+
+def _plural_problems(lang: str, catalog: Any, plurals: Iterable[Any]) -> List[str]:
+    """A plural entry needs the same msgid_plural, one non-empty form per
+    plural class of the catalog's own Plural-Forms, and in every form every
+    placeholder of the sentence except the count (a language may say "one"
+    or use a dual without the digit) and nothing else."""
+    problems: List[str] = []
+    for p in plurals:
+        message = catalog.get(p.singular)
+        if message is None:
+            continue                    # reported as a missing msgid
+        if not message.pluralizable or message.id[1] != p.plural:
+            problems.append(f"[{lang}] {p.singular!r} must be a plural entry with "
+                            f"msgid_plural {p.plural!r}")
+            continue
+        if lang == "en":
+            continue
+        forms = message.string if isinstance(message.string, tuple) else (message.string,)
+        if message.fuzzy:
+            problems.append(f"[{lang}] {p.singular!r} is fuzzy")
+        if len(forms) != catalog.num_plurals:
+            problems.append(f"[{lang}] {p.singular!r} has {len(forms)} forms, the catalog "
+                            f"declares nplurals={catalog.num_plurals}")
+        count = f"%({p.count})s"
+        required = set(_PLACEHOLDER.findall(p.plural)) - {count}
+        allowed = required | {count}
+        for i, form in enumerate(forms):
+            if not form:
+                problems.append(f"[{lang}] {p.singular!r} form {i} is untranslated")
+                continue
+            found = set(_PLACEHOLDER.findall(form))
+            if not required <= found or not found <= allowed:
+                problems.append(f"[{lang}] {p.singular!r} form {i} placeholders differ "
+                                f"(needs {sorted(required)}, may add {count})")
+    return problems
 
 
 def _duplicates(kind: str, keys: List[str]) -> List[str]:
