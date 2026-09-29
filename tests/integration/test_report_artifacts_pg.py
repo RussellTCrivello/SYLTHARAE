@@ -105,7 +105,7 @@ def test_every_format_is_stored_with_its_digest_and_manifest(world):
         assert row["sha256"] == hashlib.sha256(content).hexdigest()
         assert row["byte_size"] == len(content)
         m = row["manifest"]
-        assert m["manifest_version"] == "report-manifest/1"
+        assert m["manifest_version"] == "report-manifest/2"
         assert m["artifact"] == dict(m["artifact"], format=fmt, sha256=row["sha256"],
                                      bytes=len(content),
                                      renderer_version=renderers.RENDERERS[fmt])

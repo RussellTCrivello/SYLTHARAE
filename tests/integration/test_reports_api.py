@@ -15,7 +15,7 @@ import uuid
 
 import pytest
 
-from _seed import connect, document, side, source
+from _seed import connect, document, side, source, word_counts
 
 pytestmark = pytest.mark.integration
 
@@ -229,3 +229,56 @@ def test_reports_page_renders_for_every_role(client_factory):
         resp = client_factory(role).get("/reports")
         assert resp.status_code == 200, role
         assert b'id="reportsPage"' in resp.data
+
+
+def test_keyness_run_returns_its_analysis_rendered_in_the_callers_language(
+        app, sync_jobs, pg_db, admin_client):
+    """Step 16 over HTTP: the definition lists its analysis and translated
+    direction labels; the run carries the stored analysis and its five voices
+    rendered from the templates in the caller's language."""
+    marker = f"zkapi{_U}"
+    conn = connect(pg_db)
+    with conn, conn.cursor() as cur:
+        s1, d1 = source(cur), side(cur)
+        _, h, _ = document(cur, source_id=s1, side_id=d1, text=f"{marker} text")
+        word_counts(cur, h, {f"kapi{_U}": 500, f"kshared{_U}": 10})
+        # Its own reference content: the test must not depend on other modules' rows.
+        _, ref, _ = document(cur, source_id=s1, side_id=d1, text="reference text")
+        word_counts(cur, ref, {f"kshared{_U}": 400})
+    conn.close()
+    analyst, _ = _login_new(app, "analyst")
+    defs = analyst.get("/api/reports/definitions").get_json()["items"]
+    tk = next(d for d in defs if d["key"] == "term_keyness@1")
+    assert tk["analyses"] == [{"key": "term_keyness@1", "title": "Distinctive terms",
+                               "kind": "keyness"}]
+    direction = next(p for p in tk["parameters"] if p["name"] == "direction")
+    assert direction["choices"] == ["over", "under"] and direction["default"] == "over"
+    assert direction["choice_labels"] == ["Used more often in the selection",
+                                          "Used less often in the selection"]
+    resp = _post(analyst, "/api/reports/runs", {"report_id": "term_keyness",
+                                                "parameters": {"criteria": {"text": marker}}})
+    assert resp.status_code == 200, resp.get_data(as_text=True)
+    run = resp.get_json()["run"]
+    assert run["status"] == "completed", run
+    got = analyst.get(f"/api/reports/runs/{run['id']}").get_json()["run"]
+    [a] = got["analyses"]
+    assert (a["state"], a["reason"]) == ("measured", None), a["reason"]
+    assert a["title"] == "Distinctive terms"
+    assert [t["voice"] for t in a["text"]] == ["measure", "finding", "confidence",
+                                               "consequence", "caveat"]
+    assert f"kapi{_U}" in a["text"][1]["text"]
+    english = a["text"]
+    try:
+        # The caller's session language decides (it outranks the system one).
+        # Arabic: a selectable UI language (Croatian has a catalog but is not
+        # offered by the application - apps/web/app.py).
+        analyst.get("/set_language/ar")
+        ar = analyst.get(f"/api/reports/runs/{run['id']}").get_json()["run"]["analyses"][0]
+        assert ar["title"] == "المصطلحات المميِّزة"
+        assert ar["text"][2]["text"].startswith("لا تُعدّ نتيجةً")
+        assert f"kapi{_U}" in ar["text"][1]["text"], "parameters survive translation"
+        assert ar["narrative"] == a["narrative"], "one stored record, many languages"
+        assert all(x["text"] != y["text"] for x, y in zip(ar["text"], english))
+    finally:
+        analyst.get("/set_language/en")
+        admin_client.get("/set_language/en")

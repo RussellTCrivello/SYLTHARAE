@@ -19,7 +19,7 @@ from core.criteria import AccessScope, compile_criteria, from_dict
 from core.reporting import REGISTRY
 from core.reporting.model import COLUMN_TYPES
 
-from _seed import connect, document, side, source
+from _seed import connect, document, side, source, word_counts
 
 pytestmark = pytest.mark.integration
 
@@ -41,6 +41,15 @@ def corpus(pg_db, app):
         # Same file date for two rows: order must still be total (p.id tie-break).
         paths[s1].append(document(cur, source_id=s1, side_id=d1, text=f"{word} tie",
                                   file_date=datetime.date(2026, 1, 1))[0])
+        # Word frequencies for the keyness datasets: the matching contents
+        # use a word of their own, one other content is the reference.
+        cur.execute("SELECT DISTINCT hc.hash_id FROM paths p JOIN hash_contexts hc"
+                    " ON hc.id = p.context_id WHERE p.id = ANY(%s)",
+                    (sum(paths.values(), []),))
+        for (hash_id,) in cur.fetchall():
+            word_counts(cur, hash_id, {f"kw{tag}": 40, f"common{tag}": 5})
+        _, ref_hash, _ = document(cur, source_id=s2, side_id=d1, text="unrelated reference")
+        word_counts(cur, ref_hash, {f"common{tag}": 50, f"other{tag}": 30})
     yield {"conn": conn, "word": word, "s1": s1, "s2": s2, "paths": paths}
     conn.close()
 

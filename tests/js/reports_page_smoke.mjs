@@ -193,4 +193,52 @@ const baseRoutes = (run) => [
   check('file list read from the server', calls.some(([m, u]) => m === 'GET' && u === '/api/reports/runs/5/artifacts'));
 }
 
+// 6. Analyses (step 16): the server-rendered voices are shown verbatim, as
+// text, in voice order; not-measurable is stated; the definition lists its
+// analyses and enum choices show their translated labels.
+{
+  const KDEF = { ...DEFINITION, report_id: 'term_keyness', key: 'term_keyness@1',
+    analyses: [{ key: 'term_keyness@1', title: `Distinctive ${HOSTILE}`, kind: 'keyness' }],
+    parameters: [...DEFINITION.parameters, { name: 'direction', type: 'enum', label: 'Direction',
+      required: false, default: 'over', choices: ['over', 'under'],
+      choice_labels: ['More often', 'Less often'], minimum: null, maximum: null, max_length: null }] };
+  const voices = ['measure', 'finding', 'confidence', 'consequence', 'caveat'];
+  const KRUN = { ...RUN, report_key: 'term_keyness@1', analyses: [
+    { analysis_key: 'term_keyness@1', title: 'Distinctive terms', state: 'measured', reason: null,
+      template_set: 'keyness', template_version: 1,
+      text: voices.map((v) => ({ voice: v, text: `${v} says ${HOSTILE}` })) },
+    { analysis_key: 'other@1', title: 'Other', state: 'not_measurable', reason: 'no_target',
+      template_set: 'keyness', template_version: 1,
+      text: voices.map((v) => ({ voice: v, text: v })) }] };
+  const routes = baseRoutes(KRUN).map(([re, f]) => (String(re).includes('definitions')
+    ? [re, () => ({ success: true, items: [KDEF] })] : [re, f]));
+  const { byId } = await run({ data: { can_run: true, is_admin: false, list_limit: 50, row_page: 100,
+                                       max_row_page: 500, job_poll_ms: 1, job_poll_limit: 3 }, routes });
+  check('analyses section shown', !byId.runAnalyses.classList.contains('d-none'));
+  const first = byId.runAnalysisList.children[0];
+  const dl = first.children[2];
+  const terms = dl.children.filter((_, i) => i % 2 === 0).map((n) => n.textContent);
+  check('five voices in order with their labels', terms.join('|') === voices.map((v) => LABELS[`voice_${v}`]).join('|'), terms);
+  check('voice text verbatim and not markup', dl.children[3].textContent === `finding says ${HOSTILE}`
+        && !byId.runAnalysisList.innerHTML.includes('<img'), dl.children[3].textContent);
+  check('state and templates stated', first.children[0].textContent.includes(LABELS.analysis_measured)
+        && first.children[1].textContent.includes('keyness@1'), first.children[1].textContent);
+  check('not measurable stated', byId.runAnalysisList.children[1].children[0].textContent
+        .includes(LABELS.analysis_not_measurable));
+  check('definition lists its analyses as text', byId.reportAbout.textContent.includes('term_keyness@1')
+        && !byId.reportAbout.innerHTML.includes('<img'));
+  const direction = byId.param_direction;
+  check('enum choices show translated labels', direction.children.map((o) => o.textContent).join('|')
+        === `${LABELS.none}|More often|Less often` && direction.value === 'over',
+        direction.children.map((o) => o.textContent));
+}
+
+// 7. A run without analyses keeps the section hidden.
+{
+  const { byId } = await run({ data: { can_run: true, is_admin: false, list_limit: 50, row_page: 100,
+                                       max_row_page: 500, job_poll_ms: 1, job_poll_limit: 3 },
+                               routes: baseRoutes(RUN) });
+  check('no analyses: section hidden', byId.runAnalyses.classList.contains('d-none'));
+}
+
 process.exit(failures ? 1 : 0);

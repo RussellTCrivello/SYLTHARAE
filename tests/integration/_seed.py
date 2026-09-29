@@ -64,3 +64,15 @@ def document(cur, *, source_id, side_id, text, file_name=None, file_type="txt",
         (file_name or f"doc_{n}.{file_type}", f"/seed/doc_{n}.{file_type}", len(text),
          file_type, file_status, file_date, context_id))
     return cur.fetchone()[0], hash_id, context_id
+
+
+def word_counts(cur, hash_id, counts):
+    """Word frequencies of one content, as ingestion stores them
+    (``words`` + ``words_hashs``). ``counts`` maps word -> count; a count of
+    ``None`` stores a row whose count is unknown (word_count NULL)."""
+    for word, count in counts.items():
+        cur.execute("INSERT INTO words (word) VALUES (%s) ON CONFLICT (word)"
+                    " DO UPDATE SET word = EXCLUDED.word RETURNING id", (word,))
+        word_id = cur.fetchone()[0]
+        cur.execute("INSERT INTO words_hashs (hash_id, word_id, word_count, position_indexer)"
+                    " VALUES (%s, %s, %s, ''::bytea)", (hash_id, word_id, count))

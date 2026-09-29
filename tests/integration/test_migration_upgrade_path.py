@@ -736,3 +736,48 @@ def test_m0025_signal_run_history_index_and_downgrade(legacy_db):
     m0025.module.upgrade(conn)          # idempotent
     conn.commit()
     assert set(indexes()) == set(got)
+
+
+def test_m0026_report_run_analyses_and_downgrade(legacy_db):
+    """0026: report_run_analyses exists on an upgraded 0015 install with its
+    keys, CHECKs, cascade and write-once trigger; downgrade removes exactly
+    the table and its function; upgrade is idempotent."""
+    conn, _ = legacy_db
+    assert run_migrations(conn)[-1] >= "0026"
+
+    def state():
+        with conn.cursor() as cur:
+            cur.execute("SELECT conname FROM pg_constraint"
+                        " WHERE conrelid = 'report_run_analyses'::regclass ORDER BY conname")
+            constraints = [r[0] for r in cur.fetchall()]
+            cur.execute("SELECT tgname FROM pg_trigger WHERE tgrelid ="
+                        " 'report_run_analyses'::regclass AND NOT tgisinternal")
+            triggers = [r[0] for r in cur.fetchall()]
+            cur.execute("SELECT confdeltype FROM pg_constraint WHERE conrelid ="
+                        " 'report_run_analyses'::regclass AND contype = 'f'")
+            fk = [r[0] for r in cur.fetchall()]
+        return constraints, triggers, fk
+
+    constraints, triggers, fk = state()
+    assert set(constraints) == {
+        "report_run_analyses_pkey", "report_run_analyses_run_id_fkey",
+        "uq_report_run_analyses_key", "ck_report_run_analyses_state",
+        "ck_report_run_analyses_reason", "ck_report_run_analyses_fingerprint",
+        "ck_report_run_analyses_json", "ck_report_run_analyses_voices",
+        "ck_report_run_analyses_template"}
+    assert triggers == ["trg_report_run_analyses_write_once"]
+    assert fk == ["c"], "rows follow their run (ON DELETE CASCADE)"
+
+    m0026 = next(m for m in discover_migrations() if m.version == "0026")
+    for migration in reversed([m for m in discover_migrations() if m.version >= "0026"]):
+        migration.module.downgrade(conn)
+    conn.commit()
+    with conn.cursor() as cur:
+        cur.execute("SELECT to_regclass('report_run_analyses'),"
+                    " to_regprocedure('report_run_analyses_write_once()'),"
+                    " to_regclass('report_run_datasets')")
+        assert cur.fetchone() == (None, None, "report_run_datasets")
+    m0026.module.upgrade(conn)
+    m0026.module.upgrade(conn)          # idempotent
+    conn.commit()
+    assert state() == (constraints, triggers, fk)

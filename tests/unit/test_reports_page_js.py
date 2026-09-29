@@ -10,7 +10,11 @@ disabled with the reason; a saved search is submitted by id. Files (step
 manifest links point at the artifact, the creator's name is text, the
 unavailable formats' reasons are text, a repeated request is reported, the
 chosen format survives the list reload and a failed verification names the
-failing check.
+failing check. Analyses (step 16): the server-rendered five voices are shown
+verbatim as text in voice order with their labels, the state (measured / not
+measurable) and template set are stated, a run without analyses hides the
+section, the definition lists its analyses and enum choices show their
+translated labels.
 """
 import shutil
 import subprocess
@@ -26,4 +30,4 @@ def test_reports_page_renders_server_state_as_text():
     proc = subprocess.run(["node", "tests/js/reports_page_smoke.mjs"], cwd=ROOT,
                           capture_output=True, text=True, timeout=60)
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert proc.stdout.count("ok ") == 31, proc.stdout
+    assert proc.stdout.count("ok ") == 39, proc.stdout
