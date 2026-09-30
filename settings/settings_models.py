@@ -500,6 +500,37 @@ class InterfaceVisibility:
 
 
 @dataclass
+class RetentionSettings:
+    """Step 21: days to keep each growing area; ``0`` keeps it forever.
+
+    The defaults and the authority are ``services/retention/model.py``
+    (``POLICIES``) - these fields are only the persisted storage shape; the
+    retention service re-validates whatever is stored here.
+    """
+    jobs_days: int = 90
+    rule_ledger_days: int = 180
+    rule_evaluations_days: int = 180
+    scenario_outcomes_days: int = 0
+    notifications_days: int = 0
+    report_artifacts_days: int = 0
+    report_runs_days: int = 365
+    path_revisions_days: int = 0
+    audit_log_days: int = 0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {f: getattr(self, f) for f in (
+            "jobs_days", "rule_ledger_days", "rule_evaluations_days",
+            "scenario_outcomes_days", "notifications_days",
+            "report_artifacts_days", "report_runs_days",
+            "path_revisions_days", "audit_log_days")}
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'RetentionSettings':
+        known = set(cls.__dataclass_fields__)  # type: ignore[attr-defined]
+        return cls(**{k: v for k, v in (data or {}).items() if k in known})
+
+
+@dataclass
 class AllSettings:
     """Complete settings container"""
     system: SystemSettings = field(default_factory=SystemSettings)
@@ -508,6 +539,7 @@ class AllSettings:
     processing: ProcessingSettings = field(default_factory=ProcessingSettings)
     notifications: NotificationSettings = field(default_factory=NotificationSettings)
     theme: ThemeSettings = field(default_factory=ThemeSettings)
+    retention: RetentionSettings = field(default_factory=RetentionSettings)
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     storage: StorageConfig = field(default_factory=StorageConfig)
     interfaces: InterfaceVisibility = field(default_factory=InterfaceVisibility)
@@ -521,6 +553,7 @@ class AllSettings:
             "processing": self.processing.to_dict(),
             "notifications": self.notifications.to_dict(),
             "theme": self.theme.to_dict(),
+            "retention": self.retention.to_dict(),
             "database": self.database.to_dict(),
             "storage": self.storage.to_dict(),
             "interfaces": self.interfaces.to_dict(),
@@ -542,6 +575,7 @@ class AllSettings:
             processing=ProcessingSettings.from_dict(data.get("processing", {})),
             notifications=NotificationSettings.from_dict(data.get("notifications", {})),
             theme=ThemeSettings.from_dict(data.get("theme", {})),
+            retention=RetentionSettings.from_dict(data.get("retention", {})),
             database=DatabaseConfig.from_dict(data.get("database", {})),
             storage=StorageConfig.from_dict(data.get("storage", {})),
             interfaces=InterfaceVisibility.from_dict(data.get("interfaces", {})),
@@ -604,6 +638,65 @@ SETTING_DEFINITIONS = {
                     "element on the page (administrators only)",
         category="system"
     ),
+
+    # Retention (step 21): days to keep each growing area; 0 = keep forever.
+    # Bounds match services/retention/model.py, which re-validates.
+    "retention.jobs_days": SettingDefinition(
+        key="jobs_days", type=SettingType.INTEGER, default=90,
+        label="Retention: finished jobs (days)",
+        description="Delete finished JobManager jobs and their events after "
+                    "this many days. 0 keeps them forever.",
+        category="retention", min_value=0, max_value=3650),
+    "retention.rule_ledger_days": SettingDefinition(
+        key="rule_ledger_days", type=SettingType.INTEGER, default=180,
+        label="Retention: rule match ledger (days)",
+        description="Delete the rule engine's matched-subject ledger rows "
+                    "after this many days. 0 keeps them forever.",
+        category="retention", min_value=0, max_value=3650),
+    "retention.rule_evaluations_days": SettingDefinition(
+        key="rule_evaluations_days", type=SettingType.INTEGER, default=180,
+        label="Retention: rule evaluation log (days)",
+        description="Delete monitoring-rule evaluation log rows after this "
+                    "many days. 0 keeps them forever.",
+        category="retention", min_value=0, max_value=3650),
+    "retention.scenario_outcomes_days": SettingDefinition(
+        key="scenario_outcomes_days", type=SettingType.INTEGER, default=0,
+        label="Retention: scenario outcomes (days)",
+        description="Delete scenario outcome history after this many days. "
+                    "0 (default) keeps the append-only evidence forever.",
+        category="retention", min_value=0, max_value=3650),
+    "retention.notifications_days": SettingDefinition(
+        key="notifications_days", type=SettingType.INTEGER, default=0,
+        label="Retention: notifications (days)",
+        description="Delete notifications for every recipient after this "
+                    "many days, read or unread. 0 keeps them forever.",
+        category="retention", min_value=0, max_value=3650),
+    "retention.report_artifacts_days": SettingDefinition(
+        key="report_artifacts_days", type=SettingType.INTEGER, default=0,
+        label="Retention: report artifacts (days)",
+        description="Delete stored report artifacts (bytes and manifest) "
+                    "after this many days. 0 keeps them forever.",
+        category="retention", min_value=0, max_value=3650),
+    "retention.report_runs_days": SettingDefinition(
+        key="report_runs_days", type=SettingType.INTEGER, default=365,
+        label="Retention: report runs (days)",
+        description="Delete finished report runs with their datasets and "
+                    "remaining artifacts after this many days. 0 keeps them "
+                    "forever.",
+        category="retention", min_value=0, max_value=3650),
+    "retention.path_revisions_days": SettingDefinition(
+        key="path_revisions_days", type=SettingType.INTEGER, default=0,
+        label="Retention: revision log (days)",
+        description="Delete the append-only revision log behind the Change "
+                    "report after this many days. 0 keeps it forever.",
+        category="retention", min_value=0, max_value=3650),
+    "retention.audit_log_days": SettingDefinition(
+        key="audit_log_days", type=SettingType.INTEGER, default=0,
+        label="Retention: audit log (days)",
+        description="Delete audit history (export disclosures included) "
+                    "after this many days. 0 (default) keeps it forever; "
+                    "deleting it weakens tamper evidence and is audited.",
+        category="retention", min_value=0, max_value=3650),
 
     # Theme settings
     "theme.primary_color": SettingDefinition(

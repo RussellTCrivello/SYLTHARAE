@@ -31,11 +31,11 @@ from the code, so it cannot claim more than the application does.
 <!-- BEGIN GENERATED REGISTRY EVIDENCE -->
 ### 1. Registry inventory
 
-- Interfaces declared: **32**
+- Interfaces declared: **33**
 - Cross-cutting features (not interfaces): **1**
-- Endpoints owned (canonical routes + aliases): **76**
+- Endpoints owned (canonical routes + aliases): **77**
 - With a keyboard shortcut: **17**
-- With a help topic: **30**
+- With a help topic: **31**
 - Declared domain vocabulary: **12**
 - Domains currently containing interfaces: **10**
 - Declared domains holding no interface yet: **2**
@@ -52,7 +52,7 @@ Domains are **declared** in `core/interfaces/domains.py`; a declared domain may 
 | CLASSIFY | 2 | in use |
 | REPORT | 4 | in use |
 | OPERATE | 3 | in use |
-| ADMINISTRATION | 2 | in use |
+| ADMINISTRATION | 3 | in use |
 | SETTINGS | 3 | in use |
 | SECURITY | 0 | declared, empty |
 | INTERNAL | 1 | in use |
@@ -77,7 +77,7 @@ Declared aliases: **45**, across **12** interfaces. An alias is an endpoint the 
 ### 3. Dependency validation
 
 - Validation result: **no issues**
-- Interfaces declaring a dependency: **12**
+- Interfaces declaring a dependency: **13**
 - Interfaces other interfaces depend on: **9**
 
 | Interface | Requires | Required by |
@@ -94,11 +94,12 @@ Declared aliases: **45**, across **12** interfaces. An alias is an endpoint the 
 | `batch_analysis` | `file_library` | — |
 | `classification` | `file_library`, `words` | — |
 | `comprehensive_dashboard` | `file_library` | — |
-| `reports` | `jobs`, `search` | `schedules` |
+| `reports` | `jobs`, `search` | `retention`, `schedules` |
+| `retention` | `jobs`, `reports` | — |
 | `schedules` | `jobs`, `monitoring`, `reports` | — |
 | `charts_dashboard` | `file_library` | — |
 | `detection` | `jobs`, `signal_horizon` | — |
-| `jobs` | — | `detection`, `reports`, `schedules` |
+| `jobs` | — | `detection`, `reports`, `retention`, `schedules` |
 | `settings` | — | `interface_manager` |
 | `interface_manager` | `settings` | — |
 
@@ -108,8 +109,8 @@ Declared aliases: **45**, across **12** interfaces. An alias is an endpoint the 
 
 ### 5. Lifecycle and migration
 
-- Interfaces by status: **ACTIVE 31, DEPRECATED 1**
-- Interfaces by kind: **INTERNAL 1, PAGE 30, SECTION 1**
+- Interfaces by status: **ACTIVE 32, DEPRECATED 1**
+- Interfaces by kind: **INTERNAL 1, PAGE 31, SECTION 1**
 
 Renames and merges the registry understands (a stored value under an old key reaches the interface that replaced it; the code may not name the old key):
 
@@ -148,11 +149,11 @@ Cross-cutting settings that are **not** features (they belong to an existing int
 <!-- BEGIN GENERATED APPLICATION EVIDENCE -->
 ### 7. Endpoint coverage
 
-- Endpoints in the application's URL map (static excluded): **418**
-- User-facing page endpoints: **58**
-- Owned by an interface: **76**
+- Endpoints in the application's URL map (static excluded): **422**
+- User-facing page endpoints: **59**
+- Owned by an interface: **77**
 - **Unmanaged user-facing endpoints**: **0**
-- Interfaces with a navigable route: **31**
+- Interfaces with a navigable route: **32**
 
 Unmanaged user-facing endpoints: **0** — every page the application serves is owned by exactly one interface.
 
@@ -161,18 +162,18 @@ Unmanaged user-facing endpoints: **0** — every page the application serves is 
 | Classification | Endpoints |
 | --- | --- |
 | ACTION | 9 |
-| API_ENDPOINT | 333 |
+| API_ENDPOINT | 336 |
 | INTERNAL_PAGE | 1 |
 | REDIRECT | 1 |
 | SYSTEM_ENDPOINT | 16 |
 | TEST_ENDPOINT | 1 |
-| USER_INTERFACE | 57 |
+| USER_INTERFACE | 58 |
 
 By blueprint:
 
 | Blueprint | Endpoints |
 | --- | --- |
-| (app) | 215 |
+| (app) | 219 |
 | analytics | 22 |
 | archives_api | 10 |
 | auth | 12 |
@@ -206,11 +207,11 @@ The coverage rule tolerates exactly these, by name — a new page cannot be adde
 
 **TEST_ENDPOINT_PREFIXES** (1): `/_test/`
 
-Endpoints the interface switch does not gate (API, system and infrastructure; authentication and authorization are unchanged): **350**
+Endpoints the interface switch does not gate (API, system and infrastructure; authentication and authorization are unchanged): **353**
 
 ### 10. Rendered navigation
 
-`GET /` as an administrator returned 200; the sidebar renders **9 domains** and **30 entries**, all of them from the registry:
+`GET /` as an administrator returned 200; the sidebar renders **9 domains** and **31 entries**, all of them from the registry:
 
 - Work
 - Discover
@@ -222,7 +223,7 @@ Endpoints the interface switch does not gate (API, system and infrastructure; au
 - Administration
 - Settings
 
-Entries, in render order: `index`, `files.files_list`, `search_page`, `sources_list`, `sides_list`, `keywords_list`, `words_list`, `categories_list`, `email_words`, `notifications_page`, `signals_page`, `monitoring_page`, `operations_input_page`, `operations_import_page`, `archives_page`, `path_analysis_page`, `analysis_batch`, `analyst_categorization_page`, `file_classification_page`, `comprehensive_dashboard`, `reports_page`, `schedules_page`, `charts_dashboard`, `detection_page`, `operations_jobs_page`, `import_export_page`, `users_page`, `audit_page`, `settings_page_direct`, `translations.translation_management_page`
+Entries, in render order: `index`, `files.files_list`, `search_page`, `sources_list`, `sides_list`, `keywords_list`, `words_list`, `categories_list`, `email_words`, `notifications_page`, `signals_page`, `monitoring_page`, `operations_input_page`, `operations_import_page`, `archives_page`, `path_analysis_page`, `analysis_batch`, `analyst_categorization_page`, `file_classification_page`, `comprehensive_dashboard`, `reports_page`, `schedules_page`, `charts_dashboard`, `detection_page`, `operations_jobs_page`, `import_export_page`, `retention_page`, `users_page`, `audit_page`, `settings_page_direct`, `translations.translation_management_page`
 
 Marked active on this page: `index`
 <!-- END GENERATED APPLICATION EVIDENCE -->

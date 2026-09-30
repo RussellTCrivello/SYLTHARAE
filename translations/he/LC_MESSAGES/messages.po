@@ -12309,3 +12309,108 @@ msgstr "כל כלל פעיל"
 msgid "every active scenario"
 msgstr "כל תרחיש פעיל"
 
+# --- Retention (step 21) ---
+#: templates/Retention/retention.html
+msgid "What is pruned, how old, and what it would delete right now. Every prune is audited with its count."
+msgstr "מה נמחק, מה גילו, ומה היה נמחק כעת. כל מחיקה נרשמת ביומן עם מספר הרשומות."
+
+#: templates/Retention/retention.html
+msgid "Run enabled policies"
+msgstr "הפעלת המדיניות הפעילה"
+
+#: templates/Retention/retention.html
+msgid "How retention works"
+msgstr "כך פועל השימור"
+
+#: templates/Retention/retention.html
+msgid "Each policy deletes rows older than its number of days, in batches, with the deleted count audited."
+msgstr "כל מדיניות מוחקת רשומות ישנות ממספר הימים שלה, בקבוצות, והמספר שנמחק נרשם ביומן."
+
+#: templates/Retention/retention.html
+msgid "0 days means keep forever - the default for everything whose deletion would destroy evidence: scenario outcomes, notifications, report artifacts, the revision log and the audit log."
+msgstr "אפס ימים פירושו שמירה לנצח — ברירת המחדל לכל מה שמחיקתו תהרוס ראיות: תוצאות תרחישים, התראות, קבצי דוחות, יומן השינויים ויומן הביקורת."
+
+#: templates/Retention/retention.html
+msgid "Live rows are never pruned: queued or running jobs, and report runs that never finished, stay whatever their age."
+msgstr "רשומות חיות אינן נמחקות לעולם: משימות בתור או בהרצה, והרצות דוח שמעולם לא הסתיימו, נשארות ללא קשר לגילן."
+
+#: templates/Retention/retention.html
+msgid "Deleting report artifacts removes their bytes and manifests: those files can no longer be verified afterwards. The audit row records it."
+msgstr "מחיקת קבצי דוח מסירה את התוכן ואת המניפסטים שלהם: לאחר מכן לא ניתן עוד לאמת את הקבצים האלה. יומן הביקורת מתעד זאת."
+
+#: templates/Retention/retention.html
+msgid "Retention can be scheduled like any report: create a retention schedule on the Schedules page (administrators)."
+msgstr "ניתן לתזמן שימור כמו כל דוח: ליצור תזמון שימור בעמוד התזמונים (מנהלים)."
+
+#: templates/Retention/retention.html
+msgid "Area"
+msgstr "תחום"
+
+#: templates/Retention/retention.html
+msgid "What it is"
+msgstr "מה זה"
+
+#: templates/Retention/retention.html
+msgid "Keep (days)"
+msgstr "שמירה (ימים)"
+
+#: templates/Retention/retention.html
+msgid "Would delete now"
+msgstr "היה מוחק כעת"
+
+#: templates/Retention/retention.html
+msgid "Rows in table"
+msgstr "רשומות בטבלה"
+
+#: templates/Retention/retention.html
+msgid "Oldest"
+msgstr "הישן ביותר"
+
+#: templates/Retention/retention.html
+msgid "No retention policies."
+msgstr "אין מדיניות שימור."
+
+#: templates/Retention/retention.html
+msgid "Keep (days) — 0 keeps forever"
+msgstr "שמירה (ימים) — אפס שומר לנצח"
+
+#: templates/Retention/retention.html
+msgid "keep forever"
+msgstr "שמירה לנצח"
+
+#: templates/Retention/retention.html
+msgid "Run every enabled retention policy now? This deletes aged rows and is audited."
+msgstr "להריץ עכשיו כל מדיניות שימור פעילה? פעולה זו מוחקת רשומות ישנות ונרשמת ביומן."
+
+#: templates/Retention/retention.html
+msgid "Run this retention policy now? This deletes aged rows and is audited."
+msgstr "להריץ עכשיו את מדיניות השימור הזאת? פעולה זו מוחקת רשומות ישנות ונרשמת ביומן."
+
+#: templates/Retention/retention.html
+msgid "Retention policy:"
+msgstr "מדיניות שימור:"
+
+#: templates/Retention/retention.html
+msgid "The policy was refused:"
+msgstr "המדיניות נדחתה:"
+
+#: templates/Retention/retention.html
+msgid "The retention overview could not be loaded."
+msgstr "טעינת סקירת השימור נכשלה."
+
+#: templates/Retention/retention.html
+msgid "The retention job is on the Jobs page."
+msgstr "משימת השימור נמצאת בעמוד המשימות."
+
+#: templates/Scheduling/schedules.html
+msgid "Prune by the retention policies"
+msgstr "מחיקה לפי מדיניות השימור"
+
+#: templates/Scheduling/schedules.html
+msgid "every enabled retention policy"
+msgstr "כל מדיניות שימור פעילה"
+
+#: templates/Retention/retention.html
+msgid "Retention"
+msgstr "שימור"
+

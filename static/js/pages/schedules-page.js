@@ -106,6 +106,7 @@ function whatRuns(row) {
         const version = payload.version ? `@${payload.version}` : '';
         return `${L.what_report}: ${escapeCell(payload.report_id || '?')}${version}`;
     }
+    if (row.schedule_type === 'retention') return L.what_retention;
     return row.schedule_type === 'rule_evaluation' ? L.what_rules : L.what_scenarios;
 }
 

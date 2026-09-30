@@ -17,14 +17,16 @@ from services.scheduling.model import (
 
 
 class TestTheVocabulary:
-    def test_three_job_types_map_onto_existing_jobs(self):
+    def test_the_job_types_map_onto_existing_jobs(self):
+        # step 21 added "retention": pruning is scheduled like any report.
         assert set(SCHEDULE_TYPES) == {"report_run", "rule_evaluation",
-                                       "scenario_evaluation"}
+                                       "scenario_evaluation", "retention"}
 
     def test_reports_run_as_their_owner_evaluations_are_administrative(self):
         assert required_role("report_run") == "analyst"
         assert required_role("rule_evaluation") == "admin"
         assert required_role("scenario_evaluation") == "admin"
+        assert required_role("retention") == "admin"
         with pytest.raises(ScheduleError):
             required_role("nonsense")
 

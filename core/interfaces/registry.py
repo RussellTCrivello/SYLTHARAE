@@ -302,6 +302,17 @@ REGISTRY: Tuple[Interface, ...] = (
         help_topic="report/reports", keyboard_shortcut="g r",
     ),
     _if(
+        "retention", "Retention",
+        "The pruning policies for everything that grows: finished jobs, the "
+        "rule ledger and evaluation log, scenario outcomes, notifications, "
+        "report runs and artifacts, the revision log and the audit log - "
+        "each with an explicit keep-forever default where pruning would "
+        "destroy evidence. Every applied prune is audited with its count.",
+        Domain.ADMINISTRATION, "retention_page", "bi-hourglass-split",
+        dependencies=("jobs", "reports"),
+        help_topic="operate/retention",
+    ),
+    _if(
         "schedules", "Schedules",
         "Run a registered report, or evaluate every active rule / scenario, on "
         "an interval. Each fire re-checks the owner's role and the payload "

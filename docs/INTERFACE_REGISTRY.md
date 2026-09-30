@@ -67,12 +67,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 ## Generated reference
 
 <!-- BEGIN GENERATED REGISTRY TABLE -->
-- Interfaces: **32** (features declared separately: **1**)
-- Endpoints owned: **76**
-- With a keyboard shortcut: **17**; with a help topic: **30**
-- By domain: ADMINISTRATION 2, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 4, SETTINGS 3, WORK 1
-- By status: ACTIVE 31, DEPRECATED 1
-- By kind: INTERNAL 1, PAGE 30, SECTION 1
+- Interfaces: **33** (features declared separately: **1**)
+- Endpoints owned: **77**
+- With a keyboard shortcut: **17**; with a help topic: **31**
+- By domain: ADMINISTRATION 3, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 4, SETTINGS 3, WORK 1
+- By status: ACTIVE 32, DEPRECATED 1
+- By kind: INTERNAL 1, PAGE 31, SECTION 1
 
 
 ### WORK (1)
@@ -136,10 +136,11 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `jobs` | Jobs | OPERATE | `operations_jobs_page` | `operations_job_detail_page` | any | on | — | operate/jobs | g j | ACTIVE |
 | `import_export_console` | Import/Export | OPERATE | `import_export_page` | — | admin | on | — | — | — | DEPRECATED |
 
-### ADMINISTRATION (2)
+### ADMINISTRATION (3)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `retention` | Retention | ADMINISTRATION | `retention_page` | — | any | on | `jobs`, `reports` | operate/retention | — | ACTIVE |
 | `users` | User Management | ADMINISTRATION | `users_page` | — | admin | on | — | administration/users | g u | ACTIVE |
 | `audit_log` | Audit Log | ADMINISTRATION | `audit_page` | — | admin | on | — | administration/audit | g l | ACTIVE |
 

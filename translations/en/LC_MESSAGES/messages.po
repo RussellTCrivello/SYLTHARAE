@@ -12488,3 +12488,108 @@ msgstr ""
 msgid "every active scenario"
 msgstr ""
 
+# --- Retention (step 21) ---
+#: templates/Retention/retention.html
+msgid "What is pruned, how old, and what it would delete right now. Every prune is audited with its count."
+msgstr "What is pruned, how old, and what it would delete right now. Every prune is audited with its count."
+
+#: templates/Retention/retention.html
+msgid "Run enabled policies"
+msgstr "Run enabled policies"
+
+#: templates/Retention/retention.html
+msgid "How retention works"
+msgstr "How retention works"
+
+#: templates/Retention/retention.html
+msgid "Each policy deletes rows older than its number of days, in batches, with the deleted count audited."
+msgstr "Each policy deletes rows older than its number of days, in batches, with the deleted count audited."
+
+#: templates/Retention/retention.html
+msgid "0 days means keep forever - the default for everything whose deletion would destroy evidence: scenario outcomes, notifications, report artifacts, the revision log and the audit log."
+msgstr "0 days means keep forever - the default for everything whose deletion would destroy evidence: scenario outcomes, notifications, report artifacts, the revision log and the audit log."
+
+#: templates/Retention/retention.html
+msgid "Live rows are never pruned: queued or running jobs, and report runs that never finished, stay whatever their age."
+msgstr "Live rows are never pruned: queued or running jobs, and report runs that never finished, stay whatever their age."
+
+#: templates/Retention/retention.html
+msgid "Deleting report artifacts removes their bytes and manifests: those files can no longer be verified afterwards. The audit row records it."
+msgstr "Deleting report artifacts removes their bytes and manifests: those files can no longer be verified afterwards. The audit row records it."
+
+#: templates/Retention/retention.html
+msgid "Retention can be scheduled like any report: create a retention schedule on the Schedules page (administrators)."
+msgstr "Retention can be scheduled like any report: create a retention schedule on the Schedules page (administrators)."
+
+#: templates/Retention/retention.html
+msgid "Area"
+msgstr "Area"
+
+#: templates/Retention/retention.html
+msgid "What it is"
+msgstr "What it is"
+
+#: templates/Retention/retention.html
+msgid "Keep (days)"
+msgstr "Keep (days)"
+
+#: templates/Retention/retention.html
+msgid "Would delete now"
+msgstr "Would delete now"
+
+#: templates/Retention/retention.html
+msgid "Rows in table"
+msgstr "Rows in table"
+
+#: templates/Retention/retention.html
+msgid "Oldest"
+msgstr "Oldest"
+
+#: templates/Retention/retention.html
+msgid "No retention policies."
+msgstr "No retention policies."
+
+#: templates/Retention/retention.html
+msgid "Keep (days) — 0 keeps forever"
+msgstr "Keep (days) — 0 keeps forever"
+
+#: templates/Retention/retention.html
+msgid "keep forever"
+msgstr "keep forever"
+
+#: templates/Retention/retention.html
+msgid "Run every enabled retention policy now? This deletes aged rows and is audited."
+msgstr "Run every enabled retention policy now? This deletes aged rows and is audited."
+
+#: templates/Retention/retention.html
+msgid "Run this retention policy now? This deletes aged rows and is audited."
+msgstr "Run this retention policy now? This deletes aged rows and is audited."
+
+#: templates/Retention/retention.html
+msgid "Retention policy:"
+msgstr "Retention policy:"
+
+#: templates/Retention/retention.html
+msgid "The policy was refused:"
+msgstr "The policy was refused:"
+
+#: templates/Retention/retention.html
+msgid "The retention overview could not be loaded."
+msgstr "The retention overview could not be loaded."
+
+#: templates/Retention/retention.html
+msgid "The retention job is on the Jobs page."
+msgstr "The retention job is on the Jobs page."
+
+#: templates/Scheduling/schedules.html
+msgid "Prune by the retention policies"
+msgstr "Prune by the retention policies"
+
+#: templates/Scheduling/schedules.html
+msgid "every enabled retention policy"
+msgstr "every enabled retention policy"
+
+#: templates/Retention/retention.html
+msgid "Retention"
+msgstr "Retention"
+

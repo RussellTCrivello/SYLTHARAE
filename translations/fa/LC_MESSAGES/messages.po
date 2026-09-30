@@ -12605,3 +12605,108 @@ msgstr "هر قاعده فعال"
 msgid "every active scenario"
 msgstr "هر سناریوی فعال"
 
+# --- Retention (step 21) ---
+#: templates/Retention/retention.html
+msgid "What is pruned, how old, and what it would delete right now. Every prune is audited with its count."
+msgstr "چه چیزی پاک می‌شود، چه سنی دارد، و اکنون چه چیزی را حذف می‌کرد. هر پاک‌سازی با شمارش آن ثبت می‌شود."
+
+#: templates/Retention/retention.html
+msgid "Run enabled policies"
+msgstr "اجرای سیاست‌های فعال"
+
+#: templates/Retention/retention.html
+msgid "How retention works"
+msgstr "نگه‌داشت چگونه کار می‌کند"
+
+#: templates/Retention/retention.html
+msgid "Each policy deletes rows older than its number of days, in batches, with the deleted count audited."
+msgstr "هر سیاست ردیف‌های قدیمی‌تر از تعداد روزهای خود را به صورت دسته‌ای حذف می‌کند و شمارش حذف‌شده‌ها ثبت می‌شود."
+
+#: templates/Retention/retention.html
+msgid "0 days means keep forever - the default for everything whose deletion would destroy evidence: scenario outcomes, notifications, report artifacts, the revision log and the audit log."
+msgstr "صفر روز یعنی نگه‌داشتن برای همیشه — پیش‌فرض برای هر چیزی که حذفش شواهد را از بین می‌برد: نتایج سناریوها، اعلان‌ها، خروجی‌های گزارش، تاریخچه بازبینی‌ها و گزارش حسابرسی."
+
+#: templates/Retention/retention.html
+msgid "Live rows are never pruned: queued or running jobs, and report runs that never finished, stay whatever their age."
+msgstr "ردیف‌های زنده هرگز پاک نمی‌شوند: کارهای در صف یا در حال اجرا، و اجراهای گزارشی که هرگز تمام نشده‌اند، با هر سنی باقی می‌مانند."
+
+#: templates/Retention/retention.html
+msgid "Deleting report artifacts removes their bytes and manifests: those files can no longer be verified afterwards. The audit row records it."
+msgstr "حذف خروجی‌های گزارش، بایت‌ها و مانیفست‌های آن‌ها را برمی‌دارد: پس از آن دیگر نمی‌توان آن پرونده‌ها را راستی‌آزمایی کرد. سجل حسابرسی آن را ثبت می‌کند."
+
+#: templates/Retention/retention.html
+msgid "Retention can be scheduled like any report: create a retention schedule on the Schedules page (administrators)."
+msgstr "نگه‌داشت را می‌توان مانند هر گزارشی زمان‌بندی کرد: از صفحه زمان‌بندی‌ها یک زمان‌بندی نگه‌داشت بسازید (مدیران)."
+
+#: templates/Retention/retention.html
+msgid "Area"
+msgstr "حوزه"
+
+#: templates/Retention/retention.html
+msgid "What it is"
+msgstr "این چیست"
+
+#: templates/Retention/retention.html
+msgid "Keep (days)"
+msgstr "نگه‌داری (روز)"
+
+#: templates/Retention/retention.html
+msgid "Would delete now"
+msgstr "اکنون حذف می‌کرد"
+
+#: templates/Retention/retention.html
+msgid "Rows in table"
+msgstr "ردیف‌های جدول"
+
+#: templates/Retention/retention.html
+msgid "Oldest"
+msgstr "قدیمی‌ترین"
+
+#: templates/Retention/retention.html
+msgid "No retention policies."
+msgstr "سیاست نگه‌داشتی وجود ندارد."
+
+#: templates/Retention/retention.html
+msgid "Keep (days) — 0 keeps forever"
+msgstr "نگه‌داری (روز) — صفر یعنی برای همیشه"
+
+#: templates/Retention/retention.html
+msgid "keep forever"
+msgstr "نگه‌داشتن برای همیشه"
+
+#: templates/Retention/retention.html
+msgid "Run every enabled retention policy now? This deletes aged rows and is audited."
+msgstr "اجرای همه سیاست‌های نگه‌داشت فعال اکنون؟ این کار ردیف‌های قدیمی را حذف می‌کند و ثبت می‌شود."
+
+#: templates/Retention/retention.html
+msgid "Run this retention policy now? This deletes aged rows and is audited."
+msgstr "اجرای این سیاست نگه‌داشت اکنون؟ این کار ردیف‌های قدیمی را حذف می‌کند و ثبت می‌شود."
+
+#: templates/Retention/retention.html
+msgid "Retention policy:"
+msgstr "سیاست نگه‌داشت:"
+
+#: templates/Retention/retention.html
+msgid "The policy was refused:"
+msgstr "سیاست رد شد:"
+
+#: templates/Retention/retention.html
+msgid "The retention overview could not be loaded."
+msgstr "بارگیری نمای کلی نگه‌داشت ممکن نشد."
+
+#: templates/Retention/retention.html
+msgid "The retention job is on the Jobs page."
+msgstr "کار نگه‌داشت در صفحه کارها است."
+
+#: templates/Scheduling/schedules.html
+msgid "Prune by the retention policies"
+msgstr "پاک‌سازی بر اساس سیاست‌های نگه‌داشت"
+
+#: templates/Scheduling/schedules.html
+msgid "every enabled retention policy"
+msgstr "هر سیاست نگه‌داشت فعال"
+
+#: templates/Retention/retention.html
+msgid "Retention"
+msgstr "نگه‌داشت"
+

@@ -12491,3 +12491,108 @@ msgstr "كل قاعدة نشطة"
 msgid "every active scenario"
 msgstr "كل سيناريو نشط"
 
+# --- Retention (step 21) ---
+#: templates/Retention/retention.html
+msgid "What is pruned, how old, and what it would delete right now. Every prune is audited with its count."
+msgstr "ما يُحذف، وكم عمره، وما سيحذفه الآن. كل عملية حذف تُسجَّل مع عددها."
+
+#: templates/Retention/retention.html
+msgid "Run enabled policies"
+msgstr "تشغيل السياسات المُمكَّنة"
+
+#: templates/Retention/retention.html
+msgid "How retention works"
+msgstr "كيف يعمل الاحتفاظ"
+
+#: templates/Retention/retention.html
+msgid "Each policy deletes rows older than its number of days, in batches, with the deleted count audited."
+msgstr "تحذف كل سياسة الصفوف الأقدم من عدد أيامها، على دفعات، ويُسجَّل عدد المحذوف."
+
+#: templates/Retention/retention.html
+msgid "0 days means keep forever - the default for everything whose deletion would destroy evidence: scenario outcomes, notifications, report artifacts, the revision log and the audit log."
+msgstr "صفر يوم يعني الاحتفاظ للأبد — وهو الافتراضي لكل ما يؤدي حذفه إلى إتلاف الأدلة: نتائج السيناريوهات، والإشعارات، ومخرجات التقارير، وسجل المراجعات، وسجل التدقيق."
+
+#: templates/Retention/retention.html
+msgid "Live rows are never pruned: queued or running jobs, and report runs that never finished, stay whatever their age."
+msgstr "لا تُحذف الصفوف الحيّة أبدًا: المهام المنتظرة أو قيد التنفيذ، وتشغيلات التقارير التي لم تكتمل، تبقى مهما كان عمرها."
+
+#: templates/Retention/retention.html
+msgid "Deleting report artifacts removes their bytes and manifests: those files can no longer be verified afterwards. The audit row records it."
+msgstr "حذف مخرجات التقارير يمحو بياناتها وبياناتها الوصفية: لا يمكن التحقق من تلك الملفات بعد ذلك. يسجِّل سجل التدقيق ذلك."
+
+#: templates/Retention/retention.html
+msgid "Retention can be scheduled like any report: create a retention schedule on the Schedules page (administrators)."
+msgstr "يمكن جدولة الاحتفاظ كأي تقرير: أنشئ جدول احتفاظ من صفحة الجداول (للمسؤولين)."
+
+#: templates/Retention/retention.html
+msgid "Area"
+msgstr "المجال"
+
+#: templates/Retention/retention.html
+msgid "What it is"
+msgstr "ما هو"
+
+#: templates/Retention/retention.html
+msgid "Keep (days)"
+msgstr "الاحتفاظ (أيام)"
+
+#: templates/Retention/retention.html
+msgid "Would delete now"
+msgstr "سيحذف الآن"
+
+#: templates/Retention/retention.html
+msgid "Rows in table"
+msgstr "الصفوف في الجدول"
+
+#: templates/Retention/retention.html
+msgid "Oldest"
+msgstr "الأقدم"
+
+#: templates/Retention/retention.html
+msgid "No retention policies."
+msgstr "لا توجد سياسات احتفاظ."
+
+#: templates/Retention/retention.html
+msgid "Keep (days) — 0 keeps forever"
+msgstr "الاحتفاظ (أيام) — صفر يعني للأبد"
+
+#: templates/Retention/retention.html
+msgid "keep forever"
+msgstr "احتفاظ للأبد"
+
+#: templates/Retention/retention.html
+msgid "Run every enabled retention policy now? This deletes aged rows and is audited."
+msgstr "تشغيل كل سياسات الاحتفاظ المُمكَّنة الآن؟ سيحذف هذا الصفوف المتقادمة ويُسجَّل."
+
+#: templates/Retention/retention.html
+msgid "Run this retention policy now? This deletes aged rows and is audited."
+msgstr "تشغيل سياسة الاحتفاظ هذه الآن؟ سيحذف هذا الصفوف المتقادمة ويُسجَّل."
+
+#: templates/Retention/retention.html
+msgid "Retention policy:"
+msgstr "سياسة الاحتفاظ:"
+
+#: templates/Retention/retention.html
+msgid "The policy was refused:"
+msgstr "رُفضت السياسة:"
+
+#: templates/Retention/retention.html
+msgid "The retention overview could not be loaded."
+msgstr "تعذّر تحميل نظرة الاحتفاظ."
+
+#: templates/Retention/retention.html
+msgid "The retention job is on the Jobs page."
+msgstr "مهمة الاحتفاظ في صفحة المهام."
+
+#: templates/Scheduling/schedules.html
+msgid "Prune by the retention policies"
+msgstr "الحذف وفق سياسات الاحتفاظ"
+
+#: templates/Scheduling/schedules.html
+msgid "every enabled retention policy"
+msgstr "كل سياسة احتفاظ مُمكَّنة"
+
+#: templates/Retention/retention.html
+msgid "Retention"
+msgstr "الاحتفاظ"
+

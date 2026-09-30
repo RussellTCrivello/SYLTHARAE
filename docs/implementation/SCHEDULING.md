@@ -4,16 +4,17 @@ What was built, what it guarantees, and what it does not do yet.
 
 ## What a schedule is
 
-A `job_schedules` row (migration **m0031**) says: *run this job every N
-minutes*. Three job types are schedulable, each mapping onto an **existing
-JobManager job** — the scheduler creates no second job framework, no second
-queue, no second execution path:
+A `job_schedules` row (migration **m0031**; m0032 added `retention`)
+says: *run this job every N minutes*. Four job types are schedulable,
+each mapping onto an **existing JobManager job** — the scheduler creates
+no second job framework, no second queue, no second execution path:
 
 | `schedule_type`        | Job it enqueues       | Who may own one   | What one fire does                                             |
 |------------------------|-----------------------|-------------------|----------------------------------------------------------------|
 | `report_run`           | `report_run`          | analyst, admin    | `runs.submit_run` **as the schedule's owner** (same validation, same visibility, same audit trail as a manual run), then one `report_run` job |
 | `rule_evaluation`      | `rule_evaluation`     | admin             | evaluates every active monitoring rule (`trigger='schedule'`)  |
 | `scenario_evaluation`  | `scenario_evaluation` | admin             | evaluates every active scenario (`trigger='schedule'`)         |
+| `retention` (step 21)  | `retention`           | admin             | applies every enabled retention policy — batched, counted, audited ([RETENTION.md](RETENTION.md)) |
 
 The `report_run` payload (`report_id`, `version`, `parameters`) is
 validated against the report registry **at creation and edit time** — an

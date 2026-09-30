@@ -1093,6 +1093,42 @@
     "internal": true
   },
   {
+    "endpoint": "api_retention_overview",
+    "rule": "/api/retention",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "retention",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_retention_run",
+    "rule": "/api/retention/run",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "retention",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_retention_set_days",
+    "rule": "/api/retention/<area>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "retention",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_rule_archive",
     "rule": "/api/rules/<int:rule_id>",
     "methods": [
@@ -4210,6 +4246,18 @@
     "module": "reports",
     "classification": "USER_INTERFACE",
     "owned_by": "reports",
+    "internal": false
+  },
+  {
+    "endpoint": "retention_page",
+    "rule": "/retention",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "retention",
+    "classification": "USER_INTERFACE",
+    "owned_by": "retention",
     "internal": false
   },
   {

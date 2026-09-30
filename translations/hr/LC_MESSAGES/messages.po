@@ -12723,3 +12723,108 @@ msgstr "svako aktivno pravilo"
 msgid "every active scenario"
 msgstr "svaki aktivni scenarij"
 
+# --- Retention (step 21) ---
+#: templates/Retention/retention.html
+msgid "What is pruned, how old, and what it would delete right now. Every prune is audited with its count."
+msgstr "Što se briše, koliko je staro i što bi upravo sada obrisalo. Svako brisanje bilježi se s brojem obrisanih redaka."
+
+#: templates/Retention/retention.html
+msgid "Run enabled policies"
+msgstr "Pokreni omogućena pravila"
+
+#: templates/Retention/retention.html
+msgid "How retention works"
+msgstr "Kako zadržavanje radi"
+
+#: templates/Retention/retention.html
+msgid "Each policy deletes rows older than its number of days, in batches, with the deleted count audited."
+msgstr "Svako pravilo briše redke starije od svojeg broja dana, u serijama, a broj obrisanih bilježi se u dnevnik."
+
+#: templates/Retention/retention.html
+msgid "0 days means keep forever - the default for everything whose deletion would destroy evidence: scenario outcomes, notifications, report artifacts, the revision log and the audit log."
+msgstr "0 dana znači čuvati zauvijek — zadano za sve čime bi brisanje uništilo dokaze: ishode scenarija, obavijesti, datoteke izvješća, dnevnik revizija i revizijski dnevnik."
+
+#: templates/Retention/retention.html
+msgid "Live rows are never pruned: queued or running jobs, and report runs that never finished, stay whatever their age."
+msgstr "Živi redci nikad se ne brišu: poslovi u redu čekanja ili u izvođenju i izvođenja izvješća koja nikad nisu završila ostaju bez obzira na starost."
+
+#: templates/Retention/retention.html
+msgid "Deleting report artifacts removes their bytes and manifests: those files can no longer be verified afterwards. The audit row records it."
+msgstr "Brisanje datoteka izvješća uklanja njihove bajtove i manifeste: te datoteke kasnije više nije moguće provjeriti. Revizijski dnevnik to bilježi."
+
+#: templates/Retention/retention.html
+msgid "Retention can be scheduled like any report: create a retention schedule on the Schedules page (administrators)."
+msgstr "Zadržavanje se može rasporediti kao bilo koje izvješće: stvorite raspored zadržavanja na stranici Rasporedi (administratori)."
+
+#: templates/Retention/retention.html
+msgid "Area"
+msgstr "Područje"
+
+#: templates/Retention/retention.html
+msgid "What it is"
+msgstr "Što je"
+
+#: templates/Retention/retention.html
+msgid "Keep (days)"
+msgstr "Čuvati (dana)"
+
+#: templates/Retention/retention.html
+msgid "Would delete now"
+msgstr "Obrisalo bi sada"
+
+#: templates/Retention/retention.html
+msgid "Rows in table"
+msgstr "Redaka u tablici"
+
+#: templates/Retention/retention.html
+msgid "Oldest"
+msgstr "Najstarije"
+
+#: templates/Retention/retention.html
+msgid "No retention policies."
+msgstr "Nema pravila zadržavanja."
+
+#: templates/Retention/retention.html
+msgid "Keep (days) — 0 keeps forever"
+msgstr "Čuvati (dana) — 0 čuva zauvijek"
+
+#: templates/Retention/retention.html
+msgid "keep forever"
+msgstr "čuvati zauvijek"
+
+#: templates/Retention/retention.html
+msgid "Run every enabled retention policy now? This deletes aged rows and is audited."
+msgstr "Pokrenuti sada sva omogućena pravila zadržavanja? To briše zastarjele redke i bilježi se u dnevnik."
+
+#: templates/Retention/retention.html
+msgid "Run this retention policy now? This deletes aged rows and is audited."
+msgstr "Pokrenuti sada ovo pravilo zadržavanja? To briše zastarjele redke i bilježi se u dnevnik."
+
+#: templates/Retention/retention.html
+msgid "Retention policy:"
+msgstr "Pravilo zadržavanja:"
+
+#: templates/Retention/retention.html
+msgid "The policy was refused:"
+msgstr "Pravilo je odbijeno:"
+
+#: templates/Retention/retention.html
+msgid "The retention overview could not be loaded."
+msgstr "Pregled zadržavanja nije se mogao učitati."
+
+#: templates/Retention/retention.html
+msgid "The retention job is on the Jobs page."
+msgstr "Posao zadržavanja nalazi se na stranici Poslovi."
+
+#: templates/Scheduling/schedules.html
+msgid "Prune by the retention policies"
+msgstr "Brisanje prema pravilima zadržavanja"
+
+#: templates/Scheduling/schedules.html
+msgid "every enabled retention policy"
+msgstr "svako omogućeno pravilo zadržavanja"
+
+#: templates/Retention/retention.html
+msgid "Retention"
+msgstr "Zadržavanje"
+

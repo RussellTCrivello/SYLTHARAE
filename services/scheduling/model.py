@@ -30,14 +30,15 @@ MAX_INTERVAL_MINUTES = 525600  # one year
 REPORT_RUN = "report_run"
 RULE_EVALUATION = "rule_evaluation"
 SCENARIO_EVALUATION = "scenario_evaluation"
+RETENTION = "retention"
 
-SCHEDULE_TYPES = (REPORT_RUN, RULE_EVALUATION, SCENARIO_EVALUATION)
+SCHEDULE_TYPES = (REPORT_RUN, RULE_EVALUATION, SCENARIO_EVALUATION, RETENTION)
 
 #: The role an owner must hold *at each fire* for the schedule to run.
 #: Reports run as their owner (analyst or administrator); "evaluate every
 #: rule/scenario" is the same privilege as the manual all-rules trigger.
 REQUIRED_ROLE = {REPORT_RUN: "analyst", RULE_EVALUATION: "admin",
-                 SCENARIO_EVALUATION: "admin"}
+                 SCENARIO_EVALUATION: "admin", RETENTION: "admin"}
 
 DISABLE_REASONS = {
     "paused": "paused by the owner or an administrator",
@@ -153,4 +154,6 @@ def describe(schedule_type: str, payload: Dict[str, Any]) -> str:
                 + (f"@{version}" if version else " (latest version)"))
     if schedule_type == RULE_EVALUATION:
         return "every active monitoring rule"
+    if schedule_type == RETENTION:
+        return "every enabled retention policy"
     return "every active scenario"

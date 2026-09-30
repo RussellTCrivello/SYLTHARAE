@@ -234,6 +234,9 @@ Settings Data Models - Core dataclasses and validation
   - `get_interface_enabled(self, interface_id: str) -> bool` - Get enabled status for an interface
   - `set_interface_enabled(self, interface_id: str, enabled: bool, category: str = 'user')` - Set enabled status for an interface
   - `restore_missing_interfaces(self, default_interfaces: Dict[str, Dict[str, Any]])` - Restore missing interfaces with default values.
+- **class `RetentionSettings`** - Step 21: days to keep each growing area; ``0`` keeps it forever.
+  - `to_dict(self) -> Dict[str, Any]`
+  - `from_dict(cls, data: Dict[str, Any]) -> 'RetentionSettings'` *(class)*
 - **class `AllSettings`** - Complete settings container
   - `to_dict(self) -> Dict[str, Any]`
   - `to_dict_full(self) -> Dict[str, Any]` - Full dict including sensitive data (for internal use)

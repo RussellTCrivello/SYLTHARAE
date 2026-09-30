@@ -16,6 +16,7 @@ def register_all_routes(app, babel_instance=None):
     from . import scenarios
     from . import reports
     from . import schedules
+    from . import retention
     from . import audit
     # Import new settings routes (replaces old settings.py) - optional
     try:
@@ -68,6 +69,8 @@ def register_all_routes(app, babel_instance=None):
     # Step 20 schedules (report_run / rule_evaluation / scenario_evaluation
     # on an interval, fired through the JobManager by the scheduler)
     schedules.register_schedule_routes(app)
+    # Step 21 retention (policy-driven pruning, administrators, audited)
+    retention.register_retention_routes(app)
     # Audit log viewer (administrators, read-only)
     audit.register_audit_routes(app)
     # Unified operations API + pages (Input / Import Center / Job Center)

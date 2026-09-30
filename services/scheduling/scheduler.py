@@ -285,6 +285,13 @@ class Scheduler:
                 options=dict(common, rule_ids=None, trigger="schedule"),
                 created_by=created_by)
             return job["job_id"]
+        if schedule_type == "retention":
+            from services.scheduling.model import RETENTION
+
+            job = manager.create_job(
+                "retention", source="schedules:retention",
+                options=common, created_by=created_by)
+            return job["job_id"]
         job = manager.create_job(
             "scenario_evaluation", source="schedules:all_scenarios",
             options=dict(common, scenario_ids=None, trigger="schedule"),
