@@ -12345,3 +12345,67 @@ msgid_plural "Listed: the reach of %(keyword_rows)s keywords, widest first."
 msgstr[0] "רשום: טווח ההגעה של מילת מפתח אחת, הרחבה ראשונה."
 msgstr[1] "רשום: טווח ההגעה של %(keyword_rows)s מילות מפתח, הרחבה ראשונה."
 
+#. templates/Settings/settings.html
+msgid "Sidebar navigation"
+msgstr "ניווט בסרגל הצד"
+
+#. templates/Settings/settings.html
+msgid "Navigation"
+msgstr "ניווט"
+
+#. templates/Settings/settings.html
+msgid "Interface"
+msgstr "ממשק"
+
+#. templates/Settings/settings.html
+msgid "Position"
+msgstr "מיקום"
+
+#. templates/Settings/settings.html
+msgid "Show in sidebar"
+msgstr "הצג בסרגל הצד"
+
+#. templates/Settings/settings.html
+msgid "Loading your navigation…"
+msgstr "טוען את הניווט שלך…"
+
+#. templates/Settings/settings.html
+msgid "Save sidebar"
+msgstr "שמור את סרגל הצד"
+
+#. templates/Settings/settings.html
+msgid "Reset to default order"
+msgstr "אפס לסדר ברירת המחדל"
+
+#. templates/Settings/settings.html
+msgid "Move up"
+msgstr "הזז למעלה"
+
+#. templates/Settings/settings.html
+msgid "Move down"
+msgstr "הזז למטה"
+
+#. templates/Settings/settings.html
+msgid "Sidebar saved. It applies on your next navigation."
+msgstr "סרגל הצד נשמר. יחול בניווט הבא שלך."
+
+#. templates/Settings/settings.html
+msgid "Back to the default sidebar."
+msgstr "חזרה לסרגל הצד המוגדר כברירת מחדל."
+
+#. templates/Settings/settings.html
+msgid "Saving failed."
+msgstr "השמירה נכשלה."
+
+#. templates/Settings/settings.html
+msgid "The sidebar preferences could not be loaded."
+msgstr "טעינת העדפות סרגל הצד נכשלה."
+
+#. templates/Settings/settings.html
+msgid ""
+"Choose which interfaces appear in your sidebar and in which order. These choices are yours alone: other accounts "
+"keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
+msgstr ""
+"בחר אילו ממשקים יופיעו בסרגל הצד שלך ובאיזה סדר. הבחירות הללו שלך בלבד: חשבונות אחרים שומרים על סרגל הצד שלהם, וממשק"
+" שהתפקיד שלך אינו רשאי לראות לעולם לא יופיע, לא משה מה תגדיר כאן."
+

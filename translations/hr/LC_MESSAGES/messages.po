@@ -12472,3 +12472,68 @@ msgstr[0] "Navedeno: doseg jedne ključne riječi, najšira prva."
 msgstr[1] "Navedeno: doseg %(keyword_rows)s ključne riječi, najšira prva."
 msgstr[2] "Navedeno: doseg %(keyword_rows)s ključnih riječi, najšira prva."
 
+#. templates/Settings/settings.html
+msgid "Sidebar navigation"
+msgstr "Navigacija bočne trake"
+
+#. templates/Settings/settings.html
+msgid "Navigation"
+msgstr "Navigacija"
+
+#. templates/Settings/settings.html
+msgid "Interface"
+msgstr "Sučelje"
+
+#. templates/Settings/settings.html
+msgid "Position"
+msgstr "Položaj"
+
+#. templates/Settings/settings.html
+msgid "Show in sidebar"
+msgstr "Prikaži u bočnoj traci"
+
+#. templates/Settings/settings.html
+msgid "Loading your navigation…"
+msgstr "Učitavanje vaše navigacije…"
+
+#. templates/Settings/settings.html
+msgid "Save sidebar"
+msgstr "Spremi bočnu traku"
+
+#. templates/Settings/settings.html
+msgid "Reset to default order"
+msgstr "Vrati na zadani redoslijed"
+
+#. templates/Settings/settings.html
+msgid "Move up"
+msgstr "Pomakni gore"
+
+#. templates/Settings/settings.html
+msgid "Move down"
+msgstr "Pomakni dolje"
+
+#. templates/Settings/settings.html
+msgid "Sidebar saved. It applies on your next navigation."
+msgstr "Bočna traka je spremljena. Primjenjuje se pri vašoj sljedećoj navigaciji."
+
+#. templates/Settings/settings.html
+msgid "Back to the default sidebar."
+msgstr "Povratak na zadanu bočnu traku."
+
+#. templates/Settings/settings.html
+msgid "Saving failed."
+msgstr "Spremanje nije uspjelo."
+
+#. templates/Settings/settings.html
+msgid "The sidebar preferences could not be loaded."
+msgstr "Postavke bočne trake nisu se mogle učitati."
+
+#. templates/Settings/settings.html
+msgid ""
+"Choose which interfaces appear in your sidebar and in which order. These choices are yours alone: other accounts "
+"keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
+msgstr ""
+"Odaberite koja se sučelja pojavljuju u vašoj bočnoj traci i kojim redoslijedom. Ovi izbori su samo vaši: drugi "
+"računi zadržavaju svoju bočnu traku, i sučelje koje vaša uloga ne smije vidjeti se nikada ne pojavljuje, što god "
+"ovdje postavili."
+

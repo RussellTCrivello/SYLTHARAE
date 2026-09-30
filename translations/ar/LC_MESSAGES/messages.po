@@ -12431,3 +12431,67 @@ msgstr[3] "مدرجة: مدى وصول %(keyword_rows)s كلمات مفتاحي�
 msgstr[4] "مدرجة: مدى وصول %(keyword_rows)s كلمة مفتاحية، الأوسع أولاً."
 msgstr[5] "مدرجة: مدى وصول %(keyword_rows)s من الكلمات المفتاحية، الأوسع أولاً."
 
+#. templates/Settings/settings.html
+msgid "Sidebar navigation"
+msgstr "تنقّل الشريط الجانبي"
+
+#. templates/Settings/settings.html
+msgid "Navigation"
+msgstr "التنقّل"
+
+#. templates/Settings/settings.html
+msgid "Interface"
+msgstr "الواجهة"
+
+#. templates/Settings/settings.html
+msgid "Position"
+msgstr "الموضع"
+
+#. templates/Settings/settings.html
+msgid "Show in sidebar"
+msgstr "العرض في الشريط الجانبي"
+
+#. templates/Settings/settings.html
+msgid "Loading your navigation…"
+msgstr "جارٍ تحميل تنقّلك…"
+
+#. templates/Settings/settings.html
+msgid "Save sidebar"
+msgstr "حفظ الشريط الجانبي"
+
+#. templates/Settings/settings.html
+msgid "Reset to default order"
+msgstr "إعادة الترتيب الافتراضي"
+
+#. templates/Settings/settings.html
+msgid "Move up"
+msgstr "تحريك لأعلى"
+
+#. templates/Settings/settings.html
+msgid "Move down"
+msgstr "تحريك لأسفل"
+
+#. templates/Settings/settings.html
+msgid "Sidebar saved. It applies on your next navigation."
+msgstr "تم حفظ الشريط الجانبي. يُطبَّق عند تنقّلك التالي."
+
+#. templates/Settings/settings.html
+msgid "Back to the default sidebar."
+msgstr "العودة إلى الشريط الجانبي الافتراضي."
+
+#. templates/Settings/settings.html
+msgid "Saving failed."
+msgstr "فشل الحفظ."
+
+#. templates/Settings/settings.html
+msgid "The sidebar preferences could not be loaded."
+msgstr "تعذّر تحميل تفضيلات الشريط الجانبي."
+
+#. templates/Settings/settings.html
+msgid ""
+"Choose which interfaces appear in your sidebar and in which order. These choices are yours alone: other accounts "
+"keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
+msgstr ""
+"اختر الواجهات التي تظهر في شريطك الجانبي وبأي ترتيب. هذه الخيارات لك وحدك: الحسابات الأخرى تحتفظ بشريطها الجانبي "
+"الخاص، والواجهة التي لا يسمح دورك برؤيتها لا تظهر أبدًا مهما ضبطت هنا."
+

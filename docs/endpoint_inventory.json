@@ -913,6 +913,42 @@
     "internal": true
   },
   {
+    "endpoint": "api_navigation_prefs_delete",
+    "rule": "/api/preferences/navigation",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "preferences",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_navigation_prefs_get",
+    "rule": "/api/preferences/navigation",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "preferences",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_navigation_prefs_put",
+    "rule": "/api/preferences/navigation",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "preferences",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_place",
     "rule": "/api/places/<string:place_key>",
     "methods": [

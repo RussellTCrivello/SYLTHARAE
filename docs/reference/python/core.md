@@ -943,7 +943,7 @@ The application's navigation and page identity, prepared from the registry.
 - **class `PagePresentation`** - What a page says about itself, taken from the registry.
   - `to_dict(self) -> Dict[str, object]`
 - `interface_conditions(interface_id: str, state, user) -> InterfaceConditions` - Answer exists / enabled / visible / accessible, without collapsing them.
-- `build_navigation(state, user, current_endpoint: Optional[str] = None, url_for: Optional[Callable[..., str]] = None) -> Tuple[NavigationGroup, ...]` - The sidebar: domains in declared order, each holding what may be shown.
+- `build_navigation(state, user, current_endpoint: Optional[str] = None, url_for: Optional[Callable[..., str]] = None, prefs: Optional[Mapping[str, Mapping[str,...` - The sidebar: domains in declared order, each holding what may be shown.
 - `breadcrumbs_for(current_endpoint: Optional[str], label: str, state = None, user = None, url_for: Optional[Callable[..., str]] = None) -> Tuple[Crumb, ...]` - Home → the interface a page belongs to, with the interface's own name.
 - `present_page(endpoint: Optional[str], state, user = None, url_for: Optional[Callable[..., str]] = None, entity_title: Optional[str] = None) -> PagePresentation` - What the current page is, according to the registry.
 - `navigation_model(state, user, current_endpoint = None, url_for = None) -> Dict[str, object]` - Navigation plus the page's identity, as the shell context.

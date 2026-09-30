@@ -12473,3 +12473,67 @@ msgid_plural "Listed: the reach of %(keyword_rows)s keywords, widest first."
 msgstr[0] "فهرست‌شده: گستره یک واژه کلیدی، گسترده‌ترین اول."
 msgstr[1] "فهرست‌شده: گستره %(keyword_rows)s واژه کلیدی، گسترده‌ترین اول."
 
+#. templates/Settings/settings.html
+msgid "Sidebar navigation"
+msgstr "ناوبری نوار کناری"
+
+#. templates/Settings/settings.html
+msgid "Navigation"
+msgstr "ناوبری"
+
+#. templates/Settings/settings.html
+msgid "Interface"
+msgstr "واجهه"
+
+#. templates/Settings/settings.html
+msgid "Position"
+msgstr "جایگاه"
+
+#. templates/Settings/settings.html
+msgid "Show in sidebar"
+msgstr "نمایش در نوار کناری"
+
+#. templates/Settings/settings.html
+msgid "Loading your navigation…"
+msgstr "در حال بارگیری ناوبری شما…"
+
+#. templates/Settings/settings.html
+msgid "Save sidebar"
+msgstr "ذخیره نوار کناری"
+
+#. templates/Settings/settings.html
+msgid "Reset to default order"
+msgstr "بازگشت به ترتیب پیش‌فرض"
+
+#. templates/Settings/settings.html
+msgid "Move up"
+msgstr "انتقال به بالا"
+
+#. templates/Settings/settings.html
+msgid "Move down"
+msgstr "انتقال به پایین"
+
+#. templates/Settings/settings.html
+msgid "Sidebar saved. It applies on your next navigation."
+msgstr "نوار کناری ذخیره شد. در ناوبری بعدی شما اعمال می‌شود."
+
+#. templates/Settings/settings.html
+msgid "Back to the default sidebar."
+msgstr "بازگشت به نوار کناری پیش‌فرض."
+
+#. templates/Settings/settings.html
+msgid "Saving failed."
+msgstr "ذخیره ناموفق بود."
+
+#. templates/Settings/settings.html
+msgid "The sidebar preferences could not be loaded."
+msgstr "بارگیری تنظیمات نوار کناری ممکن نشد."
+
+#. templates/Settings/settings.html
+msgid ""
+"Choose which interfaces appear in your sidebar and in which order. These choices are yours alone: other accounts "
+"keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
+msgstr ""
+"انتخاب کنید کدام واجهه‌ها در نوار کناری شما و با چه ترتیبی ظاهر شوند. این انتخاب‌ها فقط از آنِ شماست: حساب‌های دیگر "
+"نوار کناری خود را دارند و واجهه‌ای که نقش شما اجازه دیدنش را ندارد هرگز ظاهر نمی‌شود، هرچه اینجا تنظیم کنید."
+

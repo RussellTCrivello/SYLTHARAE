@@ -14397,3 +14397,65 @@ msgid_plural "Listed: the reach of %(keyword_rows)s keywords, widest first."
 msgstr[0] ""
 msgstr[1] ""
 
+#. templates/Settings/settings.html
+msgid "Sidebar navigation"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Navigation"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Interface"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Position"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Show in sidebar"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Loading your navigation…"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Save sidebar"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Reset to default order"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Move up"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Move down"
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Sidebar saved. It applies on your next navigation."
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Back to the default sidebar."
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "Saving failed."
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid "The sidebar preferences could not be loaded."
+msgstr ""
+
+#. templates/Settings/settings.html
+msgid ""
+"Choose which interfaces appear in your sidebar and in which order. These choices are yours alone: other accounts "
+"keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
+msgstr ""
+

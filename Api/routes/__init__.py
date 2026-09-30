@@ -17,6 +17,7 @@ def register_all_routes(app, babel_instance=None):
     from . import reports
     from . import schedules
     from . import retention
+    from . import preferences
     from . import audit
     # Import new settings routes (replaces old settings.py) - optional
     try:
@@ -71,6 +72,8 @@ def register_all_routes(app, babel_instance=None):
     schedules.register_schedule_routes(app)
     # Step 21 retention (policy-driven pruning, administrators, audited)
     retention.register_retention_routes(app)
+    # Per-user navigation preferences (sidebar order / visibility, audited)
+    preferences.register_preference_routes(app)
     # Audit log viewer (administrators, read-only)
     audit.register_audit_routes(app)
     # Unified operations API + pages (Input / Import Center / Job Center)

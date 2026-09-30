@@ -12701,6 +12701,70 @@ msgid_plural "Listed: the reach of %(keyword_rows)s keywords, widest first."
 msgstr[0] "Listed: the reach of one keyword, widest first."
 msgstr[1] "Listed: the reach of %(keyword_rows)s keywords, widest first."
 
+#. templates/Settings/settings.html
+msgid "Sidebar navigation"
+msgstr "Sidebar navigation"
+
+#. templates/Settings/settings.html
+msgid "Navigation"
+msgstr "Navigation"
+
+#. templates/Settings/settings.html
+msgid "Interface"
+msgstr "Interface"
+
+#. templates/Settings/settings.html
+msgid "Position"
+msgstr "Position"
+
+#. templates/Settings/settings.html
+msgid "Show in sidebar"
+msgstr "Show in sidebar"
+
+#. templates/Settings/settings.html
+msgid "Loading your navigation…"
+msgstr "Loading your navigation…"
+
+#. templates/Settings/settings.html
+msgid "Save sidebar"
+msgstr "Save sidebar"
+
+#. templates/Settings/settings.html
+msgid "Reset to default order"
+msgstr "Reset to default order"
+
+#. templates/Settings/settings.html
+msgid "Move up"
+msgstr "Move up"
+
+#. templates/Settings/settings.html
+msgid "Move down"
+msgstr "Move down"
+
+#. templates/Settings/settings.html
+msgid "Sidebar saved. It applies on your next navigation."
+msgstr "Sidebar saved. It applies on your next navigation."
+
+#. templates/Settings/settings.html
+msgid "Back to the default sidebar."
+msgstr "Back to the default sidebar."
+
+#. templates/Settings/settings.html
+msgid "Saving failed."
+msgstr "Saving failed."
+
+#. templates/Settings/settings.html
+msgid "The sidebar preferences could not be loaded."
+msgstr "The sidebar preferences could not be loaded."
+
+#. templates/Settings/settings.html
+msgid ""
+"Choose which interfaces appear in your sidebar and in which order. These choices are yours alone: other accounts "
+"keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
+msgstr ""
+"Choose which interfaces appear in your sidebar and in which order. These choices are yours alone: other accounts "
+"keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
+
 #~ msgid "File Analysis Overview"
 #~ msgstr ""
 

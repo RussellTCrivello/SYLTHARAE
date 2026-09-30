@@ -8,6 +8,11 @@
     {#- Runs data-on-<event> handlers without inline script (RES-CSP-01).
         Synchronous and first, so every control drawn below is live. -#}
     <script src="{{ url_for('static', filename='js/modules/core/declarative-events.js') }}"></script>
+    {#- Static sidebar: in-application navigations swap only the main
+        content, so the sidebar element is never redrawn; its state is also
+        restored on a real load. Defers to declarative-events (installed
+        listeners are never duplicated; see the module header). -#}
+    <script src="{{ url_for('static', filename='js/modules/core/navigation-swap.js') }}" defer></script>
     {#- One default app name for every fallback position, matching the
         settings model default ("SYLTHARAE System", settings/settings_models.py).
         Empty stored values also fall back instead of producing a blank title,
@@ -282,7 +287,7 @@
     <!-- ========================================
          MAIN CONTENT AREA
          ======================================== -->
-    <div class="main-content">
+    <div class="main-content" id="mainContent">
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
