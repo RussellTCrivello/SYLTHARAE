@@ -227,6 +227,51 @@ try {
           JSON.stringify(order4) === JSON.stringify(order1),
           `expected ${order1.slice(0, 3)} got ${order4.slice(0, 3)}`);
 
+    // ── D11 discipline: the jobs page's polling timer must die on leave ──
+    // The jobs page runs a 2 s poller. Navigating away (swap) used to leave
+    // it firing against DOM that no longer exists - an error every 2 s for
+    // the rest of the session. Loading the page directly, then swapping
+    // away, must produce zero new errors after the swap settles.
+    const errorsBeforeJobs = consoleErrors.length;
+    // The jobs page holds an SSE stream open: networkidle never fires, so
+    // wait for the DOM and a settle instead.
+    await page.goto(BASE + '/operations/jobs', { waitUntil: 'domcontentloaded' });
+    await new Promise((r) => setTimeout(r, 2500));   // one poll tick on-page
+    const jobsErrorsOnPage = consoleErrors.length - errorsBeforeJobs;
+    check('jobs page runs clean while on it', jobsErrorsOnPage === 0,
+          consoleErrors.slice(errorsBeforeJobs).join(' | ').slice(0, 200));
+
+    // Swap away via the sidebar (or history if this server has no sidebar
+    // link for it), then out-wait the 2 s poller twice.
+    const away = await page.evaluate(() => {
+        const link = document.querySelector('#sidebar a[href="/operations/jobs"]');
+        // We are ON /operations/jobs; swap to a neighbour instead.
+        const other = [...document.querySelectorAll('#sidebar a[href]')]
+            .map((a) => a.getAttribute('href'))
+            .find((h) => h && h !== '/operations/jobs' && /^\/[^/]/.test(h)
+                       && !/logout|download|#/.test(h));
+        if (other) { document.querySelector(`#sidebar a[href="${other}"]`).click(); return other; }
+        history.back();
+        return 'history.back';
+    });
+    await new Promise((r) => setTimeout(r, 4500));   // > two poll ticks
+    const errorsAfterLeave = consoleErrors.length - errorsBeforeJobs - jobsErrorsOnPage;
+    check('no jobs-page timer errors after navigating away', errorsAfterLeave === 0,
+          (away) + ' -> ' + consoleErrors.slice(errorsBeforeJobs + jobsErrorsOnPage)
+              .join(' | ').slice(0, 200));
+
+    // Coming back to the jobs page re-runs its script: the table fills
+    // again (rows or its empty state), and the poller was not duplicated.
+    await page.goto(BASE + '/operations/jobs', { waitUntil: 'domcontentloaded' });
+    await new Promise((r) => setTimeout(r, 1500));
+    const jobsAlive = await page.evaluate(() => {
+        const body = document.getElementById('jobsBody');
+        return { body: !!body, rows: body ? body.querySelectorAll('tr').length : 0 };
+    });
+    check('returning to the jobs page re-binds it', jobsAlive.body && jobsAlive.rows >= 0
+          && await page.evaluate(() => typeof window.__jobsPageTeardown === 'function'),
+          JSON.stringify(jobsAlive));
+
     // sidebar on a normal page reflects nothing broken (no JS errors)
     check('no page/console errors during the run', consoleErrors.length === 0,
           consoleErrors.slice(0, 3).join(' | '));

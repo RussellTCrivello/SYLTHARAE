@@ -13,7 +13,10 @@ import {
 // Load translations from JSON script tag
 let translations = {};
 
-document.addEventListener('DOMContentLoaded', function() {
+// The universal initializer imports this module and runs init() on a full
+// load AND on every in-application navigation (the static sidebar), so the
+// page's handlers re-bind to the fresh table instead of going stale.
+function init() {
     // Load translations from JSON script tag
     const pageDataEl = document.getElementById('files-list-page-data');
     if (pageDataEl) {
@@ -48,7 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('Files list page loaded');
-});
+}
+
+export { init };
 
 // Expose functions to window for onclick handlers
 window.selectAllFiles = function() {

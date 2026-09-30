@@ -8,6 +8,15 @@
 var JOBS_PAGE_DATA = JSON.parse(document.getElementById('jobs-page-data').textContent || '{}');
 
 (function () {
+  // The static sidebar re-runs this page's classic script on every
+  // in-application navigation. A previous run's polling timer and event
+  // stream must die before this one binds to the fresh DOM, or they keep
+  // firing against elements that no longer exist.
+  if (typeof window.__jobsPageTeardown === 'function') {
+    try { window.__jobsPageTeardown(); } catch (e) { /* already dead */ }
+    window.__jobsPageTeardown = null;
+  }
+
   const fmtDur = (s) => {
     if (s == null) return '—';
     const m = Math.floor(s / 60), sec = Math.round(s % 60);
@@ -20,17 +29,23 @@ var JOBS_PAGE_DATA = JSON.parse(document.getElementById('jobs-page-data').textCo
   const statusBadge = (s) => (window.InforaxisStatus ? window.InforaxisStatus.badge(s) : '<span class="badge bg-secondary">' + String(s == null ? '' : s) + '</span>');
 
   async function loadJobs() {
+    // A tick can land after the reader navigated away (the swap keeps this
+    // window alive): the page's controls are gone - say nothing, do nothing.
+    const fType = document.getElementById('fType');
+    const fStatus = document.getElementById('fStatus');
+    const fUser = document.getElementById('fUser');
+    const body = document.getElementById('jobsBody');
+    if (!fType || !fStatus || !fUser || !body) return;
     const p = new URLSearchParams();
-    const t = document.getElementById('fType').value;
-    const st = document.getElementById('fStatus').value;
-    const u = document.getElementById('fUser').value.trim();
+    const t = fType.value;
+    const st = fStatus.value;
+    const u = fUser.value.trim();
     if (t) p.set('type', t === 'import' ? '' : t);
     if (st) p.set('status', st);
     if (u) p.set('user', u);
     p.set('limit', '100');
     const r = await fetch('/api/jobs?' + p.toString());
     const d = await r.json();
-    const body = document.getElementById('jobsBody');
     if (!d.success || !(d.jobs || []).length) {
       body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">' + JOBS_PAGE_DATA.noJobsYetStartAnIngestion + '</td></tr>';
       return;
@@ -119,15 +134,19 @@ var JOBS_PAGE_DATA = JSON.parse(document.getElementById('jobs-page-data').textCo
 
   // Live updates: SSE when available (single-process), polling fallback.
   let pollTimer = setInterval(loadJobs, 2000);
+  let stream = null;
   if (window.EventSource) {
     try {
-      const es = new EventSource('/api/jobs/stream');
+      stream = new EventSource('/api/jobs/stream');
       const refresh = () => { loadJobs(); };
       ['JOB_CREATED','JOB_STARTED','PROGRESS','JOB_COMPLETED','JOB_CANCELLED','JOB_PAUSED','FAILED','CANCELLING'].forEach(ev =>
-        es.addEventListener(ev, refresh));
-      es.addEventListener('PROGRESS', refresh);
+        stream.addEventListener(ev, refresh));
       document.getElementById('liveIndicator').textContent = JOBS_PAGE_DATA.liveUpdatesEventStreamConnected;
-    } catch (e) { /* keep polling */ }
+    } catch (e) { stream = null; /* keep polling */ }
   }
+  window.__jobsPageTeardown = function () {
+    clearInterval(pollTimer);
+    if (stream) stream.close();
+  };
   loadJobs();
 })();

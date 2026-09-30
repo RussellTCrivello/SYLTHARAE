@@ -97,10 +97,16 @@
     }
 
     function runPageScripts(newDoc) {
-        // Classic scripts re-execute when re-created; module scripts are
-        // cached by URL (re-appending is a no-op), so the page modules'
-        // init is invoked explicitly afterwards.
-        const scripts = Array.from(newDoc.querySelectorAll('script'));
+        // Only the page's own scripts re-run: classic scripts from the BODY
+        // are re-created so their functions exist for the new content's
+        // declarative handlers. Shell scripts (the head: declarative-events,
+        // this module, csrf/locale fixtures) already ran on the full load -
+        // re-running them would pile up timers and document listeners - and
+        // module scripts are cached by URL (re-appending is a no-op), so the
+        // page modules' init is invoked explicitly afterwards.
+        const scripts = Array.from(newDoc.querySelectorAll('script'))
+            .filter((old) => !newDoc.head.contains(old))
+            .filter((old) => (old.getAttribute('type') || '') !== 'module');
         for (const old of scripts) {
             const script = document.createElement('script');
             for (const attr of old.attributes) {
@@ -112,7 +118,13 @@
         import('/static/js/pages/universal-initializer.js')
             .then(function (mod) {
                 if (mod && typeof mod.initializePage === 'function') {
-                    return mod.initializePage();
+                    // Tell the initializer this visit arrived by swap: a
+                    // self-running page module must re-import fresh, not
+                    // reuse its already-run cached instance.
+                    window.__swapReinit = Date.now();
+                    return mod.initializePage().finally(function () {
+                        delete window.__swapReinit;
+                    });
                 }
             })
             .catch(function () { /* initializer unavailable: declarative

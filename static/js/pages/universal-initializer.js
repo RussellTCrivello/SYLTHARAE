@@ -51,7 +51,9 @@ const pageHandlers = {
     'files-list': () => import('./files-list-page.js'),
     'file-types': () => import('./file-types-page.js'),
     'file-detail': () => import('./file-detail-page.js'),
-    'keywords-list': () => import('./keywords-list-page.js'),
+    // Self-running modules: accept a swap cache-buster so a revisit
+    // re-imports a fresh copy that wires the current DOM.
+    'keywords-list': (bust) => import('./keywords-list-page.js' + (bust || '')),
     'keyword-detail': () => import('./keyword-detail-page.js'),
     'category-words': () => import('./category-words-page.js'),
     'words-list': () => import('./words-list-page.js'),
@@ -63,11 +65,11 @@ const pageHandlers = {
     'search': () => import('./search-page.js'),
     'search-enhanced': () => import('./search-enhanced-page.js'),
     'search-advanced': () => import('./search-advanced-page.js'),
-    'dashboard': () => import('./dashboard-page.js'),
+    'dashboard': (bust) => import('./dashboard-page.js' + (bust || '')),
     'comprehensive-dashboard': () => import('./comprehensive-dashboard-page.js'),
     'notifications': () => import('./notifications-page.js'),
     'import-export': () => import('./import-export-page.js'),
-    'analysis-batch': () => import('./analysis-batch-page.js'),
+    'analysis-batch': (bust) => import('./analysis-batch-page.js' + (bust || '')),
     'email-words': () => import('./email-words-page.js'),
     'archives': () => import('./archives-page.js'),
     'path-analysis': () => import('./path-analysis-page.js'),
@@ -114,14 +116,22 @@ export async function initializePage() {
     }
     
     try {
-        // Load and initialize page-specific module
-        const pageModule = await handler();
+        // Load and initialize page-specific module. When navigation-swap
+        // has just swapped this page into an already-loaded document, a
+        // self-running module (no init export) must be re-imported with a
+        // cache-buster: ES module caching would otherwise return the
+        // instance that already ran for a previous visit, and the fresh
+        // DOM would never be wired.
+        const bust = window.__swapReinit ? '?swap=' + window.__swapReinit : '';
+        const pageModule = await handler(bust);
         if (pageModule && pageModule.default && typeof pageModule.default === 'function') {
             await pageModule.default();
         } else if (pageModule && typeof pageModule.init === 'function') {
             await pageModule.init();
         } else {
-            console.warn(`Page module for ${pageType} does not export a default init function`);
+            // A module with no init function runs itself at import time -
+            // a legitimate shape (cached, so once per full load). Nothing
+            // to call here; say nothing.
         }
     } catch (error) {
         console.error(`Error initializing page ${pageType}:`, error);

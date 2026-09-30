@@ -292,20 +292,29 @@ if (typeof window !== 'undefined') {
         viewMode.initializeFileViewMode();
     }
     
-    // File Management functions (from files-management.js)
-    window.selectAllFiles = fileManagement.selectAllFiles.bind(fileManagement);
-    window.deselectAllFiles = fileManagement.deselectAllFiles.bind(fileManagement);
-    window.toggleSelectAll = fileManagement.toggleSelectAll.bind(fileManagement);
-    window.updateBulkToolbar = fileManagement.updateBulkToolbar.bind(fileManagement);
-    window.clearFileSearch = fileManagement.clearFileSearch.bind(fileManagement);
-    window.changeFilesPageSize = fileManagement.changeFilesPageSize.bind(fileManagement);
-    window.bulkAnalyze = fileManagement.bulkAnalyze.bind(fileManagement);
-    window.bulkExport = fileManagement.bulkExport.bind(fileManagement);
-    window.bulkDelete = fileManagement.bulkDelete.bind(fileManagement);
-    window.deleteFile = fileManagement.deleteFile.bind(fileManagement);
+    // File Management functions (from files-management.js). Every binding
+    // is existence-guarded: the module is shared by pages at different
+    // migration stages (the archives workspace among them), and one absent
+    // method used to throw mid-exposure and take the rest of the globals
+    // down with it ("Cannot read properties of undefined (reading 'bind')").
+    const exposeFileManagement = (method, globalName) => {
+        if (fileManagement && typeof fileManagement[method] === 'function') {
+            window[globalName] = fileManagement[method].bind(fileManagement);
+        }
+    };
+    exposeFileManagement('selectAllFiles', 'selectAllFiles');
+    exposeFileManagement('deselectAllFiles', 'deselectAllFiles');
+    exposeFileManagement('toggleSelectAll', 'toggleSelectAll');
+    exposeFileManagement('updateBulkToolbar', 'updateBulkToolbar');
+    exposeFileManagement('clearFileSearch', 'clearFileSearch');
+    exposeFileManagement('changeFilesPageSize', 'changeFilesPageSize');
+    exposeFileManagement('bulkAnalyze', 'bulkAnalyze');
+    exposeFileManagement('bulkExport', 'bulkExport');
+    exposeFileManagement('bulkDelete', 'bulkDelete');
+    exposeFileManagement('deleteFile', 'deleteFile');
     // Expose applyFilters for files list page (override the generic one from filters module)
-    window.applyFileFilters = fileManagement.applyFilters.bind(fileManagement);
-    window.navigateToPage = fileManagement.navigateToPage.bind(fileManagement);
+    exposeFileManagement('applyFilters', 'applyFileFilters');
+    exposeFileManagement('navigateToPage', 'navigateToPage');
     
     // Theme Manager
     window.ThemeManager = themeManager;

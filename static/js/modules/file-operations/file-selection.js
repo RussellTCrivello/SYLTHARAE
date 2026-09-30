@@ -231,7 +231,11 @@ function updateSelectedCount() {
 /**
  * Initialize file selection handlers
  */
+let selectionWired = false;
+
 export function initializeFileSelection() {
+    if (selectionWired) return;   // re-init must not pile up listeners
+    selectionWired = true;
     // Add change handlers to checkboxes
     document.addEventListener('change', (e) => {
         if (e.target.classList.contains('file-checkbox')

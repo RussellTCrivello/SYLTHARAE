@@ -6,7 +6,10 @@
 // Load translations from JSON script tag
 let translations = {};
 
-document.addEventListener('DOMContentLoaded', function() {
+// The universal initializer imports this module and runs init() on a full
+// load AND on every in-application navigation (the static sidebar), so a
+// revisit always shows the current view. One dispatcher, no self-run.
+function loadPageTranslations() {
     // Load translations from JSON script tag
     const pageDataEl = document.getElementById('words-list-page-data');
     if (pageDataEl) {
@@ -20,9 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error parsing words list page data:', e);
         }
     }
-    
+
     console.log('Words list page loaded');
-});
+}
 
     const tableBody = document.getElementById('wordsTableBody');
     const searchInput = document.getElementById('searchWords');
@@ -65,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize
     function init() {
+        loadPageTranslations();
         const urlParams = new URLSearchParams(window.location.search);
         currentPage = parseInt(urlParams.get('page')) || 1;
         
@@ -739,16 +743,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            waitForBootstrap(() => {
-                init();
-            });
-        });
-    } else {
-        // DOM already loaded
-        waitForBootstrap(() => {
-            init();
-        });
-    }
+export { init };
