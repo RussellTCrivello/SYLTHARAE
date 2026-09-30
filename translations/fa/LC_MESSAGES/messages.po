@@ -12459,3 +12459,149 @@ msgstr "سقف ردیف"
 msgid "Completeness"
 msgstr "کامل بودن"
 
+# --- Scheduling (step 20) ---
+
+#: templates/Scheduling/schedules.html
+msgid "Schedules"
+msgstr "زمان‌بندی‌ها"
+
+#: templates/Scheduling/schedules.html
+msgid "Run a report, or evaluate every active rule or scenario, on an interval. Each fire re-checks the owner and the payload before anything runs."
+msgstr "یک گزارش را اجرا کنید، یا هر قاعده و سناریوی فعال را در یک بازه زمانی ارزیابی کنید. هر اجرا پیش از اجرای هر چیز دوباره مالک و محتوا را بررسی می‌کند."
+
+#: templates/Scheduling/schedules.html
+msgid "New schedule"
+msgstr "زمان‌بندی جدید"
+
+#: templates/Scheduling/schedules.html
+msgid "How scheduling works"
+msgstr "زمان‌بندی چگونه کار می‌کند"
+
+#: templates/Scheduling/schedules.html
+msgid "A schedule runs a registered report as its owner, or evaluates every active monitoring rule or scenario, every N minutes."
+msgstr "زمان‌بندی یک گزارش ثبت‌شده را به‌عنوان مالکش اجرا می‌کند، یا هر قاعده یا سناریوی نظارت فعال را هر N دقیقه ارزیابی می‌کند."
+
+#: templates/Scheduling/schedules.html
+msgid "Nothing is run by a person who may no longer run it: every fire re-reads the owner's role. An owner who loses the required role, or a report whose parameters no longer validate, disables the schedule with the reason stated."
+msgstr "هیچ چیزی توسط کسی که دیگر حق اجرای آن را ندارد اجرا نمی‌شود: هر اجرا نقش مالک را دوباره می‌خواند. مالی که نقش لازم را از دست بدهد، یا گزارشی که پارامترهایش دیگر معتبر نباشد، زمان‌بندی را با ذکر دلیل غیرفعال می‌کند."
+
+#: templates/Scheduling/schedules.html
+msgid "A fire enqueues the same background job a manual run creates - one snapshot for a report, one evaluation per rule - visible on the Jobs page and in this schedule's history."
+msgstr "هر اجرا همان کار پس‌زمینه‌ای را در صف قرار می‌دهد که اجرای دستی ایجاد می‌کند - یک اسنپ‌شات برای گزارش، یک ارزیابی برای هر قاعده - که در صفحه کارها و تاریخچه این زمان‌بندی دیده می‌شود."
+
+#: templates/Scheduling/schedules.html
+msgid "Pause stops firing without deleting anything; resume fires again one interval from now, so a long pause never fires a burst."
+msgstr "توقف موقت اجرا را بدون حذف چیزی متوقف می‌کند؛ ازسرگیری دوباره از یک بازه بعد از الان اجرا می‌کند، پس یک توقف طولانی هرگز انفجار اجرا ایجاد نمی‌کند."
+
+#: templates/Scheduling/schedules.html
+msgid "What runs"
+msgstr "چه چیزی اجرا می‌شود"
+
+#: templates/Scheduling/schedules.html
+msgid "Every"
+msgstr "هر"
+
+#: templates/Scheduling/schedules.html
+msgid "Next run"
+msgstr "اجرای بعدی"
+
+#: templates/Scheduling/schedules.html
+msgid "Last job"
+msgstr "آخرین کار"
+
+#: templates/Scheduling/schedules.html
+msgid "No schedules yet."
+msgstr "هنوز زمان‌بندی‌ای نیست."
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule has not created any jobs yet."
+msgstr "این زمان‌بندی هنوز کاری ایجاد نکرده است."
+
+#: templates/Scheduling/schedules.html
+msgid "A report run (as its owner)"
+msgstr "اجرای گزارش (به‌عنوان مالکش)"
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active rule"
+msgstr "ارزیابی هر قاعده فعال"
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active scenario"
+msgstr "ارزیابی هر سناریوی فعال"
+
+#: templates/Scheduling/schedules.html
+msgid "Every (minutes)"
+msgstr "هر (دقیقه)"
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters (JSON)"
+msgstr "پارامترها (JSON)"
+
+#: templates/Scheduling/schedules.html
+msgid "Validated against the report when you save and again at every fire."
+msgstr "هنگام ذخیره در برابر گزارش اعتبارسنجی می‌شود و در هر اجرا دوباره."
+
+#: templates/Scheduling/schedules.html
+msgid "Delete this schedule? Its history stays on the Jobs page."
+msgstr "این زمان‌بندی حذف شود؟ تاریخچه‌اش در صفحه کارها می‌ماند."
+
+#: templates/Scheduling/schedules.html
+msgid "Run this schedule now?"
+msgstr "این زمان‌بندی الان اجرا شود؟"
+
+#: templates/Scheduling/schedules.html
+msgid "Reason"
+msgstr "دلیل"
+
+#: templates/Scheduling/schedules.html
+msgid "Last run"
+msgstr "آخرین اجرا"
+
+#: templates/Scheduling/schedules.html
+msgid "queued"
+msgstr "در صف"
+
+#: templates/Scheduling/schedules.html
+msgid "consecutive failures"
+msgstr "شکست‌های پیاپی"
+
+#: templates/Scheduling/schedules.html
+msgid "The schedule was refused:"
+msgstr "زمان‌بندی رد شد:"
+
+#: templates/Scheduling/schedules.html
+msgid "Deleted."
+msgstr "حذف شد."
+
+#: templates/Scheduling/schedules.html
+msgid "Fired: the job is on the Jobs page."
+msgstr "اجرا شد: کار در صفحه کارها است."
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule can no longer run (see its status)."
+msgstr "این زمان‌بندی دیگر نمی‌تواند اجرا شود (وضعیتش را ببینید)."
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters are not valid JSON."
+msgstr "پارامترها JSON معتبر نیستند."
+
+#: templates/Scheduling/schedules.html
+msgid "The schedules could not be loaded."
+msgstr "زمان‌بندی‌ها بارگیری نشدند."
+
+#: templates/Scheduling/schedules.html
+msgid "Jobs of"
+msgstr "کارهای"
+
+#: templates/Scheduling/schedules.html
+msgid "report"
+msgstr "گزارش"
+
+#: templates/Scheduling/schedules.html
+msgid "every active rule"
+msgstr "هر قاعده فعال"
+
+#: templates/Scheduling/schedules.html
+msgid "every active scenario"
+msgstr "هر سناریوی فعال"
+

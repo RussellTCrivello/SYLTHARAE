@@ -12163,3 +12163,149 @@ msgstr "מגבלת שורות"
 msgid "Completeness"
 msgstr "שלמות"
 
+# --- Scheduling (step 20) ---
+
+#: templates/Scheduling/schedules.html
+msgid "Schedules"
+msgstr "לוחות זמנים"
+
+#: templates/Scheduling/schedules.html
+msgid "Run a report, or evaluate every active rule or scenario, on an interval. Each fire re-checks the owner and the payload before anything runs."
+msgstr "מריץ דוח, או מעריך כל כלל או תרחיש פעיל, במרווח זמן. כל הרצה בודקת מחדש את הבעלים והתוכן לפני שמשהו רץ."
+
+#: templates/Scheduling/schedules.html
+msgid "New schedule"
+msgstr "לוח זמנים חדש"
+
+#: templates/Scheduling/schedules.html
+msgid "How scheduling works"
+msgstr "איך התזמון עובד"
+
+#: templates/Scheduling/schedules.html
+msgid "A schedule runs a registered report as its owner, or evaluates every active monitoring rule or scenario, every N minutes."
+msgstr "לוח הזמנים מריץ דוח רשום כבעליו, או מעריך כל כלל או תרחיש ניטור פעיל, כל N דקות."
+
+#: templates/Scheduling/schedules.html
+msgid "Nothing is run by a person who may no longer run it: every fire re-reads the owner's role. An owner who loses the required role, or a report whose parameters no longer validate, disables the schedule with the reason stated."
+msgstr "דבר לא רץ על ידי מי שאינו רשאי עוד להריץ אותו: כל הרצה קוראת מחדש את תפקיד הבעלים. בעלים שאיבד את התפקיד הנדרש, או דוח שהפרמטרים שלו כבר אינם תקפים, משביתים את לוח הזמנים עם ציון הסיבה."
+
+#: templates/Scheduling/schedules.html
+msgid "A fire enqueues the same background job a manual run creates - one snapshot for a report, one evaluation per rule - visible on the Jobs page and in this schedule's history."
+msgstr "כל הרצה מכניסה לתור את אותה משימת רקע שהרצה ידנית יוצרת - תמונת מצב אחת לדוח, הערכה אחת לכלל - גלויה בעמוד המשימות ובהיסטוריית לוח הזמנים."
+
+#: templates/Scheduling/schedules.html
+msgid "Pause stops firing without deleting anything; resume fires again one interval from now, so a long pause never fires a burst."
+msgstr "השהיה עוצרת את ההרצות בלי למחוק דבר; חידוש מריץ שוב מרווח אחד מעכשיו, ולכן השהיה ארוכה לא מפעילה מטח הרצות."
+
+#: templates/Scheduling/schedules.html
+msgid "What runs"
+msgstr "מה רץ"
+
+#: templates/Scheduling/schedules.html
+msgid "Every"
+msgstr "כל"
+
+#: templates/Scheduling/schedules.html
+msgid "Next run"
+msgstr "ההרצה הבאה"
+
+#: templates/Scheduling/schedules.html
+msgid "Last job"
+msgstr "המשימה האחרונה"
+
+#: templates/Scheduling/schedules.html
+msgid "No schedules yet."
+msgstr "אין עדיין לוחות זמנים."
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule has not created any jobs yet."
+msgstr "לוח זמנים זה עדיין לא יצר משימות."
+
+#: templates/Scheduling/schedules.html
+msgid "A report run (as its owner)"
+msgstr "הרצת דוח (כבעליו)"
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active rule"
+msgstr "הערכת כל כלל פעיל"
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active scenario"
+msgstr "הערכת כל תרחיש פעיל"
+
+#: templates/Scheduling/schedules.html
+msgid "Every (minutes)"
+msgstr "כל (דקות)"
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters (JSON)"
+msgstr "פרמטרים (JSON)"
+
+#: templates/Scheduling/schedules.html
+msgid "Validated against the report when you save and again at every fire."
+msgstr "נבדקים מול הדוח בשמירה ושוב בכל הרצה."
+
+#: templates/Scheduling/schedules.html
+msgid "Delete this schedule? Its history stays on the Jobs page."
+msgstr "למחוק את לוח הזמנים? ההיסטוריה שלו נשארת בעמוד המשימות."
+
+#: templates/Scheduling/schedules.html
+msgid "Run this schedule now?"
+msgstr "להריץ את לוח הזמנים עכשיו?"
+
+#: templates/Scheduling/schedules.html
+msgid "Reason"
+msgstr "סיבה"
+
+#: templates/Scheduling/schedules.html
+msgid "Last run"
+msgstr "הרצה אחרונה"
+
+#: templates/Scheduling/schedules.html
+msgid "queued"
+msgstr "בתור"
+
+#: templates/Scheduling/schedules.html
+msgid "consecutive failures"
+msgstr "כשלים רצופים"
+
+#: templates/Scheduling/schedules.html
+msgid "The schedule was refused:"
+msgstr "לוח הזמנים נדחה:"
+
+#: templates/Scheduling/schedules.html
+msgid "Deleted."
+msgstr "נמחק."
+
+#: templates/Scheduling/schedules.html
+msgid "Fired: the job is on the Jobs page."
+msgstr "הורץ: המשימה בעמוד המשימות."
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule can no longer run (see its status)."
+msgstr "לוח זמנים זה כבר אינו יכול לרוץ (ראה את מצבו)."
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters are not valid JSON."
+msgstr "הפרמטרים אינם JSON תקין."
+
+#: templates/Scheduling/schedules.html
+msgid "The schedules could not be loaded."
+msgstr "לא ניתן היה לטעון את לוחות הזמנים."
+
+#: templates/Scheduling/schedules.html
+msgid "Jobs of"
+msgstr "משימות של"
+
+#: templates/Scheduling/schedules.html
+msgid "report"
+msgstr "דוח"
+
+#: templates/Scheduling/schedules.html
+msgid "every active rule"
+msgstr "כל כלל פעיל"
+
+#: templates/Scheduling/schedules.html
+msgid "every active scenario"
+msgstr "כל תרחיש פעיל"
+

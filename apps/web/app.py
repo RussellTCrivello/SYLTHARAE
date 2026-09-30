@@ -297,6 +297,23 @@ def _recover_jobs():
 
 with app.app_context():
     _recover_jobs()
+
+# Step 20 scheduler: fires due job schedules (report runs, rule and scenario
+# evaluations) through the JobManager. Off unless SYLTHARAE_SCHEDULER=1 - the
+# entry point sets that for production; tests and import-only processes never
+# grow this thread by accident. Guarded like job recovery: a scheduler that
+# cannot start must not block the web app.
+def _start_scheduler():
+    try:
+        from services.scheduling.scheduler import Scheduler, enabled_by_config
+
+        if enabled_by_config():
+            Scheduler.get_instance().start()
+            logger.info("✅ Job scheduler started")
+    except Exception as exc:
+        logger.warning("Job scheduler not started: %s", exc.__class__.__name__)
+
+_start_scheduler()
 logger.info("✅ Rate limiting enabled (default 60/min, 600/hour per client)")
 
 # Enable gzip compression for all responses

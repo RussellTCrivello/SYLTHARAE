@@ -12345,3 +12345,149 @@ msgstr "حد الصفوف"
 msgid "Completeness"
 msgstr "الاكتمال"
 
+# --- Scheduling (step 20) ---
+
+#: templates/Scheduling/schedules.html
+msgid "Schedules"
+msgstr "الجداول الزمنية"
+
+#: templates/Scheduling/schedules.html
+msgid "Run a report, or evaluate every active rule or scenario, on an interval. Each fire re-checks the owner and the payload before anything runs."
+msgstr "شغّل تقريراً، أو قيّم كل قاعدة أو سيناريو نشط، على فاصل زمني. كل تشغيل يعيد التحقق من المالك والحمولة قبل تنفيذ أي شيء."
+
+#: templates/Scheduling/schedules.html
+msgid "New schedule"
+msgstr "جدول جديد"
+
+#: templates/Scheduling/schedules.html
+msgid "How scheduling works"
+msgstr "كيف يعمل الجدولة"
+
+#: templates/Scheduling/schedules.html
+msgid "A schedule runs a registered report as its owner, or evaluates every active monitoring rule or scenario, every N minutes."
+msgstr "يشغّل الجدول تقريراً مسجلاً بصفته مالكه، أو يقيّم كل قاعدة مراقبة أو سيناريو نشط، كل N دقيقة."
+
+#: templates/Scheduling/schedules.html
+msgid "Nothing is run by a person who may no longer run it: every fire re-reads the owner's role. An owner who loses the required role, or a report whose parameters no longer validate, disables the schedule with the reason stated."
+msgstr "لا شيء يُشغَّل من قبل شخص لم يعد يملك حق تشغيله: كل تشغيل يعيد قراءة دور المالك. المالك الذي يفقد الدور المطلوب، أو تقرير لم تعد معاييره صالحة، يعطّل الجدول مع ذكر السبب."
+
+#: templates/Scheduling/schedules.html
+msgid "A fire enqueues the same background job a manual run creates - one snapshot for a report, one evaluation per rule - visible on the Jobs page and in this schedule's history."
+msgstr "يضع كل تشغيل نفس المهمة الخلفية التي تنشئها العملية اليدوية - لقطة واحدة للتقرير، تقييم واحد لكل قاعدة - ظاهرة في صفحة المهام وفي سجل هذا الجدول."
+
+#: templates/Scheduling/schedules.html
+msgid "Pause stops firing without deleting anything; resume fires again one interval from now, so a long pause never fires a burst."
+msgstr "الإيقاف المؤقت يوقف التشغيل دون حذف أي شيء؛ الاستئناف يشغّل مرة أخرى بعد فاصل واحد من الآن، فلا تتكرر عمليات التشغيل دفعة واحدة بعد توقف طويل."
+
+#: templates/Scheduling/schedules.html
+msgid "What runs"
+msgstr "ما الذي يعمل"
+
+#: templates/Scheduling/schedules.html
+msgid "Every"
+msgstr "كل"
+
+#: templates/Scheduling/schedules.html
+msgid "Next run"
+msgstr "التشغيل التالي"
+
+#: templates/Scheduling/schedules.html
+msgid "Last job"
+msgstr "آخر مهمة"
+
+#: templates/Scheduling/schedules.html
+msgid "No schedules yet."
+msgstr "لا جداول بعد."
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule has not created any jobs yet."
+msgstr "لم يُنشئ هذا الجدول أي مهام بعد."
+
+#: templates/Scheduling/schedules.html
+msgid "A report run (as its owner)"
+msgstr "تشغيل تقرير (بصفته مالكه)"
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active rule"
+msgstr "تقييم كل قاعدة نشطة"
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active scenario"
+msgstr "تقييم كل سيناريو نشط"
+
+#: templates/Scheduling/schedules.html
+msgid "Every (minutes)"
+msgstr "كل (بالدقائق)"
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters (JSON)"
+msgstr "المعاملات (JSON)"
+
+#: templates/Scheduling/schedules.html
+msgid "Validated against the report when you save and again at every fire."
+msgstr "يُتحقق منها مقابل التقرير عند الحفظ ومرة أخرى في كل تشغيل."
+
+#: templates/Scheduling/schedules.html
+msgid "Delete this schedule? Its history stays on the Jobs page."
+msgstr "حذف هذا الجدول؟ يبقى سجله في صفحة المهام."
+
+#: templates/Scheduling/schedules.html
+msgid "Run this schedule now?"
+msgstr "تشغيل هذا الجدول الآن؟"
+
+#: templates/Scheduling/schedules.html
+msgid "Reason"
+msgstr "السبب"
+
+#: templates/Scheduling/schedules.html
+msgid "Last run"
+msgstr "آخر تشغيل"
+
+#: templates/Scheduling/schedules.html
+msgid "queued"
+msgstr "في الانتظار"
+
+#: templates/Scheduling/schedules.html
+msgid "consecutive failures"
+msgstr "إخفاقات متتالية"
+
+#: templates/Scheduling/schedules.html
+msgid "The schedule was refused:"
+msgstr "رُفض الجدول:"
+
+#: templates/Scheduling/schedules.html
+msgid "Deleted."
+msgstr "تم الحذف."
+
+#: templates/Scheduling/schedules.html
+msgid "Fired: the job is on the Jobs page."
+msgstr "تم التشغيل: المهمة في صفحة المهام."
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule can no longer run (see its status)."
+msgstr "لم يعد بإمكان هذا الجدول العمل (انظر حالته)."
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters are not valid JSON."
+msgstr "المعاملات ليست JSON صالحاً."
+
+#: templates/Scheduling/schedules.html
+msgid "The schedules could not be loaded."
+msgstr "تعذر تحميل الجداول."
+
+#: templates/Scheduling/schedules.html
+msgid "Jobs of"
+msgstr "مهام"
+
+#: templates/Scheduling/schedules.html
+msgid "report"
+msgstr "تقرير"
+
+#: templates/Scheduling/schedules.html
+msgid "every active rule"
+msgstr "كل قاعدة نشطة"
+
+#: templates/Scheduling/schedules.html
+msgid "every active scenario"
+msgstr "كل سيناريو نشط"
+

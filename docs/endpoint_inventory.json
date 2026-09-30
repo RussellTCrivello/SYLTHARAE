@@ -1441,6 +1441,114 @@
     "internal": true
   },
   {
+    "endpoint": "api_schedules_create",
+    "rule": "/api/schedules",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_delete",
+    "rule": "/api/schedules/<int:schedule_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_get",
+    "rule": "/api/schedules/<int:schedule_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_jobs",
+    "rule": "/api/schedules/<int:schedule_id>/jobs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_list",
+    "rule": "/api/schedules",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_pause",
+    "rule": "/api/schedules/<int:schedule_id>/pause",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_resume",
+    "rule": "/api/schedules/<int:schedule_id>/resume",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_run_now",
+    "rule": "/api/schedules/<int:schedule_id>/run_now",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_update",
+    "rule": "/api/schedules/<int:schedule_id>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_search",
     "rule": "/api/search",
     "methods": [
@@ -4139,6 +4247,18 @@
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
+  },
+  {
+    "endpoint": "schedules_page",
+    "rule": "/schedules",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "USER_INTERFACE",
+    "owned_by": "schedules",
+    "internal": false
   },
   {
     "endpoint": "search_advanced",

@@ -302,6 +302,16 @@ REGISTRY: Tuple[Interface, ...] = (
         help_topic="report/reports", keyboard_shortcut="g r",
     ),
     _if(
+        "schedules", "Schedules",
+        "Run a registered report, or evaluate every active rule / scenario, on "
+        "an interval. Each fire re-checks the owner's role and the payload "
+        "before anything runs; a schedule that can no longer run is disabled "
+        "with the reason stated.",
+        Domain.REPORT, "schedules_page", "bi-clock-history",
+        dependencies=("reports", "jobs", "monitoring"),
+        help_topic="report/schedules",
+    ),
+    _if(
         "charts_dashboard", "Charts Dashboard",
         "The same stored material presented as charts and timelines.",
         Domain.REPORT, "charts_dashboard", "bi-bar-chart",

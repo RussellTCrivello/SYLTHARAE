@@ -67,12 +67,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 ## Generated reference
 
 <!-- BEGIN GENERATED REGISTRY TABLE -->
-- Interfaces: **31** (features declared separately: **1**)
-- Endpoints owned: **75**
-- With a keyboard shortcut: **17**; with a help topic: **29**
-- By domain: ADMINISTRATION 2, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 3, SETTINGS 3, WORK 1
-- By status: ACTIVE 30, DEPRECATED 1
-- By kind: INTERNAL 1, PAGE 29, SECTION 1
+- Interfaces: **32** (features declared separately: **1**)
+- Endpoints owned: **76**
+- With a keyboard shortcut: **17**; with a help topic: **30**
+- By domain: ADMINISTRATION 2, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 4, SETTINGS 3, WORK 1
+- By status: ACTIVE 31, DEPRECATED 1
+- By kind: INTERNAL 1, PAGE 30, SECTION 1
 
 
 ### WORK (1)
@@ -119,12 +119,13 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `analyst_categorization` | Analyst Categories | CLASSIFY | `analyst_categorization_page` | — | any | on | `file_library` | classify/analyst-categories | — | ACTIVE |
 | `classification` | Classification | CLASSIFY | `file_classification_page` | — | any | on | `file_library`, `words` | classify/classification | — | ACTIVE |
 
-### REPORT (3)
+### REPORT (4)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `comprehensive_dashboard` | Comprehensive Dashboard | REPORT | `comprehensive_dashboard` | — | any | on | `file_library` | report/detailed-dashboard | — | ACTIVE |
 | `reports` | Reports | REPORT | `reports_page` | — | any | on | `search`, `jobs` | report/reports | g r | ACTIVE |
+| `schedules` | Schedules | REPORT | `schedules_page` | — | any | on | `reports`, `jobs`, `monitoring` | report/schedules | — | ACTIVE |
 | `charts_dashboard` | Charts Dashboard | REPORT | `charts_dashboard` | — | any | on | `file_library` | report/charts | — | ACTIVE |
 
 ### OPERATE (3)

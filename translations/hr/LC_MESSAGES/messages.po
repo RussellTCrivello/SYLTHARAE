@@ -12577,3 +12577,149 @@ msgstr "Ograničenje redaka"
 msgid "Completeness"
 msgstr "Potpunost"
 
+# --- Scheduling (step 20) ---
+
+#: templates/Scheduling/schedules.html
+msgid "Schedules"
+msgstr "Rasporedi"
+
+#: templates/Scheduling/schedules.html
+msgid "Run a report, or evaluate every active rule or scenario, on an interval. Each fire re-checks the owner and the payload before anything runs."
+msgstr "Pokrenite izvješće ili procijenite sva aktivna pravila ili scenarije u razmaku. Svako pokretanje ponovno provjerava vlasnika i sadržaj prije nego što išta radi."
+
+#: templates/Scheduling/schedules.html
+msgid "New schedule"
+msgstr "Novi raspored"
+
+#: templates/Scheduling/schedules.html
+msgid "How scheduling works"
+msgstr "Kako radi raspored"
+
+#: templates/Scheduling/schedules.html
+msgid "A schedule runs a registered report as its owner, or evaluates every active monitoring rule or scenario, every N minutes."
+msgstr "Raspored pokrenuto registrirano izvješće kao njegov vlasnik ili procjenjuje svako aktivno pravilo ili scenarij svakih N minuta."
+
+#: templates/Scheduling/schedules.html
+msgid "Nothing is run by a person who may no longer run it: every fire re-reads the owner's role. An owner who loses the required role, or a report whose parameters no longer validate, disables the schedule with the reason stated."
+msgstr "Ništa ne pokreće osoba koja to više ne smije: svako pokretanje ponovno čita ulogu vlasnika. Vlasnik koji izgubi potrebnu ulogu ili izvješće čiji parametri više nisu valjani onemogućuje raspored uz navedeni razlog."
+
+#: templates/Scheduling/schedules.html
+msgid "A fire enqueues the same background job a manual run creates - one snapshot for a report, one evaluation per rule - visible on the Jobs page and in this schedule's history."
+msgstr "Svako pokretanje stavlja u red isti posao u pozadini koji stvara ručno pokretanje - jedna snimka za izvješće, jedna procjena po pravilu - vidljivo na stranici poslova i u povijesti ovog rasporeda."
+
+#: templates/Scheduling/schedules.html
+msgid "Pause stops firing without deleting anything; resume fires again one interval from now, so a long pause never fires a burst."
+msgstr "Pauza zaustavlja pokretanje bez brisanja čega; nastavak pokreće ponovno jedan razmak od sada, tako da duga pauza nikad ne pokrene niz pokretanja."
+
+#: templates/Scheduling/schedules.html
+msgid "What runs"
+msgstr "Što se pokreće"
+
+#: templates/Scheduling/schedules.html
+msgid "Every"
+msgstr "Svake"
+
+#: templates/Scheduling/schedules.html
+msgid "Next run"
+msgstr "Sljedeće pokretanje"
+
+#: templates/Scheduling/schedules.html
+msgid "Last job"
+msgstr "Zadnji posao"
+
+#: templates/Scheduling/schedules.html
+msgid "No schedules yet."
+msgstr "Još nema rasporeda."
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule has not created any jobs yet."
+msgstr "Ovaj raspored još nije stvorio nijedan posao."
+
+#: templates/Scheduling/schedules.html
+msgid "A report run (as its owner)"
+msgstr "Pokretanje izvješća (kao njegov vlasnik)"
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active rule"
+msgstr "Procijeni sva aktivna pravila"
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active scenario"
+msgstr "Procijeni sve aktivne scenarije"
+
+#: templates/Scheduling/schedules.html
+msgid "Every (minutes)"
+msgstr "Svake (minute)"
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters (JSON)"
+msgstr "Parametri (JSON)"
+
+#: templates/Scheduling/schedules.html
+msgid "Validated against the report when you save and again at every fire."
+msgstr "Provjeravaju se prema izvješću pri spremanju i ponovno pri svakom pokretanju."
+
+#: templates/Scheduling/schedules.html
+msgid "Delete this schedule? Its history stays on the Jobs page."
+msgstr "Obrisati ovaj raspored? Njegova povijest ostaje na stranici poslova."
+
+#: templates/Scheduling/schedules.html
+msgid "Run this schedule now?"
+msgstr "Pokrenuti ovaj raspored sada?"
+
+#: templates/Scheduling/schedules.html
+msgid "Reason"
+msgstr "Razlog"
+
+#: templates/Scheduling/schedules.html
+msgid "Last run"
+msgstr "Zadnje pokretanje"
+
+#: templates/Scheduling/schedules.html
+msgid "queued"
+msgstr "u redu čekanja"
+
+#: templates/Scheduling/schedules.html
+msgid "consecutive failures"
+msgstr "uzastopni neuspjesi"
+
+#: templates/Scheduling/schedules.html
+msgid "The schedule was refused:"
+msgstr "Raspored je odbijen:"
+
+#: templates/Scheduling/schedules.html
+msgid "Deleted."
+msgstr "Izbrisano."
+
+#: templates/Scheduling/schedules.html
+msgid "Fired: the job is on the Jobs page."
+msgstr "Pokrenuto: posao je na stranici poslova."
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule can no longer run (see its status)."
+msgstr "Ovaj raspored više ne može raditi (vidi njegov status)."
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters are not valid JSON."
+msgstr "Parametri nisu valjani JSON."
+
+#: templates/Scheduling/schedules.html
+msgid "The schedules could not be loaded."
+msgstr "Rasporede nije bilo moguće učitati."
+
+#: templates/Scheduling/schedules.html
+msgid "Jobs of"
+msgstr "Poslovi od"
+
+#: templates/Scheduling/schedules.html
+msgid "report"
+msgstr "izvješće"
+
+#: templates/Scheduling/schedules.html
+msgid "every active rule"
+msgstr "svako aktivno pravilo"
+
+#: templates/Scheduling/schedules.html
+msgid "every active scenario"
+msgstr "svaki aktivni scenarij"
+

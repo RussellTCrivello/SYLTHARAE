@@ -14669,3 +14669,149 @@ msgstr ""
 msgid "Completeness"
 msgstr ""
 
+# --- Scheduling (step 20) ---
+
+#: templates/Scheduling/schedules.html
+msgid "Schedules"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Run a report, or evaluate every active rule or scenario, on an interval. Each fire re-checks the owner and the payload before anything runs."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "New schedule"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "How scheduling works"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "A schedule runs a registered report as its owner, or evaluates every active monitoring rule or scenario, every N minutes."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Nothing is run by a person who may no longer run it: every fire re-reads the owner's role. An owner who loses the required role, or a report whose parameters no longer validate, disables the schedule with the reason stated."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "A fire enqueues the same background job a manual run creates - one snapshot for a report, one evaluation per rule - visible on the Jobs page and in this schedule's history."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Pause stops firing without deleting anything; resume fires again one interval from now, so a long pause never fires a burst."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "What runs"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Every"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Next run"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Last job"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "No schedules yet."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule has not created any jobs yet."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "A report run (as its owner)"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active rule"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Evaluate every active scenario"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Every (minutes)"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters (JSON)"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Validated against the report when you save and again at every fire."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Delete this schedule? Its history stays on the Jobs page."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Run this schedule now?"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Reason"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Last run"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "queued"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "consecutive failures"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "The schedule was refused:"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Deleted."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Fired: the job is on the Jobs page."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "This schedule can no longer run (see its status)."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Parameters are not valid JSON."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "The schedules could not be loaded."
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "Jobs of"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "report"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "every active rule"
+msgstr ""
+
+#: templates/Scheduling/schedules.html
+msgid "every active scenario"
+msgstr ""
+
