@@ -195,9 +195,10 @@ anything is read or recorded, the same rule the saved-search check
 applies - and the dataset's ``{owner}`` predicate (a declarative access
 mechanism beside criteria, scope and the viewer tokens) repeats the rule
 in SQL, so a future consumer cannot forget it. Admins read every
-scenario; the reader's source scope applies on top. The remaining catalog
-family (Comprehensive) is added only when its dataset exists and is
-verified (step 23).
+scenario; the reader's source scope applies on top. The last catalog family
+(Comprehensive, step 23) followed the same rule: it was added only once
+its dataset existed and was verified - see
+[COMPREHENSIVE.md](COMPREHENSIVE.md).
 
 ## Evidence
 

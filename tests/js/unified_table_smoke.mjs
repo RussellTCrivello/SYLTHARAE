@@ -75,8 +75,11 @@ const sortCell = (key) => Array.from(headerRow.querySelectorAll('th'))
 const bodyRows = () => table.querySelector('tbody').querySelectorAll('tr')
     .filter((row) => row.tagName === 'TR');
 
-const { loadRuntime } = { loadRuntime: (f) => import('/home/user/SYLTHARAE/' + f) };
-await import('/home/user/SYLTHARAE/static/js/modules/ui/unified-table.js');
+import path from 'node:path';
+import url from 'node:url';
+const ROOT = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..');
+const { loadRuntime } = { loadRuntime: (f) => import(path.join('file://', ROOT, f)) };
+await import(path.join('file://', ROOT, 'static/js/modules/ui/unified-table.js'));
 const UnifiedTable = globalThisRef.UnifiedTable;
 check('the module is on the global', typeof UnifiedTable === 'object');
 // The stub's querySelectorAll has no descendant combinator, so the module's

@@ -225,6 +225,60 @@ SCENARIO_OUTCOME_V1 = ReportDefinition(
     access_control="scenario_owner",
 )
 
+COMPOSITION_ANALYSIS_V1 = Analysis(
+    analysis_id="composition",
+    version=1,
+    kind="composition",
+    inputs={"overview": "comprehensive.overview@1"},
+    description="Exact composition of the matched set: contents, file "
+                "occurrences, sources, the keywords and categories present "
+                "in the matched contents, and their first and last file and "
+                "event dates. Counts only; it compares nothing, so it can "
+                "overstate nothing.",
+    title="Matched Set Overview",
+)
+
+COVERAGE_ANALYSIS_V1 = Analysis(
+    analysis_id="coverage",
+    version=1,
+    kind="coverage",
+    inputs={"overview": "comprehensive.overview@1",
+            "keywords": "keyword_intelligence.matches@1",
+            "categories": "category_analysis.summary@1"},
+    description="How far the stored keywords and categories reach into the "
+                "matched contents: distinct contents containing each, "
+                "against the same matched set the overview counted. The "
+                "listings' own copy of the matched-set size is cross-checked "
+                "against the overview; a disagreement fails the run.",
+    title="Keyword and Category Reach",
+)
+
+COMPREHENSIVE_V1 = ReportDefinition(
+    report_id="comprehensive",
+    version=1,
+    title="Comprehensive Intelligence Report",
+    description="One report over the matched set, in sections: what was "
+                "selected (overview), how its terms differ from the rest of "
+                "the collection (distinctive terms), and how far the stored "
+                "keywords and categories reach into it. Each section keeps "
+                "its own five voices; the overview and reach sections come "
+                "from one exact dataset row the whole run shares.",
+    help_topic="reports/comprehensive",
+    unit="hash",
+    roles=tuple(ALL_ROLES),
+    parameters=(
+        Parameter("criteria", "criteria", "Search criteria", required=True),
+        Parameter("direction", "enum", "Direction", required=False, default="over",
+                  choices=("over", "under"),
+                  choice_labels=("Used more often in the selection",
+                                 "Used less often in the selection")),
+    ),
+    datasets=("comprehensive.overview@1", "term_keyness.ranked@1",
+              "term_keyness.totals@1", "keyword_intelligence.matches@1",
+              "category_analysis.summary@1"),
+    analyses=("composition@1", "term_keyness@2", "coverage@1"),
+)
+
 REPORTS: Tuple[ReportDefinition, ...] = (
     SEARCH_RESULTS_V1,
     TERM_KEYNESS_V1,
@@ -237,11 +291,14 @@ REPORTS: Tuple[ReportDefinition, ...] = (
     LATEST_V1,
     CHANGE_V1,
     SCENARIO_OUTCOME_V1,
+    COMPREHENSIVE_V1,
 )
 
 ANALYSES: Tuple[Analysis, ...] = (
     TERM_KEYNESS_ANALYSIS_V1,
     TERM_KEYNESS_ANALYSIS_V2,
+    COMPOSITION_ANALYSIS_V1,
+    COVERAGE_ANALYSIS_V1,
 )
 
 HELP_TOPICS: Tuple[HelpTopic, ...] = (
@@ -297,6 +354,17 @@ HELP_TOPICS: Tuple[HelpTopic, ...] = (
                 "each evaluation's results stay exactly as they were "
                 "recorded. A scenario's outcomes are visible to its owner "
                 "and to administrators.",
+    ),
+    HelpTopic(
+        topic="reports/comprehensive",
+        title="About the Comprehensive Intelligence Report",
+        summary="Combines the matched-set overview, the distinctive terms "
+                "and the keyword and category reach into one report of "
+                "sections: what was selected, how it differs from the rest "
+                "of the collection, and which stored keywords and "
+                "categories it uses. Every section keeps its own measures, "
+                "findings, confidence, consequence and caveat, and every "
+                "count states whether it is exact or a shortened listing.",
     ),
     HelpTopic(
         topic="reports/change",

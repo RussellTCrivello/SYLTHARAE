@@ -349,6 +349,270 @@ KINDS: Dict[str, Kind] = {f"{k.name}@{k.version}": k for k in (KEYNESS, KEYNESS_
 
 
 # ---------------------------------------------------------------------------
+# composition (step 23, the Comprehensive report's opening section)
+#
+# What the criteria selected, counted exactly over the matched set: contents,
+# file occurrences, sources, and the keywords and categories present in the
+# matched contents. One dataset input (comprehensive.overview@1, exact) and
+# no threshold: this section states counts, it compares nothing, so it can
+# overstate nothing. Dates are unknown (never zero) when the matched set has
+# none; unknown word counts are counted, never read as zero.
+# ---------------------------------------------------------------------------
+
+COMPOSITION_TEMPLATES = TemplateSet("composition", 1, {
+    "measure.method": (
+        "The overview counts what the criteria select in the visible collection at one "
+        "moment: contents, their file occurrences, their sources, and the keywords and "
+        "categories present in them."),
+    "measure.sizes": (
+        "Contents: %(contents)s. File occurrences: %(paths)s. Sources: %(sources)s."),
+    "measure.dates": (
+        "File dates: %(first_ingest)s to %(last_ingest)s. Event dates: %(first_event)s "
+        "to %(last_event)s."),
+    "measure.dates_no_events": (
+        "File dates: %(first_ingest)s to %(last_ingest)s. No event date is detected in "
+        "the matched contents."),
+    "measure.not_measurable": (
+        "The overview counts the contents the criteria select; the criteria selected none."),
+    "finding.keywords": Plural(
+        "One keyword is present in the matched contents.",
+        "%(keywords)s keywords are present in the matched contents.",
+        "keywords"),
+    "finding.categories": Plural(
+        "One category is present in the matched contents.",
+        "%(categories)s categories are present in the matched contents.",
+        "categories"),
+    "finding.no_contents": (
+        "No visible content matches the criteria, so there is nothing to describe."),
+    "confidence.exact": (
+        "These counts are exact for the matched set: the overview is a single measured "
+        "row, not a listing, so nothing is shortened and nothing is estimated."),
+    "confidence.not_measurable": "No count was performed.",
+    "consequence.read_on": (
+        "These facts describe the matched set only. The sections that follow measure how "
+        "its terms and categories differ from the rest of the collection."),
+    "consequence.not_measurable": "No conclusion can be drawn from this section.",
+    "caveat.overlap": (
+        "Categories can share words, so one content can carry several categories, and a "
+        "content can carry many keywords. Sources are counted distinctly: one source with "
+        "many file occurrences counts once."),
+    "caveat.unknown_counts": Plural(
+        "One word record in the matched contents has no stored count.",
+        "%(unknown_count_rows)s word records in the matched contents have no stored count.",
+        "unknown_count_rows"),
+    "caveat.not_measurable": (
+        "Next step: widen the criteria, or check that the matching files were processed."),
+}, record_format=2)
+
+
+def _composition(inputs: Mapping[str, Dict[str, Any]], params: Mapping[str, Any],
+                 narrate: Callable[..., Dict[str, Any]]) -> Dict[str, Any]:
+    [overview] = inputs["overview"]["rows"]
+    m = {name: int(overview[name]) for name in
+         ("contents", "paths", "sources", "keywords", "categories", "unknown_count_rows")}
+    if m["contents"] == 0:
+        return {"state": NOT_MEASURABLE, "reason": "no_contents", "measures": m, "rows": [],
+                "narrative": narrate(reason="no_contents")}
+    measure = [("measure.method", {}),
+               ("measure.sizes", {k: m[k] for k in ("contents", "paths", "sources")})]
+    if overview["first_event"] is None or overview["last_event"] is None:
+        measure.append(("measure.dates_no_events",
+                        {"first_ingest": overview["first_ingest"],
+                         "last_ingest": overview["last_ingest"]}))
+    else:
+        measure.append(("measure.dates",
+                        {"first_ingest": overview["first_ingest"],
+                         "last_ingest": overview["last_ingest"],
+                         "first_event": overview["first_event"],
+                         "last_event": overview["last_event"]}))
+    finding = [("finding.keywords", {"keywords": m["keywords"]}),
+               ("finding.categories", {"categories": m["categories"]})]
+    caveat = [("caveat.overlap", {})]
+    if m["unknown_count_rows"]:
+        caveat.append(("caveat.unknown_counts", {"unknown_count_rows": m["unknown_count_rows"]}))
+    return {"state": MEASURED, "reason": None, "measures": m, "rows": [],
+            "narrative": narrate(measure=measure, finding=finding, caveat=caveat,
+                                 overview=overview)}
+
+
+def _narrate_composition(reason=None, measure=None, finding=None, caveat=None,
+                         overview=None):
+    """composition@1 wording (record format 2: a voice may be several
+    sentences, every count that a noun agrees with is its own plural
+    sentence)."""
+    T = COMPOSITION_TEMPLATES
+    if reason:
+        return T.compose(_not_measurable_choices(reason))
+    return T.compose([measure, finding, ("confidence.exact", {}),
+                      ("consequence.read_on", {}), caveat])
+
+
+COMPOSITION = Kind(
+    name="composition", version=1,
+    inputs={"overview": InputRole(("exact",),
+                                  ("contents", "paths", "sources", "keywords", "categories",
+                                   "first_ingest", "last_ingest", "first_event", "last_event",
+                                   "unknown_count_rows"))},
+    thresholds=(),
+    templates=COMPOSITION_TEMPLATES,
+    compute=lambda inputs, params: _composition(inputs, params, _narrate_composition),
+)
+
+
+# ---------------------------------------------------------------------------
+# coverage (step 23, the Comprehensive report's supporting section)
+#
+# How far the stored keywords and categories reach into the matched contents.
+# The keywords and categories come from the whole collection; their reach is
+# counted only inside the matched set, so an absent keyword is a listed zero,
+# never a missing row. The overview's exact counts are cross-checked against
+# each listing's own copy of the matched-set size, and a disagreement fails
+# the run (the same discipline keyness applies to its G2 columns). Category
+# shares are not a partition (categories share words), so no concentration
+# index is computed here - an HHI over overlapping shares would state more
+# than the data supports.
+# ---------------------------------------------------------------------------
+
+COVERAGE_TEMPLATES = TemplateSet("coverage", 1, {
+    "measure.method": (
+        "Reach measures how far the stored keywords and categories extend into the matched "
+        "contents: for each, how many of the matched contents contain it, and how often."),
+    "measure.sizes": (
+        "Matched contents: %(contents)s. Keywords present in at least one: %(keywords)s. "
+        "Categories present in at least one: %(categories)s."),
+    "measure.listing_keywords": Plural(
+        "Listed: the reach of one keyword, widest first.",
+        "Listed: the reach of %(keyword_rows)s keywords, widest first.",
+        "keyword_rows"),
+    "measure.listing_categories": Plural(
+        "Listed: the reach of one category, widest first.",
+        "Listed: the reach of %(category_rows)s categories, widest first.",
+        "category_rows"),
+    "measure.not_measurable": (
+        "Reach is measured inside the matched contents; the criteria matched none."),
+    "finding.top_keyword": (
+        "The widest keyword is \"%(top_keyword)s\": present in %(keyword_contents)s of the "
+        "matched contents (%(keyword_share)s%% of them); stored occurrences: "
+        "%(keyword_occurrences)s."),
+    "finding.top_category": (
+        "The widest category is \"%(top_category)s\": %(category_contents)s of the matched "
+        "contents contain at least one of its words (%(category_share)s%% of them)."),
+    "finding.none": (
+        "No keyword and no category reaches the matched contents: presence there is zero, "
+        "which is a measurement, not an unknown."),
+    "finding.no_contents": "No visible content matches the criteria.",
+    "confidence.counts": (
+        "Reaches are exact counts of distinct matched contents; shares are those counts "
+        "against the same matched set. The listings are capped prefixes, so a shortened "
+        "listing states its truncation."),
+    "confidence.not_measurable": "No reach was measured.",
+    "consequence.read": (
+        "Reach shows which stored keywords and categories the matched set uses most, not "
+        "why. Next step: open the contents listed by the Keyword Intelligence and Category "
+        "Analysis reports."),
+    "consequence.not_measurable": "No conclusion can be drawn from this section.",
+    "caveat.overlap": (
+        "Categories share words, so their shares are not a partition and can overlap. A "
+        "keyword belongs to one category; a content can contain many keywords."),
+    "caveat.unknown_counts": Plural(
+        "One word record of the matched contents has no stored count and is excluded from "
+        "every occurrence total.",
+        "%(unknown_count_rows)s word records of the matched contents have no stored count "
+        "and are excluded from every occurrence total.",
+        "unknown_count_rows"),
+    "caveat.not_measurable": (
+        "Next step: widen the criteria, or check that the matching files were processed."),
+}, record_format=2)
+
+
+def _coverage(inputs: Mapping[str, Dict[str, Any]], params: Mapping[str, Any],
+              narrate: Callable[..., Dict[str, Any]]) -> Dict[str, Any]:
+    [overview] = inputs["overview"]["rows"]
+    m = {"contents": int(overview["contents"]),
+         "keywords": int(overview["keywords"]),
+         "categories": int(overview["categories"]),
+         "unknown_count_rows": int(overview["unknown_count_rows"])}
+    if m["contents"] == 0:
+        return {"state": NOT_MEASURABLE, "reason": "no_contents", "measures": m, "rows": [],
+                "narrative": narrate(reason="no_contents")}
+    keywords = inputs["keywords"]
+    categories = inputs["categories"]
+    if (m["keywords"] or m["categories"]) and \
+            not keywords["rows"] and not categories["rows"]:
+        raise AnalysisError(
+            "coverage: the overview counts present keywords or categories, "
+            "yet neither capped listing has a row; the listing prefixes "
+            "contradict the overview")
+    for role, rows in (("keywords", keywords["rows"]), ("categories", categories["rows"])):
+        for row in rows:
+            if int(row["corpus_contents"]) != m["contents"]:
+                raise AnalysisError(
+                    f"coverage: the {role} listing's matched-set size "
+                    f"({row['corpus_contents']}) disagrees with the overview "
+                    f"({m['contents']})")
+    measure = [("measure.method", {}),
+               ("measure.sizes", {k: m[k] for k in ("contents", "keywords", "categories")}),
+               ("measure.listing_keywords", {"keyword_rows": len(keywords["rows"])}),
+               ("measure.listing_categories", {"category_rows": len(categories["rows"])})]
+    finding = []
+    if m["keywords"] == 0 and m["categories"] == 0:
+        finding.append(("finding.none", {}))
+    else:
+        if m["keywords"] and keywords["rows"]:
+            top = keywords["rows"][0]
+            finding.append(("finding.top_keyword",
+                            {"top_keyword": top["label"],
+                             "keyword_contents": int(top["contents"]),
+                             "keyword_share": round(int(top["contents"]) / m["contents"] * 100, 2),
+                             "keyword_occurrences": int(top["occurrences"])}))
+        if m["categories"] and categories["rows"]:
+            top = categories["rows"][0]
+            finding.append(("finding.top_category",
+                            {"top_category": top["category_name"],
+                             "category_contents": int(top["contents"]),
+                             "category_share": round(int(top["contents"]) / m["contents"] * 100, 2)}))
+    caveat = [("caveat.overlap", {})]
+    if m["unknown_count_rows"]:
+        caveat.append(("caveat.unknown_counts", {"unknown_count_rows": m["unknown_count_rows"]}))
+    measures_out = dict(m, keyword_rows=len(keywords["rows"]),
+                        category_rows=len(categories["rows"]),
+                        keywords_truncated=bool(keywords["truncated"]),
+                        categories_truncated=bool(categories["truncated"]))
+    return {"state": MEASURED, "reason": None, "measures": measures_out, "rows": [],
+            "narrative": narrate(measure=measure, finding=finding, caveat=caveat)}
+
+
+def _narrate_coverage(reason=None, measure=None, finding=None, caveat=None):
+    """coverage@1 wording (record format 2)."""
+    T = COVERAGE_TEMPLATES
+    if reason:
+        return T.compose(_not_measurable_choices(reason))
+    return T.compose([measure, finding, ("confidence.counts", {}),
+                      ("consequence.read", {}), caveat])
+
+
+COVERAGE = Kind(
+    name="coverage", version=1,
+    inputs={
+        "overview": InputRole(("exact",),
+                              ("contents", "keywords", "categories", "unknown_count_rows")),
+        "keywords": InputRole(("capped",),
+                              ("label", "contents", "occurrences", "corpus_contents")),
+        "categories": InputRole(("capped",),
+                                ("category_name", "contents", "corpus_contents")),
+    },
+    thresholds=(),
+    templates=COVERAGE_TEMPLATES,
+    compute=lambda inputs, params: _coverage(inputs, params, _narrate_coverage),
+)
+
+
+#: Kinds by "name@version". Released versions stay: stored analyses name the
+#: kind version that produced them.
+KINDS.update({f"{k.name}@{k.version}": k for k in (COMPOSITION, COVERAGE)})
+
+
+# ---------------------------------------------------------------------------
 # Declared analyses
 # ---------------------------------------------------------------------------
 

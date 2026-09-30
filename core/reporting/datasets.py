@@ -938,6 +938,85 @@ SCENARIO_OUTCOMES_V1 = Dataset(
     scope_column="hc.source_id",
 )
 
+# ---------------------------------------------------------------------------
+# Comprehensive (step 23)
+#
+# One exact overview row over the contents the criteria matched: the counts
+# every other section of the Comprehensive report reads, measured once in the
+# run's single snapshot. Counts are of the matched set itself ({where} already
+# carries the reader's access scope), never of a listing: no cap applies, so
+# nothing here can be truncated. The two date spans are reported as unknown
+# (NULL), never as zero, when the matched set has no such date: ingestion
+# dates say when files were collected, event dates (content_signals.date_from)
+# are the durable temporal signals of the contents.
+# ---------------------------------------------------------------------------
+
+_COMPREHENSIVE_BASE = (
+    "WITH rpt_hit AS ("  # nosec B608 # module constants only (CANONICAL_FROM); values are bound parameters
+    " SELECT p.id AS path_id, p.date_creation, hc.hash_id AS hash_id,"
+    " hc.source_id AS source_id FROM " + CANONICAL_FROM + " WHERE {where}"
+    "), rpt_base AS ("
+    " SELECT DISTINCT rpt_h.hash_id AS hash_id FROM rpt_hit rpt_h"
+    " WHERE rpt_h.hash_id IS NOT NULL"
+    ") "
+)
+
+COMPREHENSIVE_OVERVIEW_V1 = Dataset(
+    dataset_id="comprehensive.overview",
+    version=1,
+    description=(
+        "Exact overview of the matched set in one row: distinct contents, "
+        "distinct file occurrences and distinct sources matched by the "
+        "criteria; the number of keywords and of categories present in "
+        "those contents (at least one matched content each); the first and "
+        "last ingestion date of the matched files; the first and last event "
+        "date of the contents' temporal signals (both NULL - unknown, not "
+        "zero - when no such date exists); and the word records of the "
+        "matched contents whose stored count is unknown (word_count IS "
+        "NULL, excluded from every sum elsewhere). Uncapped: one row, "
+        "never truncated."),
+    unit="hash",
+    semantics="exact",
+    row_limit=1,
+    columns=(
+        Column("contents", "bigint", False, "Matched contents"),
+        Column("paths", "bigint", False, "Matched files"),
+        Column("sources", "bigint", False, "Sources"),
+        Column("keywords", "bigint", False, "Keywords present"),
+        Column("categories", "bigint", False, "Categories present"),
+        Column("first_ingest", "date", True, "First file date"),
+        Column("last_ingest", "date", True, "Last file date"),
+        Column("first_event", "date", True, "First event date"),
+        Column("last_event", "date", True, "Last event date"),
+        Column("unknown_count_rows", "bigint", False, "Word records without a count"),
+    ),
+    sql=(_COMPREHENSIVE_BASE
+         + "SELECT"  # nosec B608 # module constants only (CANONICAL_FROM); values are bound parameters
+         " (SELECT COUNT(*) FROM rpt_base)::bigint AS contents,"
+         " (SELECT COUNT(*) FROM rpt_hit)::bigint AS paths,"
+         " (SELECT COUNT(DISTINCT rpt_h.source_id) FROM rpt_hit rpt_h"
+         "  WHERE rpt_h.hash_id IS NOT NULL)::bigint AS sources,"
+         " (SELECT COUNT(DISTINCT rpt_kh.keyword_id) FROM keywords_hashs rpt_kh"
+         "  JOIN rpt_base ON rpt_base.hash_id = rpt_kh.hash_id)::bigint AS keywords,"
+         " (SELECT COUNT(DISTINCT rpt_wc.category_id) FROM words_hashs rpt_wh"
+         "  JOIN rpt_base ON rpt_base.hash_id = rpt_wh.hash_id"
+         "  JOIN words_categorys rpt_wc ON rpt_wc.word_id = rpt_wh.word_id)::bigint AS categories,"
+         " (SELECT MIN(rpt_h2.date_creation) FROM rpt_hit rpt_h2) AS first_ingest,"
+         " (SELECT MAX(rpt_h3.date_creation) FROM rpt_hit rpt_h3) AS last_ingest,"
+         " (SELECT MIN(rpt_cs.date_from) FROM content_signals rpt_cs"
+         "  JOIN rpt_base ON rpt_base.hash_id = rpt_cs.hash_id) AS first_event,"
+         " (SELECT MAX(rpt_cs.date_from) FROM content_signals rpt_cs"
+         "  JOIN rpt_base ON rpt_base.hash_id = rpt_cs.hash_id) AS last_event,"
+         " (SELECT COUNT(*) FROM words_hashs rpt_wh2"
+         "  JOIN rpt_base ON rpt_base.hash_id = rpt_wh2.hash_id"
+         "  WHERE rpt_wh2.word_count IS NULL)::bigint AS unknown_count_rows"
+         " FROM (SELECT 1) rpt_one LIMIT %s"),
+    sql_params=(TOKEN_CRITERIA, TOKEN_LIMIT),
+    roles=_READERS,
+    parameters=("criteria",),
+    criteria_param="criteria",
+)
+
 DATASETS: Tuple[Dataset, ...] = (
     SEARCH_RESULTS_MATCHES_V1,
     SEARCH_RESULTS_COUNT_V1,
@@ -953,4 +1032,5 @@ DATASETS: Tuple[Dataset, ...] = (
     CHANGE_MODIFIED_V1,
     CHANGE_REMOVED_V1,
     SCENARIO_OUTCOMES_V1,
+    COMPREHENSIVE_OVERVIEW_V1,
 )
