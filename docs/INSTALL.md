@@ -23,7 +23,7 @@ server. Steps are numbered because other parts of the product refer to them
 | PostgreSQL | 13 or newer (tested on 16) | Only `plpgsql` is needed; no extensions (the `pg_trgm` dependency was removed in migration 0004). |
 | OS | Windows 10/11 or Linux | The `.bat` launchers are Windows-only; everything else is cross-platform. |
 | Tesseract OCR | 5.x, optional | OCR for scanned PDFs and images. Without it the RapidOCR engine is used; with neither, OCR is reported as unavailable. |
-| FFmpeg | optional | Needed by `moviepy` for video metadata and frames. |
+| FFmpeg | optional | Video decoding for the OpenCV media path. |
 | RAM / disk | 4 GB / 2 GB + your evidence | Extraction scratch space lives under the application data directory. |
 
 ## Step 1 - Install the prerequisites
@@ -88,18 +88,15 @@ Notes:
   installed" instead of stopping the run.
 * **Verified clean install** (Python 3.11, Linux): `pip install -r
   requirements.txt` resolves in under a minute with `pip check` clean,
-  selecting `Pillow 12.3`, `pypdf 6.x` and `moviepy 1.0.3`.
-* **moviepy and Pillow:** Pillow is pinned to `>=12.3` for security fixes.
-  `moviepy 2.2.x` declares `pillow<12`, so pip resolves to `moviepy 1.0.3` on
-  a fresh install. Both work: the video reader imports either API
-  (`reader_file/readers/read_video.py`). An upgrade from an older environment
-  can keep `moviepy 2.2.1` next to Pillow 12.3; pip prints a conflict warning
-  that is safe to ignore for the video-reading paths SYLTHARAE uses.
-* **Headless servers:** if `import rapidocr_onnxruntime` fails with
-  `libGL.so.1`, either install `libgl1` or replace the desktop wheel:
-  `pip uninstall -y opencv-python && pip install --force-reinstall --no-deps opencv-python-headless`.
-  `pip check` then reports that `rapidocr-onnxruntime requires opencv-python`:
-  expected, since the headless wheel provides the same `cv2` module.
+  selecting `Pillow 12.3` and `pypdf 6.x` (moviepy is no longer shipped:
+  see below).
+* **moviepy removed from the shipped set (step 27 packaging audit):**
+  moviepy 1.x ships no wheel on any platform, so the wheels-only offline
+  bundle cannot carry it, and every moviepy 2.x release pins `pillow<11`,
+  which conflicts with the `Pillow>=12.3` security floor. The video reader
+  treats moviepy as an optional, guarded fallback; the shipped media path
+  uses OpenCV (`opencv-python-headless`), which has wheels and no Pillow
+  ceiling.
 
 ## OCR engines and language packs
 

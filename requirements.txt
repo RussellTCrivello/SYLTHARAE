@@ -73,7 +73,11 @@ opencv-python-headless>=4.9            # [WIN-BINARY] image preprocessing; Windo
 # Audio and video
 # -----------------------------------------------------------------------------
 mutagen>=1.47                         # [WIN-NATIVE] audio metadata extraction
-moviepy>=1.0.3                        # [WIN-NATIVE] media processing API; needs FFmpeg
+# moviepy: REMOVED from the shipped set (step 27 packaging audit). Its 1.x
+# line ships no wheel (impossible in the wheels-only offline bundle) and its
+# 2.x line pins pillow<11, conflicting with the Pillow>=12.3 security floor.
+# The video reader's moviepy branch is an optional guarded fallback; the
+# primary OpenCV path needs nothing else.
 
 # -----------------------------------------------------------------------------
 # Archives and ebooks

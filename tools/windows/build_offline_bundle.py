@@ -73,6 +73,43 @@ PINNED = {
 
 RUNTIME_EXTRAS = ("pdf", "office", "ocr", "ebook", "audio", "media", "server")
 
+#: Dependencies that publish NO wheel at all (sdist only, on every platform)
+#: but are pure Python. The offline target installs wheels only - an sdist
+#: would need a toolchain it must not require - so the CONNECTED build
+#: machine builds their universal wheel at staging time (``pip wheel``). The
+#: build refuses any wheel that is not ``none-any``: the moment one of these
+#: starts shipping compiled content, it leaves this list and needs a pinned
+#: upstream artifact instead. The values are the package's runtime
+#: dependencies that the platform download must carry (they are not pulled
+#: in transitively once the sdist-only line is removed from it).
+SDIST_ONLY_PURE = {
+    "odfpy": ["defusedxml"],   # [WIN-NATIVE] OpenDocument extraction
+    # transitive (extract-msg): ships two pure modules, no wheel anywhere
+    "red-black-tree-mod": [],
+}
+
+
+def _split_sdist_only(lines: list[str]) -> tuple[list[str], list[str]]:
+    """Split requirement lines into (platform-download, build-here).
+
+    The platform download must not contain the sdist-only names (pip cannot
+    resolve them under ``--only-binary``) but must carry their runtime
+    dependencies; the build-here list keeps the original requirement lines
+    for ``pip wheel`` on the connected machine.
+    """
+    from packaging.utils import canonicalize_name
+
+    platform_lines: list[str] = []
+    build_lines: list[str] = []
+    for line in lines:
+        name = _req_name(line)
+        if canonicalize_name(name) in {canonicalize_name(n) for n in SDIST_ONLY_PURE}:
+            build_lines.append(line)
+            platform_lines.extend(SDIST_ONLY_PURE[name])
+        else:
+            platform_lines.append(line)
+    return platform_lines, build_lines
+
 TESSDATA_DIR = ROOT / "offline-bundle" / "windows" / "tessdata"
 TESSDATA_LANGUAGES = ("eng", "ara", "heb")
 
@@ -119,8 +156,32 @@ def stage_wheels(output: Path, manifest: dict, python_version: str) -> None:
     """Download the complete win_amd64 wheelhouse."""
     wheels_dir = output / "wheels"
     wheels_dir.mkdir(parents=True, exist_ok=True)
+    platform_lines, build_lines = _split_sdist_only(_runtime_requirement_lines())
+    # Every registered sdist-only package gets a wheel, whether it is a
+    # direct requirement or only a transitive one (the split above can only
+    # see direct lines): the platform download below resolves through
+    # --find-links and must find them already built.
+    build_reqs = list(build_lines)
+    covered = {_req_name(line).replace("-", "_").lower() for line in build_lines}
+    for name in SDIST_ONLY_PURE:
+        if name.replace("-", "_").lower() not in covered:
+            build_reqs.append(name)
+    # Build the sdist-only pure-python wheels locally (connected machine);
+    # a non-universal wheel here means the package is no longer pure and
+    # must move to a pinned upstream artifact, not be shipped as a build.
+    for line in build_reqs:
+        print(f"building the universal wheel for the sdist-only dependency: {line}", flush=True)
+        subprocess.run([sys.executable, "-m", "pip", "wheel", line,
+                        "--no-deps", "-w", str(wheels_dir)], check=True)
+    built_names = {_req_name(line).replace("-", "_").lower() for line in build_reqs}
+    for path in wheels_dir.iterdir():
+        if path.suffix == ".whl" and "none-any" not in path.name \
+                and path.name.split("-")[0].lower() in built_names:
+            raise SystemExit(
+                f"{path.name} is not a universal (none-any) wheel - the "
+                "package is not pure Python and cannot be built here")
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as handle:
-        handle.write("\n".join(_runtime_requirement_lines()) + "\n")
+        handle.write("\n".join(platform_lines) + "\n")
         req_file = handle.name
     command = [
         sys.executable, "-m", "pip", "download",

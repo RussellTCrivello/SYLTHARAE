@@ -165,7 +165,11 @@ class VideoFileReader(BaseReader):
         except Exception as e:
             logger.debug(f"opencv failed: {e}")
         
-        # Try moviepy as fallback
+        # Try moviepy as an OPTIONAL fallback (not shipped: its 1.x line has
+        # no wheel for the offline bundle and its 2.x line pins pillow<11,
+        # conflicting with the Pillow security floor - step 27 packaging
+        # audit). Environments that install it themselves get the richer
+        # metadata; the OpenCV path above is the shipped behaviour.
         try:
             # AUDIT-DEP-02: moviepy 2.x removed ``moviepy.editor``; support both.
             try:
