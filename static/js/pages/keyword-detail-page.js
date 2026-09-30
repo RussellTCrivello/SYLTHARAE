@@ -51,7 +51,7 @@ function deleteKeyword(id) {
                             console.warn('Error parsing page data, using default URL');
                         }
                     }
-                    window.location.href = redirectUrl;
+                    if (window.swapNavigate) { window.swapNavigate(redirectUrl); } else { window.location.href = redirectUrl; }
                 } else {
                     alert(translations.error + ': ' + data.error);
                 }

@@ -77,7 +77,7 @@ function navigateCategoryWords(changes) {
             params.set(name, value);
         }
     });
-    window.location.href = window.location.pathname + '?' + params.toString();
+    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?' + params.toString()); } else { window.location.href = window.location.pathname + '?' + params.toString(); }
 }
 
 // The per-page selector in the table toolbar
@@ -236,7 +236,7 @@ async function removeWordFromCategory(categoryId, wordId, wordName) {
             showToast(data.message || translations.wordRemoved || 'Word removed from category successfully', 'success');
             // The list is the server's; reload it without the removed word.
             setTimeout(() => {
-                window.location.reload();
+                if (window.swapNavigate) { window.swapNavigate(window.location.href); } else { window.location.reload(); }
             }, 800);
         } else {
             showToast(data.error || translations.error || 'Error', 'error');
@@ -754,7 +754,7 @@ async function saveWordToCategory() {
                 console.error('Error adding word to list:', error);
                 // Fallback to reload if dynamic update fails
                 setTimeout(() => {
-                    window.location.reload();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.href); } else { window.location.reload(); }
                 }, 1000);
             }
         } else {
@@ -770,7 +770,7 @@ async function saveWordToCategory() {
 // Add word to list dynamically
 async function addWordToList(wordId, wordText) {
     // The list is the server's; a fresh page shows the word in its order.
-    window.location.reload();
+    if (window.swapNavigate) { window.swapNavigate(window.location.href); } else { window.location.reload(); }
 }
 
 // Helper function to escape HTML

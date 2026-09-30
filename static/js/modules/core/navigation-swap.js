@@ -208,5 +208,14 @@
         document.addEventListener('DOMContentLoaded', restoreSidebarState);
         // Persist before a full load tears the page down (fallback paths).
         window.addEventListener('pagehide', persistSidebarState);
+        // In-app navigation for flows that are not link clicks - a
+        // successful add/edit/delete refreshing the data, a pagination
+        // jump. Same fetch-and-swap as a link click: only the main
+        // content changes, the sidebar element is never redrawn (owner
+        // requirement: interacting with the app must not refresh the
+        // sidebar). Callers guard with `window.swapNavigate ? ... :
+        // location.href` so an old bundle without this module still
+        // works by falling back to a full load.
+        window.swapNavigate = function (url) { return navigateTo(url, true); };
     }
 })();

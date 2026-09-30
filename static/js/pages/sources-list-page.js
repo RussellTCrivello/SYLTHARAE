@@ -91,7 +91,7 @@ function navigateSources(changes) {
             params.set(name, value);
         }
     });
-    window.location.href = window.location.pathname + '?' + params.toString();
+    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?' + params.toString()); } else { window.location.href = window.location.pathname + '?' + params.toString(); }
 }
 
 // The per-page selector in the table toolbar
@@ -164,12 +164,12 @@ function bulkUpdate() {
 
 // View source categories and keywords
 function viewSourceCategoriesKeywords(sourceId) {
-    window.location.href = `/sources/${sourceId}/categories-keywords`;
+    if (window.swapNavigate) { window.swapNavigate(`/sources/${sourceId}/categories-keywords`); } else { window.location.href = `/sources/${sourceId}/categories-keywords`; }
 }
 
 // View source details
 function viewSource(sourceId) {
-    window.location.href = `/sources/${sourceId}`;
+    if (window.swapNavigate) { window.swapNavigate(`/sources/${sourceId}`); } else { window.location.href = `/sources/${sourceId}`; }
 }
 
 // Edit source
@@ -237,7 +237,7 @@ function duplicateSource(sourceId) {
             if (data.success) {
                 showToast(translations.sourceDuplicatedSuccessfully || 'Source duplicated successfully!', 'success');
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 showToast((translations.errorDuplicatingSource || 'Error duplicating source') + ': ' + (data.message || (translations.unknownError || 'Unknown error')), 'error');
@@ -263,7 +263,7 @@ function toggleSourceStatus(sourceId) {
         if (data.success) {
             showToast(translations.sourceStatusUpdated || 'Source status updated!', 'success');
             setTimeout(() => {
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             }, 500);
         } else {
             showToast((translations.errorUpdatingStatus || 'Error updating status') + ': ' + (data.message || (translations.unknownError || 'Unknown error')), 'error');
@@ -347,7 +347,7 @@ function deleteSource(sourceId, sourceName = '') {
                     showToast(translations.sourceDeletedSuccessfully || 'Source deleted successfully!', 'success');
                 }
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 // Show formatted error notification
@@ -631,7 +631,7 @@ function submitSourceForm() {
                 // Small delay to ensure modal closes before reload
                 // Add cache-busting parameter to ensure fresh data
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 // Show formatted error notification
@@ -679,7 +679,7 @@ function submitSourceForm() {
                 modal.hide();
             }
             setTimeout(() => {
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             }, 500);
         }
     })

@@ -1710,7 +1710,7 @@ function renderWordCloud(words) {
         `;
         wordItem.onclick = () => {
             // Navigate to search with this word
-            window.location.href = `/search?q=${encodeURIComponent(wordText)}`;
+            if (window.swapNavigate) { window.swapNavigate(`/search?q=${encodeURIComponent(wordText)}`); } else { window.location.href = `/search?q=${encodeURIComponent(wordText)}`; }
         };
         container.appendChild(wordItem);
     });
@@ -2052,7 +2052,7 @@ function renderFiles(files) {
     files.forEach((file, index) => {
         const card = document.createElement('div');
         card.className = 'file-card';
-        card.onclick = () => window.location.href = `/file/${file.id}`;
+        if (window.swapNavigate) { window.swapNavigate(`/file/${file.id}`); } else { window.location.href = `/file/${file.id}`; }
         
         const fileIcon = getFileIcon(file.type);
         const statusClass = file.status === translations.read ? 'read' : 'unread';

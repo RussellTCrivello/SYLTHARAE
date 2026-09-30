@@ -862,7 +862,7 @@ if (typeof window.translations === 'undefined') {
             if (data.success) {
                 alert(`${translations.successfullyDeleted || 'Successfully deleted'} ${data.deleted_count} ${translations.keywords || 'keywords'}`);
                 // ✅ Complete page reload with cache-busting
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             } else {
                 alert((translations.errorDeletingKeywords || 'Error deleting keywords') + ': ' + (data.error || translations.unknownError || 'Unknown error'));
                 if (btn) {
@@ -1193,7 +1193,7 @@ if (typeof window.translations === 'undefined') {
             if (data.success) {
                 alert(`✅ ${translations.successfullyMergedAll}\n\n${translations.merged}: ${data.merged_count} ${translations.keywords}\n${translations.duplicateSets}: ${data.duplicate_sets}\n\n${translations.refreshingPage}`);
                 // ✅ Complete page reload with cache-busting
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             } else {
                 alert('❌ ' + translations.errorMergingDuplicatesColon + ': ' + (data.error || translations.unknownError));
             }
@@ -1208,7 +1208,7 @@ if (typeof window.translations === 'undefined') {
 
     // Global functions for template buttons
     window.viewKeyword = function(id){ 
-        window.location.href = `/keywords/${id}`;
+        if (window.swapNavigate) { window.swapNavigate(`/keywords/${id}`); } else { window.location.href = `/keywords/${id}`; }
     };
     
     window.editKeyword = function(id) {
@@ -1230,7 +1230,7 @@ if (typeof window.translations === 'undefined') {
                 if (j.success) {
                     alert(translations.keywordDeletedSuccessfully);
                     // ✅ Complete page reload with cache-busting
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 } else {
                     alert(j.error || translations.failedToDelete);
                 }
@@ -1295,7 +1295,7 @@ if (typeof window.translations === 'undefined') {
                 }
                 alert('✅ ' + message);
                 // Reload page to show updated data
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             } else {
                 alert('❌ ' + (translations.error || 'Error') + ': ' + (data.error || translations.unknownError || 'Unknown error'));
             }

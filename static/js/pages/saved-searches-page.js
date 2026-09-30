@@ -58,7 +58,7 @@ async function renameSavedSearch(searchId, currentName) {
         });
 
         if (response.ok) {
-            window.location.href = window.location.pathname + '?t=' + Date.now();
+            if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
         } else {
             const err = await response.json().catch(() => ({}));
             alert((translations.error || 'Error') + ': ' + (err.error || translations.unknownError || 'Unknown error'));
@@ -84,7 +84,7 @@ async function deleteSavedSearch(searchId) {
         });
 
         if (response.ok) {
-            window.location.href = window.location.pathname + '?t=' + Date.now();
+            if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
         } else {
             const err = await response.json().catch(() => ({}));
             alert((translations.error || 'Error') + ': ' + (err.error || translations.unknownError || 'Unknown error'));

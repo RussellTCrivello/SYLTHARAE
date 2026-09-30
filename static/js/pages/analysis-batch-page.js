@@ -136,7 +136,7 @@ async function startAnalysis() {
                 document.getElementById('currentFile').textContent = translations.analysisComplete;
                 setTimeout(() => {
                     // ✅ Complete page reload with cache-busting
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 2000);
             }
         }
@@ -334,7 +334,7 @@ async function retryFile(fileId, buttonElement) {
             
             // Reload page after 2 seconds to refresh the list
             setTimeout(() => {
-                window.location.reload();
+                if (window.swapNavigate) { window.swapNavigate(window.location.href); } else { window.location.reload(); }
             }, 2000);
         } else {
             // Error - show error state

@@ -660,7 +660,7 @@ function loadPageTranslations() {
         .then(data => {
             if (data.success) {
                 alert(`${translations.successfullyDeleted} ${data.deleted_count} ${translations.words}`);
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             } else {
                 alert(translations.errorDeletingWords + ': ' + (data.error || translations.error));
             }
@@ -688,7 +688,7 @@ function loadPageTranslations() {
     
     // Global functions
     window.viewWord = function(id) {
-        window.location.href = `/words/${id}`;
+        if (window.swapNavigate) { window.swapNavigate(`/words/${id}`); } else { window.location.href = `/words/${id}`; }
     };
     
     window.deleteWord = function(id) {
@@ -705,7 +705,7 @@ function loadPageTranslations() {
         .then(j => {
             if (j.success) {
                 alert(translations.wordDeletedSuccessfully);
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             } else {
                 alert(j.error || translations.failedToDelete);
             }

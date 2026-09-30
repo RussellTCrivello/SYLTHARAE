@@ -91,7 +91,7 @@ function navigateCategories(changes) {
             params.set(name, value);
         }
     });
-    window.location.href = window.location.pathname + '?' + params.toString();
+    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?' + params.toString()); } else { window.location.href = window.location.pathname + '?' + params.toString(); }
 }
 
 // The per-page selector in the table toolbar
@@ -325,7 +325,7 @@ async function saveCategory() {
             } else {
                 // Fallback to page reload if no ID returned
                 setTimeout(() => {
-                    window.location.reload();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.href); } else { window.location.reload(); }
                 }, 500);
             }
         } else {
@@ -340,7 +340,7 @@ async function saveCategory() {
 
 // View words in category
 function viewCategoryWords(categoryId, categoryName) {
-    window.location.href = `/categories/${categoryId}/words`;
+    if (window.swapNavigate) { window.swapNavigate(`/categories/${categoryId}/words`); } else { window.location.href = `/categories/${categoryId}/words`; }
 }
 
 // Add word to category
@@ -619,7 +619,7 @@ async function saveWordToCategory() {
             }
             // Refresh the page to update counts
             setTimeout(() => {
-                window.location.reload();
+                if (window.swapNavigate) { window.swapNavigate(window.location.href); } else { window.location.reload(); }
             }, 500);
         } else {
             showToast(data.error || translations.error || 'Error', 'error');
@@ -665,7 +665,7 @@ async function deleteCategory(categoryId, categoryName) {
         if (data.success) {
             showToast(data.message || translations.categoryDeleted || 'Category deleted successfully', 'success');
             setTimeout(() => {
-                window.location.reload();
+                if (window.swapNavigate) { window.swapNavigate(window.location.href); } else { window.location.reload(); }
             }, 500);
         } else {
             showToast(data.error || translations.error || 'Error', 'error');
@@ -803,7 +803,7 @@ async function removeDuplicates() {
         }
         
         setTimeout(() => {
-            window.location.reload();
+            if (window.swapNavigate) { window.swapNavigate(window.location.href); } else { window.location.reload(); }
         }, 1000);
         
     } catch (error) {

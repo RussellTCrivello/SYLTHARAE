@@ -242,7 +242,9 @@ export async function removeAnalystCategoriesFromSelection() {
 /** Same refresh pattern as the page's bulk delete: reload so sidebar counts
  *  and any category badges reflect the change. */
 function refreshAfterCategorization() {
-    window.location.href = window.location.pathname + '?t=' + Date.now();
+    (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
 }
 
 // Delegated: any checkbox change anywhere updates the bar (grid re-renders

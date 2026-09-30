@@ -18,7 +18,20 @@ import { initEventDelegation } from './event-delegation.js';
  */
 export function initNavigation() {
     console.log('Initializing navigation...');
-    
+    // One initialization per content view: the module's own self-run and
+    // the archives page handler can both call this on a full load, and a
+    // swap revisit hands it a fresh (empty) view. The marker lives on the
+    // element, so a swapped-in view is initialized exactly once and a
+    // full load can never double-fetch the root data.
+    const initView = document.getElementById('unifiedContentView');
+    if (initView) {
+        if (initView.dataset.navInitialized) {
+            console.log('Navigation: this content view is already initialized');
+            return;
+        }
+        initView.dataset.navInitialized = '1';
+    }
+
     // Initialize global event delegation first
     initEventDelegation();
     

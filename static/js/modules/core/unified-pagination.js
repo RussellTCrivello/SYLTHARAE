@@ -27,10 +27,14 @@
                 targetPage = totalPages;
             }
 
-            // Update current URL with new page number
+            // Update current URL with new page number. The swap keeps
+            // the shell (and the sidebar with it) on screen; only the
+            // main content re-renders - a full load here used to redraw
+            // the sidebar on every jump.
             var url = new URL(window.location.href);
             url.searchParams.set('page', targetPage);
-            window.location.href = url.toString();
+            if (window.swapNavigate) { window.swapNavigate(url.toString()); }
+            else { window.location.href = url.toString(); }
         };
 
         jumpBtn.addEventListener('click', handleJump);

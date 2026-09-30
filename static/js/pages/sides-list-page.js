@@ -89,7 +89,7 @@ function navigateSides(changes) {
             params.set(name, value);
         }
     });
-    window.location.href = window.location.pathname + '?' + params.toString();
+    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?' + params.toString()); } else { window.location.href = window.location.pathname + '?' + params.toString(); }
 }
 
 // The per-page selector in the table toolbar
@@ -176,7 +176,7 @@ function clearSearch() {
 
 // View side categories and keywords
 function viewSideCategoriesKeywords(sideId) {
-    window.location.href = `/sides/${sideId}/categories-keywords`;
+    if (window.swapNavigate) { window.swapNavigate(`/sides/${sideId}/categories-keywords`); } else { window.location.href = `/sides/${sideId}/categories-keywords`; }
 }
 
 // Search: Enter navigates with ?search=, which re-renders the list server-side
@@ -210,7 +210,7 @@ window.viewSideCategoriesKeywords = viewSideCategoriesKeywords;
 window.exportSide = exportSide;
 
 function viewSide(sideId) {
-    window.location.href = `/sides/${sideId}`;
+    if (window.swapNavigate) { window.swapNavigate(`/sides/${sideId}`); } else { window.location.href = `/sides/${sideId}`; }
 }
 
 function editSide(sideId) {
@@ -234,7 +234,7 @@ function duplicateSide(sideId) {
             if (data.success) {
                 showToast(translations.sideDuplicatedSuccessfully || 'Side duplicated successfully!', 'success');
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 showToast((translations.errorDuplicatingSide || 'Error duplicating side') + ': ' + (data.message || (translations.unknownError || 'Unknown error')), 'error');
@@ -261,7 +261,7 @@ function toggleSideStatus(sideId) {
         if (data.success) {
             showToast(translations.sideStatusUpdated || 'Side status updated!', 'success');
             setTimeout(() => {
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             }, 500);
         } else {
             showToast((translations.errorUpdatingStatus || 'Error updating status') + ': ' + (data.message || (translations.unknownError || 'Unknown error')), 'error');
@@ -319,7 +319,7 @@ function deleteSide(sideId, sideName = '') {
                     showToast(translations.sideDeletedSuccessfully || 'Side deleted successfully!', 'success');
                 }
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 // Show formatted error notification
@@ -487,7 +487,7 @@ function submitSideForm() {
                 // Small delay to ensure modal closes before reload
                 // Add cache-busting parameter to ensure fresh data
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 // Show formatted error notification
@@ -535,7 +535,7 @@ function submitSideForm() {
                 modal.hide();
             }
             setTimeout(() => {
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             }, 500);
         }
     })

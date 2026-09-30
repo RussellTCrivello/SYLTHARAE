@@ -272,6 +272,85 @@ try {
           && await page.evaluate(() => typeof window.__jobsPageTeardown === 'function'),
           JSON.stringify(jobsAlive));
 
+    // ── Sidebar discipline, exhaustive (owner field report: "the sidebar
+    // refreshes whenever I navigate between interfaces"). EVERY sidebar
+    // entry is clicked; after each, the sidebar must still be the SAME
+    // DOM node and the window must never have torn down (no full load).
+    const swapExposed = await page.evaluate(() => typeof window.swapNavigate === 'function'
+                                                && window.__navigationSwapInstalled === true);
+    check('content-swap navigator (swapNavigate) is installed', swapExposed,
+          'window.swapNavigate=' + typeof (await page.evaluate(() => window.swapNavigate)));
+
+    const walk = await page.evaluate(async () => {
+        // re-mark: an earlier section of this smoke full-loaded the page
+        window.__navSmokeFirstLoad = true;
+        const sb0 = document.getElementById('sidebar');
+        if (sb0) sb0.__navSmokeMarker = 'syl-smoke-42';
+        const links = [...document.querySelectorAll('#sidebar a.sidebar-nav-link')].filter((a) => {
+            const h = a.getAttribute('href') || '';
+            return h && !h.startsWith('#') && !/logout|download/i.test(h)
+                && (!a.target || a.target === '_self');
+        });
+        const results = [];
+        for (const link of links) {
+            const path = new URL(link.href, location.origin).pathname;
+            link.click();
+            // the swap replaces #mainContent and re-runs page init; settle
+            const deadline = Date.now() + 8000;
+            while (Date.now() < deadline) {
+                await new Promise((r) => setTimeout(r, 250));
+                const main = document.getElementById('mainContent');
+                if (main && main.getAttribute('aria-busy') !== 'true'
+                    && location.pathname === path) break;
+            }
+            await new Promise((r) => setTimeout(r, 400));
+            const sb = document.getElementById('sidebar');
+            results.push({
+                path,
+                sameNode: !!sb && sb.__navSmokeMarker === 'syl-smoke-42',
+                noReload: window.__navSmokeFirstLoad === true,
+                landed: location.pathname === path,
+            });
+        }
+        return results;
+    });
+    const brokenWalk = walk.filter((r) => !(r.sameNode && r.noReload && r.landed));
+    check('every sidebar entry swaps without a full load (' + walk.length + ' links)',
+          walk.length > 5 && brokenWalk.length === 0,
+          brokenWalk.map((r) => r.path + ' node:' + r.sameNode + ' reload:' + !r.noReload
+                         + ' landed:' + r.landed).join(' | ') || 'all clean');
+
+    // ── Pagination jump: server-side paging must swap, not reload ──
+    await page.goto(BASE + '/words', { waitUntil: 'networkidle0' });
+    await page.evaluate(() => {
+        window.__navSmokeFirstLoad = true;   // re-mark: this WAS a full load
+        const sb = document.getElementById('sidebar');
+        if (sb) sb.__navSmokeMarker = 'syl-smoke-42';
+    });
+    const jump = await page.evaluate(() => {
+        const input = document.querySelector('.unified-pagination-jump-input');
+        const btn = document.querySelector('.unified-pagination-jump-btn');
+        if (!input || !btn) return { present: false };
+        input.value = '2';
+        btn.click();
+        return { present: true };
+    });
+    if (jump.present) {
+        await new Promise((r) => setTimeout(r, 1800));
+        const afterJump = await page.evaluate(() => ({
+            page: new URLSearchParams(location.search).get('page'),
+            noReload: window.__navSmokeFirstLoad === true,
+            sameNode: (() => { const sb = document.getElementById('sidebar');
+                               return !!sb && sb.__navSmokeMarker === 'syl-smoke-42'; })(),
+        }));
+        check('pagination jump swaps without a full load',
+              afterJump.page === '2' && afterJump.noReload && afterJump.sameNode,
+              JSON.stringify(afterJump));
+    } else {
+        check('pagination jump control present (seed data expected >1 page)',
+              false, 'no .unified-pagination-jump-btn on /words');
+    }
+
     // sidebar on a normal page reflects nothing broken (no JS errors)
     check('no page/console errors during the run', consoleErrors.length === 0,
           consoleErrors.slice(0, 3).join(' | '));

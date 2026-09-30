@@ -118,7 +118,7 @@ function sortTable(column) {
     url.searchParams.set('sort_by', currentSortBy);
     url.searchParams.set('sort_order', currentSortOrder);
     url.searchParams.set('page', '1'); // Reset to first page
-    window.location.href = url.toString();
+    if (window.swapNavigate) { window.swapNavigate(url.toString()); } else { window.location.href = url.toString(); }
 }
 
 // Update sort icons
@@ -148,7 +148,7 @@ function changePerPage(value) {
     const url = new URL(window.location.href);
     url.searchParams.set('per_page', String(value));
     url.searchParams.set('page', '1'); // Reset to first page
-    window.location.href = url.toString();
+    if (window.swapNavigate) { window.swapNavigate(url.toString()); } else { window.location.href = url.toString(); }
 }
 
 // Note:
@@ -297,7 +297,7 @@ function setButtonState(button, iconClass, label = '') {
 
 function searchInFiles(email) {
     // Redirect to advanced search with email pre-filled
-    window.location.href = `/search/advanced?q=${encodeURIComponent(email)}`;
+    if (window.swapNavigate) { window.swapNavigate(`/search/advanced?q=${encodeURIComponent(email)}`); } else { window.location.href = `/search/advanced?q=${encodeURIComponent(email)}`; }
 }
 
 // Show files containing an email address in a modal

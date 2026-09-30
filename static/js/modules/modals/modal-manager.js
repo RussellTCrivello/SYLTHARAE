@@ -756,7 +756,9 @@ export async function submitAddItem(section) {
                     closeAddItemModal(modalId);
                     
                     setTimeout(() => {
-                        window.location.href = window.location.pathname + '?t=' + Date.now();
+                        (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
                     }, 500);
                 } else {
                     const errorMsg = result.error || result.message || translations.errorAdding || 'Error adding item';
@@ -880,7 +882,9 @@ export async function submitAddWordsCategorys() {
             
             // Reload page to refresh data
             setTimeout(() => {
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
             }, 500);
         } else {
             const errorMsg = response.error || (translations.errorAddingWordCategory || 'Error adding word-category relationship');

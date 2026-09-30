@@ -231,7 +231,9 @@ const FileManagement = {
         params.delete('cursor');
         
         // Navigate
-        window.location.href = window.location.pathname + '?' + params.toString();
+        (window.swapNavigate
+            ? window.swapNavigate(window.location.pathname + '?' + params.toString())
+            : (window.location.href = window.location.pathname + '?' + params.toString()));
     },
     
     clearFileSearch() {
@@ -250,7 +252,9 @@ const FileManagement = {
             params.set('limit', perPageSelect.value);
             params.set('page', '1'); // a new batch starts at the first batch
             params.delete('cursor');
-            window.location.href = window.location.pathname + '?' + params.toString();
+            (window.swapNavigate
+            ? window.swapNavigate(window.location.pathname + '?' + params.toString())
+            : (window.location.href = window.location.pathname + '?' + params.toString()));
         }
     },
     
@@ -279,7 +283,9 @@ const FileManagement = {
                     window.alert(message);
                 }
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
                 }, 2000);
             } else {
                 const errorMsg = `${window.translations?.errorStartingAnalysis || 'Error starting analysis'}: ${data.error || 'Unknown error'}`;
@@ -346,7 +352,9 @@ const FileManagement = {
                 } else if (window.alert) {
                     window.alert(message);
                 }
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
             } else {
                 const errorMsg = `${window.translations?.errorDeletingFiles || 'Error deleting files'}: ${data.error || 'Unknown error'}`;
                 if (window.showError) {
@@ -382,7 +390,9 @@ const FileManagement = {
                 } else if (window.alert) {
                     window.alert(window.translations?.fileDeleted || 'File deleted');
                 }
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
             } else {
                 const errorMsg = `${window.translations?.errorDeletingFile || 'Error deleting file'}: ${data.error || 'Unknown error'}`;
                 if (window.showError) {

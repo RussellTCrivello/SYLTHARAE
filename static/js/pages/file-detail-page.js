@@ -606,14 +606,14 @@ function goToPage(page) {
         url.searchParams.delete('case_sensitive');
         url.searchParams.delete('whole_word');
     }
-    window.location.href = url.toString();
+    if (window.swapNavigate) { window.swapNavigate(url.toString()); } else { window.location.href = url.toString(); }
 }
 
 function changePageSize(newPerPage) {
     const url = new URL(window.location);
     url.searchParams.set('page', 1);
     url.searchParams.set('per_page', newPerPage);
-    window.location.href = url.toString();
+    if (window.swapNavigate) { window.swapNavigate(url.toString()); } else { window.location.href = url.toString(); }
 }
 
 function jumpToPage() {
@@ -1095,14 +1095,14 @@ document.addEventListener('DOMContentLoaded', function () {
             // The record is gone: the reader goes back to the library rather
             // than staying on a page describing something that no longer
             // exists.
-            window.location.href = '/files';
+            if (window.swapNavigate) { window.swapNavigate('/files'); } else { window.location.href = '/files'; }
             return {ok: true, handled: true};
         }
 
         if (endpoint) {
             // A navigation the server prepared - the extracted text, for
             // instance. The browser performs it; the surface reports it.
-            window.location.href = endpoint;
+            if (window.swapNavigate) { window.swapNavigate(endpoint); } else { window.location.href = endpoint; }
             return {ok: true, handled: true};
         }
 
