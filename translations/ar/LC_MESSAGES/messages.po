@@ -12503,3 +12503,12 @@ msgstr "ابحث في هذا العمود"
 msgid "Contains…"
 msgstr "يحتوي على…"
 
+#. templates/components/table.html
+#. templates/components/unified_pagination.html
+msgid "Show More"
+msgstr "عرض المزيد"
+
+#. templates/components/table.html
+msgid "Load More"
+msgstr "تحميل المزيد"
+

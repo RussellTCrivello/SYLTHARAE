@@ -441,13 +441,496 @@ function openEditor(kind, record) {
     document.getElementById(`${kind}EditorTitle`).textContent = record
         ? L[`edit_${kind}`] : L[`new_${kind}`];
     document.getElementById(`${kind}Name`).value = record ? record.name : '';
-    document.getElementById(`${kind}Definition`).value = JSON.stringify(
-        record ? record.definition : DATA[`starter_${kind}`], null, 2);
+    const defVal = record ? record.definition : DATA[`starter_${kind}`];
+    document.getElementById(`${kind}Definition`).value = JSON.stringify(defVal, null, 2);
     clear(`${kind}Validation`);
+    if (isScenario) {
+        initScenarioVisualBuilder(defVal);
+        switchEditorMode('visual');
+    } else {
+        initRuleVisualBuilder(defVal);
+        switchRuleEditorMode('visual');
+    }
     document.getElementById(`${kind}Name`).focus();
 }
 
 function editScenario(s) { openEditor('scenario', s); }
+
+// ---------------------------------------------------------------------------
+// Visual Scenario Rule Builder & Templates (Fields & Buttons, No JSON needed)
+// ---------------------------------------------------------------------------
+
+const SCENARIO_TEMPLATES = {
+    urgent_event: {
+        strategy: 'first_match',
+        default_outcome: 'none',
+        notify_existing: false,
+        conditions: {
+            dated_soon: { signals: { signal_types: ['date_reference'] }, min_confidence: 'medium', event_window_days: { from: 0, to: 30 } },
+            dated: { signals: { signal_types: ['date_reference'] } }
+        },
+        cases: [
+            { id: 'soon', when: { all: ['dated_soon'] }, outcome: 'review' },
+            { id: 'later', when: { all: ['dated'] }, outcome: 'watch' }
+        ],
+        outcomes: {
+            review: { label: 'Needs review', actions: ['notify'] },
+            watch: { label: 'Watch', actions: [] },
+            none: { label: 'No action', actions: [] }
+        }
+    },
+    high_confidence: {
+        strategy: 'first_match',
+        default_outcome: 'none',
+        notify_existing: false,
+        conditions: {
+            critical_date: { signals: { signal_types: ['date_reference'] }, min_confidence: 'high' }
+        },
+        cases: [
+            { id: 'crit_case', when: { all: ['critical_date'] }, outcome: 'critical' }
+        ],
+        outcomes: {
+            critical: { label: 'Critical Alert', actions: ['notify'] },
+            none: { label: 'No action', actions: [] }
+        }
+    },
+    place_mention: {
+        strategy: 'first_match',
+        default_outcome: 'none',
+        notify_existing: false,
+        conditions: {
+            place_found: { signals: { signal_types: ['place_mention'] }, min_confidence: 'medium' }
+        },
+        cases: [
+            { id: 'geo_case', when: { all: ['place_found'] }, outcome: 'geo_alert' }
+        ],
+        outcomes: {
+            geo_alert: { label: 'Location Identified', actions: ['notify'] },
+            none: { label: 'No action', actions: [] }
+        }
+    },
+    cross_check: {
+        strategy: 'first_match',
+        default_outcome: 'none',
+        notify_existing: false,
+        conditions: {
+            has_date: { signals: { signal_types: ['date_reference'] }, min_confidence: 'medium' },
+            has_place: { signals: { signal_types: ['place_mention'] }, min_confidence: 'medium' }
+        },
+        cases: [
+            { id: 'both_case', when: { all: ['has_date', 'has_place'] }, outcome: 'escalate' }
+        ],
+        outcomes: {
+            escalate: { label: 'Cross-Signal Escalation', actions: ['notify'] },
+            none: { label: 'No action', actions: [] }
+        }
+    }
+};
+
+function switchEditorMode(mode) {
+    const isVisual = mode === 'visual';
+    const visualBox = document.getElementById('scenarioVisualBuilder');
+    const jsonBox = document.getElementById('scenarioJsonContainer');
+    const btnV = document.getElementById('btnModeVisual');
+    const btnJ = document.getElementById('btnModeJson');
+    if (visualBox && jsonBox) {
+        visualBox.classList.toggle('d-none', !isVisual);
+        jsonBox.classList.toggle('d-none', isVisual);
+    }
+    if (btnV && btnJ) {
+        btnV.classList.toggle('active', isVisual);
+        btnV.classList.toggle('btn-primary', isVisual);
+        btnV.classList.toggle('btn-outline-primary', !isVisual);
+        btnJ.classList.toggle('active', !isVisual);
+        btnJ.classList.toggle('btn-secondary', !isVisual);
+        btnJ.classList.toggle('btn-outline-secondary', isVisual);
+    }
+    if (isVisual) {
+        try {
+            const raw = document.getElementById('scenarioDefinition').value;
+            const def = JSON.parse(raw);
+            initScenarioVisualBuilder(def);
+        } catch (_) {}
+    } else {
+        syncVisualToJson();
+    }
+}
+
+function onTemplateSelect() {
+    const sel = document.getElementById('scenarioTemplateSelect');
+    if (!sel || !sel.value || sel.value === 'custom') return;
+    const tpl = SCENARIO_TEMPLATES[sel.value];
+    if (tpl) {
+        initScenarioVisualBuilder(tpl);
+        syncVisualToJson();
+    }
+}
+
+function initScenarioVisualBuilder(def) {
+    const box = document.getElementById('scenarioVisualBuilder');
+    if (!box || !def) return;
+
+    const stratEl = document.getElementById('visualStrategy');
+    if (stratEl) stratEl.value = def.strategy || 'first_match';
+
+    const defOutEl = document.getElementById('visualDefaultOutcome');
+    if (defOutEl) defOutEl.value = def.default_outcome || 'none';
+
+    const notifyEl = document.getElementById('visualNotifyExisting');
+    if (notifyEl) notifyEl.checked = Boolean(def.notify_existing);
+
+    const condContainer = document.getElementById('visualConditionsContainer');
+    if (condContainer) {
+        clear('visualConditionsContainer');
+        const conditions = def.conditions || {};
+        for (const [name, cond] of Object.entries(conditions)) {
+            addVisualConditionRow(name, cond);
+        }
+    }
+
+    const casesContainer = document.getElementById('visualCasesContainer');
+    if (casesContainer) {
+        clear('visualCasesContainer');
+        const cases = def.cases || [];
+        const outcomes = def.outcomes || {};
+        for (const c of cases) {
+            const outInfo = outcomes[c.outcome] || { label: c.outcome, actions: [] };
+            addVisualCaseRow(c, outInfo);
+        }
+    }
+}
+
+function addVisualConditionRow(name = '', cond = {}) {
+    const container = document.getElementById('visualConditionsContainer');
+    if (!container) return;
+
+    const condName = name || `cond_${container.children.length + 1}`;
+    const sigTypes = cond.signals?.signal_types || ['date_reference'];
+    const minConf = cond.min_confidence || 'medium';
+    const winDays = cond.event_window_days?.to !== undefined ? cond.event_window_days.to : '';
+
+    const row = el('div', { class: 'row g-1 mb-2 align-items-center p-2 border rounded bg-white visual-cond-row' },
+        el('div', { class: 'col-md-3' },
+            el('label', { class: 'small text-muted d-block' }, 'Condition ID'),
+            el('input', { type: 'text', class: 'form-control form-control-sm v-cond-id', value: condName, required: true })),
+        el('div', { class: 'col-md-3' },
+            el('label', { class: 'small text-muted d-block' }, 'Signal Type'),
+            el('select', { class: 'form-select form-select-sm v-cond-sig' },
+                el('option', { value: 'date_reference', ...(sigTypes.includes('date_reference') ? { selected: true } : {}) }, 'Date Reference (temporal)'),
+                el('option', { value: 'place_mention', ...(sigTypes.includes('place_mention') ? { selected: true } : {}) }, 'Place Mention (places)'))),
+        el('div', { class: 'col-md-3' },
+            el('label', { class: 'small text-muted d-block' }, 'Min Confidence'),
+            el('select', { class: 'form-select form-select-sm v-cond-conf' },
+                el('option', { value: 'low', ...(minConf === 'low' ? { selected: true } : {}) }, 'Low'),
+                el('option', { value: 'medium', ...(minConf === 'medium' ? { selected: true } : {}) }, 'Medium'),
+                el('option', { value: 'high', ...(minConf === 'high' ? { selected: true } : {}) }, 'High'))),
+        el('div', { class: 'col-md-2' },
+            el('label', { class: 'small text-muted d-block' }, 'Window (Days)'),
+            el('input', { type: 'number', class: 'form-control form-control-sm v-cond-window', placeholder: 'Any', value: String(winDays) })),
+        el('div', { class: 'col-md-1 text-end' },
+            el('label', { class: 'small text-muted d-block' }, ' '),
+            el('button', { type: 'button', class: 'btn btn-sm btn-outline-danger py-0 px-2' },
+                el('i', { class: 'bi bi-x-lg' }))));
+
+    const removeBtn = row.querySelector('.btn-outline-danger');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            row.remove();
+            syncVisualToJson();
+        });
+    }
+
+    for (const input of row.querySelectorAll('input, select')) {
+        input.addEventListener('input', syncVisualToJson);
+        input.addEventListener('change', syncVisualToJson);
+    }
+
+    container.appendChild(row);
+}
+
+function addVisualCaseRow(cas = {}, outInfo = {}) {
+    const container = document.getElementById('visualCasesContainer');
+    if (!container) return;
+
+    const caseId = cas.id || `case_${container.children.length + 1}`;
+    const whenConds = cas.when?.all || (cas.when?.any || []);
+    const whenText = whenConds.join(', ');
+    const outcomeLabel = outInfo.label || cas.outcome || 'Review';
+    const doNotify = (outInfo.actions || []).includes('notify');
+
+    const row = el('div', { class: 'row g-1 mb-2 align-items-center p-2 border rounded bg-white visual-case-row' },
+        el('div', { class: 'col-md-3' },
+            el('label', { class: 'small text-muted d-block' }, 'Case ID'),
+            el('input', { type: 'text', class: 'form-control form-control-sm v-case-id', value: caseId, required: true })),
+        el('div', { class: 'col-md-3' },
+            el('label', { class: 'small text-muted d-block' }, 'Trigger Condition(s)'),
+            el('input', { type: 'text', class: 'form-control form-control-sm v-case-when', value: whenText, placeholder: 'e.g. dated_soon' })),
+        el('div', { class: 'col-md-3' },
+            el('label', { class: 'small text-muted d-block' }, 'Outcome Label'),
+            el('input', { type: 'text', class: 'form-control form-control-sm v-case-outcome', value: outcomeLabel, placeholder: 'e.g. Urgent' })),
+        el('div', { class: 'col-md-2' },
+            el('label', { class: 'small text-muted d-block' }, 'Action'),
+            el('div', { class: 'form-check form-switch pt-1' },
+                el('input', { class: 'form-check-input v-case-notify', type: 'checkbox', ...(doNotify ? { checked: true } : {}) }),
+                el('label', { class: 'form-check-label small' }, 'Notify'))),
+        el('div', { class: 'col-md-1 text-end' },
+            el('label', { class: 'small text-muted d-block' }, ' '),
+            el('button', { type: 'button', class: 'btn btn-sm btn-outline-danger py-0 px-2' },
+                el('i', { class: 'bi bi-x-lg' }))));
+
+    const removeBtn = row.querySelector('.btn-outline-danger');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            row.remove();
+            syncVisualToJson();
+        });
+    }
+
+    for (const input of row.querySelectorAll('input, select')) {
+        input.addEventListener('input', syncVisualToJson);
+        input.addEventListener('change', syncVisualToJson);
+    }
+
+    container.appendChild(row);
+}
+
+function syncVisualToJson() {
+    const textarea = document.getElementById('scenarioDefinition');
+    if (!textarea) return;
+
+    const strat = document.getElementById('visualStrategy')?.value || 'first_match';
+    const defOutcome = (document.getElementById('visualDefaultOutcome')?.value || 'none').trim();
+    const notifyExisting = Boolean(document.getElementById('visualNotifyExisting')?.checked);
+
+    const conditions = {};
+    const condRows = document.querySelectorAll('.visual-cond-row');
+    for (const r of condRows) {
+        const id = (r.querySelector('.v-cond-id')?.value || '').trim();
+        if (!id) continue;
+        const sigType = r.querySelector('.v-cond-sig')?.value || 'date_reference';
+        const conf = r.querySelector('.v-cond-conf')?.value || 'medium';
+        const win = r.querySelector('.v-cond-window')?.value;
+        const cObj = {
+            signals: { signal_types: [sigType] },
+            min_confidence: conf
+        };
+        if (win !== '' && win !== undefined && !isNaN(Number(win))) {
+            cObj.event_window_days = { from: 0, to: Number(win) };
+        }
+        conditions[id] = cObj;
+    }
+
+    const cases = [];
+    const outcomes = {};
+    outcomes[defOutcome] = { label: 'Default No Action', actions: [] };
+
+    const caseRows = document.querySelectorAll('.visual-case-row');
+    for (const r of caseRows) {
+        const id = (r.querySelector('.v-case-id')?.value || '').trim();
+        if (!id) continue;
+        const whenRaw = (r.querySelector('.v-case-when')?.value || '').trim();
+        const whenList = whenRaw ? whenRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const outLbl = (r.querySelector('.v-case-outcome')?.value || '').trim() || id;
+        const outId = outLbl.toLowerCase().replace(/[^a-z0-9_]+/g, '_').slice(0, 30) || 'out';
+        const doNotify = Boolean(r.querySelector('.v-case-notify')?.checked);
+
+        cases.push({
+            id: id,
+            when: { all: whenList.length > 0 ? whenList : Object.keys(conditions).slice(0, 1) },
+            outcome: outId
+        });
+        outcomes[outId] = {
+            label: outLbl,
+            actions: doNotify ? ['notify'] : []
+        };
+    }
+
+    const def = {
+        strategy: strat,
+        default_outcome: defOutcome,
+        notify_existing: notifyExisting,
+        conditions: conditions,
+        cases: cases,
+        outcomes: outcomes
+    };
+
+    textarea.value = JSON.stringify(def, null, 2);
+}
+
+// ---------------------------------------------------------------------------
+// Visual Monitoring Rule Builder & Templates (Fields & Buttons, No JSON needed)
+// ---------------------------------------------------------------------------
+
+const RULE_TEMPLATES = {
+    urgent_temporal: {
+        unit: 'signal',
+        signals: { signal_types: ['date_reference'] },
+        min_confidence: 'medium',
+        event_window_days: { from: 0, to: 30 },
+        threshold: { count: 1 },
+        cooldown_minutes: 60,
+        group_by: 'none',
+        delivery: { mode: 'immediate' },
+        notify_existing: false
+    },
+    place_mention: {
+        unit: 'signal',
+        signals: { signal_types: ['place_mention'] },
+        min_confidence: 'medium',
+        threshold: { count: 1 },
+        cooldown_minutes: 120,
+        group_by: 'none',
+        delivery: { mode: 'immediate' },
+        notify_existing: false
+    },
+    high_confidence: {
+        unit: 'content',
+        min_confidence: 'high',
+        threshold: { count: 1 },
+        cooldown_minutes: 30,
+        group_by: 'content',
+        delivery: { mode: 'immediate' },
+        notify_existing: false
+    },
+    activity_digest: {
+        unit: 'signal',
+        min_confidence: 'low',
+        threshold: { count: 1 },
+        cooldown_minutes: 0,
+        group_by: 'content',
+        delivery: { mode: 'digest', interval_hours: 24 },
+        notify_existing: false
+    }
+};
+
+function switchRuleEditorMode(mode) {
+    const isVisual = mode === 'visual';
+    const visualBox = document.getElementById('ruleVisualBuilder');
+    const jsonBox = document.getElementById('ruleJsonContainer');
+    const btnV = document.getElementById('btnRuleModeVisual');
+    const btnJ = document.getElementById('btnRuleModeJson');
+    if (visualBox && jsonBox) {
+        visualBox.classList.toggle('d-none', !isVisual);
+        jsonBox.classList.toggle('d-none', isVisual);
+    }
+    if (btnV && btnJ) {
+        btnV.classList.toggle('active', isVisual);
+        btnV.classList.toggle('btn-primary', isVisual);
+        btnV.classList.toggle('btn-outline-primary', !isVisual);
+        btnJ.classList.toggle('active', !isVisual);
+        btnJ.classList.toggle('btn-primary', !isVisual);
+        btnJ.classList.toggle('btn-outline-secondary', isVisual);
+    }
+    if (isVisual) {
+        try {
+            const def = JSON.parse(document.getElementById('ruleDefinition').value || '{}');
+            initRuleVisualBuilder(def);
+        } catch (_e) { /* keep current visual state */ }
+    } else {
+        syncRuleVisualToJson();
+    }
+}
+
+function onRuleTemplateSelect() {
+    const sel = document.getElementById('ruleTemplateSelect');
+    if (!sel || !sel.value || sel.value === 'custom') return;
+    const tpl = RULE_TEMPLATES[sel.value];
+    if (tpl) {
+        initRuleVisualBuilder(tpl);
+        syncRuleVisualToJson();
+    }
+}
+
+function initRuleVisualBuilder(def) {
+    if (!def) return;
+    const unitEl = document.getElementById('ruleVisualUnit');
+    if (unitEl) unitEl.value = def.unit || 'signal';
+
+    const sigTypeEl = document.getElementById('ruleVisualSignalType');
+    if (sigTypeEl) {
+        const sigType = def.signals?.signal_type || (def.signals?.signal_types && def.signals.signal_types[0]) || '';
+        sigTypeEl.value = sigType;
+    }
+
+    const confEl = document.getElementById('ruleVisualMinConfidence');
+    if (confEl) confEl.value = def.min_confidence || '';
+
+    const threshEl = document.getElementById('ruleVisualThreshold');
+    if (threshEl) threshEl.value = (def.threshold && def.threshold.count) || 1;
+
+    const coolEl = document.getElementById('ruleVisualCooldown');
+    if (coolEl) coolEl.value = def.cooldown_minutes !== undefined ? def.cooldown_minutes : 60;
+
+    const groupEl = document.getElementById('ruleVisualGroupBy');
+    if (groupEl) groupEl.value = def.group_by || 'none';
+
+    const delivEl = document.getElementById('ruleVisualDelivery');
+    const digestContainer = document.getElementById('ruleVisualDigestHoursContainer');
+    const digestHoursEl = document.getElementById('ruleVisualDigestHours');
+    const mode = (def.delivery && def.delivery.mode) || 'immediate';
+    if (delivEl) delivEl.value = mode;
+    if (digestContainer) digestContainer.style.display = mode === 'digest' ? '' : 'none';
+    if (digestHoursEl) digestHoursEl.value = (def.delivery && def.delivery.interval_hours) || 24;
+
+    const critEl = document.getElementById('ruleVisualCriteriaSearch');
+    if (critEl) critEl.value = (def.criteria && (def.criteria.text || def.criteria.search || (def.criteria.keywords && def.criteria.keywords[0]))) || '';
+
+    const winToggle = document.getElementById('ruleVisualEventWindowToggle');
+    const winContainer = document.getElementById('ruleVisualEventWindowContainer');
+    const winFrom = document.getElementById('ruleVisualWindowFrom');
+    const winTo = document.getElementById('ruleVisualWindowTo');
+    const hasWin = Boolean(def.event_window_days);
+    if (winToggle) winToggle.checked = hasWin;
+    if (winContainer) winContainer.style.display = hasWin ? '' : 'none';
+    if (winFrom) winFrom.value = def.event_window_days?.from !== undefined ? def.event_window_days.from : 0;
+    if (winTo) winTo.value = def.event_window_days?.to !== undefined ? def.event_window_days.to : 30;
+
+    const notifyExistingEl = document.getElementById('ruleVisualNotifyExisting');
+    if (notifyExistingEl) notifyExistingEl.checked = Boolean(def.notify_existing);
+}
+
+function syncRuleVisualToJson() {
+    const textarea = document.getElementById('ruleDefinition');
+    if (!textarea) return;
+
+    const unit = document.getElementById('ruleVisualUnit')?.value || 'signal';
+    const sigType = document.getElementById('ruleVisualSignalType')?.value;
+    const conf = document.getElementById('ruleVisualMinConfidence')?.value;
+    const threshCount = parseInt(document.getElementById('ruleVisualThreshold')?.value, 10) || 1;
+    const cooldown = parseInt(document.getElementById('ruleVisualCooldown')?.value, 10);
+    const groupBy = document.getElementById('ruleVisualGroupBy')?.value || 'none';
+    const delivMode = document.getElementById('ruleVisualDelivery')?.value || 'immediate';
+    const digestHours = parseInt(document.getElementById('ruleVisualDigestHours')?.value, 10) || 24;
+    const critSearch = (document.getElementById('ruleVisualCriteriaSearch')?.value || '').trim();
+    const hasEventWin = Boolean(document.getElementById('ruleVisualEventWindowToggle')?.checked);
+    const winFrom = parseInt(document.getElementById('ruleVisualWindowFrom')?.value, 10);
+    const winTo = parseInt(document.getElementById('ruleVisualWindowTo')?.value, 10);
+    const notifyExisting = Boolean(document.getElementById('ruleVisualNotifyExisting')?.checked);
+
+    const def = {
+        unit: unit,
+        group_by: groupBy,
+        threshold: { count: threshCount },
+        cooldown_minutes: isNaN(cooldown) ? 60 : cooldown,
+        delivery: delivMode === 'digest' ? { mode: 'digest', interval_hours: digestHours } : { mode: 'immediate' },
+        notify_existing: notifyExisting
+    };
+
+    if (conf) {
+        def.min_confidence = conf;
+    }
+    if (sigType) {
+        def.signals = { signal_types: [sigType] };
+    }
+    if (hasEventWin) {
+        def.event_window_days = { from: isNaN(winFrom) ? 0 : winFrom, to: isNaN(winTo) ? 30 : winTo };
+    }
+    if (critSearch) {
+        def.criteria = { text: critSearch };
+    }
+
+    textarea.value = JSON.stringify(def, null, 2);
+}
 
 async function validateScenario() {
     const definition = readDefinition('scenarioDefinition', 'scenarioValidation');
@@ -496,17 +979,42 @@ async function loadRules() {
     document.getElementById('ruleSummary').textContent = fmt(L.count_rules, { n: body.count })
         + (body.truncated ? ` ${fmt(L.list_truncated, { n: body.limit })}` : '');
     if (!body.rules.length) {
-        emptyRow('ruleRows', 6, L.no_rules);
+        emptyRow('ruleRows', 7, L.no_rules);
         return;
     }
     const rows = clear('ruleRows');
     for (const r of body.rules) {
         const name = el('button', { type: 'button', class: 'btn btn-link btn-sm p-0 text-start' }, userText(r.name));
         name.addEventListener('click', () => openRule(r.id));
+
+        const actionsTd = el('td');
+        if (DATA.can_write && r.status !== 'archived') {
+            const btnGroup = el('div', { class: 'btn-group btn-group-sm' });
+            if (r.owner_user_id === DATA.user_id) {
+                const editBtn = el('button', { type: 'button', class: 'btn btn-outline-secondary', title: L.action_edit }, el('i', { class: 'bi bi-pencil me-1' }), L.action_edit);
+                editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditor('rule', r); });
+                btnGroup.append(editBtn);
+            }
+            if (r.status === 'active') {
+                const evalBtn = el('button', { type: 'button', class: 'btn btn-outline-primary', title: L.action_evaluate }, el('i', { class: 'bi bi-play me-1' }), L.action_evaluate);
+                evalBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    guarded(async () => {
+                        const res = await api('POST', `/api/rules/${r.id}/evaluate`);
+                        await followJob(res.job, 'ruleJob');
+                        await afterRuleChange((await api('GET', `/api/rules/${r.id}`)).rule);
+                    });
+                });
+                btnGroup.append(evalBtn);
+            }
+            actionsTd.append(btnGroup);
+        }
+
         rows.append(el('tr', { 'data-rule-id': r.id },
             el('td', {}, name), el('td', {}, statusBadge(r.status)), el('td', { text: r.version }),
             el('td', { text: r.baselined ? L.yes : L.no }), el('td', { text: when(r.last_evaluated_at) }),
-            el('td', {}, userText(r.owner_username || String(r.owner_user_id)))));
+            el('td', {}, userText(r.owner_username || String(r.owner_user_id))),
+            actionsTd));
     }
 }
 
@@ -594,7 +1102,41 @@ function init() {
     on('tabScenarios', 'click', () => selectTab('scenarios'));
     on('tabRules', 'click', () => selectTab('rules'));
     on('scenarioNew', 'click', () => openEditor('scenario', null));
+    on('btnModeVisual', 'click', () => switchEditorMode('visual'));
+    on('btnModeJson', 'click', () => switchEditorMode('json'));
+    on('scenarioTemplateSelect', 'change', onTemplateSelect);
+    on('btnAddVisualCondition', 'click', () => addVisualConditionRow());
+    on('btnAddVisualCase', 'click', () => addVisualCaseRow());
+    on('visualStrategy', 'change', syncVisualToJson);
+    on('visualDefaultOutcome', 'input', syncVisualToJson);
+    on('visualNotifyExisting', 'change', syncVisualToJson);
     on('ruleNew', 'click', () => openEditor('rule', null));
+    on('btnRuleModeVisual', 'click', () => switchRuleEditorMode('visual'));
+    on('btnRuleModeJson', 'click', () => switchRuleEditorMode('json'));
+    on('ruleTemplateSelect', 'change', onRuleTemplateSelect);
+    on('ruleVisualUnit', 'change', syncRuleVisualToJson);
+    on('ruleVisualSignalType', 'change', syncRuleVisualToJson);
+    on('ruleVisualMinConfidence', 'change', syncRuleVisualToJson);
+    on('ruleVisualThreshold', 'input', syncRuleVisualToJson);
+    on('ruleVisualCooldown', 'input', syncRuleVisualToJson);
+    on('ruleVisualGroupBy', 'change', syncRuleVisualToJson);
+    on('ruleVisualDelivery', 'change', () => {
+        const mode = document.getElementById('ruleVisualDelivery')?.value;
+        const digestContainer = document.getElementById('ruleVisualDigestHoursContainer');
+        if (digestContainer) digestContainer.style.display = mode === 'digest' ? '' : 'none';
+        syncRuleVisualToJson();
+    });
+    on('ruleVisualDigestHours', 'input', syncRuleVisualToJson);
+    on('ruleVisualCriteriaSearch', 'input', syncRuleVisualToJson);
+    on('ruleVisualEventWindowToggle', 'change', () => {
+        const toggle = document.getElementById('ruleVisualEventWindowToggle');
+        const container = document.getElementById('ruleVisualEventWindowContainer');
+        if (container) container.style.display = toggle?.checked ? '' : 'none';
+        syncRuleVisualToJson();
+    });
+    on('ruleVisualWindowFrom', 'input', syncRuleVisualToJson);
+    on('ruleVisualWindowTo', 'input', syncRuleVisualToJson);
+    on('ruleVisualNotifyExisting', 'change', syncRuleVisualToJson);
     on('scenarioCancel', 'click', () => show('scenarioEditor', false));
     on('ruleCancel', 'click', () => show('ruleEditor', false));
     on('scenarioValidate', 'click', validateScenario);

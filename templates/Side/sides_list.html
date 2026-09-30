@@ -175,7 +175,12 @@
         export_interface=export_interface_for(request.endpoint),
         export_columns=[
             {'key': 'id', 'label': _('Id')},
-        ]) %}
+        ],
+        page=page|default(1),
+        total_pages=total_pages|default(1),
+        total_count=total_sides|default(0),
+        rows_shown=sides|length,
+        append=True) %}
     {% for side in sides %}
     {% set stars = ((side.importance or 0) * 5)|round|int %}
     <tr class="side-item" data-side-id="{{ side.id }}">

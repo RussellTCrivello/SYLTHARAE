@@ -103,7 +103,7 @@ Counted by scanning `templates/**`. These are the places a shared component has 
 | --- | --- | --- |
 | Hand-written empty state | `states` | 3 templates |
 | Hand-written loading indicator | `states` | 9 templates |
-| Hand-written inline error | `states` | 9 templates |
+| Hand-written inline error | `states` | 10 templates |
 | Hand-written table | `table` | 10 templates |
 | Hand-written pagination markup | `pagination` | 0 templates |
 | Pagination mount (filled by the shared renderer) | `pagination` | 8 templates |

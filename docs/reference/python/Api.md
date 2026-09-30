@@ -425,7 +425,7 @@ Database Performance Monitoring API Routes
 
 ### `Api/routes/places.py`
 
-Gazetteer read API (Phase 2). Any authenticated user; read-only.
+Gazetteer read and management API (Phase 2).
 
 - `register_place_routes(app)`
 

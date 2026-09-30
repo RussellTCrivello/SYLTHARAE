@@ -12417,3 +12417,12 @@ msgstr "חפש בעמודה זו"
 msgid "Contains…"
 msgstr "מכיל…"
 
+#. templates/components/table.html
+#. templates/components/unified_pagination.html
+msgid "Show More"
+msgstr "הצג עוד"
+
+#. templates/components/table.html
+msgid "Load More"
+msgstr "טען עוד"
+

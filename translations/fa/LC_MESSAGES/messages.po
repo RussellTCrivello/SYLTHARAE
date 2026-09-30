@@ -12545,3 +12545,12 @@ msgstr "جست‌وجو در این ستون"
 msgid "Contains…"
 msgstr "شامل…"
 
+#. templates/components/table.html
+#. templates/components/unified_pagination.html
+msgid "Show More"
+msgstr "نمایش بیشتر"
+
+#. templates/components/table.html
+msgid "Load More"
+msgstr "بارگیری بیشتر"
+

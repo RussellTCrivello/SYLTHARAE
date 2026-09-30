@@ -197,7 +197,12 @@
         export_interface=export_interface_for(request.endpoint),
         export_columns=[
             {'key': 'id', 'label': _('Id')},
-        ]) %}
+        ],
+        page=page|default(1),
+        total_pages=total_pages|default(1),
+        total_count=total_keywords|default(0),
+        rows_shown=keywords|length,
+        append=True) %}
     {% for keyword in keywords %}
     {% set row_number = (page - 1) * per_page + loop.index %}
     <tr data-keyword-id="{{ keyword.id }}"

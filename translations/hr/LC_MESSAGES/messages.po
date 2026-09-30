@@ -12545,3 +12545,12 @@ msgstr "Pretraži ovaj stupac"
 msgid "Contains…"
 msgstr "Sadrži…"
 
+#. templates/components/table.html
+#. templates/components/unified_pagination.html
+msgid "Show More"
+msgstr "Prikaži više"
+
+#. templates/components/table.html
+msgid "Load More"
+msgstr "Učitaj više"
+

@@ -186,7 +186,12 @@
             {'key': 'note', 'label': _('Notes')},
             {'key': 'attachments', 'label': _('Attachments')},
             {'key': 'ownership', 'label': _('Ownership')},
-        ]) %}
+        ],
+        page=page|default(1),
+        total_pages=total_pages|default(1),
+        total_count=total_sources|default(0),
+        rows_shown=sources|length,
+        append=True) %}
     {% for source in sources %}
     {% set stars = ((source.importance or 0) * 5)|round|int %}
     <tr class="source-item" data-source-id="{{ source.id }}">

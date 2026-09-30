@@ -80,10 +80,10 @@ Counted from the catalogs the build ships - the Babel catalogs under `translatio
 
 | Language | Catalog entries | Source strings | Translated | Fallback | Missing | Coverage | Of which translated |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ar` | 3765 | 3405 | 3396 | 9 | 0 | 100.0% | 99.7% |
-| `fa` | 3765 | 3405 | 3398 | 7 | 0 | 100.0% | 99.8% |
-| `he` | 3765 | 3405 | 3392 | 13 | 0 | 100.0% | 99.6% |
-| `hr` | 3521 | 3405 | 3323 | 22 | 60 | 98.2% | 97.6% |
+| `ar` | 3767 | 3405 | 3396 | 9 | 0 | 100.0% | 99.7% |
+| `fa` | 3767 | 3405 | 3398 | 7 | 0 | 100.0% | 99.8% |
+| `he` | 3767 | 3405 | 3392 | 13 | 0 | 100.0% | 99.6% |
+| `hr` | 3523 | 3405 | 3323 | 22 | 60 | 98.2% | 97.6% |
 
 ### Coverage per screen
 

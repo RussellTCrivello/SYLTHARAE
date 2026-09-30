@@ -390,8 +390,9 @@ def test_keyword_intelligence_lists_every_keyword_over_the_matched_set(corpus):
         corpus, "keyword_intelligence.matches@1", _values(corpus))
     assert names == [c.name for c in
                      REGISTRY.dataset("keyword_intelligence.matches@1").columns]
-    by_label = {r[1]: r for r in rows}
-    assert len(rows) == 2, "the zero-presence keyword is listed too"
+    matching_rows = [r for r in rows if tag in r[1]]
+    by_label = {r[1]: r for r in matching_rows}
+    assert len(matching_rows) == 2, "the zero-presence keyword is listed too"
     hit = by_label[f"kw{tag} common{tag}"]
     assert hit[0] == corpus["keyword_id"] and hit[2] == f"catA{tag}"
     assert hit[3] == 5, "every matched content contains the pattern"
@@ -782,12 +783,15 @@ def test_scenario_outcomes_are_owner_scoped_before_retrieval(corpus):
             " NOW() + interval '1 hour', '{}'::jsonb) RETURNING id",
             (corpus["scenario_id"], f"eval2-{corpus['tag']}".encode()))
         evaluation_2 = cur.fetchone()[0]
+        cur.execute("SELECT hash_id FROM scenario_outcomes WHERE scenario_id = %s LIMIT 1",
+                    (corpus["scenario_id"],))
+        target_hash = cur.fetchone()[0]
         cur.execute(
             "INSERT INTO scenario_outcomes (scenario_id, evaluation_id,"
             " scenario_version, hash_id, outcomes, matched_cases, delivery,"
             " recorded_at)"
             " VALUES (%s, %s, 1, %s, '{review}', '{watch}', 'recorded', NOW())",
-            (corpus["scenario_id"], evaluation_2, owner))
+            (corpus["scenario_id"], evaluation_2, target_hash))
     rows_after = _ids(owner)
     assert len(rows_after) == 3
     assert rows_after[0][names.index("evaluation_id")] == evaluation_2, (

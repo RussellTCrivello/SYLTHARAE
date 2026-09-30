@@ -973,6 +973,42 @@
     "internal": true
   },
   {
+    "endpoint": "api_places_create",
+    "rule": "/api/places",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_places_delete",
+    "rule": "/api/places/<string:place_key>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_places_update",
+    "rule": "/api/places/<string:place_key>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_remove_duplicate_categories",
     "rule": "/api/categories/remove-duplicates",
     "methods": [

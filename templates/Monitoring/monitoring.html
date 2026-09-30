@@ -79,12 +79,82 @@
 
         <form id="scenarioEditor" class="card mb-3 d-none" autocomplete="off">
             <div class="card-body">
-                <h2 class="fs-5" id="scenarioEditorTitle">{{ _('New scenario') }}</h2>
-                <label class="form-label" for="scenarioName">{{ _('Name') }}</label>
-                <input type="text" class="form-control form-control-sm mb-2" id="scenarioName" maxlength="120" dir="auto" required>
-                <label class="form-label" for="scenarioDefinition">{{ _('Definition (JSON)') }}</label>
-                <textarea class="form-control form-control-sm font-monospace" id="scenarioDefinition" rows="18" dir="ltr" spellcheck="false"></textarea>
-                <div class="form-text">{{ _('Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md.') }}</div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="fs-5 mb-0" id="scenarioEditorTitle">{{ _('New scenario') }}</h2>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Editor Mode">
+                        <button type="button" class="btn btn-outline-primary active" id="btnModeVisual"><i class="bi bi-ui-checks me-1"></i>Visual Builder</button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnModeJson"><i class="bi bi-code-slash me-1"></i>JSON (Advanced)</button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold" for="scenarioName">{{ _('Name') }}</label>
+                    <input type="text" class="form-control form-control-sm" id="scenarioName" maxlength="120" dir="auto" required>
+                </div>
+
+                <!-- Visual Rule Builder Container -->
+                <div id="scenarioVisualBuilder" class="border rounded p-3 mb-3 bg-light-subtle">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-magic me-1"></i>Ready-Made Templates</h6>
+                        <select id="scenarioTemplateSelect" class="form-select form-select-sm" style="max-width: 320px;">
+                            <option value="custom">Choose a ready-made template…</option>
+                            <option value="urgent_event">Urgent Event: Dated within 30 days</option>
+                            <option value="high_confidence">Critical: High-confidence date signal</option>
+                            <option value="place_mention">Geographic: Place mention detected</option>
+                            <option value="cross_check">Multi-Condition: Date and Place match</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold" for="visualStrategy">Evaluation Strategy</label>
+                            <select id="visualStrategy" class="form-select form-select-sm">
+                                <option value="first_match">First matching case decides (first_match)</option>
+                                <option value="highest_priority">Case with highest priority decides (highest_priority)</option>
+                                <option value="all_matching">Every matching case contributes (all_matching)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold" for="visualDefaultOutcome">Default Outcome</label>
+                            <input type="text" class="form-control form-control-sm" id="visualDefaultOutcome" value="none" placeholder="none">
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="visualNotifyExisting">
+                        <label class="form-check-label small" for="visualNotifyExisting">Notify on existing baseline documents (notify_existing)</label>
+                    </div>
+
+                    <!-- Conditions Builder -->
+                    <div class="card mb-3 border">
+                        <div class="card-header bg-transparent py-2 d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold"><i class="bi bi-funnel me-1"></i>Conditions (Signal & Document Triggers)</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="btnAddVisualCondition"><i class="bi bi-plus-lg me-1"></i>Add Condition</button>
+                        </div>
+                        <div class="card-body p-2" id="visualConditionsContainer">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Cases Builder -->
+                    <div class="card mb-3 border">
+                        <div class="card-header bg-transparent py-2 d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold"><i class="bi bi-diagram-3 me-1"></i>Decision Cases & Outcomes</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="btnAddVisualCase"><i class="bi bi-plus-lg me-1"></i>Add Case</button>
+                        </div>
+                        <div class="card-body p-2" id="visualCasesContainer">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Raw JSON Definition Container -->
+                <div id="scenarioJsonContainer" class="d-none mb-3">
+                    <label class="form-label" for="scenarioDefinition">{{ _('Definition (JSON)') }}</label>
+                    <textarea class="form-control form-control-sm font-monospace" id="scenarioDefinition" rows="18" dir="ltr" spellcheck="false"></textarea>
+                    <div class="form-text">{{ _('Conditions, cases, outcomes, the mandatory default outcome and the strategy (first_match, all_matching or highest_priority). See docs/implementation/SCENARIOS.md.') }}</div>
+                </div>
+
                 <div id="scenarioValidation" class="mt-2" aria-live="polite"></div>
                 <div class="d-flex gap-2 mt-2">
                     <button type="button" class="btn btn-outline-secondary btn-sm" id="scenarioValidate"><i class="bi bi-check2-square me-1"></i>{{ _('Validate') }}</button>
@@ -160,18 +230,140 @@
             <thead><tr>
                 <th>{{ _('Name') }}</th><th>{{ _('Status') }}</th><th>{{ _('Version') }}</th>
                 <th>{{ _('Baseline') }}</th><th>{{ _('Last evaluated') }}</th><th>{{ _('Owner') }}</th>
+                <th>{{ _('Actions') }}</th>
             </tr></thead>
             <tbody id="ruleRows"></tbody>
         {% endcall %}
 
         <form id="ruleEditor" class="card mb-3 d-none" autocomplete="off">
             <div class="card-body">
-                <h2 class="fs-5" id="ruleEditorTitle">{{ _('New rule') }}</h2>
-                <label class="form-label" for="ruleName">{{ _('Name') }}</label>
-                <input type="text" class="form-control form-control-sm mb-2" id="ruleName" maxlength="120" dir="auto" required>
-                <label class="form-label" for="ruleDefinition">{{ _('Definition (JSON)') }}</label>
-                <textarea class="form-control form-control-sm font-monospace" id="ruleDefinition" rows="14" dir="ltr" spellcheck="false"></textarea>
-                <div class="form-text">{{ _('Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md.') }}</div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="fs-5 mb-0" id="ruleEditorTitle">{{ _('New rule') }}</h2>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Rule Editor Mode">
+                        <button type="button" class="btn btn-outline-primary active" id="btnRuleModeVisual"><i class="bi bi-ui-checks me-1"></i>Visual Builder</button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnRuleModeJson"><i class="bi bi-code-slash me-1"></i>JSON (Advanced)</button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold" for="ruleName">{{ _('Name') }}</label>
+                    <input type="text" class="form-control form-control-sm" id="ruleName" maxlength="120" dir="auto" required>
+                </div>
+
+                <!-- Visual Rule Builder Container -->
+                <div id="ruleVisualBuilder" class="border rounded p-3 mb-3 bg-light-subtle">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-magic me-1"></i>Ready-Made Rule Templates</h6>
+                        <select id="ruleTemplateSelect" class="form-select form-select-sm" style="max-width: 340px;">
+                            <option value="custom">Choose a ready-made template…</option>
+                            <option value="urgent_temporal">Urgent Temporal: Forward event within 30 days</option>
+                            <option value="place_mention">Geographic: New place mention alert</option>
+                            <option value="high_confidence">Critical: High confidence signal watch</option>
+                            <option value="activity_digest">Daily Digest: 24-hour summary of detections</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold" for="ruleVisualUnit">Target Unit</label>
+                            <select id="ruleVisualUnit" class="form-select form-select-sm">
+                                <option value="signal">Each matching signal (signal)</option>
+                                <option value="content">Each document with matches (content)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold" for="ruleVisualSignalType">Signal Type</label>
+                            <select id="ruleVisualSignalType" class="form-select form-select-sm">
+                                <option value="">All Signal Types</option>
+                                <option value="date_reference">Date Reference (date_reference)</option>
+                                <option value="place_mention">Place Mention (place_mention)</option>
+                                <option value="relative_reference">Relative Reference (relative_reference)</option>
+                                <option value="orientation">Temporal Orientation (orientation)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold" for="ruleVisualMinConfidence">Minimum Confidence</label>
+                            <select id="ruleVisualMinConfidence" class="form-select form-select-sm">
+                                <option value="">Any Confidence</option>
+                                <option value="low">Low or higher</option>
+                                <option value="medium">Medium or higher</option>
+                                <option value="high">High only</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold" for="ruleVisualThreshold">Alert Threshold (Count)</label>
+                            <input type="number" class="form-control form-control-sm" id="ruleVisualThreshold" value="1" min="1" max="10000">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold" for="ruleVisualCooldown">Cooldown (Minutes)</label>
+                            <input type="number" class="form-control form-control-sm" id="ruleVisualCooldown" value="60" min="0" max="43200">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold" for="ruleVisualGroupBy">Grouping</label>
+                            <select id="ruleVisualGroupBy" class="form-select form-select-sm">
+                                <option value="none">None (Individual notification)</option>
+                                <option value="content">Group by document</option>
+                                <option value="value">Group by signal value</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold" for="ruleVisualDelivery">Delivery Mode</label>
+                            <select id="ruleVisualDelivery" class="form-select form-select-sm">
+                                <option value="immediate">Immediate (alert upon detection)</option>
+                                <option value="digest">Digest (periodic digest notification)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="ruleVisualDigestHoursContainer" style="display: none;">
+                            <label class="form-label small fw-semibold" for="ruleVisualDigestHours">Digest Interval (Hours)</label>
+                            <input type="number" class="form-control form-control-sm" id="ruleVisualDigestHours" value="24" min="1" max="168">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold" for="ruleVisualCriteriaSearch">Keyword / Criteria Text (Optional)</label>
+                            <input type="text" class="form-control form-control-sm" id="ruleVisualCriteriaSearch" placeholder="Filter documents matching keyword or text...">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center pt-4">
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" id="ruleVisualEventWindowToggle">
+                                    <label class="form-check-label small" for="ruleVisualEventWindowToggle">Restrict to event horizon days</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3" id="ruleVisualEventWindowContainer" style="display: none;">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold" for="ruleVisualWindowFrom">Event Horizon From (days relative to today)</label>
+                            <input type="number" class="form-control form-control-sm" id="ruleVisualWindowFrom" value="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold" for="ruleVisualWindowTo">Event Horizon To (days relative to today)</label>
+                            <input type="number" class="form-control form-control-sm" id="ruleVisualWindowTo" value="30">
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="ruleVisualNotifyExisting">
+                        <label class="form-check-label small" for="ruleVisualNotifyExisting">Notify on existing baseline signals (notify_existing)</label>
+                    </div>
+                </div>
+
+                <!-- Raw JSON Definition Container -->
+                <div id="ruleJsonContainer" class="d-none mb-3">
+                    <label class="form-label" for="ruleDefinition">{{ _('Definition (JSON)') }}</label>
+                    <textarea class="form-control form-control-sm font-monospace" id="ruleDefinition" rows="14" dir="ltr" spellcheck="false"></textarea>
+                    <div class="form-text">{{ _('Criteria, signal filter, minimum confidence, event window, threshold, cooldown, grouping and delivery. See docs/implementation/RULE_ENGINE.md.') }}</div>
+                </div>
+
                 <div id="ruleValidation" class="mt-2" aria-live="polite"></div>
                 <div class="d-flex gap-2 mt-2">
                     <button type="submit" class="btn btn-primary btn-sm" id="ruleSave"><i class="bi bi-save me-1"></i>{{ _('Save') }}</button>

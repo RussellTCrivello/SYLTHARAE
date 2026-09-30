@@ -36,6 +36,7 @@ import { createRequire } from 'node:module';
 const puppeteer = createRequire(import.meta.url)('puppeteer-core');
 
 const BASE = (process.env.SMOKE_BASE_URL || 'http://localhost:5055').replace(/\/$/, '');
+const USER = process.env.SMOKE_ADMIN_USER || 'admin';
 const PASSWORD = process.env.SMOKE_ADMIN_PASSWORD || '';
 if (!PASSWORD) { console.error('SMOKE_ADMIN_PASSWORD required'); process.exit(2); }
 
@@ -68,7 +69,7 @@ page.on('console', (m) => {
 try {
     // ── sign in ─────────────────────────────────────────────────────────
     await page.goto(BASE + '/auth/login', { waitUntil: 'networkidle0' });
-    await page.type('input[name="username"]', 'admin');
+    await page.type('input[name="username"]', USER);
     await page.type('input[name="password"]', PASSWORD);
     await Promise.all([
         page.waitForNavigation({ waitUntil: 'networkidle0' }),

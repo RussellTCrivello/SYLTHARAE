@@ -12773,6 +12773,15 @@ msgstr "Search this column"
 msgid "Contains…"
 msgstr "Contains…"
 
+#. templates/components/table.html
+#. templates/components/unified_pagination.html
+msgid "Show More"
+msgstr "Show More"
+
+#. templates/components/table.html
+msgid "Load More"
+msgstr "Load More"
+
 #~ msgid "File Analysis Overview"
 #~ msgstr ""
 
