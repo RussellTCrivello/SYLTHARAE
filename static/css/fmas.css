@@ -3276,3 +3276,12 @@ button:disabled, .action-btn:disabled {
     pointer-events: none;
     cursor: not-allowed;
 }
+
+/* Declared list-cap notice under the advanced-filter selects (step 25:
+   truncation must be declared, never silent). */
+.filter-cap-note {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-light, #8a93a3);
+}

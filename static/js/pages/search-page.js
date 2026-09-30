@@ -122,7 +122,7 @@ async function performEnhancedSearch(query) {
         resultsContainer.innerHTML = `
             <div class="empty-state">
                 <i class="bi bi-exclamation-triangle"></i>
-                <p>Error performing search: ${error.message || 'Unknown error'}</p>
+                <p>Error performing search: ${escapeHtml(error.message || 'Unknown error')}</p>
             </div>
         `;
     }

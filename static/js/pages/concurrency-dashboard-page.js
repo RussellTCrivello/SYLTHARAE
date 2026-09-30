@@ -44,7 +44,7 @@ function updateManagerCard(type, metrics) {
     }
     
     if (metrics.status === 'error') {
-        card.innerHTML = `<p class="text-danger">Error: ${metrics.error || 'Unknown error'}</p>`;
+        card.innerHTML = `<p class="text-danger">Error: ${escapeHtml(metrics.error || 'Unknown error')}</p>`;
         return;
     }
     

@@ -2533,7 +2533,7 @@ async function openCategoryModal(category) {
     contentElement.innerHTML = `
         <div class="modal-loading">
             <div class="spinner"></div>
-            <p>${formatTranslation('loadingFilesFor', { category: category })}</p>
+            <p>${formatTranslation('loadingFilesFor', { category: escapeHtml(category) })}</p>
         </div>
     `;
     
@@ -2561,7 +2561,7 @@ async function openCategoryModal(category) {
                 <div class="modal-empty">
                     <i class="bi bi-inbox"></i>
                     <h3>${translations.noFilesFound}</h3>
-                    <p>${formatTranslation('noFilesInCategory', { category: category })}</p>
+                    <p>${formatTranslation('noFilesInCategory', { category: escapeHtml(category) })}</p>
                 </div>
             `;
         }
@@ -2910,7 +2910,7 @@ async function openCategoryWordsModal(categoryId, categoryName) {
     contentElement.innerHTML = `
         <div class="modal-loading">
             <div class="spinner"></div>
-            <p>${formatTranslation('loadingWordsFor', { category: categoryName })}</p>
+            <p>${formatTranslation('loadingWordsFor', { category: escapeHtml(categoryName) })}</p>
         </div>
     `;
     
@@ -2938,7 +2938,7 @@ async function openCategoryWordsModal(categoryId, categoryName) {
                 <div class="modal-empty">
                     <i class="bi bi-inbox"></i>
                     <h3>${translations.noWordsFound}</h3>
-                    <p>${formatTranslation('noWordsInCategory', { category: categoryName })}</p>
+                    <p>${formatTranslation('noWordsInCategory', { category: escapeHtml(categoryName) })}</p>
                 </div>
             `;
         }
@@ -3063,7 +3063,7 @@ async function openWordFilesModal(wordId, wordText, categoryId = null) {
     contentElement.innerHTML = `
         <div class="modal-loading">
             <div class="spinner"></div>
-            <p>${formatTranslation('loadingFilesContaining', { word: wordText })}</p>
+            <p>${formatTranslation('loadingFilesContaining', { word: escapeHtml(wordText) })}</p>
         </div>
     `;
     
@@ -3097,7 +3097,7 @@ async function openWordFilesModal(wordId, wordText, categoryId = null) {
                 <div class="modal-empty">
                     <i class="bi bi-inbox"></i>
                     <h3>${translations.noFilesFound}</h3>
-                    <p>${formatTranslation('noFilesInCategory', { category: wordText })}</p>
+                    <p>${formatTranslation('noFilesInCategory', { category: escapeHtml(wordText) })}</p>
                 </div>
             `;
         }

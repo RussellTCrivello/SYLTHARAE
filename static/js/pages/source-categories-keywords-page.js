@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         loadCategories(sourceId, page);
                     });
                 } else {
-                    container.innerHTML = `<div class="alert alert-warning">${data.error || translations.noCategories || 'No categories found'}</div>`;
+                    container.innerHTML = `<div class="alert alert-warning">${escapeHtml(data.error || translations.noCategories || 'No categories found')}</div>`;
                 }
             })
             .catch(error => {
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         loadKeywords(sourceId, page);
                     });
                 } else {
-                    container.innerHTML = `<div class="alert alert-warning">${data.error || translations.noKeywords || 'No keywords found'}</div>`;
+                    container.innerHTML = `<div class="alert alert-warning">${escapeHtml(data.error || translations.noKeywords || 'No keywords found')}</div>`;
                 }
             })
             .catch(error => {

@@ -553,7 +553,10 @@ def _library_page(args, page=1, limit=10, scope_where=None, scope_params=()):
         if highlight_lower and highlight_lower in (name or '').lower():
             from markupsafe import Markup, escape
             escaped = escape(name)
-            name = Markup(str(escaped).replace(
+            # Safe by construction: `name` and the highlight term are both
+            # escaped BEFORE the <mark> wrapper is added, so no untrusted
+            # markup can result (step 25 security audit triage).
+            name = Markup(str(escaped).replace(  # nosec B704
                 str(escape(highlight_term)),
                 f'<mark>{escape(highlight_term)}</mark>'))
         files.append((
@@ -1077,10 +1080,15 @@ def file_detail(file_id):
     percentages = {}
     try:
         classification_data = select_classification(file_id)
-        logger.info(f"Classification data for file {file_id}: {classification_data}")
+        # Structure only: how many categories came back. The values
+        # themselves are document-derived content and stay out of the log
+        # (step 25 security audit: document content must not reach logs).
+        logger.info("Classification data for file %s: %d category entries",
+                    file_id, len(classification_data or {}))
         if classification_data:
             percentages = compute_percentage(classification_data)
-            logger.info(f"Computed percentages for file {file_id}: {percentages}")
+            logger.info("Computed percentages for file %s: %d categories",
+                        file_id, len(percentages))
         else:
             logger.warning(f"No classification data returned for file {file_id}")
     except Exception as e:
@@ -1103,9 +1111,10 @@ def file_detail(file_id):
     if total_pages is None:
         total_pages = 0
     
-    # Debug: Log content status with detailed information
+    # Debug: Log content status; lengths and types only - never a preview
+    # of the document (step 25 security audit: document content must not
+    # reach logs).
     logger.info(f"Rendering template for file_id={file_id}: content_length={len(content)}, total_chars={total_chars}, total_pages={total_pages}, content_type={type(content)}")
-    logger.info(f"Content preview (first 100 chars): {repr(content[:100]) if content else 'EMPTY'}")
     
     # Previous/Next for the file being displayed, resolved inside the
     # browsing context the operator arrived from (the filtered library list,

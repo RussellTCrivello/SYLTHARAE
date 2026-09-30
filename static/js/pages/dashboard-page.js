@@ -852,7 +852,7 @@ async function loadDashboardSummary() {
         
         const filesChangeEl = document.getElementById('filesChange');
         if (filesChangeEl) {
-            filesChangeEl.innerHTML = `<i class="bi bi-arrow-up"></i> ${data.recentFiles || 0} ${translations.thisWeek}`;
+            filesChangeEl.innerHTML = `<i class="bi bi-arrow-up"></i> ${Number(data.recentFiles) || 0} ${translations.thisWeek}`;
         }
         
         console.log('loadDashboardSummary: Successfully updated all elements');

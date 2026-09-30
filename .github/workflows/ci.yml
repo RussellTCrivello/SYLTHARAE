@@ -127,6 +127,13 @@ jobs:
       - name: Bandit (new findings against the baseline)
         run: bandit -q -c pyproject.toml -r . -ll -b tools/security/bandit-baseline.json
 
+      # The message-matched baseline cannot see a NEW site in an
+      # already-baselined file (bandit matches by message, not line or
+      # count - step 25 audit). The count gate closes that hole: any
+      # (file, check) cell growing beyond its triaged count fails.
+      - name: Bandit count gate (new sites in baselined files)
+        run: python3 tools/security/bandit_count_gate.py
+
       - name: pip-audit (known vulnerabilities)
         run: pip-audit --progress-spinner off --skip-editable
 

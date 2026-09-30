@@ -390,9 +390,9 @@ notificationsPage.loadTabData = async function(tab) {
             }
         } else {
             const errorMsg = window.appTranslations?.['Error loading notifications'] || 'Error loading notifications';
-            if (allList) allList.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>${data.error || errorMsg}</p></div>`;
-            if (unreadList) unreadList.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>${data.error || errorMsg}</p></div>`;
-            if (readList) readList.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>${data.error || errorMsg}</p></div>`;
+            if (allList) allList.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>${escapeHtml(data.error || errorMsg)}</p></div>`;
+            if (unreadList) unreadList.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>${escapeHtml(data.error || errorMsg)}</p></div>`;
+            if (readList) readList.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>${escapeHtml(data.error || errorMsg)}</p></div>`;
         }
     } catch (error) {
         console.error('Error loading notifications:', error);
