@@ -151,7 +151,9 @@
         columns=[
             {'kind': 'select', 'width': '44px'},
             {'kind': 'index', 'width': '70px'},
-            {'key': 'name', 'label': _('Name'), 'sortable': True, 'type': 'text'},
+            {'key': 'name', 'label': _('Name'), 'sortable': True, 'type': 'text',
+             'filter': {'kind': 'text', 'param': 'search',
+                        'value': search|default('')}},
             {'key': 'job', 'label': _('Job/Type'), 'width': '140px'},
             {'key': 'city', 'label': _('Location'), 'width': '160px'},
             {'key': 'importance', 'label': _('Importance'), 'sortable': True, 'type': 'number', 'width': '150px'},

@@ -41,7 +41,8 @@
                             type_options=None,
                             empty_action_label=_('Upload your first file'),
                             empty_action_href=None,
-                            export_params=None, export_scope_base=None) %}
+                            export_params=None, export_scope_base=None,
+                            name_search_param=None) %}
 {% set files_info -%}
     {%- if files and files|length > 0 -%}
         {%- set start = start_position|default(1) -%}
@@ -56,7 +57,9 @@
         columns=[
             {'kind': 'select', 'width': '44px'},
             {'kind': 'index', 'width': '64px'},
-            {'key': 'name', 'label': _('File Name'), 'sortable': True, 'type': 'text'},
+            {'key': 'name', 'label': _('File Name'), 'sortable': True, 'type': 'text',
+             'filter': {'kind': 'text', 'param': name_search_param,
+                        'value': search or ''} if name_search_param else none},
             {'key': 'type', 'label': _('Type'), 'width': '110px',
              'filter': {
                  'kind': 'values', 'row_attr': 'data-type',

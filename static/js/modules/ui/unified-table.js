@@ -328,24 +328,60 @@
         global.location.assign(url.toString());
     }
 
-    /** A client-mode table filters the rows it has, in place. */
-    function filterRowsClientSide(table, config, values, hide) {
-        if (!config.row_attr) return;
+    /** A client-mode table filters the rows it has, in place. Every active
+     *  column filter is registered here and all of them are re-evaluated
+     *  together on each change, so a values filter and a text search (or
+     *  several of either) combine with AND - one filter can never silently
+     *  lift another's rows back in. */
+    const clientFilters = new Map();   // table -> Map(key -> filter state)
+
+    function clientFilterKey(config) {
+        return config.param || config.row_attr || '';
+    }
+
+    function cellValue(row, config) {
+        const cell = row.querySelector('[' + config.row_attr + ']');
+        return cell ? (cell.getAttribute(config.row_attr) || '').toLowerCase() : null;
+    }
+
+    function rowPassesFilter(row, state) {
+        const value = cellValue(row, state.config);
+        if (value === null) return true;   // the column is not on this row
+        if (state.kind === 'text') {
+            return !state.text || value.indexOf(state.text) >= 0;
+        }
+        if (!state.values || !state.values.length) return true;
+        const chosen = state.values.indexOf(value) >= 0;
+        return state.hide ? !chosen : chosen;
+    }
+
+    function evaluateClientFilters(table) {
+        const active = clientFilters.get(table);
         table.querySelectorAll('tbody tr').forEach((row) => {
-            const cell = row.querySelector('[' + config.row_attr + ']');
-            if (!cell) return;
-            const value = cell.getAttribute(config.row_attr) || '';
-            const match = values.indexOf(value.toLowerCase()) >= 0;
-            const filtered = hide ? match : (values.length ? !match : false);
-            row.classList.toggle('ut-row-filtered', filtered);
+            if (row.hasAttribute(STATE_ATTR)) return;
+            let passes = true;
+            if (active) {
+                for (const state of active.values()) {
+                    if (!rowPassesFilter(row, state)) {
+                        passes = false;
+                        break;
+                    }
+                }
+            }
+            row.classList.toggle('ut-row-filtered', !passes);
         });
     }
 
-    function clearClientFilter(table, config) {
-        if (!config.row_attr) return;
-        table.querySelectorAll('tbody tr.ut-row-filtered').forEach((row) => {
-            row.classList.remove('ut-row-filtered');
-        });
+    function setClientFilter(table, config, state) {
+        let active = clientFilters.get(table);
+        if (!active) {
+            active = new Map();
+            clientFilters.set(table, active);
+        }
+        const key = clientFilterKey(config);
+        if (state === null) active.delete(key);
+        else active.set(key, state);
+        evaluateClientFilters(table);
     }
 
     function applyColumnFilter(table, pop, mode) {
@@ -363,15 +399,22 @@
                 .map((check) => (check.getAttribute('value') || '').toLowerCase())
                 .filter(Boolean);
             const joined = chosen.join(',');
+            const client = configOf(table).mode === 'client';
             if (mode === 'clear') {
                 changes.push([config.param, null], [config.exclude_param, null]);
-                clearClientFilter(table, config);
+                if (client) setClientFilter(table, config, null);
             } else if (mode === 'hide') {
                 changes.push([config.exclude_param, joined], [config.param, null]);
-                filterRowsClientSide(table, config, chosen, true);
+                if (client) {
+                    setClientFilter(table, config,
+                        { kind: 'values', config, values: chosen, hide: true });
+                }
             } else {   // show only the chosen values
                 changes.push([config.param, joined], [config.exclude_param, null]);
-                filterRowsClientSide(table, config, chosen, false);
+                if (client) {
+                    setClientFilter(table, config,
+                        { kind: 'values', config, values: chosen, hide: false });
+                }
             }
         } else if (kind === 'number') {
             const min = pop.querySelector('[data-ut-filter-min]');
@@ -385,17 +428,36 @@
             changes.push(
                 [config.from_param, from ? from.value.trim() : null],
                 [config.to_param, to ? to.value.trim() : null]);
+        } else if (kind === 'text') {
+            const input = pop.querySelector('[data-ut-filter-text]');
+            if (mode === 'clear' && input) input.value = '';   // clear means clear
+            const value = input ? input.value.trim() : '';
+            changes.push([config.param, value || null]);
+            if (configOf(table).mode === 'client') {
+                setClientFilter(table, config,
+                    value ? { kind: 'text', config, text: value.toLowerCase() } : null);
+            }
         }
 
         if (configOf(table).mode === 'client') {
-            if (kind !== 'values') return;   // a client table cannot re-ask
-            if (mode === 'clear') return;    // handled above
-            return;
+            return;   // a client table never re-asks: the rows are filtered here
         }
         navigateWithFilter(table, changes);
     }
 
     function wireColumnFilters(table, scope) {
+        // Enter in a column's search field applies that column's filter.
+        scope.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            const input = event.target.closest('[data-ut-filter-text]');
+            if (!input) return;
+            const pop = input.closest('[data-ut-filter-pop]');
+            const apply = pop && pop.querySelector('[data-ut-filter-apply]');
+            if (apply) {
+                event.preventDefault();
+                apply.click();
+            }
+        });
         scope.addEventListener('click', (event) => {
             const btn = event.target.closest('[data-ut-filter-btn]');
             const pop = event.target.closest('[data-ut-filter-pop]');

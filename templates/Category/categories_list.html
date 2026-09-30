@@ -140,7 +140,9 @@
         id='categoriesTable',
         columns=[
             {'kind': 'index', 'width': '70px'},
-            {'key': 'name', 'label': _('Category Name'), 'sortable': True, 'type': 'text'},
+            {'key': 'name', 'label': _('Category Name'), 'sortable': True, 'type': 'text',
+             'filter': {'kind': 'text', 'param': 'search',
+                        'value': search|default('')}},
             {'key': 'files', 'label': _('Files'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '110px'},
             {'key': 'words', 'label': _('Words'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '110px'},
             {'kind': 'actions', 'width': '260px'}

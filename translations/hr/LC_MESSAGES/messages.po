@@ -12537,3 +12537,11 @@ msgstr ""
 "računi zadržavaju svoju bočnu traku, i sučelje koje vaša uloga ne smije vidjeti se nikada ne pojavljuje, što god "
 "ovdje postavili."
 
+#. templates/components/table.html
+msgid "Search this column"
+msgstr "Pretraži ovaj stupac"
+
+#. templates/components/table.html
+msgid "Contains…"
+msgstr "Sadrži…"
+

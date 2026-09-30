@@ -172,7 +172,9 @@
         columns=[
             {'kind': 'select', 'width': '50px'},
             {'kind': 'index', 'width': '70px'},
-            {'key': 'word', 'label': _('Word'), 'sortable': True, 'type': 'text'},
+            {'key': 'word', 'label': _('Word'), 'sortable': True, 'type': 'text',
+             'filter': {'kind': 'text', 'param': 'search',
+                        'value': search|default('')}},
             {'key': 'usage_count', 'label': _('Usage Count'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '120px'},
             {'key': 'status', 'label': _('Status'), 'sortable': True, 'width': '140px'},
             {'kind': 'actions', 'width': '150px'}

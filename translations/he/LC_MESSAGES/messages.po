@@ -12409,3 +12409,11 @@ msgstr ""
 "בחר אילו ממשקים יופיעו בסרגל הצד שלך ובאיזה סדר. הבחירות הללו שלך בלבד: חשבונות אחרים שומרים על סרגל הצד שלהם, וממשק"
 " שהתפקיד שלך אינו רשאי לראות לעולם לא יופיע, לא משה מה תגדיר כאן."
 
+#. templates/components/table.html
+msgid "Search this column"
+msgstr "חפש בעמודה זו"
+
+#. templates/components/table.html
+msgid "Contains…"
+msgstr "מכיל…"
+

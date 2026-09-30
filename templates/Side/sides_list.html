@@ -150,7 +150,9 @@
         columns=[
             {'kind': 'select', 'width': '44px'},
             {'kind': 'index', 'width': '70px'},
-            {'key': 'name', 'label': _('Name'), 'sortable': True, 'type': 'text'},
+            {'key': 'name', 'label': _('Name'), 'sortable': True, 'type': 'text',
+             'filter': {'kind': 'text', 'param': 'search',
+                        'value': search|default('')}},
             {'key': 'importance', 'label': _('Importance'), 'sortable': True, 'type': 'number', 'width': '150px'},
             {'key': 'sources', 'label': _('Sources'), 'type': 'number', 'align': 'end', 'width': '100px'},
             {'key': 'documents', 'label': _('Documents'), 'type': 'number', 'align': 'end', 'width': '115px'},

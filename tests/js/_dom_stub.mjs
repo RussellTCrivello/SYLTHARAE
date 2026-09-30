@@ -199,6 +199,9 @@ export class FakeElement {
         this.listeners[type] = (this.listeners[type] || [])
             .filter((entry) => entry.handler !== handler);
     }
+    /** DOM activation: the element's click() dispatches a click event. */
+    click() { return this.dispatch('click'); }
+
     dispatch(type, payload = {}) {
         // Events travel the whole path - capture down from the document, then
         // the target, then bubble back up - because a component delegating its

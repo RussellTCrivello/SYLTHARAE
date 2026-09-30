@@ -12765,6 +12765,14 @@ msgstr ""
 "Choose which interfaces appear in your sidebar and in which order. These choices are yours alone: other accounts "
 "keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
 
+#. templates/components/table.html
+msgid "Search this column"
+msgstr "Search this column"
+
+#. templates/components/table.html
+msgid "Contains…"
+msgstr "Contains…"
+
 #~ msgid "File Analysis Overview"
 #~ msgstr ""
 

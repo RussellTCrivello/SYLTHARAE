@@ -268,6 +268,108 @@ check('"hide" excludes the chosen formats',
       hideUrl.searchParams.get('exclude_file_type') === 'pdf'
       && !hideUrl.searchParams.has('file_type'), assigned[assigned.length - 1]);
 
+// ---------------------------------------------------------------------
+// The column's own search field (kind 'text'): a dedicated search field
+// per column. Client tables filter in place; several active filters
+// (text and values, either order) combine with AND. Enter applies.
+// ---------------------------------------------------------------------
+documentRoot.appendChild(treeFromHtml(`
+<div data-unified-table='{"mode":"client"}'>
+  <table id="clientTable">
+    <thead><tr>
+      <th class="ut-col ut-sortable" data-ut-sort="name" data-ut-type="text">Name
+        <button type="button" class="ut-filter-btn" data-ut-filter-btn aria-expanded="false"></button>
+        <div class="ut-col-filter" data-ut-filter-pop hidden
+             data-ut-filter-config='{"kind":"text","row_attr":"data-ut-value","param":"name_contains"}'>
+          <input type="search" data-ut-filter-text value="">
+          <div class="ut-col-filter-actions">
+            <button type="button" class="btn" data-ut-filter-apply>Apply</button>
+            <button type="button" class="btn" data-ut-filter-clear>Clear</button>
+          </div>
+        </div>
+      </th>
+      <th class="ut-col" data-ut-type="text">Kind
+        <button type="button" class="ut-filter-btn" data-ut-filter-btn aria-expanded="false"></button>
+        <div class="ut-col-filter" data-ut-filter-pop hidden
+             data-ut-filter-config='{"kind":"values","row_attr":"data-kind","param":"kind"}'>
+          <label class="ut-filter-value"><input type="checkbox" class="ut-filter-check" value="memo"><span>Memo</span></label>
+          <label class="ut-filter-value"><input type="checkbox" class="ut-filter-check" value="log"><span>Log</span></label>
+          <div class="ut-col-filter-actions">
+            <button type="button" class="btn" data-ut-filter-only>Show only</button>
+            <button type="button" class="btn" data-ut-filter-clear>Clear</button>
+          </div>
+        </div>
+      </th>
+    </tr></thead>
+    <tbody>
+      <tr><td data-ut-value="annual report">annual report</td><td data-kind="memo" data-ut-value="memo">memo</td></tr>
+      <tr><td data-ut-value="bananas ledger">bananas ledger</td><td data-kind="log" data-ut-value="log">log</td></tr>
+      <tr><td data-ut-value="annual budget">annual budget</td><td data-kind="log" data-ut-value="log">log</td></tr>
+      <tr><td data-ut-value="minutes draft">minutes draft</td><td data-kind="memo" data-ut-value="memo">memo</td></tr>
+    </tbody>
+  </table>
+  <div class="ut-toolbar"></div>
+</div>`));
+const clientTable = documentRoot.querySelector('#clientTable');
+UnifiedTable.enhance(clientTable);
+const clientRows = () => Array.from(clientTable.querySelectorAll('tbody tr'));
+const visibleTexts = () => clientRows()
+    .filter((row) => !row.classList.contains('ut-row-filtered'))
+    .map((row) => row.querySelectorAll('td')[0].getAttribute('data-ut-value'));
+
+const clientPops = clientTable.querySelectorAll('[data-ut-filter-pop]');
+const namePop = clientPops[0];      // the Name column's text filter
+const kindPop = clientPops[1];      // the Kind column's values filter
+const nameInput = namePop.querySelector('[data-ut-filter-text]');
+
+// A standalone empty search field, entered directly: the input fires the
+// field's dedicated search on Enter.
+nameInput.value = 'annual';
+nameInput.dispatch('keydown', { key: 'Enter' });
+check('Enter in the column search field applies it',
+      JSON.stringify(visibleTexts()) === JSON.stringify(['annual report', 'annual budget']),
+      JSON.stringify(visibleTexts()));
+
+// The same view, narrowed further by the Kind column: both filters hold.
+const memoCheck = kindPop.querySelector('.ut-filter-check[value="memo"]');
+memoCheck.checked = true;
+kindPop.querySelector('[data-ut-filter-only]').dispatch('click');
+check('a values filter combines with the text filter (AND)',
+      JSON.stringify(visibleTexts()) === JSON.stringify(['annual report']),
+      JSON.stringify(visibleTexts()));
+
+// Clearing the text field lifts only the text: the values filter stands.
+namePop.querySelector('[data-ut-filter-clear]').dispatch('click');
+check('clearing the text filter keeps the values filter',
+      JSON.stringify(visibleTexts()) === JSON.stringify(['annual report', 'minutes draft']),
+      JSON.stringify(visibleTexts()));
+
+// Clearing the values filter restores every row.
+kindPop.querySelector('[data-ut-filter-clear]').dispatch('click');
+check('clearing the last filter restores every row',
+      visibleTexts().length === 4, JSON.stringify(visibleTexts()));
+
+// A server-mode column search re-asks with the column's parameter.
+const searchPop = sizeHeader.querySelector('[data-ut-filter-pop]');
+searchPop.setAttribute('data-ut-filter-config',
+    '{"kind":"text","row_attr":"data-ut-value","param":"name_contains"}');
+searchPop.appendChild(treeFromHtml(
+    '<div class="ut-col-filter-actions"><input type="search" data-ut-filter-text value="">'
+    + '<button type="button" class="btn" data-ut-filter-apply>Apply</button>'
+    + '<button type="button" class="btn" data-ut-filter-clear>Clear</button></div>'));
+assigned.length = 0;
+filterBtn.dispatch('click');
+const textInput = searchPop.querySelector('[data-ut-filter-text]');
+textInput.value = 'al';
+searchPop.querySelector('[data-ut-filter-apply]').dispatch('click');
+const textUrl = new URL(assigned[assigned.length - 1]);
+check('a server table re-asks with the column search parameter',
+      textUrl.searchParams.get('name_contains') === 'al'
+      && textUrl.searchParams.get('page') === '1'
+      && textUrl.searchParams.get('sort') === 'name',
+      assigned[assigned.length - 1]);
+check('an applied column search closes the popover', searchPop.hidden);
+
 // Report
 let failed = 0;
 for (const [name, ok] of checks) {

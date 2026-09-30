@@ -12495,3 +12495,11 @@ msgstr ""
 "اختر الواجهات التي تظهر في شريطك الجانبي وبأي ترتيب. هذه الخيارات لك وحدك: الحسابات الأخرى تحتفظ بشريطها الجانبي "
 "الخاص، والواجهة التي لا يسمح دورك برؤيتها لا تظهر أبدًا مهما ضبطت هنا."
 
+#. templates/components/table.html
+msgid "Search this column"
+msgstr "ابحث في هذا العمود"
+
+#. templates/components/table.html
+msgid "Contains…"
+msgstr "يحتوي على…"
+

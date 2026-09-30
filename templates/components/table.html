@@ -243,6 +243,19 @@
         <button type="button" class="btn btn-sm btn-primary" data-ut-filter-apply>{{ _('Apply') }}</button>
         <button type="button" class="btn btn-sm btn-outline-secondary" data-ut-filter-clear>{{ _('Clear') }}</button>
     </div>
+    {%- elif kind == 'text' -%}
+    {#- The column's own search field: contains-match, dedicated to this
+        column (the reader asked for one search field per column). -#}
+    <div class="ut-filter-range">
+        <label class="ut-filter-range-label">{{ _('Search this column') }}
+            <input type="search" class="form-control form-control-sm" data-ut-filter-text
+                   value="{{ filter.value|default('') }}"
+                   placeholder="{{ filter.placeholder|default(_('Contains…')) }}"></label>
+    </div>
+    <div class="ut-col-filter-actions">
+        <button type="button" class="btn btn-sm btn-primary" data-ut-filter-apply>{{ _('Apply') }}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-ut-filter-clear>{{ _('Clear') }}</button>
+    </div>
     {%- endif -%}
 </div>
 {% endmacro %}

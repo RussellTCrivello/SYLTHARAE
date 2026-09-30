@@ -14459,3 +14459,11 @@ msgid ""
 "keep their own sidebar, and an interface your role may not see never appears, whatever you set here."
 msgstr ""
 
+#. templates/components/table.html
+msgid "Search this column"
+msgstr "Search this column"
+
+#. templates/components/table.html
+msgid "Contains…"
+msgstr "Contains…"
+

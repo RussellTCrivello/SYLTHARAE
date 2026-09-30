@@ -86,3 +86,16 @@ def test_every_list_page_route_renders_its_table(admin_client, seeded_corpus, ro
         f"{route}: {resp.status_code} {resp.get_data(as_text=True)[:300]}")
     assert "<table" in resp.get_data(as_text=True), (
         f"{route} rendered without its table")
+
+
+def test_the_file_library_carries_a_dedicated_name_column_search(admin_client,
+                                                                 seeded_corpus):
+    """The reader asked for one search field per column: the File Name
+    column's filter is the text kind, bound to the view's `search`
+    parameter and prefilled from it."""
+    resp = admin_client.get("/files?search=rep")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert '{"kind":"text","param":"search"' in html.replace(" ", ""), (
+        "the File Name column has no dedicated search field")
+    assert 'value="rep"' in html, "the column search is not prefilled from the view"
