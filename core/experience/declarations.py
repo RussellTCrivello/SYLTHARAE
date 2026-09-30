@@ -146,7 +146,7 @@ DECLARED_SCREENS: Dict[str, Dict[str, Any]] = {
         "filters": (
             ("status", "Status", "screen.keywords.filter.status.label",
              {"control": "select"}),
-            ("sort", "Sort By", "screen.keywords.filter.sort.label",
+            ("category", "Category", "screen.keywords.filter.category.label",
              {"control": "select"}),
         ),
         "states": (
@@ -166,8 +166,24 @@ DECLARED_SCREENS: Dict[str, Dict[str, Any]] = {
     # reference (handler, endpoint) is the page's, not the definition's.
     "sources": {
         "title": "Sources",
+        "columns": (
+            ("name", "Name", "screen.sources.column.name.label",
+             {"sortable": True}),
+            ("job", "Job/Type", "screen.sources.column.job.label", {}),
+            ("location", "Location", "screen.sources.column.location.label", {}),
+            ("importance", "Importance", "screen.sources.column.importance.label",
+             {"sortable": True}),
+            ("documents", "Documents", "screen.sources.column.documents.label",
+             {"render": "number", "align": "end"}),
+            ("category", "Category", "screen.sources.column.category.label", {}),
+            ("access_status", "Access Status",
+             "screen.sources.column.access_status.label", {}),
+            ("discovered", "Discovery Date",
+             "screen.sources.column.discovered.label",
+             {"render": "date", "sortable": True}),
+        ),
         "states": (
-            ("empty", "No sources yet.", "state.sources.empty.title"),
+            ("empty", "No sources found", "state.sources.empty.title"),
         ),
         "help": ("sources", "Sources", "help.sources.title", "help.sources.summary"),
     },
@@ -175,8 +191,20 @@ DECLARED_SCREENS: Dict[str, Dict[str, Any]] = {
     # ---------------------------------------------------------------- sides
     "sides": {
         "title": "Sides",
+        "columns": (
+            ("name", "Name", "screen.sides.column.name.label",
+             {"sortable": True}),
+            ("importance", "Importance", "screen.sides.column.importance.label",
+             {"sortable": True}),
+            ("sources", "Sources", "screen.sides.column.sources.label",
+             {"render": "number", "align": "end"}),
+            ("documents", "Documents", "screen.sides.column.documents.label",
+             {"render": "number", "align": "end"}),
+            ("created", "Created", "screen.sides.column.created.label",
+             {"render": "date", "sortable": True}),
+        ),
         "states": (
-            ("empty", "No sides yet.", "state.sides.empty.title"),
+            ("empty", "No sides found", "state.sides.empty.title"),
         ),
         "help": ("sides", "Sides", "help.sides.title", "help.sides.summary"),
     },

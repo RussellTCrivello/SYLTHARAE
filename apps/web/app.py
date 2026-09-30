@@ -297,6 +297,23 @@ def _recover_jobs():
 
 with app.app_context():
     _recover_jobs()
+
+# Step 20 scheduler: fires due job schedules (report runs, rule and scenario
+# evaluations) through the JobManager. Off unless SYLTHARAE_SCHEDULER=1 - the
+# entry point sets that for production; tests and import-only processes never
+# grow this thread by accident. Guarded like job recovery: a scheduler that
+# cannot start must not block the web app.
+def _start_scheduler():
+    try:
+        from services.scheduling.scheduler import Scheduler, enabled_by_config
+
+        if enabled_by_config():
+            Scheduler.get_instance().start()
+            logger.info("✅ Job scheduler started")
+    except Exception as exc:
+        logger.warning("Job scheduler not started: %s", exc.__class__.__name__)
+
+_start_scheduler()
 logger.info("✅ Rate limiting enabled (default 60/min, 600/hour per client)")
 
 # Enable gzip compression for all responses
@@ -527,6 +544,16 @@ logger.info("✅ Interface registry views registered")
 from Api.routes.experience_api import register_experience_routes
 register_experience_routes(app)
 logger.info("✅ Experience contract views registered")
+
+# Register the shared list exports (one endpoint, every list interface)
+from Api.routes.exports import register_exports_routes
+register_exports_routes(app)
+logger.info("✅ List export views registered")
+
+# Register the direct file operations (rename / copy / locate, from any table)
+from Api.routes.file_operations import register_file_operations_routes
+register_file_operations_routes(app)
+logger.info("✅ File operation views registered")
 
 # ==================== FAVICON ROUTE ====================
 @app.route('/favicon.ico')

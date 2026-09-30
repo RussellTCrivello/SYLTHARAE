@@ -280,8 +280,25 @@ def register_common_routes(app, babel_instance):
             }
 
             current_user_obj = getattr(g, 'user', None)
+            # The user's own sidebar preferences (hide / position). Kept
+            # fail-open to the declared navigation: if the preference store
+            # cannot be read, the registry's order and visibility stand -
+            # the shell never blanks the navigation over a preference error.
+            nav_prefs = None
+            if current_user_obj is not None and getattr(current_user_obj, 'id', None):
+                try:
+                    from services.navigation_prefs import get_prefs as _get_nav_prefs
+                    from Api.utils.utils import get_connection as _nav_conn
+                    with _nav_conn() as _nav_conn_handle:
+                        nav_prefs = _get_nav_prefs(_nav_conn_handle,
+                                                   current_user_obj.id)
+                except Exception as nav_pref_error:
+                    logger.debug("navigation preferences unavailable: %s",
+                                 nav_pref_error)
+                    nav_prefs = None
             context['navigation'] = build_navigation(
-                interface_state, current_user_obj, request.endpoint, url_for)
+                interface_state, current_user_obj, request.endpoint, url_for,
+                prefs=nav_prefs)
             # Named `page_identity`, not `page`: several routes already pass
             # `page` as the current pagination cursor, and a template that
             # received a number where it expected the page model (or the other

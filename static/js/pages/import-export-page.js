@@ -11,6 +11,7 @@
  * explicitly published on window.
  */
 
+import { escapeHtml } from '../modules/core/utils.js';
 // Load translations from JSON script tag
 let translations = {};
 
@@ -104,7 +105,7 @@ async function handleBatchImport() {
                 </div>
             `;
         } else {
-            resultsDiv.innerHTML = `<div class="alert alert-danger">${data.error || (translations.importFailed || 'Import failed')}</div>`;
+            resultsDiv.innerHTML = `<div class="alert alert-danger">${escapeHtml(data.error || (translations.importFailed || 'Import failed'))}</div>`;
         }
 
     } catch (error) {
@@ -166,13 +167,13 @@ async function importDatabaseBackup(file) {
             resultsDiv.innerHTML = `
                 <div class="alert alert-success">
                     <strong>${translations.backupValid || 'Backup Valid'}</strong><br>
-                    ${translations.tables || 'Tables'}: ${data.results.table_count}<br>
+                    ${translations.tables || 'Tables'}: ${escapeHtml(data.results.table_count)}<br>
                     ${data.results.warnings && data.results.warnings.length > 0 ?
                         '<small>' + data.results.warnings.join('<br>') + '</small>' : ''}
                 </div>
             `;
         } else {
-            resultsDiv.innerHTML = `<div class="alert alert-danger">${(data.results && data.results.error) || data.error || (translations.invalidBackup || 'Invalid backup')}</div>`;
+            resultsDiv.innerHTML = `<div class="alert alert-danger">${escapeHtml((data.results && data.results.error) || data.error || (translations.invalidBackup || 'Invalid backup'))}</div>`;
         }
 
     } catch (error) {
@@ -233,7 +234,7 @@ async function importSettings(file) {
                 </div>
             `;
         } else {
-            resultsDiv.innerHTML = `<div class="alert alert-danger">${data.error || (translations.invalidSettingsFile || 'Invalid settings file')}</div>`;
+            resultsDiv.innerHTML = `<div class="alert alert-danger">${escapeHtml(data.error || (translations.invalidSettingsFile || 'Invalid settings file'))}</div>`;
         }
 
     } catch (error) {

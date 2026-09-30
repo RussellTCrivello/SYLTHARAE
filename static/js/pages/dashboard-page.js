@@ -652,7 +652,7 @@ function renderTopWordsCloud(words) {
         wordItem.style.fontSize = fontSize + 'rem';
         wordItem.innerHTML = `${escapeHtml(word.word)} <span class="count">(${escapeHtml(word.files)})</span>`;
         wordItem.onclick = () => {
-            window.location.href = `/search?q=${encodeURIComponent(word.word)}`;
+            if (window.swapNavigate) { window.swapNavigate(`/search?q=${encodeURIComponent(word.word)}`); } else { window.location.href = `/search?q=${encodeURIComponent(word.word)}`; }
         };
         container.appendChild(wordItem);
     });
@@ -666,7 +666,7 @@ function renderLargestFiles(files) {
     files.forEach(file => {
         const row = document.createElement('tr');
         row.style.cursor = 'pointer';
-        row.onclick = () => window.location.href = `/file/${file.id}`;
+        if (window.swapNavigate) { window.swapNavigate(`/file/${file.id}`); } else { window.location.href = `/file/${file.id}`; }
         
         row.innerHTML = `
             <td><strong>${escapeHtml(file.name)}</strong></td>
@@ -852,7 +852,7 @@ async function loadDashboardSummary() {
         
         const filesChangeEl = document.getElementById('filesChange');
         if (filesChangeEl) {
-            filesChangeEl.innerHTML = `<i class="bi bi-arrow-up"></i> ${data.recentFiles || 0} ${translations.thisWeek}`;
+            filesChangeEl.innerHTML = `<i class="bi bi-arrow-up"></i> ${Number(data.recentFiles) || 0} ${translations.thisWeek}`;
         }
         
         console.log('loadDashboardSummary: Successfully updated all elements');
@@ -1447,7 +1447,7 @@ async function loadFileReports() {
             data.files.forEach(file => {
                 const card = document.createElement('div');
                 card.className = 'file-report-card';
-                card.onclick = () => window.location.href = `/file/${file.id}`;
+                if (window.swapNavigate) { window.swapNavigate(`/file/${file.id}`); } else { window.location.href = `/file/${file.id}`; }
                 
                 const fileIcon = getFileIcon(file.type);
                 const fileSize = formatFileSize(file.size);
@@ -1518,7 +1518,7 @@ async function performSearch() {
             data.files.forEach(file => {
                 const card = document.createElement('div');
                 card.className = 'file-report-card';
-                card.onclick = () => window.location.href = `/file/${file.id}`;
+                if (window.swapNavigate) { window.swapNavigate(`/file/${file.id}`); } else { window.location.href = `/file/${file.id}`; }
                 
                 const fileIcon = getFileIcon(file.type);
                 const fileSize = formatFileSize(file.size);

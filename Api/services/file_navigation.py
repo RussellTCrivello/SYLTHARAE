@@ -212,11 +212,27 @@ def build_library_filters(
         else:
             logger.warning("Invalid status_filter: %s", status_filter)
 
-    file_type = (args.get("file_type") or "").strip()
-    if file_type:
+    # A file type may be one value or a comma-separated set - the column
+    # filter's "show only the chosen formats". Each value must be exact; an
+    # empty segment is dropped, and a set filters with ANY, not LIKE.
+    type_values = [v.strip() for v in (args.get("file_type") or "").split(",")
+                   if v.strip()]
+    if len(type_values) == 1:
         parts.append("p.file_type = %s")
-        params.append(file_type)
-        context.append(("file_type", file_type))
+        params.append(type_values[0])
+        context.append(("file_type", type_values[0]))
+    elif type_values:
+        parts.append("p.file_type = ANY(%s)")
+        params.append(type_values)
+        context.append(("file_type", ",".join(type_values)))
+
+    # The column filter's "hide the chosen formats": the same values, negated.
+    excluded = [v.strip() for v in (args.get("exclude_file_type") or "").split(",")
+                if v.strip()]
+    if excluded:
+        parts.append("COALESCE(p.file_type, '') <> ALL(%s)")
+        params.append(excluded)
+        context.append(("exclude_file_type", ",".join(excluded)))
 
     date_from = _coerce_date(args.get("date_from"))
     date_to = _coerce_date(args.get("date_to"))

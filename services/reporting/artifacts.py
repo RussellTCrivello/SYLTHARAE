@@ -55,12 +55,13 @@ from services.reporting import runs
 logger = logging.getLogger(__name__)
 
 #: 2: records the run's analyses (key, fingerprint, state, template set).
-MANIFEST_VERSION = "report-manifest/2"
+MANIFEST_VERSION = "report-manifest/3"   # 3: the rendering states its language
 MAX_ARTIFACT_BYTES = 64 * 1024 * 1024
 
 _ARTIFACT_COLUMNS = (
-    "id, run_id, format, dataset_key, renderer_version, filename, media_type, byte_size,"
-    " sha256, manifest_sha256, created_by, creator_username, creator_role, job_id, created_at")
+    "id, run_id, format, dataset_key, renderer_version, language, filename, media_type,"
+    " byte_size, sha256, manifest_sha256, created_by, creator_username, creator_role,"
+    " job_id, created_at")
 
 
 class ArtifactError(runs.ReportRunError):
@@ -73,7 +74,7 @@ def _dict_cur(conn):
 
 def artifact_to_api(row: Dict[str, Any]) -> Dict[str, Any]:
     out = {k: row[k] for k in ("id", "run_id", "format", "dataset_key", "renderer_version",
-                               "filename", "media_type", "byte_size", "sha256",
+                               "language", "filename", "media_type", "byte_size", "sha256",
                                "manifest_sha256", "creator_username", "creator_role",
                                "job_id")}
     out["created_at"] = row["created_at"].isoformat() if row.get("created_at") else None
@@ -104,7 +105,7 @@ def run_document(conn, run_row: Dict[str, Any], registry=REGISTRY) -> Dict[str, 
                   "criteria_parameter": None}
     with _dict_cur(conn) as cur:
         cur.execute("SELECT dataset_key, dataset_fingerprint, query_fingerprint, semantics,"
-                    " row_limit, row_count, truncated, columns, rows"
+                    " row_limit, row_count, truncated, columns, rows, baseline"
                     " FROM report_run_datasets WHERE run_id = %s ORDER BY position",
                     (run_row["id"],))
         datasets = [dict(r) for r in cur.fetchall()]
@@ -137,6 +138,7 @@ def build_manifest(document: Dict[str, Any], rendering, *, content_sha256: str,
             "format": rendering.format, "dataset_key": rendering.dataset_key,
             "filename": rendering.filename, "media_type": rendering.media_type,
             "renderer_version": rendering.renderer_version,
+            "language": rendering.notes.get("language", "en"),
             "bytes": byte_size, "sha256": content_sha256, "notes": rendering.notes,
         },
         "report": {"id": run["report_id"], "version": run["report_version"],
@@ -156,9 +158,11 @@ def build_manifest(document: Dict[str, Any], rendering, *, content_sha256: str,
                 "runner_version": run["generator_version"]},
         "snapshot": {"id": run["snapshot"], "taken_at": run["snapshot_at"],
                      "isolation": run["isolation_level"]},
-        "datasets": [{k: ds[k] for k in ("dataset_key", "dataset_fingerprint",
-                                         "query_fingerprint", "semantics", "row_limit",
-                                         "row_count", "truncated", "columns")}
+        "datasets": [dict({k: ds[k] for k in ("dataset_key", "dataset_fingerprint",
+                                              "query_fingerprint", "semantics", "row_limit",
+                                              "row_count", "truncated", "columns")},
+                          **({"baseline": ds["baseline"]}
+                             if ds.get("baseline") is not None else {}))
                      for ds in document["datasets"]],
         "analyses": [dict({k: a[k] for k in ("analysis_key", "analysis_fingerprint", "kind",
                                               "state", "reason", "inputs", "template_set",
@@ -196,21 +200,27 @@ def _dataset_keys(conn, run_id: int) -> List[str]:
     return keys
 
 
-def _existing(conn, run_id, fmt, dataset_key) -> Optional[Dict[str, Any]]:
+def _existing(conn, run_id, fmt, dataset_key,
+              language: str = "en") -> Optional[Dict[str, Any]]:
     with _dict_cur(conn) as cur:
         cur.execute("SELECT " + _ARTIFACT_COLUMNS + " FROM report_artifacts"  # nosec B608 # _ARTIFACT_COLUMNS is a constant, optional columns are fixed literals; values are bound parameters
                     " WHERE run_id = %s AND format = %s AND COALESCE(dataset_key, '') = %s"
-                    " AND renderer_version = %s",
-                    (run_id, fmt, dataset_key or "", renderers.RENDERERS[fmt]))
+                    " AND renderer_version = %s AND language = %s",
+                    (run_id, fmt, dataset_key or "", renderers.RENDERERS[fmt], language))
         row = cur.fetchone()
     conn.rollback()
     return row
 
 
 def request_artifact(conn, run_id: int, *, user, fmt: Any, dataset_key: Any = None,
-                     registry=REGISTRY) -> Dict[str, Any]:
+                     language: Any = None, registry=REGISTRY) -> Dict[str, Any]:
     """Validate an artifact request. Returns ``{"existing": artifact}`` or
-    ``{"create": {"run_id", "format", "dataset_key"}}``."""
+    ``{"create": {"run_id", "format", "dataset_key", "language"}}``. The
+    language is part of the rendering: explicit (the requester's choice,
+    defaulting to their interface language), validated against the shipped
+    catalogs, and recorded on the artifact and in its manifest."""
+    from core.reporting.i18n import available_languages
+
     if getattr(user, "role", None) not in runs.RUN_ROLES:
         raise ArtifactError("FORBIDDEN", "viewers can read reports but not create files", 403)
     _completed_run(conn, run_id, user, registry)
@@ -219,14 +229,21 @@ def request_artifact(conn, run_id: int, *, user, fmt: Any, dataset_key: Any = No
                                                    dataset_key)
     except renderers.RenderError as exc:
         raise ArtifactError("VALIDATION_FAILED", str(exc)) from None
-    row = _existing(conn, run_id, fmt, dataset_key)
+    lang = language if language not in (None, "") else "en"
+    if lang not in available_languages():
+        raise ArtifactError(
+            "VALIDATION_FAILED",
+            f"language must be one of: {', '.join(sorted(available_languages()))}")
+    row = _existing(conn, run_id, fmt, dataset_key, lang)
     if row is not None:
         return {"existing": artifact_to_api(row)}
-    return {"create": {"run_id": run_id, "format": fmt, "dataset_key": dataset_key}}
+    return {"create": {"run_id": run_id, "format": fmt, "dataset_key": dataset_key,
+                       "language": lang}}
 
 
 def create_artifact(conn, *, run_id: int, fmt: str, dataset_key: Optional[str],
-                    creator_id: int, job_id: Optional[str] = None,
+                    creator_id: int, language: str = "en",
+                    job_id: Optional[str] = None,
                     registry=REGISTRY) -> Dict[str, Any]:
     """Render and store (job side). Returns ``{"status": "created" | "existing" |
     "refused" | "failed", ...}``; never raises for a stated refusal."""
@@ -247,13 +264,13 @@ def create_artifact(conn, *, run_id: int, fmt: str, dataset_key: Optional[str],
         run_row = _completed_run(conn, run_id, user, registry)
     except runs.ReportRunError as exc:
         return {"status": "refused", "reason": exc.code.lower(), "message": exc.message}
-    existing = _existing(conn, run_id, fmt, dataset_key)
+    existing = _existing(conn, run_id, fmt, dataset_key, language)
     if existing is not None:
         return {"status": "existing", "artifact": artifact_to_api(existing)}
     document = run_document(conn, run_row, registry)
     conn.rollback()
     try:
-        rendering = renderers.render(document, fmt, dataset_key)
+        rendering = renderers.render(document, fmt, dataset_key, language)
     except renderers.RenderError as exc:
         return {"status": "failed", "error": str(exc)}
     size = len(rendering.content)
@@ -274,18 +291,19 @@ def create_artifact(conn, *, run_id: int, fmt: str, dataset_key: Optional[str],
     with _dict_cur(conn) as cur:
         cur.execute(
             "INSERT INTO report_artifacts (run_id, format, dataset_key, renderer_version,"  # nosec B608 # _ARTIFACT_COLUMNS is a constant, optional columns are fixed literals; values are bound parameters
-            " filename, media_type, byte_size, sha256, content, manifest, manifest_sha256,"
-            " created_by, creator_username, creator_role, job_id)"
-            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            " language, filename, media_type, byte_size, sha256, content, manifest,"
+            " manifest_sha256, created_by, creator_username, creator_role, job_id)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             " ON CONFLICT DO NOTHING RETURNING " + _ARTIFACT_COLUMNS,
-            (run_id, fmt, dataset_key, rendering.renderer_version, rendering.filename,
-             rendering.media_type, size, digest, psycopg2.Binary(rendering.content),
+            (run_id, fmt, dataset_key, rendering.renderer_version, language,
+             rendering.filename, rendering.media_type, size, digest,
+             psycopg2.Binary(rendering.content),
              psycopg2.extras.Json(manifest), manifest_digest(manifest), creator["id"],
              creator["username"], creator["role"], job_id))
         row = cur.fetchone()
     conn.commit()
     if row is None:      # a concurrent identical request stored it first
-        existing = _existing(conn, run_id, fmt, dataset_key)
+        existing = _existing(conn, run_id, fmt, dataset_key, language)
         return {"status": "existing", "artifact": artifact_to_api(existing)}
     return {"status": "created", "artifact": artifact_to_api(row)}
 
@@ -300,15 +318,15 @@ class ArtifactJobResult:
 
 def run_artifact_job(get_connection: Callable, *, run_id: int, fmt: str,
                      dataset_key: Optional[str], creator_id: int,
-                     job_id: Optional[str] = None,
+                     language: str = "en", job_id: Optional[str] = None,
                      progress_cb: Optional[Callable] = None) -> ArtifactJobResult:
     """JobManager entry point (job type ``report_artifact``)."""
     result = ArtifactJobResult()
     with get_connection() as conn:
         out = create_artifact(conn, run_id=run_id, fmt=fmt, dataset_key=dataset_key,
-                              creator_id=creator_id, job_id=job_id)
+                              creator_id=creator_id, language=language, job_id=job_id)
     result.stats = {"run_id": run_id, "format": fmt, "dataset_key": dataset_key,
-                    "status": out["status"]}
+                    "language": language, "status": out["status"]}
     if out.get("artifact"):
         result.stats["artifact_id"] = out["artifact"]["id"]
         result.stats["sha256"] = out["artifact"]["sha256"]

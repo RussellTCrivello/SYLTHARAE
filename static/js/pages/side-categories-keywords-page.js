@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         loadCategories(sideId, page);
                     });
                 } else {
-                    container.innerHTML = `<div class="alert alert-warning">${data.error || translations.noCategories || 'No categories found'}</div>`;
+                    container.innerHTML = `<div class="alert alert-warning">${escapeHtml(data.error || translations.noCategories || 'No categories found')}</div>`;
                 }
             })
             .catch(error => {
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         loadKeywords(sideId, page);
                     });
                 } else {
-                    container.innerHTML = `<div class="alert alert-warning">${data.error || translations.noKeywords || 'No keywords found'}</div>`;
+                    container.innerHTML = `<div class="alert alert-warning">${escapeHtml(data.error || translations.noKeywords || 'No keywords found')}</div>`;
                 }
             })
             .catch(error => {
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.loadItemView(section, parseInt(id), name, 1);
                 } else {
                     // Fallback: navigate to archives page with filter
-                    window.location.href = `/archives?section=${section}&id=${id}`;
+                    if (window.swapNavigate) { window.swapNavigate(`/archives?section=${section}&id=${id}`); } else { window.location.href = `/archives?section=${section}&id=${id}`; }
                 }
             });
         });
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.loadItemView(section, parseInt(id), name, 1);
                 } else {
                     // Fallback: navigate to archives page with filter
-                    window.location.href = `/archives?section=${section}&id=${id}`;
+                    if (window.swapNavigate) { window.swapNavigate(`/archives?section=${section}&id=${id}`); } else { window.location.href = `/archives?section=${section}&id=${id}`; }
                 }
             });
         });

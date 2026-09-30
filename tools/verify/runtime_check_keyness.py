@@ -171,10 +171,10 @@ def main(base, state_dir):
                   "the JSON artifact carries the analysis and its five voices")
     save("manifests", manifests)
     mj, mc = manifests.get("json", {}), manifests.get("csv", {})
-    check(mj.get("manifest_version") == "report-manifest/2"
+    check(mj.get("manifest_version") == "report-manifest/3"
           and mj["analyses"][0]["analysis_fingerprint"] == analysis["analysis_fingerprint"]
           and mj["analyses"][0]["included"] is True,
-          "JSON manifest (report-manifest/2) lists the analysis as included")
+          "JSON manifest (report-manifest/3) lists the analysis as included")
     check(mc.get("analyses") and mc["analyses"][0]["included"] is False,
           "CSV manifest lists the analysis as not included")
 

@@ -36,10 +36,10 @@ This is a measurement of the product as it is, not a target.
 
 | Measure | Value |
 | --- | --- |
-| Registered interfaces | 31 |
-| Navigable screens | 29 |
+| Registered interfaces | 34 |
+| Navigable screens | 32 |
 | Screens with a described experience | 5 |
-| Screens nobody has described yet | 24 |
+| Screens nobody has described yet | 27 |
 | Registered actions | 34 |
 | - page / record / selection / bulk | 13 / 10 / 2 / 9 |
 | - destructive | 6 |
@@ -49,10 +49,10 @@ This is a measurement of the product as it is, not a target.
 | - declared with no operation behind them | 5 |
 | Templates rendering the shared ActionToolbar | 5 |
 | Hand-written action bars | 1 |
-| Templates with record actions drawn by hand | 3 |
+| Templates with record actions drawn by hand | 2 |
 | Templates with a filter submit inside a bar | 1 |
 | Templates with document viewer controls | 1 |
-| Files still calling the browser confirm() | 19 |
+| Files still calling the browser confirm() | 21 |
 | Files deciding button state by hand | 13 |
 | Gaps: actions the model cannot describe | 12 |
 
@@ -128,10 +128,10 @@ Each row is a scan from `SURFACES`, so the count and the files come from one sta
 | --- | --- | --- |
 | Shared action toolbar | 5 | `templates/Keyword/keywords_list.html`, `templates/Side/sides_list.html`, `templates/Sources/sources_list.html`, `templates/Word/Word_list.html`, `templates/email_words/email_words.html` |
 | Hand-written action bar | 1 | `templates/file/files_list.html` |
-| Record actions drawn by hand | 3 | `templates/Word/Word_detail.html`, `templates/Word/Word_list.html`, `templates/file/files_list.html` |
+| Record actions drawn by hand | 2 | `templates/Word/Word_detail.html`, `templates/Word/Word_list.html` |
 | Filter form submitted from a bar | 1 | `templates/email_words/email_words.html` |
 | Document viewer controls | 1 | `templates/file/full_content.html` |
-| Browser confirm() dialog | 19 | `static/js/pages/analysis-batch-page.js`, `static/js/pages/analyst-categorization-page.js`, `static/js/pages/categories-list-page.js`, `static/js/pages/category-words-page.js`, `static/js/pages/keyword-detail-page.js`, `static/js/pages/keywords-list-page.js`, `static/js/pages/monitoring-page.js`, `static/js/pages/notifications-page.js`, `static/js/pages/saved-searches-page.js`, `static/js/pages/search-advanced-page.js`, `static/js/pages/search-enhanced-page.js`, `static/js/pages/side-detail-page.js`, `static/js/pages/sides-list-page.js`, `static/js/pages/source-detail-page.js`, `static/js/pages/sources-list-page.js`, `static/js/pages/translation-management-page.js`, `static/js/pages/users-page.js`, `static/js/pages/word-detail-page.js`, `static/js/pages/words-list-page.js` |
+| Browser confirm() dialog | 21 | `static/js/pages/analysis-batch-page.js`, `static/js/pages/analyst-categorization-page.js`, `static/js/pages/categories-list-page.js`, `static/js/pages/category-words-page.js`, `static/js/pages/keyword-detail-page.js`, `static/js/pages/keywords-list-page.js`, `static/js/pages/monitoring-page.js`, `static/js/pages/notifications-page.js`, `static/js/pages/retention-page.js`, `static/js/pages/saved-searches-page.js`, `static/js/pages/schedules-page.js`, `static/js/pages/search-advanced-page.js`, `static/js/pages/search-enhanced-page.js`, `static/js/pages/side-detail-page.js`, `static/js/pages/sides-list-page.js`, `static/js/pages/source-detail-page.js`, `static/js/pages/sources-list-page.js`, `static/js/pages/translation-management-page.js`, `static/js/pages/users-page.js`, `static/js/pages/word-detail-page.js`, `static/js/pages/words-list-page.js` |
 | Button state decided by the page | 13 | `static/js/pages/analysis-batch-page.js`, `static/js/pages/categories-list-page.js`, `static/js/pages/email-words-page.js`, `static/js/pages/file-types-page.js`, `static/js/pages/ingestion-studio-page.js`, `static/js/pages/install-wizard-page.js`, `static/js/pages/keywords-list-page.js`, `static/js/pages/login-page.js`, `static/js/pages/notifications-page.js`, `static/js/pages/reports-page.js`, `static/js/pages/search-advanced-page.js`, `static/js/pages/search-enhanced-page.js`, `static/js/pages/users-page.js` |
 
 The component library counts 5 standardised and 2 hand-written action bars. Those are the same bars seen from two directions: the 5 templates rendering the shared toolbar are listed above, and the hand-written ones split into the file list's action bar and the full-content viewer's bar - which this audit counts as a viewer control, because that is what it is, not as an action bar to migrate.
@@ -142,9 +142,9 @@ The scripts are scanned as well as the templates, which is why the browser `conf
 
 Derived from the table above, not from taste:
 
-* **Record action surface** - the 10 registered record-scope actions, plus the 3 templates that draw record actions themselves.
+* **Record action surface** - the 10 registered record-scope actions, plus the 2 templates that draw record actions themselves.
 * **Specialized composites** - a viewer surface (1 template) for the document controls, and a filter surface (1 template) for the bar that submits a filter form.
-* **Confirmation dialog** - 7 registered actions require a confirmation, and 19 files still open the browser's own dialog to get one.
+* **Confirmation dialog** - 7 registered actions require a confirmation, and 21 files still open the browser's own dialog to get one.
 
 ### Actions that do not fit the current abstractions
 

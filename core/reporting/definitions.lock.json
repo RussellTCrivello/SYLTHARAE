@@ -1,15 +1,37 @@
 {
   "analyses": {
+    "composition@1": "21f32a6927a70dbe3da26c8ed4cbcade3dc242a451c01efbc238741bfe0206a3",
+    "coverage@1": "3bbf87c83f0d59c72a08cdb6d828f98cb2df991c315d8f55ee2c30bbf31eef85",
     "term_keyness@1": "cd432ccf878df3a3edd87bc8f22a0a5c29b2dac19f599fe935940c059e92d752",
     "term_keyness@2": "f3fdc9db41b1fc4449bd9c5ea6918c532a08edec075b235bd3c18e2a85444bcb"
   },
   "datasets": {
+    "category_analysis.summary@1": "c77fcb27d586a9b2225e9d43838ed1c0775617c4999983ce946190fc6d3df579",
+    "change.added@1": "d6d96c1ce30003c92d9dbcded77c642e9f3d1bb886de786e4f8b8ec856dcfe3d",
+    "change.modified@1": "28ce491acf4c18a9de0bf8a1f82da204efe17e23858afe0cc41e596ff6d4a14b",
+    "change.removed@1": "aea20e74eba28c01ba6c4dac90f0b29986bd2b6435561649af910c46c75bd67f",
+    "comprehensive.overview@1": "658d9c3f25016d535e41a3314226aa4ed0a8ee44983c7cabc644f6a3cbf12450",
+    "entity_place.mentions@1": "27e0888b0e163bdce9cb6017b4038913f2b7ab592b486eb098361661c3c376c0",
+    "horizon.signals@1": "0e0296bca94b1661a9b0d25271d2bffbb325f284c51ee858f53c1d15ec2125de",
+    "keyword_intelligence.matches@1": "b1318b899cc552abe2a49313872fdd8e8a617ff04057a6bcb2ed35a9b19357c9",
+    "latest.entries@1": "bccd64fa68249828cb5936f63578b833b938928005b0af9af13e47e2e595ecc1",
+    "relationship.contexts@1": "49e730ed7865f69a3d1fa804111ecc8a52b6ba7eb429d01cf6919208180057bf",
+    "scenario.outcomes@1": "00e805e4a763e126b5bd6d81e55957aaf3703e5fb142f6e8aa6df06665efe76d",
     "search_results.count@1": "4ffcaaa72705048eb986b46129c8f2383bd3cd08da18c96e535b7ee6c5db6764",
     "search_results.matches@1": "15491b6eaa13b19a29c7b137fedae1869af10e48c69ae8b761d3e77505862df1",
     "term_keyness.ranked@1": "985b5756e9dbd2289634d41b179ab1edd2de5d9093083e9c6ede5ced19406b01",
     "term_keyness.totals@1": "b33d940c49e4cb7e32524a2b855465231311a2674acaeee37053f351de37fc21"
   },
   "reports": {
+    "category_analysis@1": "732942fff84e43ad61008da4860a4817f8d1c1dc87a4cd882661fc2327a38773",
+    "change@1": "5a11bd1ffc9ae18cf31df69292efeace315663ac4d35268fd2b0e51891f19cdc",
+    "comprehensive@1": "24a80aa695c7d7c64d73615e4a4bb2478cdff98c280274cd14ebb19b2a3af964",
+    "entity_place@1": "b213b9686e52b3fb0017c1354cb29a6313882c6dc086070d7cd8a5775aa222a6",
+    "horizon@1": "cf00d76188f0faf0697697bf82215d94bfb58d4729d14ddf2918b7129b68e7df",
+    "keyword_intelligence@1": "465576c26f366a087ac3530863eef9266a398ff8ed277868621ca87fc27ccafa",
+    "latest@1": "c26ab0650039878cdba35ae52312fab9d3738febf2e0b17967b852fb3eee473a",
+    "relationship@1": "cff99d55b3d2703819d9f99ab1203b949aec7537339517841a75c11b1447efc3",
+    "scenario_outcome@1": "f10ba33fc04ef5753ec761fc8913e984168d1e7785ef9e04561feb9dc20f24a2",
     "search_results@1": "82cd519e3d801e3b283bd6e00f66f2b0b87d2b6607d72545949ddf618b2b8f97",
     "term_keyness@1": "f43240c50871fdc8abe351e4e1964bfaa17fbdc5dd35981bfa44419f2ac3b8bb",
     "term_keyness@2": "8729596fbe18310f4193d4c28949d5837641724e7ec7fb119fcfecafebe8f973"

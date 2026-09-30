@@ -25,7 +25,7 @@ the product's conditions and says so).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Optional, Sequence, Tuple
+from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 from .domains import DOMAIN_LABELS, DOMAIN_ORDER, domain_label
 from .lifecycle import StatusPolicy, policy
@@ -245,12 +245,19 @@ def _entry_for(interface: Interface, state, user, current_endpoint: Optional[str
 
 
 def build_navigation(state, user, current_endpoint: Optional[str] = None,
-                     url_for: Optional[Callable[..., str]] = None) -> Tuple[NavigationGroup, ...]:
+                     url_for: Optional[Callable[..., str]] = None,
+                     prefs: Optional[Mapping[str, Mapping[str, object]]] = None) -> Tuple[NavigationGroup, ...]:
     """The sidebar: domains in declared order, each holding what may be shown.
 
     Visibility comes from `InterfaceState.is_visible` (enabled, dependencies,
     feature flag, role); ordering comes from `DOMAIN_ORDER`; the label comes
     from the domain vocabulary. Nothing here decides security.
+
+    ``prefs`` (optional, the user's own `user_navigation_prefs` rows) narrows
+    what the registry already allows: a ``hidden`` entry is dropped and an
+    explicit ``position`` places an entry inside its domain ahead of the
+    entries that keep the declared order. Preferences can never widen
+    visibility: they are applied after `is_visible` said yes.
     """
     if url_for is None:  # pragma: no cover - callers in a request pass url_for
         from flask import url_for as _url_for
@@ -264,13 +271,24 @@ def build_navigation(state, user, current_endpoint: Optional[str] = None,
     groups = []
     for domain in DOMAIN_ORDER:
         interfaces = visible_by_domain.get(domain) or visible_by_domain.get(str(domain)) or ()
-        entries = tuple(
-            entry for entry in (
-                _entry_for(interface, state, user, current_endpoint, url_for)
-                for interface in interfaces
-                if interface.kind is InterfaceKind.PAGE or interface.kind == InterfaceKind.PAGE
-            ) if entry is not None
-        )
+        prepared = []
+        for interface in interfaces:
+            if interface.kind is InterfaceKind.PAGE or interface.kind == InterfaceKind.PAGE:
+                entry = _entry_for(interface, state, user, current_endpoint, url_for)
+                if entry is not None:
+                    prepared.append(entry)
+        if prefs:
+            shown = []
+            for entry in prepared:
+                pref = prefs.get(entry.interface_id)
+                if pref and pref.get("hidden"):
+                    continue
+                shown.append((pref.get("position") if pref else None, entry))
+            shown.sort(key=lambda pair: (pair[0] is None, pair[0] or 0))
+            prepared_entries = [entry for _, entry in shown]
+        else:
+            prepared_entries = prepared
+        entries = tuple(prepared_entries)
         if entries:
             groups.append(NavigationGroup(domain=str(domain), label=domain_label(domain), entries=entries))
     return tuple(groups)

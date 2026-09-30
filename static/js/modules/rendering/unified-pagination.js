@@ -296,8 +296,11 @@ function attachPaginationListeners(container, onPageChange, endpoint, baseUrl, u
                     container._paginationCallback(page);
                 }
             } else if (href && href !== '#') {
-                // Navigate to URL (for server-side pagination)
-                window.location.href = href;
+                // Navigate to URL (for server-side pagination) through the
+                // content swap when the shell provides it: paging must not
+                // redraw the sidebar / shell, only the main content.
+                if (window.swapNavigate) { window.swapNavigate(href); }
+                else { window.location.href = href; }
             }
         });
         container._paginationDelegationAttached = true;
@@ -333,6 +336,8 @@ function attachPaginationListeners(container, onPageChange, endpoint, baseUrl, u
                 if (url.startsWith('#')) {
                     // Callback-based, trigger callback
                     if (onPageChange) onPageChange(targetPage);
+                } else if (window.swapNavigate) {
+                    window.swapNavigate(url);
                 } else {
                     window.location.href = url;
                 }

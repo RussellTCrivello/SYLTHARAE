@@ -46,22 +46,22 @@ document with what it writes.
 
 | Measurement | Count |
 | --- | --- |
-| Interfaces | 31 |
-| Navigable interfaces | 29 |
+| Interfaces | 34 |
+| Navigable interfaces | 32 |
 | Interfaces with a described screen | 5 |
 | Interfaces declaring no help topic | 2 |
-| Interfaces declaring no keyboard shortcut | 14 |
+| Interfaces declaring no keyboard shortcut | 17 |
 | Registered actions | 34 |
 | Actions bound to a control | 6 |
 | Presented actions nothing binds | 28 |
 | Actions declared and not built | 1 |
 | Actions named in markup and never registered | 0 |
 | Actions no described screen presents | 1 |
-| Declared components | 20 |
+| Declared components | 22 |
 | Components an element cannot resolve to | 0 |
-| Classes rendered in the product | 278 |
-| Classes the project owns | 81 |
-| Classes that are third-party | 197 |
+| Classes rendered in the product | 401 |
+| Classes the project owns | 154 |
+| Classes that are third-party | 247 |
 | Classes belonging to nobody | 0 |
 | Bindings the scan found | 10 |
 
@@ -83,7 +83,7 @@ with the evidence.
 
 | Action | Status | Where | Shared surface it uses |
 | --- | --- | --- | --- |
-| `files.reprocess` | declared, not built | Api/blueprints/files.py:124 | the shared record action surface |
+| `files.reprocess` | declared, not built | Api/blueprints/files.py:125 | the shared record action surface |
 | `files.analyze_selected` | presented, nothing binds it | file_library | the shared record action surface |
 | `files.delete_selected` | presented, nothing binds it | file_library | the shared record action surface |
 | `files.export_selected` | presented, nothing binds it | file_library | the shared record action surface |
@@ -138,6 +138,9 @@ with the evidence.
 | `classification` | CLASSIFY | `file_classification_page` | classify/classification | Not declared | 0 |
 | `comprehensive_dashboard` | REPORT | `comprehensive_dashboard` | report/detailed-dashboard | Not declared | 0 |
 | `reports` | REPORT | `reports_page` | report/reports | g r | 0 |
+| `reports_dashboard` | REPORT | `reports_dashboard_page` | report/dashboard | Not declared | 0 |
+| `retention` | ADMINISTRATION | `retention_page` | operate/retention | Not declared | 0 |
+| `schedules` | REPORT | `schedules_page` | report/schedules | Not declared | 0 |
 | `charts_dashboard` | REPORT | `charts_dashboard` | report/charts | Not declared | 0 |
 | `detection` | OPERATE | `detection_page` | operate/detection | g d | 0 |
 | `jobs` | OPERATE | `operations_jobs_page` | operate/jobs | g j | 0 |
@@ -155,10 +158,10 @@ with the evidence.
 | --- | --- | --- |
 | action | 34 | 34 |
 | binding | 6 | 34 |
-| component | 20 | 20 |
+| component | 22 | 22 |
 | execution | 29 | 34 |
-| help | 29 | 31 |
-| interface | 31 | 31 |
+| help | 32 | 34 |
+| interface | 34 | 34 |
 | permission | 34 | 34 |
 | scope | 34 | 34 |
 | state | 34 | 34 |

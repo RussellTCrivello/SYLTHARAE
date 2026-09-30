@@ -81,6 +81,12 @@ await import(pathToFileURL(path.resolve('static/js/pages/reports-page.js')).href
 await settle();
 
 check(requests.includes('GET /api/reports/definitions'), 'initial load asks for the definitions');
+// The catalog is alphabetically ordered (deterministic), so the auto-selected
+// first entry is whichever family sorts first - not a positional contract.
+// Select the canonical search report explicitly.
+byId('reportSelect').value = 'search_results@1';
+byId('reportSelect').dispatch('change');
+await settle();
 check(byId('reportSelect').value === 'search_results@1', `report selected: ${byId('reportSelect').value}`);
 check(/Counts: path/.test(text('reportAbout')) && /search_results\.count@1/.test(text('reportAbout')),
     `unit and datasets explained: ${text('reportAbout').slice(0, 120)}`);
@@ -142,17 +148,19 @@ check(requests.some((r) => /^POST \/api\/reports\/runs\/\d+\/artifacts$/.test(r)
 check(/File created\./.test(text('fileJob')), `file job reported: ${text('fileJob')}`);
 const fileRows = rows('fileRows');
 check(fileRows.length === 1 && /html/.test(fileRows[0].textContent), `one file listed: ${fileRows[0]?.textContent}`);
-const shownSha = fileRows[0].children[4].textContent.trim();
-const download = fileRows[0].children[6].children[0].getAttribute('href');
+// With step 18 multilingual rendering, fileRow renders:
+// 0:format, 1:dataset, 2:language, 3:filename, 4:size, 5:sha256, 6:created_at, 7:actions
+const shownSha = fileRows[0].children[5].textContent.trim();
+const download = fileRows[0].children[7].children[0].getAttribute('href');
 const response = await nativeFetch(new URL(download, base), { headers: { Cookie: cookie } });
 const bytes = Buffer.from(await response.arrayBuffer());
 const { createHash } = await import('node:crypto');
 const measured = createHash('sha256').update(bytes).digest('hex');
 check(response.status === 200 && measured === shownSha, `downloaded bytes hash to the shown SHA-256 (${measured.slice(0, 12)})`);
-check(/^attachment; filename="report_search_results_v1_run\d+\.html"$/.test(response.headers.get('content-disposition') || ''),
+check(/^attachment; filename="report_search_results_v1_run\d+(_[a-z]{2})?\.html"$/.test(response.headers.get('content-disposition') || ''),
     `downloaded as an attachment: ${response.headers.get('content-disposition')}`);
 check(Boolean(response.headers.get('x-disclosure-audit-id')), 'the download was recorded (DATA_EXPORTED)');
-fileRows[0].children[6].children[2].dispatch('click');
+fileRows[0].children[7].children[2].dispatch('click');
 await settle();
 check(/^Verified:/.test(text('fileVerify')), `verification shown: ${text('fileVerify')}`);
 byId('fileCreate').dispatch('click');

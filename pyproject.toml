@@ -57,7 +57,7 @@ ebook = ["ebooklib>=0.18", "beautifulsoup4>=4.12", "mobi>=0.3"]
 audio = ["mutagen>=1.47"]
 server = ["waitress>=3.0"]  # opt-in production WSGI server: WSGI_SERVER=waitress
 pst = ["libpff-python"]  # needs a C toolchain / libpff headers on most hosts
-media = ["moviepy>=1.0.3", "opencv-python-headless>=4.9"]
+media = ["opencv-python-headless>=4.9"]  # moviepy removed: no wheel on 1.x, pillow<11 on 2.x (conflicts with the Pillow security floor)
 dev = [
     "pytest>=8.0",
     "pytest-cov>=4.1",

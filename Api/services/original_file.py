@@ -207,11 +207,15 @@ class OriginalFileService:
     # Serving
     # ------------------------------------------------------------------
     @classmethod
-    def content_response(cls, file_id: int, download: bool = False):
+    def content_response(cls, file_id: int, download: bool = False,
+                         filename: str = None):
         """Serve the original bytes with a deliberate disposition and type.
 
-        Returns a Flask response, or raises ``FileNotFoundError`` (missing row
-        or missing file on disk) so the route can answer 404 with a reason.
+        ``filename`` is the reader's own name for a download (Save As); it is
+        reduced to a bare file name and never changes what is served - only
+        what the browser calls it. Returns a Flask response, or raises
+        ``FileNotFoundError`` (missing row or missing file on disk) so the
+        route can answer 404 with a reason.
         """
         from flask import send_file
 
@@ -224,6 +228,14 @@ class OriginalFileService:
             raise FileNotFoundError(reason or 'unavailable')
 
         name = row['file_name'] or path_obj.name
+        if filename:
+            # A name the reader typed: one line, no directory parts. An
+            # extension is kept from the file itself when the name lacks one.
+            cleaned = ' '.join(str(filename).replace('\\', '/').split('/')[-1].split()) or name
+            suffix = path_obj.suffix.lower()
+            if suffix and not cleaned.lower().endswith(suffix):
+                cleaned = cleaned + suffix
+            name = cleaned[:255]
         extension = Path(name).suffix.lower() or path_obj.suffix.lower()
         kind = cls.viewer_kind(extension)
 

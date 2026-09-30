@@ -63,6 +63,7 @@ INTERFACE_TEMPLATES = (
     "templates/Signals/signals.html",
     "templates/Monitoring/monitoring.html",
     "templates/Reports/reports.html",
+    "templates/Reports/dashboard.html",
     "templates/auth/audit.html",
     "templates/Signals/detection.html",
 )

@@ -4,6 +4,9 @@
 <!-- templates/search.html -->
 {% extends "base.html" %}
 
+{% from 'components/table.html' import record_table %}
+{% from 'components/documents_panel.html' import documents_panel %}
+
 {% block title %}{{ _('Search') }}{% endblock %}
 
 {% block content %}
@@ -189,60 +192,98 @@
 </div>
 
 {% if query %}
+{% set per_page = per_page|default(10) %}
 <div class="section-card">
     <div class="section-header">
-        <h5 class="mb-0">{{ _('Search Results') }} ({{ total_results|default(results|length) }} {{ _('found') }})</h5>
+        <h5 class="mb-0">{{ _('Search Results') }}</h5>
+        <div class="action-group ms-auto" id="searchBulkBar">
+            <span class="action-label">
+                <span id="selectedResultCount">0</span> {{ _('selected') }}
+            </span>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="bulkResultContentBtn" disabled>
+                <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>{{ _('Export Content') }}
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="bulkResultOriginalsBtn" disabled>
+                <i class="bi bi-file-zip me-1" aria-hidden="true"></i>{{ _('Export Originals') }}
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="bulkResultNamesBtn" disabled>
+                <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i>{{ _('Filenames CSV') }}
+            </button>
+        </div>
     </div>
     <div class="section-content" id="searchResults">
-    
     {% if results %}
-    <div class="list-group list-group-flush">
+    {#- The results are the unified table: the same headers, the same
+        column filters, the same selection, the same Load More as the File
+        Library - and the reader's term rides along to the viewer. -#}
+    {% call record_table(
+            id='searchResultsTable',
+            columns=[
+                {'kind': 'select', 'width': '44px'},
+                {'key': 'name', 'label': _('File Name'), 'sortable': True, 'type': 'text'},
+                {'key': 'type', 'label': _('Type'), 'width': '110px'},
+                {'key': 'size', 'label': _('Size'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '110px'},
+                {'key': 'source', 'label': _('Source'), 'width': '150px'},
+                {'key': 'side', 'label': _('Side'), 'width': '150px'},
+                {'key': 'date', 'label': _('Date'), 'sortable': True, 'type': 'date', 'width': '130px'},
+                {'kind': 'actions', 'width': '110px'}
+            ],
+            mode='server',
+            sort_key=sort|default(''),
+            sort_dir=order|default('desc'),
+            info_text=_('%(count)d results for "%(query)s"', count=total_results, query=query),
+            per_page=per_page,
+            per_page_id='perPageSearch',
+            on_per_page_change='changeSearchPageSize()',
+            select_all_onchange='',
+            empty_message=_('No results found for "%(query)s"', query=query),
+            empty_filtered=False,
+            export_interface=export_interface_for(request.endpoint),
+            export_columns=[
+                {'key': 'path', 'label': _('Path')},
+                {'key': 'status', 'label': _('Status')},
+                {'key': 'created', 'label': _('Created')},
+            ],
+            page=page,
+            total_pages=total_pages,
+            total_count=total_results,
+            rows_shown=results|length,
+            append=True) %}
         {% for result in results %}
-        {% set file_id = result.id if result.get('id') else result[0] %}
-        {% set file_name = result.file_name if result.get('file_name') else result[1] %}
-        {% set file_type = result.file_type if result.get('file_type') else (result[2] if result|length > 2 else '') %}
-        {% set source_name = result.source_name if result.get('source_name') else (result[4] if result|length > 4 else '') %}
-        {% set side_name = result.side_name if result.get('side_name') else (result[5] if result|length > 5 else '') %}
-        {% set file_date = result.file_date if result.get('file_date') else (result[3].strftime('%Y-%m-%d') if result|length > 3 and result[3] else '') %}
-        <a href="{{ url_for('files.file_detail', file_id=file_id) }}" 
-           class="list-group-item list-group-item-action">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <h6 class="mb-1">
-                        <i class="bi bi-file-earmark me-2"></i>
-                        {{ file_name }}
-                    </h6>
-                    <small class="text-muted">
-                        {% if source_name %}
-                            {{ _('Source:') }} {{ source_name }} | 
-                        {% endif %}
-                        {% if side_name %}
-                            {{ _('Side:') }} {{ side_name }} | 
-                        {% endif %}
-                        {% if file_date %}
-                            {{ _('Date:') }} {{ file_date }}
-                        {% else %}
-                            {{ _('Date:') }} {{ _('N/A') }}
-                        {% endif %}
-                    </small>
+        <tr class="file-row ut-row-hit" data-file-id="{{ result.id }}" data-file-name="{{ result.file_name }}">
+            <td class="ut-col-select">
+                <input type="checkbox" class="file-checkbox ut-row-check result-checkbox"
+                       value="{{ result.id }}" aria-label="{{ _('Select result') }}: {{ result.file_name }}">
+            </td>
+            <td data-ut-value="{{ result.file_name|lower }}">
+                <a class="ut-name" href="{{ url_for('files.file_full_content', file_id=result.id, q=query) }}"
+                   title="{{ result.file_name }}">{{ result.file_name }}</a>
+            </td>
+            <td><span class="badge badge-type">{{ result.file_type|upper if result.file_type else '' }}</span></td>
+            <td class="text-end" data-ut-value="{{ result.file_size|default(0) }}">
+                {{ (result.file_size / 1024)|round|int }} KB
+            </td>
+            <td class="ut-muted">{{ result.source_name }}</td>
+            <td class="ut-muted">{{ result.side_name }}</td>
+            <td data-ut-value="{{ result.date_creation or '' }}">
+                {{ result.date_creation if result.date_creation else '—' }}
+            </td>
+            <td>
+                <div class="ut-actions">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-file-menu-button data-file-id="{{ result.id }}" data-file-name="{{ result.file_name }}"
+                            aria-label="{{ _('File actions') }}: {{ result.file_name }}">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <a href="{{ url_for('files.file_full_content', file_id=result.id, q=query) }}"
+                       class="btn btn-sm btn-outline-primary" title="{{ _('Open at the first match') }}">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
                 </div>
-                <span class="badge bg-secondary">{{ file_type }}</span>
-                {% if result.get('analyst_categories') %}
-                <div class="mt-1 text-end">
-                    {% for cat in result['analyst_categories'] %}
-                    <span class="badge analyst-category-badge"><i class="bi bi-person-fill me-1"></i>{{ cat }}</span>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-        </a>
+            </td>
+        </tr>
         {% endfor %}
-    </div>
-    
-    {% if total_pages and total_pages > 1 %}
-        {% from "components/unified_pagination.html" import unified_pagination %}
-        {{ unified_pagination(page, total_pages, url_for, 'search_page', {'q': query, 'scope': analyst_scope}) }}
-    {% endif %}
+    {% endcall %}
     {% else %}
     <div class="empty-state">
         <i class="bi bi-search"></i>

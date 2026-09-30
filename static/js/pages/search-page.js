@@ -122,7 +122,7 @@ async function performEnhancedSearch(query) {
         resultsContainer.innerHTML = `
             <div class="empty-state">
                 <i class="bi bi-exclamation-triangle"></i>
-                <p>Error performing search: ${error.message || 'Unknown error'}</p>
+                <p>Error performing search: ${escapeHtml(error.message || 'Unknown error')}</p>
             </div>
         `;
     }
@@ -338,3 +338,62 @@ export {
     displaySearchResults,
     goToPage
 };
+
+
+// ---------------------------------------------------------------------------
+// The results table's selection: the count, and the two batch export kinds
+// (extracted content / original files) against the chosen rows.
+// ---------------------------------------------------------------------------
+import { exportSelectedFiles } from '../modules/file-operations/file-export.js';
+
+function selectedResultIds() {
+    return Array.from(document.querySelectorAll('.result-checkbox:checked'))
+        .map((check) => check.value);
+}
+
+function updateResultToolbar() {
+    const count = selectedResultIds().length;
+    const counter = document.getElementById('selectedResultCount');
+    if (counter) counter.textContent = String(count);
+    ['bulkResultContentBtn', 'bulkResultOriginalsBtn', 'bulkResultNamesBtn']
+        .forEach((id) => {
+            const button = document.getElementById(id);
+            if (button) button.disabled = count === 0;
+        });
+}
+
+document.addEventListener('change', (event) => {
+    if (event.target.classList?.contains('result-checkbox')
+        || event.target.classList?.contains('ut-check-all')) {
+        // The table's own header checkbox flips the rows; this keeps the
+        // toolbar's count honest either way.
+        if (event.target.classList.contains('ut-check-all')) {
+            const master = event.target;
+            document.querySelectorAll('.result-checkbox').forEach((check) => {
+                check.checked = master.checked;
+            });
+        }
+        updateResultToolbar();
+    }
+});
+
+function wireBulkResults() {
+    const content = document.getElementById('bulkResultContentBtn');
+    const originals = document.getElementById('bulkResultOriginalsBtn');
+    const names = document.getElementById('bulkResultNamesBtn');
+    if (content) content.addEventListener('click', () => exportSelectedFiles(selectedResultIds(), 'text'));
+    if (originals) originals.addEventListener('click', () => exportSelectedFiles(selectedResultIds(), 'originals'));
+    if (names) {
+        names.addEventListener('click', () => {
+            const params = new URLSearchParams(window.location.search);
+            params.set('format', 'csv');
+            window.location.href = '/api/export/search_results?' + params.toString();
+        });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireBulkResults);
+} else {
+    wireBulkResults();
+}

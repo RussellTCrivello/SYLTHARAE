@@ -6,7 +6,7 @@
 {% block extra_css %}
 <link href="{{ url_for('static', filename='css/fmas.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/file-content-tabs.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/category-words.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/word-search.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='dist/css/select2.min.css') }}" rel="stylesheet" />
 <link href="{{ url_for('static', filename='css/formatted-content.css') }}" rel="stylesheet" />
 <!-- Analyst (manual) categorization in the preview pop-up: the same card,
@@ -254,28 +254,37 @@
                     <label for="filterCategory">{{ _('Category') }}</label>
                     <select id="filterCategory" class="filter-select" title="{{ _('Filter by Category') }}" aria-label="{{ _('Filter by Category') }}">
                         <option value="">{{ _('All Categories') }}</option>
-                        {% for cat in categories[:50] %}
+                        {% for cat in categories %}
                         <option value="{{ cat.id }}">{{ cat.name }}</option>
                         {% endfor %}
                     </select>
+                    {% if categories|length >= 100 and stats.total_categories|default(0) > categories|length %}
+                    <small class="filter-cap-note">{{ _('Showing the %(shown)s most-used of %(total)s categories - use the section search for the rest', shown=categories|length, total=stats.total_categories) }}</small>
+                    {% endif %}
                 </div>
                 <div class="filter-group">
                     <label for="filterSource">{{ _('Source') }}</label>
                     <select id="filterSource" class="filter-select" title="{{ _('Filter by Source') }}" aria-label="{{ _('Filter by Source') }}">
                         <option value="">{{ _('All Sources') }}</option>
-                        {% for src in sources[:50] %}
+                        {% for src in sources %}
                         <option value="{{ src.id }}">{{ src.name }}</option>
                         {% endfor %}
                     </select>
+                    {% if sources|length >= 100 and stats.total_sources|default(0) > sources|length %}
+                    <small class="filter-cap-note">{{ _('Showing the %(shown)s most-used of %(total)s sources - use the section search for the rest', shown=sources|length, total=stats.total_sources) }}</small>
+                    {% endif %}
                 </div>
                 <div class="filter-group">
                     <label for="filterSide">{{ _('Side') }}</label>
                     <select id="filterSide" class="filter-select" title="{{ _('Filter by Side') }}" aria-label="{{ _('Filter by Side') }}">
                         <option value="">{{ _('All Sides') }}</option>
-                        {% for side in sides[:50] %}
+                        {% for side in sides %}
                         <option value="{{ side.id }}">{{ side.name }}</option>
                         {% endfor %}
                     </select>
+                    {% if sides|length >= 100 and stats.total_sides|default(0) > sides|length %}
+                    <small class="filter-cap-note">{{ _('Showing the %(shown)s most-used of %(total)s sides - use the section search for the rest', shown=sides|length, total=stats.total_sides) }}</small>
+                    {% endif %}
                 </div>
                 <div class="filter-group">
                     <label for="filterDateFrom">{{ _('Date Range') }}</label>

@@ -30,6 +30,7 @@ const state = {
     datasetKey: null,
     rowOffset: 0,
     formats: [],             // [{format, single_dataset}] from the artifacts list
+    language: 'en',          // the artifact language (part of its identity)
 };
 
 // ---------------------------------------------------------------------------
@@ -566,6 +567,7 @@ function fileRow(file) {
     return el('tr', {},
         el('td', { dir: 'ltr', text: `${file.format} (${file.renderer_version})` }),
         el('td', { dir: 'ltr', text: file.dataset_key || L.all_datasets }),
+        el('td', { dir: 'ltr', text: file.language || 'en' }),
         el('td', { dir: 'ltr', class: 'text-break', text: file.filename }),
         el('td', { text: fmt(L.bytes, { n: file.byte_size }) }),
         el('td', { dir: 'ltr', class: 'font-monospace small text-break', title: `manifest ${file.manifest_sha256}`, text: file.sha256 }),
@@ -582,7 +584,7 @@ async function loadFiles() {
     document.getElementById('fileControls').classList.toggle('d-none', !(completed && DATA.can_run));
     if (!completed) {
         clear('fileUnavailable').append(L.files_completed_only);
-        emptyRow('fileRows', 7, L.no_files);
+        emptyRow('fileRows', 8, L.no_files);
         return;
     }
     const body = await api('GET', `/api/reports/runs/${encodeURIComponent(run.id)}/artifacts`);
@@ -604,11 +606,26 @@ async function loadFiles() {
         unavailable.append(el('div', { text: fmt(L.unavailable, { format: u.format.toUpperCase(), reason: u.reason }) }));
     }
     if (!body.items.length) {
-        emptyRow('fileRows', 7, L.no_files);
+        emptyRow('fileRows', 8, L.no_files);
         return;
     }
     const tbody = clear('fileRows');
     for (const file of body.items) tbody.append(fileRow(file));
+}
+
+function syncLanguageSelect() {
+    // The languages the renderers ship (step 18); the choice becomes part of
+    // the file's identity - same run+format+dataset in another language is a
+    // different file, and the manifest states the language.
+    const select = document.getElementById('fileLanguage');
+    if (!select || !Array.isArray(DATA.languages) || !DATA.languages.length) return;
+    const previous = state.language;
+    const fresh = clear('fileLanguage');
+    for (const code of DATA.languages) {
+        fresh.append(el('option', { value: code, text: code }));
+    }
+    select.value = DATA.languages.includes(previous) ? previous : 'en';
+    state.language = select.value;
 }
 
 async function createFile() {
@@ -617,6 +634,9 @@ async function createFile() {
     const payload = { format };
     const spec = state.formats.find((f) => f.format === format);
     if (spec && spec.single_dataset) payload.dataset_key = document.getElementById('fileDataset').value;
+    const languageSelect = document.getElementById('fileLanguage');
+    state.language = (languageSelect && languageSelect.value) || state.language || 'en';
+    payload.language = state.language;
     const button = document.getElementById('fileCreate');
     button.disabled = true;
     try {
@@ -662,8 +682,10 @@ async function init() {
         guarded(loadRows);
     });
     on('fileFormat', 'change', fileDatasetSync);
+    on('fileLanguage', 'change', (e) => { state.language = e.target.value || 'en'; });
     on('fileCreate', 'click', () => guarded(createFile));
     if (!DATA.can_run) notice(L.read_only);
+    syncLanguageSelect();
     await guarded(loadDefinitions);
     await guarded(loadRuns);
     const requested = new URLSearchParams(window.location.search).get('run');

@@ -596,8 +596,27 @@ class JobManager:
 
             return run_artifact_job(get_connection, run_id=options["run_id"],
                                     fmt=options["format"], dataset_key=options.get("dataset_key"),
-                                    creator_id=options["creator_id"], job_id=record["job_id"],
+                                    creator_id=options["creator_id"],
+                                    language=options.get("language", "en"),
+                                    job_id=record["job_id"],
                                     progress_cb=progress_cb)
+        if job_type == "retention":
+            # Retention (services/retention/service.py): prune the areas whose
+            # policy enables them (settings retention.<area>_days, 0 = keep
+            # forever), in batched transactions, one audit row per area.
+            from Api.utils.utils import get_connection
+            from services.retention.service import run_retention
+
+            job_id = record["job_id"]
+
+            def retention_cancelled():
+                current = self.repo.get(job_id)
+                return bool(current and current.get("cancellation_requested"))
+
+            return run_retention(get_connection, areas=options.get("areas"),
+                                 actor=options.get("actor", "system"),
+                                 job_id=job_id, progress_cb=progress_cb,
+                                 cancel_cb=retention_cancelled)
         raise ValueError(f"Unknown job type: {job_type}")
 
     #: Jobs that change stored content or signals, and the rule-evaluation

@@ -179,7 +179,11 @@
                     return result;
                 }
                 if (href && !(result && result.handled)) {
-                    window.location.href = href;
+                    // Follow through the content swap when the shell
+                    // provides it: an action that navigates must not
+                    // redraw the sidebar either.
+                    if (window.swapNavigate) { window.swapNavigate(href); }
+                    else { window.location.href = href; }
                 }
                 return result;
             }, function () {

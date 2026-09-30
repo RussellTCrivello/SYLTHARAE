@@ -38,7 +38,7 @@ NATIVE_BINARIES = [
      "primary OCR engine; no installer, no registry, no network",
      "required", TESSERACT),
     ("FFmpeg (gyan.dev release build)", "x64 shared/freeless zip",
-     "audio/video metadata and extraction (moviepy); without it media files "
+     "video decoding for the OpenCV media path; without it media files "
      "are recorded as unsupported instead of failing the deployment",
      "optional (media formats)", TESSERACT),
 ]
@@ -114,9 +114,6 @@ def _classify(req: str) -> tuple[str, str]:
     if name == "pgserver":
         return ("3. Database", "wheel bundling a complete private PostgreSQL "
                 "16 build (binaries included) for the offline cluster")
-    if name == "moviepy":
-        return ("6. Document-processing dependency", "wheel; delegates to the "
-                "bundled FFmpeg for audio/video")
     return ("1. Python/runtime dependency", "wheel from the offline wheelhouse")
 
 

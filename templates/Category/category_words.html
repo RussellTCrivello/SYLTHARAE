@@ -3,19 +3,21 @@
 {% block title %}{{ _('Words in Category') }} - {{ category.name }}{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', filename='css/category-words.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='dist/css/select2.min.css') }}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/unified-table.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/word-search.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% from 'components/breadcrumbs.html' import breadcrumbs %}
 {% block breadcrumb %}{{ breadcrumbs(parent='categories_list', intermediate=[{'label': category.name, 'url': url_for('category_words', category_id=category.id)}], current=_('Words')) }}{% endblock %}
+
+{% from 'components/table.html' import record_table %}
 
 {% block content %}
 <div class="page-header">
     <div>
         <h1 class="page-title">
             <i class="bi bi-tags me-2"></i>
-            {{ _('Words in Category') }}: {{ category.name }} ({{ words|length }})
+            {{ _('Words in Category') }}: {{ category.name }} ({{ total_words }})
         </h1>
     </div>
     <div class="d-flex gap-2">
@@ -35,280 +37,167 @@
 
 <!-- Page Tips -->
 {% from 'components/page_tips.html' import page_tips %}
-{% from 'components/filter_bar.html' import search_group %}
+{% from 'components/filter_bar.html' import filter_section, filter_grid, search_group %}
     {% call page_tips() %}
 
 <div class="tips-section">
     <div class="tips-section-title">
-        <i class="bi bi-tags"></i>
-        {{ _('Category Words Overview') }}
+        <i class="bi bi-list-ul"></i>
+        {{ _('About Word Categories') }}
     </div>
     <ul class="tips-list">
-        <li>{{ _('This page shows all words associated with the selected category') }}</li>
-        <li>{{ _('View word statistics including usage count and frequency in files') }}</li>
-        <li>{{ _('Add new words to this category or remove existing associations') }}</li>
-        <li>{{ _('Use words to understand the content and themes within this category') }}</li>
+        <li>{{ _('Words in a category are the vocabulary items grouped for this category') }}</li>
+        <li>{{ _('Click "Add Word" to add an existing word or create a new one') }}</li>
+        <li>{{ _('Use "Remove" to take a word out of this category without deleting it') }}</li>
     </ul>
 </div>
 <div class="tips-section">
     <div class="tips-section-title">
-        <i class="bi bi-plus-circle"></i>
-        {{ _('Managing Words') }}
+        <i class="bi bi-funnel"></i>
+        {{ _('Finding and Sorting') }}
     </div>
     <ul class="tips-list">
-        <li>{{ _('Click "Add Word" to associate a new word with this category') }}</li>
-        <li>{{ _('Remove words from the category by clicking the delete icon') }}</li>
-        <li>{{ _('View word details by clicking on any word in the list') }}</li>
-        <li>{{ _('Search and filter words to find specific terms quickly') }}</li>
+        <li>{{ _('Use the search box to quickly find words in this category') }}</li>
+        <li>{{ _('Sort words by clicking a column heading - word or usage count') }}</li>
+        <li>{{ _('Choose how many words a page holds with the selector above the table') }}</li>
     </ul>
 </div>
 <div class="tips-section">
     <div class="tips-section-title">
         <i class="bi bi-graph-up"></i>
-        {{ _('Word Statistics') }}
+        {{ _('Usage Counts') }}
     </div>
     <ul class="tips-list">
-        <li>{{ _('See how frequently each word appears in files within this category') }}</li>
-        <li>{{ _('View total word count and active word count for this category') }}</li>
-        <li>{{ _('Identify the most common words to understand category themes') }}</li>
-        <li>{{ _('Use statistics to improve category organization and tagging') }}</li>
+        <li>{{ _('The usage count shows how often a word appears in your documents') }}</li>
+        <li>{{ _('Sort by usage count to see the most frequent words first') }}</li>
     </ul>
+</div>
+<div class="tips-warning">
+    <strong>{{ _('Note:') }}</strong> {{ _('Removing a word from this category does not delete the word from your vocabulary. It can be added back at any time.') }}
 </div>
 {% endcall %}
 
 <!-- Stats Cards -->
 <div class="row g-4 mb-2">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card">
-            <div class="stat-icon bg-primary">
+            <div class="stat-card-icon" style="background: var(--alert-info-bg); color: var(--primary-color);">
                 <i class="bi bi-list-ul"></i>
             </div>
-            <div class="stat-info">
-                <h3 id="totalWordsCount">{{ words|length }}</h3>
-                <p>{{ _('Total Words') }}</p>
+            <div class="stat-card-content">
+                <div class="stat-card-label">{{ _('Total Words') }}</div>
+                <div class="stat-card-value">{{ total_words }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card">
-            <div class="stat-icon bg-info">
-                <i class="bi bi-funnel"></i>
-            </div>
-            <div class="stat-info">
-                <h3 id="filteredWordsCount">{{ words|length }}</h3>
-                <p>{{ _('Filtered Words') }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-success">
+            <div class="stat-card-icon" style="background: var(--alert-success-bg); color: var(--success-color);">
                 <i class="bi bi-eye"></i>
             </div>
-            <div class="stat-info">
-                <h3 id="visibleWordsCount">{{ words|length }}</h3>
-                <p>{{ _('Visible Words') }}</p>
+            <div class="stat-card-content">
+                <div class="stat-card-label">{{ _('On This Page') }}</div>
+                <div class="stat-card-value">{{ words|length }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card">
-            <div class="stat-icon bg-warning">
+            <div class="stat-card-icon" style="background: var(--alert-warning-bg); color: var(--warning-color);">
                 <i class="bi bi-table"></i>
             </div>
-            <div class="stat-info">
-                <h3 id="currentPageInfo">1 / 1</h3>
-                <p>{{ _('Page') }}</p>
+            <div class="stat-card-content">
+                <div class="stat-card-label">{{ _('Page') }}</div>
+                <div class="stat-card-value">{{ page }} / {{ total_pages }}</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Filters Section -->
-<div class="file-filters-section mb-3">
-    <div class="filter-controls-grid">
-        {{ search_group('wordSearch', _("Search Words"), _("Search words..."), onclear='clearSearch()') }}
+<!-- Filters -->
+{% call filter_section() %}
+    {% call filter_grid() %}
+        {{ search_group('wordSearch', _("Search Words"), _("Search words..."), value=search, onclear='clearSearch()') }}
+    {% endcall %}
+{% endcall %}
 
-        <div class="filter-group">
-            <label for="sortBy" class="filter-label">
-                <i class="bi bi-arrow-down-up"></i>
-                {{ _('Sort By') }}
-            </label>
-            <select class="form-select" id="sortBy" data-on-change="applyFilters()">
-                <option value="word-asc">{{ _('Word (A-Z)') }}</option>
-                <option value="word-desc">{{ _('Word (Z-A)') }}</option>
-                <option value="id-asc">{{ _('ID (Low-High)') }}</option>
-                <option value="id-desc">{{ _('ID (High-Low)') }}</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="displayFormat" class="filter-label">
-                <i class="bi bi-layout-three-columns"></i>
-                {{ _('Display Format') }}
-            </label>
-            <select class="form-select" id="displayFormat" data-on-change="changeDisplayFormat()">
-                <option value="table">{{ _('Table') }}</option>
-                <option value="list">{{ _('List') }}</option>
-                <option value="grid">{{ _('Grid') }}</option>
-                <option value="compact">{{ _('Compact') }}</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="itemsPerPage" class="filter-label">
-                <i class="bi bi-list-ol"></i>
-                {{ _('Per Page') }}
-            </label>
-            <select class="form-select" id="itemsPerPage" data-on-change="changePageSize()">
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="200">200</option>
-                <option value="all">{{ _('All') }}</option>
-            </select>
-        </div>
-    </div>
-</div>
-
-<!-- Pagination info above table -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <small class="text-muted" id="searchResultsInfo" aria-live="polite">
-            {% if words %}
-                {{ _('Showing') }} {{ words|length }} {{ _('words') }} {{ _('in category') }} "{{ category.name }}"
-            {% else %}
-                {{ _('No words in this category') }}
-            {% endif %}
-        </small>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="clearAllFilters()">
-            <i class="bi bi-x-circle me-1"></i>{{ _('Clear Filters') }}
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="exportWords()">
-            <i class="bi bi-download me-1"></i>{{ _('Export') }}
-        </button>
-    </div>
-</div>
-
-<!-- Words Display Area -->
-<div class="stat-card view-mode-table" id="wordsDisplayContainer">
-    <!-- Table View -->
-    <div class="view-table">
-        <div class="table-wrapper category-words-table-wrapper">
-            <table class="table table-hover align-middle category-words-table" id="categoryWordsTable" style="width: 100%;">
-                <thead>
-                    <tr>
-                        <th style="width:70px">#</th>
-                        <th>
-                            <div class="d-flex align-items-center">
-                                <span>{{ _('Word') }}</span>
-                                <button class="btn btn-sm btn-link p-0 ms-1" data-on-click="sortByColumn('word')" title="{{ _('Sort by word') }}" id="sortBtn-word">
-                                    <i class="bi bi-arrow-down-up" id="sortIcon-word"></i>
-                                </button>
-                            </div>
-                        </th>
-                        <th style="width:200px">{{ _('Actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody id="categoryWordsTableBody">
-                    {% for word in words %}
-                    <tr class="word-item" data-word="{{ word.word|lower }}" data-word-id="{{ word.id }}" data-word-text="{{ word.word }}">
-                        <td><span class="badge bg-secondary">{{ word.id }}</span></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="word-text"><strong>{{ word.word }}</strong></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-danger remove-word-btn" 
-                                        data-category-id="{{ category.id }}" 
-                                        data-word-id="{{ word.id }}" 
-                                        data-word-name="{{ word.word|tojson }}" 
-                                        title="{{ _('Remove') }}">
-                                    <i class="bi bi-trash"></i> {{ _('Remove') }}
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-    <!-- List View -->
-    <div class="view-list">
-        <div class="list-group" id="wordsList">
-            {% for word in words %}
-            <div class="list-group-item d-flex justify-content-between align-items-center word-item" 
-                 data-word="{{ word.word|lower }}" 
-                 data-word-id="{{ word.id }}"
-                 data-word-text="{{ word.word }}">
-                <div>
-                    <span class="badge bg-secondary me-2">#{{ word.id }}</span>
-                    <span class="word-text"><strong>{{ word.word }}</strong></span>
-                </div>
-                <button class="btn btn-sm btn-outline-danger remove-word-btn" 
-                        data-category-id="{{ category.id }}" 
-                        data-word-id="{{ word.id }}" 
-                        data-word-name="{{ word.word|tojson }}">
+{#- The list: one unit - toolbar, sortable headers, body, pager. A header
+    click re-asks the server for this view in the new order. -#}
+{% set showing_info -%}
+    {%- if words -%}
+        {%- set start = (page - 1) * per_page + 1 -%}
+        {%- set end = start + words|length - 1 -%}
+        {{ _('Showing') }} {{ start }}–{{ end }} {{ _('of') }} {{ total_words }} {{ _('words in category') }} "{{ category.name }}"
+    {%- else -%}
+        {{ _('No words in this category') }}
+    {%- endif -%}
+{%- endset %}
+{% call record_table(
+        id='categoryWordsTable',
+        columns=[
+            {'kind': 'index', 'width': '70px'},
+            {'key': 'word', 'label': _('Word'), 'sortable': True, 'type': 'text',
+             'filter': {'kind': 'text', 'param': 'search',
+                        'value': search|default('')}},
+            {'key': 'usage_count', 'label': _('Usage Count'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '140px'},
+            {'kind': 'actions', 'width': '160px'}
+        ],
+        mode='server',
+        sort_key=sort_by|default('word'),
+        sort_dir=sort_order|default('asc'),
+        info_text=showing_info,
+        per_page=per_page,
+        per_page_id='categoryWordsPerPage',
+        on_per_page_change='changeCategoryWordsPageSize()',
+        empty_message=_('No words in this category'),
+        empty_filtered=search|default('')|length > 0,
+        empty_action_label=_('Add First Word'),
+        empty_action_onclick='openAddWordModal()',
+        export_interface=export_interface_for(request.endpoint),
+        export_columns=[
+            {'key': 'id', 'label': _('Id')},
+        ],
+        page=page|default(1),
+        total_pages=total_pages|default(1),
+        total_count=total_words|default(0),
+        rows_shown=words|length,
+        append=True) %}
+    {% for word in words %}
+    <tr class="word-item"
+        data-word-id="{{ word.id }}"
+        data-word="{{ word.word|lower }}">
+        <td class="ut-index-cell"><span class="ut-badge ut-badge-neutral">#{{ word.id }}</span></td>
+        <td data-ut-value="{{ word.word|lower }}">
+            <span class="ut-name"><strong>{{ word.word }}</strong></span>
+        </td>
+        <td class="text-end" data-ut-value="{{ word.usage_count }}">
+            <span class="ut-badge ut-badge-info">{{ word.usage_count }}</span>
+        </td>
+        <td>
+            <div class="btn-group btn-group-sm ut-actions">
+                <button type="button" class="btn btn-outline-danger remove-word-btn"
+                        data-category-id="{{ category.id }}"
+                        data-word-id="{{ word.id }}"
+                        data-word-name="{{ word.word|tojson }}"
+                        title="{{ _('Remove') }}">
                     <i class="bi bi-trash"></i> {{ _('Remove') }}
                 </button>
             </div>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- Grid View -->
-    <div class="view-grid" id="wordsGrid">
-        {% for word in words %}
-        <div class="word-card word-item" data-word="{{ word.word|lower }}" data-word-id="{{ word.id }}" data-word-text="{{ word.word }}">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <span class="badge bg-secondary">#{{ word.id }}</span>
-            </div>
-            <h6 class="word-text mb-3"><strong>{{ word.word }}</strong></h6>
-            <button class="btn btn-sm btn-outline-danger w-100 remove-word-btn" 
-                    data-category-id="{{ category.id }}" 
-                    data-word-id="{{ word.id }}" 
-                    data-word-name="{{ word.word|tojson }}">
-                <i class="bi bi-trash"></i> {{ _('Remove') }}
-            </button>
-        </div>
-        {% endfor %}
-    </div>
-    
-    <!-- Compact View -->
-    <div class="view-compact" id="wordsCompact">
-        {% for word in words %}
-        <span class="word-badge word-item" data-word="{{ word.word|lower }}" data-word-id="{{ word.id }}" data-word-text="{{ word.word }}">
-            <span class="badge bg-secondary">#{{ word.id }}</span>
-            <span class="word-text">{{ word.word }}</span>
-            <button type="button" class="btn-close btn-close-sm remove-word-btn" 
-                    data-category-id="{{ category.id }}" 
-                    data-word-id="{{ word.id }}" 
-                    data-word-name="{{ word.word|tojson }}" 
-                    aria-label="{{ _('Remove') }}"></button>
-        </span>
-        {% endfor %}
-    </div>
-    
-    <!-- Empty State -->
-    <div id="emptyState" class="text-center p-5" style="display: none;">
-        <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-        <p class="text-muted mt-3">{{ _('No words found') }}</p>
-        <button type="button" class="btn btn-primary mt-3" data-on-click="openAddWordModal()">
-            <i class="bi bi-plus-circle me-2"></i>
-            {{ _('Add First Word') }}
-        </button>
-    </div>
-</div>
+        </td>
+    </tr>
+    {% endfor %}
+{% endcall %}
 
-<!-- Pagination -->
-<div class="pagination-container mt-3" id="pagination"></div>
+<!-- Pagination: the mount the server pager fills -->
+<div class="pagination-container mt-3" id="pagination">
+    {% if total_pages > 1 %}
+        {% from "components/unified_pagination.html" import unified_pagination %}
+        {% set pagination_params = {'per_page': per_page, 'category_id': category.id} %}
+        {% if search %}{% set extra_param = pagination_params.update({'search': search}) %}{% endif %}
+        {% if sort_by != 'word' or sort_order != 'asc' %}{% set extra_param = pagination_params.update({'sort': sort_by, 'order': sort_order}) %}{% endif %}
+        {{ unified_pagination(page, total_pages, url_for, 'category_words', pagination_params) }}
+    {% endif %}
+</div>
 
 <!-- Add Word Modal -->
 <div class="modal fade" id="addWordToCategoryModal" tabindex="-1" aria-labelledby="addWordToCategoryModalLabel" aria-hidden="true">
@@ -325,10 +214,10 @@
                     <div class="mb-3">
                         <label for="wordInput" class="form-label">{{ _('Select or Create Word') }}</label>
                         <div class="position-relative">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="wordInput" 
-                                   name="word_text" 
+                            <input type="text"
+                                   class="form-control"
+                                   id="wordInput"
+                                   name="word_text"
                                    autocomplete="off"
                                    placeholder="{{ _('Type to search or create a new word...') }}"
                                    required>
@@ -358,7 +247,6 @@
         "confirmRemove": _('Are you sure you want to remove this word from the category?'),
         "remove": _('Remove'),
         "words": _('words'),
-        "filtered": _('filtered'),
         "noWordsFound": _('No words found'),
         "word": _('Word'),
         "actions": _('Actions'),
@@ -367,15 +255,12 @@
         "searchWord": _('Search for a word...'),
         "addWordToCategory": _('Add Word to Category'),
         "totalWords": _('Total Words'),
-        "filteredWords": _('Filtered Words'),
-        "visibleWords": _('Visible Words'),
         "page": _('Page'),
         "showing": _('Showing'),
         "of": _('of'),
         "total": _('total')
     }
 }|tojson }}</script>
-<script src="{{ url_for('static', filename='js/modules/core/select2-loader.js') }}"
-        data-select2-src="{{ url_for('static', filename='dist/js/select2.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modules/ui/unified-table.js') }}?v=20260929a" defer></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/category-words-page.js') }}"></script>
 {% endblock %}

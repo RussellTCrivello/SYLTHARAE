@@ -105,4 +105,9 @@ export default function init() {
     document.querySelectorAll('[data-export-names]').forEach(button => {
         button.addEventListener('click', () => exportNames(button, messages));
     });
+    // The panel of one format's documents is the shared component
+    // (modules/ui/documents-panel.js); the page only provides the messages.
+    if (window.DocumentsPanel) {
+        window.DocumentsPanel.wire({ panelId: 'documentsPanel', tableId: 'panelFilesTable' });
+    }
 }

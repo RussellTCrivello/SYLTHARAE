@@ -32,7 +32,23 @@
     </div>
     {% endif %}
     
-    <div class="unified-pagination-controls">
+    <div class="unified-pagination-controls d-flex align-items-center flex-wrap gap-2">
+        {% if page < total_pages %}
+        <div class="unified-pagination-show-more me-2">
+            <button type="button" 
+                    class="btn btn-sm btn-outline-primary unified-pagination-show-more-btn"
+                    data-endpoint="{{ endpoint }}"
+                    data-current-page="{{ page }}"
+                    data-next-page="{{ page + 1 }}"
+                    data-total-pages="{{ total_pages }}"
+                    data-url-params="{{ url_params|tojson }}"
+                    aria-label="{{ _('Show More') }}"
+                    title="{{ _('Show More') }}">
+                <i class="bi bi-arrow-down-circle me-1" aria-hidden="true"></i>
+                <span>{{ _('Show More') }}</span>
+            </button>
+        </div>
+        {% endif %}
         <nav aria-label="{{ _('Page navigation') }}">
             <ul class="unified-pagination-list">
                 {# First Page Button #}

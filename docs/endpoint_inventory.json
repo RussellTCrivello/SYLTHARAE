@@ -913,6 +913,42 @@
     "internal": true
   },
   {
+    "endpoint": "api_navigation_prefs_delete",
+    "rule": "/api/preferences/navigation",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "preferences",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_navigation_prefs_get",
+    "rule": "/api/preferences/navigation",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "preferences",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_navigation_prefs_put",
+    "rule": "/api/preferences/navigation",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "preferences",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_place",
     "rule": "/api/places/<string:place_key>",
     "methods": [
@@ -929,6 +965,42 @@
     "rule": "/api/places",
     "methods": [
       "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_places_create",
+    "rule": "/api/places",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_places_delete",
+    "rule": "/api/places/<string:place_key>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_places_update",
+    "rule": "/api/places/<string:place_key>",
+    "methods": [
+      "PUT"
     ],
     "blueprint": "(app)",
     "module": "places",
@@ -1088,6 +1160,54 @@
     ],
     "blueprint": "(app)",
     "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_reports_dashboard",
+    "rule": "/api/reports/dashboard",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_retention_overview",
+    "rule": "/api/retention",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "retention",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_retention_run",
+    "rule": "/api/retention/run",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "retention",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_retention_set_days",
+    "rule": "/api/retention/<area>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "retention",
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
@@ -1436,6 +1556,114 @@
     ],
     "blueprint": "(app)",
     "module": "scenarios",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_create",
+    "rule": "/api/schedules",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_delete",
+    "rule": "/api/schedules/<int:schedule_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_get",
+    "rule": "/api/schedules/<int:schedule_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_jobs",
+    "rule": "/api/schedules/<int:schedule_id>/jobs",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_list",
+    "rule": "/api/schedules",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_pause",
+    "rule": "/api/schedules/<int:schedule_id>/pause",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_resume",
+    "rule": "/api/schedules/<int:schedule_id>/resume",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_run_now",
+    "rule": "/api/schedules/<int:schedule_id>/run_now",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_schedules_update",
+    "rule": "/api/schedules/<int:schedule_id>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
@@ -2037,6 +2265,18 @@
     "internal": true
   },
   {
+    "endpoint": "category_documents",
+    "rule": "/categories/<int:category_id>/documents",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "categories",
+    "classification": "USER_INTERFACE",
+    "owned_by": "categories",
+    "internal": false
+  },
+  {
     "endpoint": "category_words",
     "rule": "/categories/<int:category_id>/words",
     "methods": [
@@ -2470,6 +2710,18 @@
     "internal": true
   },
   {
+    "endpoint": "exports.export_interface",
+    "rule": "/api/export/<interface_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "exports",
+    "module": "exports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "favicon",
     "rule": "/favicon.ico",
     "methods": [
@@ -2734,6 +2986,42 @@
     "internal": false
   },
   {
+    "endpoint": "file_operations.copy_file",
+    "rule": "/api/file/<int:file_id>/copy",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "file_operations",
+    "module": "file_operations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_operations.locate_file",
+    "rule": "/api/file/<int:file_id>/locate",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "file_operations",
+    "module": "file_operations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "file_operations.rename_file",
+    "rule": "/api/file/<int:file_id>/rename",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "file_operations",
+    "module": "file_operations",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "files.api_cancel_task",
     "rule": "/upload/cancel/<task_id>",
     "methods": [
@@ -2917,6 +3205,18 @@
   {
     "endpoint": "files.file_search_all_pages",
     "rule": "/file/<int:file_id>/search",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "files",
+    "module": "files",
+    "classification": "USER_INTERFACE",
+    "owned_by": "file_library",
+    "internal": false
+  },
+  {
+    "endpoint": "files.file_type_documents",
+    "rule": "/files/types/<file_type>/documents",
     "methods": [
       "GET"
     ],
@@ -3350,6 +3650,18 @@
   {
     "endpoint": "keyword_detail",
     "rule": "/keywords/<int:keyword_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "keywords",
+    "classification": "USER_INTERFACE",
+    "owned_by": "keywords",
+    "internal": false
+  },
+  {
+    "endpoint": "keyword_documents",
+    "rule": "/keywords/<int:keyword_id>/documents",
     "methods": [
       "GET"
     ],
@@ -4009,6 +4321,18 @@
     "internal": true
   },
   {
+    "endpoint": "reports_dashboard_page",
+    "rule": "/reports/dashboard",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "USER_INTERFACE",
+    "owned_by": "reports_dashboard",
+    "internal": false
+  },
+  {
     "endpoint": "reports_page",
     "rule": "/reports",
     "methods": [
@@ -4018,6 +4342,18 @@
     "module": "reports",
     "classification": "USER_INTERFACE",
     "owned_by": "reports",
+    "internal": false
+  },
+  {
+    "endpoint": "retention_page",
+    "rule": "/retention",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "retention",
+    "classification": "USER_INTERFACE",
+    "owned_by": "retention",
     "internal": false
   },
   {
@@ -4055,6 +4391,18 @@
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
+  },
+  {
+    "endpoint": "schedules_page",
+    "rule": "/schedules",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "schedules",
+    "classification": "USER_INTERFACE",
+    "owned_by": "schedules",
+    "internal": false
   },
   {
     "endpoint": "search_advanced",

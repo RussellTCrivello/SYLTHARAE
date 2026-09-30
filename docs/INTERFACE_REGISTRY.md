@@ -67,12 +67,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 ## Generated reference
 
 <!-- BEGIN GENERATED REGISTRY TABLE -->
-- Interfaces: **31** (features declared separately: **1**)
-- Endpoints owned: **72**
-- With a keyboard shortcut: **17**; with a help topic: **29**
-- By domain: ADMINISTRATION 2, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 3, SETTINGS 3, WORK 1
-- By status: ACTIVE 30, DEPRECATED 1
-- By kind: INTERNAL 1, PAGE 29, SECTION 1
+- Interfaces: **34** (features declared separately: **1**)
+- Endpoints owned: **78**
+- With a keyboard shortcut: **17**; with a help topic: **32**
+- By domain: ADMINISTRATION 3, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 5, SETTINGS 3, WORK 1
+- By status: ACTIVE 33, DEPRECATED 1
+- By kind: INTERNAL 1, PAGE 32, SECTION 1
 
 
 ### WORK (1)
@@ -85,13 +85,13 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `file_library` | File Library | DISCOVER | `files.files_list` | `files.file_detail`, `files.file_content_lazy`, `files.file_content_page`, `files.file_full_content`, `files.file_search_all_pages`, `files.file_chart_data`, `files.file_types_page`, `files.delete_file`, `files.bulk_delete_files`, `files.bulk_export_files` | any | on | — | discover/file-library | g f | ACTIVE |
+| `file_library` | File Library | DISCOVER | `files.files_list` | `files.file_detail`, `files.file_content_lazy`, `files.file_content_page`, `files.file_full_content`, `files.file_search_all_pages`, `files.file_chart_data`, `files.file_types_page`, `files.file_type_documents`, `files.delete_file`, `files.bulk_delete_files`, `files.bulk_export_files` | any | on | — | discover/file-library | g f | ACTIVE |
 | `search` | Search | DISCOVER | `search_page` | `search_advanced`, `search_enhanced_page`, `saved_searches_page`, `search_advanced_api` | any | on | — | discover/search | g s | ACTIVE |
 | `sources` | Sources | DISCOVER | `sources_list` | `source_add`, `source_detail`, `source_edit`, `source_categories_keywords` | any | on | — | discover/sources | — | ACTIVE |
 | `sides` | Sides | DISCOVER | `sides_list` | `side_add`, `side_detail`, `side_edit`, `side_categories_keywords` | any | on | — | discover/sides | — | ACTIVE |
-| `keywords` | Keywords | DISCOVER | `keywords_list` | `keyword_detail`, `keywords_add` | any | on | — | discover/keywords | — | ACTIVE |
+| `keywords` | Keywords | DISCOVER | `keywords_list` | `keyword_detail`, `keywords_add`, `keyword_documents` | any | on | — | discover/keywords | — | ACTIVE |
 | `words` | Words | DISCOVER | `words_list` | `word_detail`, `words_add` | any | on | — | discover/words | — | ACTIVE |
-| `categories` | Categories | DISCOVER | `categories_list` | `category_words`, `category_add` | any | on | — | discover/categories | — | ACTIVE |
+| `categories` | Categories | DISCOVER | `categories_list` | `category_words`, `category_add`, `category_documents` | any | on | — | discover/categories | — | ACTIVE |
 | `email_words` | Email Words | DISCOVER | `email_words` | — | any | on | — | discover/email-words | — | ACTIVE |
 | `notifications` | Notifications | DISCOVER | `notifications_page` | — | any | on | — | discover/notifications | g n | ACTIVE |
 | `signal_horizon` | Horizon & Signal Explorer | DISCOVER | `signals_page` | — | any | on | — | discover/signals | g h | ACTIVE |
@@ -119,12 +119,14 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `analyst_categorization` | Analyst Categories | CLASSIFY | `analyst_categorization_page` | — | any | on | `file_library` | classify/analyst-categories | — | ACTIVE |
 | `classification` | Classification | CLASSIFY | `file_classification_page` | — | any | on | `file_library`, `words` | classify/classification | — | ACTIVE |
 
-### REPORT (3)
+### REPORT (5)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `comprehensive_dashboard` | Comprehensive Dashboard | REPORT | `comprehensive_dashboard` | — | any | on | `file_library` | report/detailed-dashboard | — | ACTIVE |
 | `reports` | Reports | REPORT | `reports_page` | — | any | on | `search`, `jobs` | report/reports | g r | ACTIVE |
+| `reports_dashboard` | Reports Dashboard | REPORT | `reports_dashboard_page` | — | any | on | `reports`, `jobs`, `schedules` | report/dashboard | — | ACTIVE |
+| `schedules` | Schedules | REPORT | `schedules_page` | — | any | on | `reports`, `jobs`, `monitoring` | report/schedules | — | ACTIVE |
 | `charts_dashboard` | Charts Dashboard | REPORT | `charts_dashboard` | — | any | on | `file_library` | report/charts | — | ACTIVE |
 
 ### OPERATE (3)
@@ -135,10 +137,11 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `jobs` | Jobs | OPERATE | `operations_jobs_page` | `operations_job_detail_page` | any | on | — | operate/jobs | g j | ACTIVE |
 | `import_export_console` | Import/Export | OPERATE | `import_export_page` | — | admin | on | — | — | — | DEPRECATED |
 
-### ADMINISTRATION (2)
+### ADMINISTRATION (3)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `retention` | Retention | ADMINISTRATION | `retention_page` | — | any | on | `jobs`, `reports` | operate/retention | — | ACTIVE |
 | `users` | User Management | ADMINISTRATION | `users_page` | — | admin | on | — | administration/users | g u | ACTIVE |
 | `audit_log` | Audit Log | ADMINISTRATION | `audit_page` | — | admin | on | — | administration/audit | g l | ACTIVE |
 

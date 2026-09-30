@@ -130,10 +130,75 @@ tracked, so it ships in the `git archive` release anyway.
 | Report | Unit | Roles | Datasets |
 | --- | --- | --- | --- |
 | `search_results@1` | path | admin, analyst, viewer | `search_results.matches@1` (capped 5000, criteria-compiled order), `search_results.count@1` (exact) |
+| `keyword_intelligence@1` | keyword | admin, analyst, viewer | `keyword_intelligence.matches@1` (capped 1000, most contents first) |
+| `category_analysis@1` | category | admin, analyst, viewer | `category_analysis.summary@1` (capped 1000, most contents first) |
+| `horizon@1` | signal | admin, analyst, viewer | `horizon.signals@1` (capped 5000, event date soonest first; `as_of` reference date is a required recorded parameter) |
+| `entity_place@1` | place | admin, analyst, viewer | `entity_place.mentions@1` (capped 2000, most identified first) |
+| `relationship@1` | context | admin, analyst, viewer | `relationship.contexts@1` (capped 5000, most cross-posted first) |
+| `latest@1` | path | admin, analyst, viewer | `latest.entries@1` (capped 5000, newest first; read per viewer - every row states this reader's view state, and running it advances the reader's baseline) |
+| `change@1` | path | admin, analyst, viewer | `change.added@1` + `change.modified@1` + `change.removed@1` (each capped 5000; read per viewer against one shared watermark - added from the ingestion date, modified/removed from the revision log with previous and current values) |
+| `scenario_outcome@1` | scenario_outcome | admin, analyst, viewer | `scenario.outcomes@1` (capped 5000, newest event first; owner-scoped - the owner and admins read, everyone else refused before retrieval) |
 
-This is the registry's reference definition: it needs no analytics and reuses
-the compiler end to end. The other nine catalog reports (step 17) are added
-only when their datasets exist and are verified.
+`search_results@1` is the registry's reference definition: it needs no
+analytics and reuses the compiler end to end. The two step-17 families read
+the content-identity stores the compiler itself uses: Keyword Intelligence
+aggregates `keywords_hashs` (one row per keyword, its decoded pattern, its
+category, distinct matched contents, summed counts with the never-measured
+counts carried separately) and Category Analysis aggregates
+`words_hashs` x `words_categorys` (one row per category; categories overlap
+when a word belongs to several, so contents count in every category that
+applies, shares are per category against the same matched set - their sum
+may exceed 100% - and the share is NULL over an empty matched set: unknown,
+never zero). The Horizon family lists resolved temporal signals over the
+matched contents, bucketed by the Signal Explorer's *own* bucket definition -
+`core/detection/horizon.py`, imported by both the explorer query and the
+dataset, never restated - against the run's declared reference date (`as_of`),
+which is recorded with the run so the bucketing is reproducible; undated
+signals and purely past mentions stay out of the horizon exactly as on the
+page. The Entity & Place family reads the gazetteer candidates
+(`content_signal_places`: one candidate = identified, several = ambiguous,
+kept and never picked), splitting identified from ambiguous per place -
+ambiguity is never resolved in SQL; unresolved mentions (no candidates) are
+out of per-place attribution by declaration; unprovenanced confidence is
+carried as unknown; retired places are marked, not hidden. The Relationship
+family counts *contexts* - the (hash_id, source_id, side_id) triple of
+`hash_contexts`: multiplicity inside a context stays a column (`paths`),
+repeated identical triples never become extra rows, a different source or
+side is a different context, and the cross-posting measure counts distinct
+sibling contexts and sibling sources within the matched set. The Latest family is
+read *per viewer*: the dataset's SQL joins this reader's ``report_baselines``
+row - bound from the authenticated scope, keyed to the view's criteria
+fingerprint, never from a request value - inside the run's own snapshot,
+and classifies every row exactly three ways: recently created (a property
+of the data), previously seen (at or before this reader's recorded
+progress), and new since the last view (beyond it; a reader without a
+baseline has no row, never a zero). Running the report advances the
+reader's baseline to the furthest row actually shown - monotonically - and
+the run records the baseline it used (before and after) beside its rows,
+so stored runs keep the classification they were read with. The Change
+family reads the same watermark with all three of its datasets - added is
+measured from ``paths.date_creation`` (the ingestion event, date
+resolution), modified and removed from the append-only ``path_revisions``
+log (migration 0029), one row per recorded event with the detection time,
+the previous values and the values after the change; a removed row has no
+current value, which is not an empty string. The watermark is kept per
+distinct view, not per report: Latest and Change of the same view advance
+the same reader progress, so "what changed since you last looked" answers
+for the set you looked at, however you looked at it. No removal operation
+exists yet, so an empty removed list is today's honest measurement; the
+log and its report are ready for the operation that will record removals.
+The Scenario Outcome family reads the append-only ``scenario_outcomes``
+log with the engine's own delivery and priority facts. The per-scenario
+access decision is declared on the definition (``access_control``) and
+enforced twice: the runner refuses a non-owner at submission - before
+anything is read or recorded, the same rule the saved-search check
+applies - and the dataset's ``{owner}`` predicate (a declarative access
+mechanism beside criteria, scope and the viewer tokens) repeats the rule
+in SQL, so a future consumer cannot forget it. Admins read every
+scenario; the reader's source scope applies on top. The last catalog family
+(Comprehensive, step 23) followed the same rule: it was added only once
+its dataset existed and was verified - see
+[COMPREHENSIVE.md](COMPREHENSIVE.md).
 
 ## Evidence
 
@@ -141,21 +206,105 @@ only when their datasets exist and are verified.
   passes all three validations and the CLI; each validation rule, SQL rule,
   parameter rule and lock rule has a negative control; fingerprint
   stability and sensitivity; binding keeps hostile input in parameters.
-* `tests/integration/test_report_registry_pg.py` (6 tests, PostgreSQL): every
+* `tests/integration/test_report_registry_pg.py` (10 tests, PostgreSQL): every
   registered dataset executes with its declared column names and order;
   column type OIDs match the declaration; no NULL in non-nullable columns;
   the listing equals the compiler's own count; order is total (a date tie is
   broken by id); the access scope restricts rows in SQL; the `row_limit + 1`
   overflow row is visible; a hostile phrase is data. Negative control run
-  by hand: declaring `file_date` as `text` fails on OID 1082.
-
+  by hand: declaring `file_date` as `text` fails on OID 1082. The step-17
+  additions assert: every keyword listed over the matched set including the
+  zero-presence one (a measured zero), the never-measured count carried in
+  `unknown_count_rows`, the decoded pattern in stored word order,
+  distinct-content counts with overlap preserved (contents count in every
+  category that applies; per-category shares summing beyond 100%), the empty
+  matched set yielding measured zeros and a NULL share, the access scope
+  narrowing both new datasets before retrieval, and the capped overflow row.
+* `tests/unit/test_report_catalog_keyword_category.py` (14): the two
+  definitions' contracts (units, roles, datasets, capped semantics, the
+  nullable share, access through the criteria compiler, hostile phrase bound
+  as data, content-level stores only) and the full-registry validation.
+* `tests/integration/test_report_catalog_api.py` (6, over HTTP): both
+  definitions listed with their contracts; runs submitted through
+  `POST /api/reports/runs` execute on one snapshot with the expected rows
+  (decoded pattern, overlap, unknown share); viewer role reads but may not
+  write; the JSON artifact, its manifest (report id/version/unit, criteria
+  fingerprint, snapshot, per-dataset row counts) and the offline
+  verification agree.
+* Horizon (step 17): `test_report_catalog_horizon.py` (11): the bucket SQL is
+  the imported core definition, temporal signals only, undated and past out
+  of scope, `as_of` a required bound date parameter, provenance columns
+  declared nullable. PG: the corpus seeds overdue/week/month/quarter/later
+  signals plus a past mention and an undated signal - the five horizon
+  buckets land exactly, order is soonest-first, and a later reference date
+  moves the buckets without dropping rows. Over HTTP: the run records
+  `as_of`, buckets come back as declared, and a run without the reference
+  date is refused (400) before anything executes.
+* Entity & Place (step 17): `test_report_catalog_entity_place.py` (11): the
+  dataset reads candidates not resolutions, identified/ambiguous are
+  distinct columns, unprovenanced confidence carried, place signals only.
+  PG (registry suite, 19): an ambiguous mention leaves both candidate
+  places with identical ambiguous counts and neither gains an identified
+  count; the unprovenanced mention lands in `unknown_confidence_occurrences`;
+  the unresolved mention appears in no row; the retired place is marked.
+  Over HTTP: identified 1 / ambiguous 1 for the same place.
+* Relationship (step 17): `test_report_catalog_relationship.py` (8): rows
+  come from `hash_contexts`, sibling sources exclude the row's own source,
+  contexts capped and criteria-scoped. PG (registry suite, 21): one content
+  on two sources yields exactly two context rows with the path multiplicity
+  as a column (2 + 1); single-context contents have zero siblings; ordered
+  most cross-posted first. The suite's own first draft caught the dataset
+  driving from paths (duplicate rows per context) - fixed to drive from
+  contexts before landing. Over HTTP: sibling contexts/sources over a run.
+* Latest (step 17): `test_report_catalog_latest.py` (13): the baseline join
+  is bound (never interpolated), the viewer tokens are declared together
+  and need a criteria view, a scope without a reader is refused (fail
+  closed), the view key is derived from the criteria fingerprint, rows are
+  classified against the reader's progress, newest first with a unique
+  tie-breaker. PG (registry suite, 23): no baseline = all new (absent row,
+  not zero); the split is exactly at the recorded progress; one arrival is
+  new and nothing else is re-marked; another reader's progress is
+  independent; recency follows the creation date, reported alongside the
+  reading state. PG (runs suite): a run records the baseline it used
+  (`last_max_id_before` absent = null, never zero) and advances it to the
+  furthest row shown; stored rows keep their original view state. Over
+  HTTP: first run all new and recorded, second run previously seen.
+* Change (step 17): `test_report_catalog_change.py` (14): the three states
+  share one view watermark, a scope without a reader is refused, the
+  revision log is the only source of modified/removed, the added state is
+  measured from the ingestion date pinned to UTC, previous/current values
+  are declared nullable (unknown, never an empty string), the writer
+  refuses unknown kinds. PG (registry suite, 28): first view shows every
+  state in full; previous/current values from the log, newest event first;
+  a removed row carries its previous values and no current value; the
+  watermark is per reader (a fresh reader sees everything); after the
+  watermark, seen events are not re-marked and an event recorded later is
+  shown exactly once. PG (runs suite): one run advances one watermark for
+  all three datasets; a rename through the operation writes the log and
+  the run shows it; an empty view records viewed-with-nothing, not zero.
+  Over HTTP: rename through the file operation is visible to the report,
+  and the next run marks it seen.
+* Scenario Outcome (step 17): `test_report_catalog_scenario_outcome.py`
+  (12): the access decision is declared on the definition, the ownership
+  predicate is bound (never interpolated), previous outcomes and priority
+  are nullable (unknown, not low/zero), a scope without a reader is
+  refused. PG (registry suite, 30): the owner and admins read the
+  history; another reader gets nothing; outcomes arrive as structured
+  JSON; the transition row carries its previous outcomes; baseline rows
+  carry no derived priority; the newest event first, across evaluations.
+  PG (runs suite, 16): the owner's run completes with no baseline block;
+  a non-owner is refused at submission with no run recorded; a
+  nonexistent scenario is a validation error. Over HTTP: owner reads,
+  another analyst gets 403 at submission, admin reads.
 ## Limitations
 
 * **Nullability is checked empirically.** Tests assert that no NULL appears
   in non-nullable columns of the seeded result; they do not derive
-  nullability from the plan. Every column of the two current datasets is
-  NOT NULL through foreign keys (see comments in `datasets.py`), so there is
-  no nullable column to negative-control yet.
+  nullability from the plan. Every column of `search_results` and
+  `keyword_intelligence.matches` is NOT NULL through foreign keys (see
+  comments in `datasets.py`); `category_analysis.summary.content_share` is
+  the first declared-nullable column (NULL over an empty matched set) and is
+  covered by an executed assertion rather than a negative control.
 * **The compiler's semantics are not in the dataset fingerprint.** The
   fingerprint pins the declared SQL (including `CANONICAL_FROM`, which is
   interpolated). A change inside `compile_criteria` is not pinned here; each

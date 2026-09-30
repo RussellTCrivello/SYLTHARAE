@@ -71,177 +71,50 @@ function showToast(message, type = 'info', duration = 4000) {
     });
 }
 // Global state for filtering and sorting
-let allSides = [];
-let filteredSides = [];
-let currentPage = 1;
-let itemsPerPage = 50;
-let currentSort = 'importance-desc';
-let currentFormat = 'grid';
+// ---------------------------------------------------------------------
+// The list is the server's now: search, order and page live in the query
+// string and the page renders what the route sends. This file keeps what a
+// row and the toolbar offer: selection, bulk actions, the modals and the
+// per-row operations.
+// ---------------------------------------------------------------------
 
-// Debounce helper
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Initialize sides data from DOM
-function initializeSidesData() {
-    const sideItems = document.querySelectorAll('.side-card-item');
-    allSides = [];
-    
-    sideItems.forEach(item => {
-        allSides.push({
-            id: item.getAttribute('data-id'),
-            name: item.getAttribute('data-name'),
-            importance: parseFloat(item.getAttribute('data-importance')) || 0,
-            docCount: parseInt(item.getAttribute('data-doc-count')) || 0,
-            sourceCount: parseInt(item.getAttribute('data-source-count')) || 0,
-            element: item
-        });
-    });
-    
-    filteredSides = [...allSides];
-    updateStats();
-}
-
-// Update statistics
-function updateStats() {
-    const totalCount = allSides.length;
-    const filteredCount = filteredSides.length;
-    const visibleCount = document.querySelectorAll('.side-card-item:not([style*="display: none"])').length;
-    
-    const totalEl = document.getElementById('totalSidesCount');
-    const filteredEl = document.getElementById('filteredSidesCount');
-    const visibleEl = document.getElementById('visibleSidesCount');
-    
-    if (totalEl) totalEl.textContent = totalCount;
-    if (filteredEl) filteredEl.textContent = filteredCount;
-    if (visibleEl) visibleEl.textContent = visibleCount;
-}
-
-// Apply filters and sorting
-function applyFilters() {
-    const searchInput = document.getElementById('sideSearch');
-    const sortBy = document.getElementById('sortBy');
-    
-    const searchTerm = (searchInput?.value || '').toLowerCase();
-    currentSort = sortBy?.value || 'importance-desc';
-    
-    // Filter
-    filteredSides = allSides.filter(side => {
-        if (searchTerm && !side.name.includes(searchTerm)) {
-            return false;
-        }
-        return true;
-    });
-    
-    // Sort
-    const [sortField, sortDirection] = currentSort.split('-');
-    filteredSides.sort((a, b) => {
-        let aVal, bVal;
-        
-        switch(sortField) {
-            case 'name':
-                aVal = a.name || '';
-                bVal = b.name || '';
-                break;
-            case 'importance':
-                aVal = a.importance || 0;
-                bVal = b.importance || 0;
-                break;
-            case 'id':
-                aVal = parseInt(a.id) || 0;
-                bVal = parseInt(b.id) || 0;
-                break;
-            case 'doc_count':
-                aVal = a.docCount || 0;
-                bVal = b.docCount || 0;
-                break;
-            case 'source_count':
-                aVal = a.sourceCount || 0;
-                bVal = b.sourceCount || 0;
-                break;
-            default:
-                aVal = a.name || '';
-                bVal = b.name || '';
-        }
-        
-        if (sortDirection === 'asc') {
-            return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+// Navigate to this list with changed query parameters; everything not named
+// here (sort, order, per page) is carried over.
+function navigateSides(changes) {
+    const params = new URLSearchParams(window.location.search);
+    Object.entries(changes || {}).forEach(([name, value]) => {
+        if (value === undefined || value === null || value === '') {
+            params.delete(name);
         } else {
-            return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+            params.set(name, value);
         }
     });
-    
-    // Show/hide cards
-    filteredSides.forEach((side, index) => {
-        if (side.element) {
-            side.element.style.display = '';
-            side.element.style.order = index;
-        }
+    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?' + params.toString()); } else { window.location.href = window.location.pathname + '?' + params.toString(); }
+}
+
+// The per-page selector in the table toolbar
+function changeSidesPageSize() {
+    const perPage = document.getElementById('sidesPerPage');
+    if (perPage) navigateSides({ per_page: perPage.value, page: '1' });
+}
+
+// The select-all checkbox in the table header
+function sidesSelectAll(master) {
+    document.querySelectorAll('.side-checkbox').forEach(cb => {
+        cb.checked = master.checked;
     });
-    
-    // Hide non-matching cards
-    allSides.forEach(side => {
-        if (!filteredSides.includes(side) && side.element) {
-            side.element.style.display = 'none';
-        }
-    });
-    
-    updateStats();
+    updateBulkButtons();
 }
 
-// Change display format
-function changeDisplayFormat() {
-    const formatSelect = document.getElementById('displayFormat');
-    if (!formatSelect) return;
-    
-    currentFormat = formatSelect.value;
-    const container = document.getElementById('sidesCardContainer');
-    if (!container) return;
-    
-    // For now, grid is the default - table/list views would require template changes
-    // This is a placeholder for future implementation
-    console.log('Display format changed to:', currentFormat);
-}
-
-// Change page size
-function changePageSize() {
-    const itemsPerPageSelect = document.getElementById('itemsPerPage');
-    if (!itemsPerPageSelect) return;
-    
-    const newLimit = parseInt(itemsPerPageSelect.value) || 50;
-    itemsPerPage = newLimit;
-    
-    // Update URL with new limit parameter and reset to first page
-    const url = new URL(window.location.href);
-    url.searchParams.set('limit', newLimit);
-    url.searchParams.delete('cursor'); // Reset to first page
-    url.searchParams.delete('page');
-    window.location.href = url.toString();
-}
-
-// Selection management
 function selectAll() {
-    const checkboxes = document.querySelectorAll('.side-checkbox');
-    checkboxes.forEach(cb => {
-        if (cb.closest('.side-card-item') && !cb.closest('.side-card-item').style.display.includes('none')) {
-            cb.checked = true;
-        }
+    document.querySelectorAll('.side-checkbox').forEach(cb => {
+        cb.checked = true;
     });
     updateBulkButtons();
 }
 
 function selectNone() {
-    const checkboxes = document.querySelectorAll('.side-checkbox');
-    checkboxes.forEach(cb => cb.checked = false);
+    document.querySelectorAll('.side-checkbox').forEach(cb => cb.checked = false);
     updateBulkButtons();
 }
 
@@ -259,7 +132,6 @@ function updateBulkButtons() {
     });
 }
 
-// Bulk operations
 function bulkExport() {
     const checkboxes = document.querySelectorAll('.side-checkbox:checked');
     const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
@@ -295,77 +167,50 @@ function exportSide(sideId) {
     console.log('Export side:', sideId);
 }
 
-// Clear search
+// Clear the search box and the search itself
 function clearSearch() {
     const searchInput = document.getElementById('sideSearch');
-    if (searchInput) {
-        searchInput.value = '';
-        applyFilters();
-    }
+    if (searchInput) searchInput.value = '';
+    navigateSides({ search: '', page: '1' });
 }
 
 // View side categories and keywords
 function viewSideCategoriesKeywords(sideId) {
-    window.location.href = `/sides/${sideId}/categories-keywords`;
+    if (window.swapNavigate) { window.swapNavigate(`/sides/${sideId}/categories-keywords`); } else { window.location.href = `/sides/${sideId}/categories-keywords`; }
 }
 
-// Initialize event listeners
+// Search: Enter navigates with ?search=, which re-renders the list server-side
 function initializeEventListeners() {
     const searchInput = document.getElementById('sideSearch');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(() => {
-            applyFilters();
-        }, 300));
-    }
-    
-    const sortBy = document.getElementById('sortBy');
-    if (sortBy) {
-        sortBy.addEventListener('change', () => {
-            applyFilters();
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                navigateSides({ search: searchInput.value.trim(), page: '1' });
+            }
         });
     }
-    
-    const displayFormat = document.getElementById('displayFormat');
-    if (displayFormat) {
-        displayFormat.addEventListener('change', () => {
-            changeDisplayFormat();
-        });
-    }
-    
-    const itemsPerPageSelect = document.getElementById('itemsPerPage');
-    if (itemsPerPageSelect) {
-        itemsPerPageSelect.addEventListener('change', () => {
-            changePageSize();
-        });
-    }
-    
-    // No checkbox listener is registered here. Each row's own `onchange`
-    // calls `updateBulkButtons()`, and a second, document-wide listener for
-    // the same event would update the toolbar twice per click for no gain.
 }
 
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', function() {
-    initializeSidesData();
+// Initialize on DOM ready: wire the search, then sync the toolbar once.
+document.addEventListener('DOMContentLoaded', function () {
     initializeEventListeners();
-    applyFilters();
+    updateBulkButtons();
 });
 
-// Make functions globally accessible
 window.selectAll = selectAll;
 window.selectNone = selectNone;
+window.sidesSelectAll = sidesSelectAll;
 window.updateBulkButtons = updateBulkButtons;
 window.bulkExport = bulkExport;
 window.bulkUpdate = bulkUpdate;
+window.changeSidesPageSize = changeSidesPageSize;
 window.clearSearch = clearSearch;
-window.applyFilters = applyFilters;
-window.changeDisplayFormat = changeDisplayFormat;
-window.changePageSize = changePageSize;
 window.viewSideCategoriesKeywords = viewSideCategoriesKeywords;
 window.exportSide = exportSide;
 
 function viewSide(sideId) {
-    window.location.href = `/sides/${sideId}`;
+    if (window.swapNavigate) { window.swapNavigate(`/sides/${sideId}`); } else { window.location.href = `/sides/${sideId}`; }
 }
 
 function editSide(sideId) {
@@ -389,7 +234,7 @@ function duplicateSide(sideId) {
             if (data.success) {
                 showToast(translations.sideDuplicatedSuccessfully || 'Side duplicated successfully!', 'success');
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 showToast((translations.errorDuplicatingSide || 'Error duplicating side') + ': ' + (data.message || (translations.unknownError || 'Unknown error')), 'error');
@@ -416,7 +261,7 @@ function toggleSideStatus(sideId) {
         if (data.success) {
             showToast(translations.sideStatusUpdated || 'Side status updated!', 'success');
             setTimeout(() => {
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             }, 500);
         } else {
             showToast((translations.errorUpdatingStatus || 'Error updating status') + ': ' + (data.message || (translations.unknownError || 'Unknown error')), 'error');
@@ -474,7 +319,7 @@ function deleteSide(sideId, sideName = '') {
                     showToast(translations.sideDeletedSuccessfully || 'Side deleted successfully!', 'success');
                 }
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 // Show formatted error notification
@@ -642,7 +487,7 @@ function submitSideForm() {
                 // Small delay to ensure modal closes before reload
                 // Add cache-busting parameter to ensure fresh data
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
                 }, 500);
             } else {
                 // Show formatted error notification
@@ -690,7 +535,7 @@ function submitSideForm() {
                 modal.hide();
             }
             setTimeout(() => {
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                if (window.swapNavigate) { window.swapNavigate(window.location.pathname + '?t=' + Date.now()); } else { window.location.href = window.location.pathname + '?t=' + Date.now(); }
             }, 500);
         }
     })

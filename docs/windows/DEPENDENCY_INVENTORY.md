@@ -52,7 +52,6 @@ Every dependency required for normal operation on a native, offline Windows mach
 | psycopg2-binary | `psycopg2-binary>=2.9` | 3. Database | client driver wheel; the server is the bundled pgserver PostgreSQL |
 | pytesseract | `pytesseract>=0.3.10` | 4. OCR engine | pytesseract wheel; the Tesseract binary comes from the tesseract stage |
 | rapidocr-onnxruntime | `rapidocr-onnxruntime>=1.4` | 4. OCR engine | wheel; bundled PP-OCRv4 ONNX models load from disk, never from the network |
-| moviepy | `moviepy>=1.0.3` | 6. Document-processing dependency | wheel; delegates to the bundled FFmpeg for audio/video |
 | bandit | `bandit>=1.7` | 9. Development-only dependency | build/test machines only; never shipped in the offline wheelhouse |
 | pytest | `pytest>=8.0` | 9. Development-only dependency | build/test machines only; never shipped in the offline wheelhouse |
 | pytest-cov | `pytest-cov>=4.1` | 9. Development-only dependency | build/test machines only; never shipped in the offline wheelhouse |
@@ -63,7 +62,7 @@ Every dependency required for normal operation on a native, offline Windows mach
 | Component | Form | Purpose | Required | Bundle stage |
 |---|---|---|---|---|
 | Tesseract OCR 5.x (UB-Mannheim portable build) | x64 portable zip | primary OCR engine; no installer, no registry, no network | required | tesseract |
-| FFmpeg (gyan.dev release build) | x64 shared/freeless zip | audio/video metadata and extraction (moviepy); without it media files are recorded as unsupported instead of failing the deployment | optional (media formats) | tesseract |
+| FFmpeg (gyan.dev release build) | x64 shared/freeless zip | video decoding for the OpenCV media path; without it media files are recorded as unsupported instead of failing the deployment | optional (media formats) | tesseract |
 
 ## Database
 

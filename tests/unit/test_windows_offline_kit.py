@@ -54,6 +54,33 @@ class TestDependencyInventory:
                          "External/network"):
             assert fragment in content, fragment
 
+    def test_moviepy_is_not_shipped_and_the_floor_holds(self):
+        """Step 27 packaging audit contract: moviepy cannot coexist with the
+        Pillow security floor (1.x has no wheel at all, 2.x pins pillow<11),
+        so it must stay out of the shipped set - the win_amd64 wheelhouse
+        must keep resolving."""
+        lines = builder._runtime_requirement_lines()
+        names = {inventory_dependencies._req_name(line).lower() for line in lines}
+        assert "moviepy" not in names
+        # the floor itself stays
+        floors = [line for line in lines if "pillow" in line.lower()]
+        assert floors and ">=" in floors[0]
+
+    def test_the_sdist_only_split_carries_the_transitive_requirements(self):
+        platform_lines, build_lines = builder._split_sdist_only(
+            ["odfpy>=1.4", "defusedxml>=0.7", "requests>=2.31"])
+        assert build_lines == ["odfpy>=1.4"]
+        # odfpy leaves the platform set, its runtime dependency enters it
+        assert "defusedxml>=0.7" in platform_lines
+        assert "requests>=2.31" in platform_lines
+        assert not any("odfpy" in line for line in platform_lines)
+
+    def test_every_sdist_only_entry_declares_its_runtime_dependencies(self):
+        for name, deps in builder.SDIST_ONLY_PURE.items():
+            assert isinstance(deps, list), name
+            for dep in deps:
+                assert isinstance(dep, str) and dep, (name, dep)
+
     def test_wheelhouse_excludes_development_only_packages(self):
         lines = builder._runtime_requirement_lines()
         names = {inventory_dependencies._req_name(line) for line in lines}

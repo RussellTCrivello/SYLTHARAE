@@ -54,6 +54,7 @@ import psycopg2.extras
 from core.analytics.kinds import AnalysisError
 from core.criteria.model import sha256_hex
 from core.reporting import REGISTRY
+from core.reporting.baselines import record_baseline
 from core.reporting.model import ReportParameterError
 from core.reporting.registry import ReportNotFound
 
@@ -142,6 +143,27 @@ def _criteria_parameter(definition):
     return params[0] if len(params) == 1 else None
 
 
+def _enforce_access_control(conn, definition, normalized, user_id: Optional[int],
+                            is_admin: bool) -> None:
+    """Pre-retrieval authorization for definitions that read something
+    with its own owner (the same rule the saved-search check applies:
+    refuse before anything is read, never create-then-hide)."""
+    if definition.access_control != "scenario_owner":
+        raise RuntimeError(f"{definition.key}: unknown access_control "
+                           f"{definition.access_control!r}")
+    with _dict_cur(conn) as cur:
+        cur.execute("SELECT owner_user_id FROM scenarios WHERE id = %s",
+                    (normalized["scenario_id"],))
+        row = cur.fetchone()
+    conn.rollback()
+    if row is None:
+        raise ReportRunError("VALIDATION_FAILED", "the scenario does not exist")
+    if row["owner_user_id"] != user_id and not is_admin:
+        raise ReportRunError("FORBIDDEN",
+                             "you do not have access to this scenario's outcomes",
+                             403)
+
+
 def _saved_search_criteria(cur, search_id: Any, user_id: int, is_admin: bool) -> Dict[str, Any]:
     from Api.services.saved_searches_repository import can_read
 
@@ -205,6 +227,8 @@ def submit_run(conn, *, user, report_id: Any, version: Any = None,
         raise ReportRunError("VALIDATION_FAILED", str(exc)) from None
     if len(criteria_fps) > 1:     # a definition fault, not a request fault
         raise RuntimeError(f"{definition.key}: datasets disagree on the criteria fingerprint")
+    if definition.access_control is not None:
+        _enforce_access_control(conn, definition, normalized, user_id, is_admin)
     with _dict_cur(conn) as cur:
         cur.execute(
             "INSERT INTO report_runs (report_id, report_version, definition_fingerprint,"  # nosec B608 # _RUN_COLUMNS is a constant; filters are fixed fragments with bound parameters
@@ -331,11 +355,13 @@ def _finish(conn, run_id: int, status: str, *, error: Optional[str] = None,
             cur.execute(
                 "INSERT INTO report_run_datasets (run_id, position, dataset_key,"
                 " dataset_fingerprint, query_fingerprint, semantics, row_limit, row_count,"
-                " truncated, columns, rows) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                " truncated, columns, rows, baseline)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (run_id, position, ds["dataset_key"], ds["dataset_fingerprint"],
                  ds["query_fingerprint"], ds["semantics"], ds["row_limit"], ds["row_count"],
                  ds["truncated"], psycopg2.extras.Json(ds["columns"]),
-                 psycopg2.extras.Json(ds["rows"])))
+                 psycopg2.extras.Json(ds["rows"]),
+                 psycopg2.extras.Json(ds["baseline"]) if ds.get("baseline") is not None else None))
         snapshot = snapshot or {}
         cur.execute(
             "UPDATE report_runs SET status = %s, error = %s, refusal_reason = %s,"
@@ -387,6 +413,13 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
     results: List[Dict[str, Any]] = []
     analyses: List[Dict[str, Any]] = []
     snapshot: Dict[str, Any] = {}
+    # Viewer datasets (Latest; every dataset of the Change report) record,
+    # on their own block, what the reader had seen as THIS run's snapshot
+    # found it - and after the snapshot transaction closes, each view's
+    # baseline is advanced to what the run showed. Datasets of one
+    # definition can share a view (the Change report's three datasets do):
+    # they read the same baseline and are advanced together, once.
+    baseline_work: Dict[str, Dict[str, Any]] = {}
     total = len(definition.datasets)
     try:
         with _dict_cur(conn) as cur:
@@ -422,6 +455,24 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
                         raise _RunFailed(f"{key}: criteria fingerprint differs from the "
                                          "one recorded at submission")
                     results.append(_read_dataset(cur, dataset, bound))
+                    if dataset.progress_column is not None and bound.progress_key:
+                        if bound.progress_key not in baseline_work:
+                            cur.execute(
+                                "SELECT last_max_id FROM report_baselines"
+                                " WHERE user_id = %s AND criteria_hash = %s",
+                                (user["id"], bound.progress_key))
+                            seen = cur.fetchone()
+                            before = (int(seen["last_max_id"])
+                                      if seen and seen["last_max_id"] is not None
+                                      else None)
+                            baseline_work[bound.progress_key] = {
+                                "user_id": user["id"], "before": before,
+                                "column": dataset.progress_column, "blocks": []}
+                        entry = baseline_work[bound.progress_key]
+                        results[-1]["baseline"] = {
+                            "criteria_hash": bound.progress_key,
+                            "last_max_id_before": entry["before"]}
+                        entry["blocks"].append(results[-1])
                     if progress_cb:
                         progress_cb({"percent": int(100 * (index + 1) / total),
                                      "current_phase": f"Report dataset {key}",
@@ -449,6 +500,31 @@ def execute_run(conn, run_id: int, *, job_id: Optional[str] = None,
     if refusal is not None:
         _finish(conn, run_id, "refused", refusal=refusal, snapshot=snapshot)
         return outcome("refused", refusal=refusal)
+    for view_key, entry in baseline_work.items():
+        # The reader has now been shown these rows: advance their baseline
+        # to the furthest id actually shown (monotonic - never backwards).
+        # A view read as empty is still a view: recording keeps the id and
+        # moves last_seen_at, so a Change view does not re-show its events.
+        # Failing to record is not allowed to fail the run, but it is named
+        # on the run: the reader may see rows again as new, never un-see.
+        column, blocks = entry["column"], entry["blocks"]
+        shown = [int(r[column]) for b in blocks for r in b["rows"]]
+        try:
+            advanced = record_baseline(
+                entry["user_id"], view_key,
+                max(shown) if shown else (entry["before"] or 0), conn=conn)
+            conn.commit()
+            for block in blocks:
+                block["baseline"] = dict(block["baseline"],
+                                         advanced_to=advanced["last_max_id"],
+                                         baseline_recorded=True)
+        except Exception:
+            conn.rollback()
+            logger.exception("report run %s: baseline advance failed", run_id)
+            for block in blocks:
+                block["baseline"] = dict(block["baseline"], advanced_to=None,
+                                         baseline_recorded=False,
+                                         reason="baseline_advance_failed")
     _finish(conn, run_id, "completed", snapshot=snapshot, datasets=results,
             analyses=analyses)
     return dict(outcome("completed", datasets=[
@@ -578,7 +654,7 @@ def get_run(conn, run_id: int, *, user, registry=REGISTRY) -> Dict[str, Any]:
     row = _fetch(conn, run_id, user, registry)
     with _dict_cur(conn) as cur:
         cur.execute("SELECT position, dataset_key, dataset_fingerprint, query_fingerprint,"
-                    " semantics, row_limit, row_count, truncated, columns"
+                    " semantics, row_limit, row_count, truncated, columns, baseline"
                     " FROM report_run_datasets WHERE run_id = %s ORDER BY position", (run_id,))
         datasets = [dict(r) for r in cur.fetchall()]
     conn.rollback()
@@ -596,6 +672,84 @@ def run_analyses(conn, run_id: int) -> List[Dict[str, Any]]:
         rows = [dict(r) for r in cur.fetchall()]
     conn.rollback()
     return rows
+
+
+def _visible_pairs(user, all_users: bool, registry) -> Optional[list]:
+    """The (report_id, version) pairs the user can read, for count filters.
+
+    ``None`` means "no definition filter" (administrators: list_runs shows
+    them everything, retired definitions included)."""
+    if all_users and user.has_role("admin"):
+        return None
+    return [(d.report_id, d.version)
+            for d in visible_definitions(getattr(user, "role", None), registry)]
+
+
+def run_status_counts(conn, *, user, all_users: bool = False,
+                      registry=REGISTRY) -> Dict[str, Any]:
+    """Runs by status over exactly the runs ``list_runs`` would show.
+
+    One grouped query; the definition filter is applied in SQL *before*
+    counting (role filtering before retrieval, never after rendering). An
+    absent status is a measured zero - the GROUP BY answered, not an
+    assumption."""
+    if all_users and not user.has_role("admin"):
+        raise ReportRunError("FORBIDDEN",
+                             "only administrators can count every user's runs", 403)
+    where, params = [], []
+    if not all_users:
+        where.append("requested_by = %s")
+        params.append(getattr(user, "id", None))
+        pairs = _visible_pairs(user, False, registry)
+        if not pairs:
+            return {"counts": {s: 0 for s in STATUSES}, "total": 0,
+                    "scope": "mine"}
+        where.append("(report_id, report_version) IN"
+                     " (SELECT * FROM unnest(%s::text[], %s::int[]))")
+        params.append([p[0] for p in pairs])
+        params.append([p[1] for p in pairs])
+    clause = (" WHERE " + " AND ".join(where)) if where else ""
+    conn.rollback()
+    with _dict_cur(conn) as cur:
+        cur.execute("SET LOCAL statement_timeout = '15s'")
+        cur.execute("SELECT status, count(*) AS n FROM report_runs"  # nosec B608 # fixed fragments; filters are bound parameters
+                    + clause + " GROUP BY status", params)
+        found = {row["status"]: int(row["n"]) for row in cur.fetchall()}
+    conn.rollback()
+    counts = {status: found.get(status, 0) for status in STATUSES}
+    return {"counts": counts, "total": sum(counts.values()),
+            "scope": "all" if all_users else "mine"}
+
+
+def artifact_summary(conn, *, user, all_users: bool = False,
+                     registry=REGISTRY) -> Dict[str, Any]:
+    """Artifacts made from the visible runs: total and per-format counts,
+    from one grouped join (the same visibility as ``list_runs``)."""
+    if all_users and not user.has_role("admin"):
+        raise ReportRunError("FORBIDDEN",
+                             "only administrators can count every user's artifacts", 403)
+    where, params = [], []
+    if not all_users:
+        where.append("r.requested_by = %s")
+        params.append(getattr(user, "id", None))
+        pairs = _visible_pairs(user, False, registry)
+        if not pairs:
+            return {"total": 0, "by_format": {}, "scope": "mine"}
+        where.append("(r.report_id, r.report_version) IN"
+                     " (SELECT * FROM unnest(%s::text[], %s::int[]))")
+        params.append([p[0] for p in pairs])
+        params.append([p[1] for p in pairs])
+    clause = (" WHERE " + " AND ".join(where)) if where else ""
+    conn.rollback()
+    with _dict_cur(conn) as cur:
+        cur.execute("SET LOCAL statement_timeout = '15s'")
+        cur.execute("SELECT a.format, count(*) AS n"  # nosec B608 # fixed fragments; filters are bound parameters
+                    " FROM report_runs r JOIN report_artifacts a ON a.run_id = r.id"
+                    + clause + " GROUP BY a.format ORDER BY a.format", params)
+        by_format = {row["format"]: int(row["n"]) for row in cur.fetchall()}
+    conn.rollback()
+    return {"total": sum(by_format.values()), "by_format": by_format,
+            "scope": "all" if all_users else "mine"}
 
 
 def list_runs(conn, *, user, all_users: bool = False, report_id: Optional[str] = None,
@@ -650,7 +804,7 @@ def dataset_rows(conn, run_id: int, dataset_key: str, *, user, limit: int = 100,
     offset = max(0, int(offset))
     with _dict_cur(conn) as cur:
         cur.execute(
-            "SELECT d.dataset_key, d.semantics, d.row_limit, d.row_count, d.truncated, d.columns,"
+            "SELECT d.dataset_key, d.semantics, d.row_limit, d.row_count, d.truncated, d.columns, d.baseline,"
             " COALESCE((SELECT jsonb_agg(e.value ORDER BY e.ordinality)"
             "           FROM jsonb_array_elements(d.rows) WITH ORDINALITY AS e(value, ordinality)"
             "           WHERE e.ordinality > %s AND e.ordinality <= %s), '[]'::jsonb) AS rows"

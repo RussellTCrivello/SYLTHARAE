@@ -209,3 +209,19 @@ def test_change_password_guessing_is_rate_limited(app):
         "current_password": f"guess-{i}", "new_password": "another-password-456"}).status_code
         for i in range(12)]
     assert 429 in codes, codes
+
+
+def test_login_rate_limit_default_and_override(monkeypatch):
+    """The login limiter defaults to 10/minute; the env override exists for
+    the runtime-acceptance harness (one server session signing in several
+    roles) and is bounded + sanitised."""
+    from Api.routes.auth import _login_rate_limit
+
+    monkeypatch.delenv("RATE_LIMIT_LOGIN_PER_MINUTE", raising=False)
+    assert _login_rate_limit() == "10 per minute"
+    monkeypatch.setenv("RATE_LIMIT_LOGIN_PER_MINUTE", "120")
+    assert _login_rate_limit() == "120 per minute"
+    monkeypatch.setenv("RATE_LIMIT_LOGIN_PER_MINUTE", "not-a-number")
+    assert _login_rate_limit() == "10 per minute"
+    monkeypatch.setenv("RATE_LIMIT_LOGIN_PER_MINUTE", "0")
+    assert _login_rate_limit() == "1 per minute"

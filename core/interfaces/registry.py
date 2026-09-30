@@ -135,7 +135,8 @@ REGISTRY: Tuple[Interface, ...] = (
         aliases=("files.file_detail", "files.file_content_lazy",
                  "files.file_content_page", "files.file_full_content",
                  "files.file_search_all_pages", "files.file_chart_data",
-                 "files.file_types_page", "files.delete_file",
+                 "files.file_types_page", "files.file_type_documents",
+                 "files.delete_file",
                  "files.bulk_delete_files", "files.bulk_export_files"),
         help_topic="discover/file-library", keyboard_shortcut="g f",
     ),
@@ -169,7 +170,7 @@ REGISTRY: Tuple[Interface, ...] = (
         "keywords", "Keywords",
         "Keywords identified in the material.",
         Domain.DISCOVER, "keywords_list", "bi-key",
-        aliases=("keyword_detail", "keywords_add"),
+        aliases=("keyword_detail", "keywords_add", "keyword_documents"),
         help_topic="discover/keywords",
     ),
     _if(
@@ -183,7 +184,7 @@ REGISTRY: Tuple[Interface, ...] = (
         "categories", "Categories",
         "Categories and the words assigned to them.",
         Domain.DISCOVER, "categories_list", "bi-tags",
-        aliases=("category_words", "category_add"),
+        aliases=("category_words", "category_add", "category_documents"),
         help_topic="discover/categories",
     ),
     _if(
@@ -299,6 +300,38 @@ REGISTRY: Tuple[Interface, ...] = (
         Domain.REPORT, "reports_page", "bi-file-earmark-bar-graph",
         dependencies=("search", "jobs"),
         help_topic="report/reports", keyboard_shortcut="g r",
+    ),
+    _if(
+        "reports_dashboard", "Reports Dashboard",
+        "The reporting system at a glance: the report versions your role can "
+        "read, the runs by measured outcome (yours, or everyone's for an "
+        "administrator), the artifacts made from them, and the schedules "
+        "that fire next. Every number is counted from the stored runs - "
+        "never assumed.",
+        Domain.REPORT, "reports_dashboard_page", "bi-speedometer2",
+        dependencies=("reports", "jobs", "schedules"),
+        help_topic="report/dashboard",
+    ),
+    _if(
+        "retention", "Retention",
+        "The pruning policies for everything that grows: finished jobs, the "
+        "rule ledger and evaluation log, scenario outcomes, notifications, "
+        "report runs and artifacts, the revision log and the audit log - "
+        "each with an explicit keep-forever default where pruning would "
+        "destroy evidence. Every applied prune is audited with its count.",
+        Domain.ADMINISTRATION, "retention_page", "bi-hourglass-split",
+        dependencies=("jobs", "reports"),
+        help_topic="operate/retention",
+    ),
+    _if(
+        "schedules", "Schedules",
+        "Run a registered report, or evaluate every active rule / scenario, on "
+        "an interval. Each fire re-checks the owner's role and the payload "
+        "before anything runs; a schedule that can no longer run is disabled "
+        "with the reason stated.",
+        Domain.REPORT, "schedules_page", "bi-clock-history",
+        dependencies=("reports", "jobs", "monitoring"),
+        help_topic="report/schedules",
     ),
     _if(
         "charts_dashboard", "Charts Dashboard",

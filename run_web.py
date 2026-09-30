@@ -37,6 +37,10 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 # Auto-install check: Only run if AUTO_INSTALL is not disabled
+# The job scheduler (step 20) runs in this same single process; tests and
+# import-only processes keep it off by not going through run_web.py.
+os.environ.setdefault('SYLTHARAE_SCHEDULER', '1')
+
 if os.environ.get('AUTO_INSTALL', '1') == '1':
     try:
         try:

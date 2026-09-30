@@ -89,19 +89,13 @@ EXPLORER_SORTS = {
     "document": "s.hash_id ASC, s.char_start ASC, s.char_end ASC",
 }
 
-#: (key, first day offset, end offset exclusive) relative to the reference date.
-BUCKETS: Tuple[Tuple[str, Optional[int], Optional[int]], ...] = (
-    ("overdue", None, 0),
-    ("week", 0, 7),
-    ("month", 7, 30),
-    ("quarter", 30, 90),
-    ("later", 90, None),
-    ("past", None, 0),
-)
-BUCKET_KEYS = tuple(b[0] for b in BUCKETS)
-#: What ``horizon`` lists when no bucket is requested: the horizon proper.
-DEFAULT_BUCKETS = ("overdue", "week", "month", "quarter", "later")
-HORIZON_SIGNAL_TYPES = (temporal_intel.SIGNAL_DATE, temporal_intel.SIGNAL_RELATIVE)
+# The horizon buckets are defined once in core.detection.horizon (the report
+# datasets share them; core never imports services).
+from core.detection.horizon import (BUCKETS, BUCKET_KEYS, DEFAULT_BUCKETS,  # noqa: E402
+                                    HORIZON_SIGNAL_TYPES,
+                                    REF_SQL as _REF_SQL,
+                                    bucket_ranges as _bucket_ranges_public,
+                                    bucket_sql as _bucket_sql_impl)
 
 #: Document-criteria request parameters -> canonical Criteria fields.
 _DOC_LIST_PARAMS = {"source_id": "sources", "side_id": "sides", "category_id": "categories",
@@ -513,33 +507,15 @@ def signal_detail(cur, signal_id: int, scope: AccessScope,
 # ---------------------------------------------------------------------------
 
 
-def _bucket_sql() -> str:
-    """The horizon bucket of signal ``s`` relative to ``ref.r``, the reference
-    date. Queries using it join ``_REF_SQL``, which binds that date as a
-    parameter (no value is ever written into the SQL text)."""
-    return ("CASE WHEN s.date_to < ref.r THEN"
-            " (CASE WHEN s.text_orientation = 'future' THEN 'overdue' ELSE 'past' END)"
-            " WHEN s.date_from < ref.r + 7 THEN 'week'"
-            " WHEN s.date_from < ref.r + 30 THEN 'month'"
-            " WHEN s.date_from < ref.r + 90 THEN 'quarter'"
-            " ELSE 'later' END")
-
-
-#: One-row relation carrying the reference date; takes one parameter.
-_REF_SQL = " CROSS JOIN (SELECT %s::date AS r) ref"
-
-
+#: Public names kept importable from here (the definitions live in
+#: core.detection.horizon); ``_bucket_sql`` predates the move and is kept
+#: for its existing callers.
 def bucket_ranges(reference_date: datetime.date) -> List[Dict[str, Any]]:
-    out = []
-    for key, start, end in BUCKETS:
-        out.append({
-            "key": key,
-            "from": (reference_date + datetime.timedelta(days=start)).isoformat()
-            if start is not None else None,
-            "to": (reference_date + datetime.timedelta(days=end - 1)).isoformat()
-            if end is not None else None,
-        })
-    return out
+    return _bucket_ranges_public(reference_date)
+
+
+def _bucket_sql() -> str:
+    return _bucket_sql_impl()
 
 
 def _horizon_filter(f: SignalFilter) -> SignalFilter:

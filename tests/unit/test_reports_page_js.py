@@ -30,4 +30,4 @@ def test_reports_page_renders_server_state_as_text():
     proc = subprocess.run(["node", "tests/js/reports_page_smoke.mjs"], cwd=ROOT,
                           capture_output=True, text=True, timeout=60)
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert proc.stdout.count("ok ") == 39, proc.stdout
+    assert proc.stdout.count("ok ") == 41, proc.stdout  # +2: the language column and the language picker (step 22)

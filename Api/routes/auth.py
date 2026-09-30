@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import logging
 
+import os
+
 from flask import (
     Blueprint,
     g,
@@ -71,8 +73,21 @@ def login_page():
     return render_template("auth/login.html")
 
 
+def _login_rate_limit() -> str:
+    """Sign-in rate limit, env-overridable for the runtime-acceptance
+    harness (which signs in several roles across the chain checks in one
+    server session). Production default stays 10/minute; the override is
+    read at request time and still bounded."""
+    per_minute = os.environ.get("RATE_LIMIT_LOGIN_PER_MINUTE", "10")
+    try:
+        value = max(1, int(per_minute))
+    except ValueError:
+        value = 10
+    return f"{value} per minute"
+
+
 @auth_bp.route("/auth/login", methods=["POST"])
-@limiter.limit("10 per minute")
+@limiter.limit(lambda: _login_rate_limit())
 def login():
     data = request.get_json(silent=True) or request.form or {}
     username = (data.get("username") or "").strip()

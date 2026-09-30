@@ -8,7 +8,6 @@ import { apiPost, apiDelete } from '../api/api-client.js';
 import { getCSRFToken } from '../core/utils.js';
 import * as fileSelection from './file-selection.js';
 import * as fileExport from './file-export.js';
-import { renderUnifiedPagination } from '../rendering/unified-pagination.js';
 
 // Current state
 const FileManagement = {
@@ -25,7 +24,6 @@ const FileManagement = {
         this.setupEventListeners();
         this.restoreViewPreference();
         this.updateBulkToolbar();
-        this.renderPagination();
     },
     
     // Restore filter values from URL parameters
@@ -43,8 +41,7 @@ const FileManagement = {
             'sourceFilter': 'source',
             'sideFilter': 'side',
             'fileTypeFilter': 'file_type',
-            'statusFilter': 'status',
-            'sortBy': 'sort'
+            'statusFilter': 'status'
         };
         
         Object.entries(filters).forEach(([elementId, paramName]) => {
@@ -93,7 +90,7 @@ const FileManagement = {
         }
         
         // Filter dropdowns - add change listeners
-        ['sourceFilter', 'sideFilter', 'fileTypeFilter', 'statusFilter', 'sortBy'].forEach(id => {
+        ['sourceFilter', 'sideFilter', 'fileTypeFilter', 'statusFilter'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 // Remove existing listeners to avoid duplicates
@@ -182,8 +179,8 @@ const FileManagement = {
         
         // Enable/disable bulk action buttons
         const bulkBtns = [
-            'bulkAnalyzeBtn', 'bulkExportBtn', 'bulkNamesCsvBtn', 'bulkNamesExcelBtn',
-            'bulkDeleteBtn'
+            'bulkAnalyzeBtn', 'bulkContentBtn', 'bulkOriginalsBtn',
+            'bulkNamesCsvBtn', 'bulkNamesExcelBtn', 'bulkDeleteBtn'
         ];
         bulkBtns.forEach(btnId => {
             const btn = document.getElementById(btnId);
@@ -205,16 +202,21 @@ const FileManagement = {
     // ==================== FILTER MANAGEMENT ====================
     applyFilters() {
         const params = new URLSearchParams();
-        
+
         // Get all filter values
         const search = document.getElementById('smartSearch')?.value?.trim();
         const source = document.getElementById('sourceFilter')?.value;
         const side = document.getElementById('sideFilter')?.value;
         const fileType = document.getElementById('fileTypeFilter')?.value;
         const status = document.getElementById('statusFilter')?.value;
-        const sort = document.getElementById('sortBy')?.value || 'date_desc';
         const limit = document.getElementById('perPageFiles')?.value || '10';
-        
+
+        // The column sort is the table's own control: keep whatever the
+        // headers put in the URL (`sort` + `order`).
+        const currentParams = new URLSearchParams(window.location.search);
+        const sort = currentParams.get('sort');
+        const order = currentParams.get('order');
+
         // Add to params if not empty
         if (search) params.set('search', search);
         if (source) params.set('source', source);
@@ -222,13 +224,16 @@ const FileManagement = {
         if (fileType) params.set('file_type', fileType);
         if (status) params.set('status', status);
         if (sort) params.set('sort', sort);
+        if (order) params.set('order', order);
         if (limit) params.set('limit', limit);
         
         // Reset to first page when filtering
         params.delete('cursor');
         
         // Navigate
-        window.location.href = window.location.pathname + '?' + params.toString();
+        (window.swapNavigate
+            ? window.swapNavigate(window.location.pathname + '?' + params.toString())
+            : (window.location.href = window.location.pathname + '?' + params.toString()));
     },
     
     clearFileSearch() {
@@ -245,77 +250,12 @@ const FileManagement = {
         if (perPageSelect) {
             const params = new URLSearchParams(window.location.search);
             params.set('limit', perPageSelect.value);
-            params.delete('cursor'); // Reset to first page
-            window.location.href = window.location.pathname + '?' + params.toString();
+            params.set('page', '1'); // a new batch starts at the first batch
+            params.delete('cursor');
+            (window.swapNavigate
+            ? window.swapNavigate(window.location.pathname + '?' + params.toString())
+            : (window.location.href = window.location.pathname + '?' + params.toString()));
         }
-    },
-    
-    // Render numbered pagination buttons (unified style)
-    renderPagination() {
-        // Try to get data from this.data first, then window.fileManagementData
-        const data = this.data && this.data.totalPages ? this.data : (window.fileManagementData || {});
-        
-        if (!data || !data.totalPages || data.totalPages <= 1) {
-            const container = document.getElementById('paginationContainer');
-            if (container) {
-                container.innerHTML = '';
-            }
-            return;
-        }
-        
-        const currentPage = parseInt(data.currentPage) || 1;
-        const totalPages = parseInt(data.totalPages) || 1;
-        
-        // Get URL parameters to preserve
-        const urlParams = {};
-        const currentParams = new URLSearchParams(window.location.search);
-        currentParams.forEach((value, key) => {
-            if (key !== 'page') {
-                urlParams[key] = value;
-            }
-        });
-        
-        // Use unified pagination
-        renderUnifiedPagination({
-            currentPage: currentPage,
-            totalPages: totalPages,
-            containerId: 'paginationContainer',
-            onPageChange: (page) => {
-                this.navigateToPage(page);
-            },
-            urlParams: urlParams,
-            showInfo: true,
-            showJump: totalPages > 5,
-            baseUrl: window.location.pathname
-        });
-    },
-    
-    // Navigate to a specific page using offset-based pagination
-    navigateToPage(targetPage) {
-        // Get current URL parameters to preserve all filters
-        const currentParams = new URLSearchParams(window.location.search);
-        
-        // Get filter values from form inputs (preferred) or URL params (fallback)
-        const search = document.getElementById('smartSearch')?.value?.trim() || currentParams.get('search') || '';
-        const source = document.getElementById('sourceFilter')?.value || currentParams.get('source') || '';
-        const side = document.getElementById('sideFilter')?.value || currentParams.get('side') || '';
-        const fileType = document.getElementById('fileTypeFilter')?.value || currentParams.get('file_type') || '';
-        const status = document.getElementById('statusFilter')?.value || currentParams.get('status') || '';
-        const sort = document.getElementById('sortBy')?.value || currentParams.get('sort') || 'date_desc';
-        const limit = document.getElementById('perPageFiles')?.value || currentParams.get('limit') || '10';
-        
-        // Build URL with filters
-        const params = new URLSearchParams();
-        if (search) params.set('search', search);
-        if (source) params.set('source', source);
-        if (side) params.set('side', side);
-        if (fileType) params.set('file_type', fileType);
-        if (status) params.set('status', status);
-        if (sort) params.set('sort', sort);
-        params.set('limit', limit);
-        params.set('page', targetPage);
-        
-        window.location.href = window.location.pathname + '?' + params.toString();
     },
     
     // ==================== BULK OPERATIONS ====================
@@ -343,7 +283,9 @@ const FileManagement = {
                     window.alert(message);
                 }
                 setTimeout(() => {
-                    window.location.href = window.location.pathname + '?t=' + Date.now();
+                    (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
                 }, 2000);
             } else {
                 const errorMsg = `${window.translations?.errorStartingAnalysis || 'Error starting analysis'}: ${data.error || 'Unknown error'}`;
@@ -364,9 +306,9 @@ const FileManagement = {
         }
     },
     
-    async bulkExport() {
+    async bulkExport(mode) {
         const selected = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(cb => cb.value);
-        
+
         if (selected.length === 0) {
             const msg = window.translations?.pleaseSelectFilesToExport || 'Please select files to export';
             if (window.showWarning) {
@@ -376,9 +318,10 @@ const FileManagement = {
             }
             return;
         }
-        
-        // Use file-export module
-        await fileExport.exportSelectedFiles(selected);
+
+        // The two batch export kinds: the extracted content, or the
+        // original source files as one ZIP. Both Save As.
+        await fileExport.exportSelectedFiles(selected, mode === 'originals' ? 'originals' : 'text');
     },
     
     async bulkDelete() {
@@ -409,7 +352,9 @@ const FileManagement = {
                 } else if (window.alert) {
                     window.alert(message);
                 }
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
             } else {
                 const errorMsg = `${window.translations?.errorDeletingFiles || 'Error deleting files'}: ${data.error || 'Unknown error'}`;
                 if (window.showError) {
@@ -445,7 +390,9 @@ const FileManagement = {
                 } else if (window.alert) {
                     window.alert(window.translations?.fileDeleted || 'File deleted');
                 }
-                window.location.href = window.location.pathname + '?t=' + Date.now();
+                (window.swapNavigate
+                            ? window.swapNavigate(window.location.pathname + '?t=' + Date.now())
+                            : (window.location.href = window.location.pathname + '?t=' + Date.now()));
             } else {
                 const errorMsg = `${window.translations?.errorDeletingFile || 'Error deleting file'}: ${data.error || 'Unknown error'}`;
                 if (window.showError) {
