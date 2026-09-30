@@ -12828,3 +12828,128 @@ msgstr "svako omogućeno pravilo zadržavanja"
 msgid "Retention"
 msgstr "Zadržavanje"
 
+# --- Reports Dashboard (step 22) ---
+#: templates/Reports/dashboard.html
+msgid "Reports Dashboard"
+msgstr "Nadzorna ploča izvješća"
+
+#: templates/Reports/dashboard.html
+msgid "The reporting system at a glance: what can run, what ran, what it produced, and what fires next. Every number is counted from the stored runs."
+msgstr "Sustav izvješća u jednom pogledu: što se može pokrenuti, što je pokrenuto, što je proizveo i što slijedi. Svaki broj izbrojan je iz pohranjenih izvođenja."
+
+#: templates/Reports/dashboard.html
+msgid "What this page counts"
+msgstr "Što ova stranica broji"
+
+#: templates/Reports/dashboard.html
+msgid "Runs and artifacts are counted over exactly the runs the Runs list below would show you - your own, or everyone's when an administrator turns on All users."
+msgstr "Izvođenja i datoteke broje se točno nad izvođenjima koja bi vam popis izvođenja dolje prikazao - vaša vlastita, ili svih kada administrator uključi Sve korisnike."
+
+#: templates/Reports/dashboard.html
+msgid "A status with no runs is a measured zero: the counter answered, it is not an assumption."
+msgstr "Status bez izvođenja je izmjerena nula: brojač je odgovorio, to nije pretpostavka."
+
+#: templates/Reports/dashboard.html
+msgid "Open a run to read its datasets, analyses and files on the Reports page."
+msgstr "Otvorite izvođenje da biste pročitali njegove skupove podataka, analize i datoteke na stranici Izvješća."
+
+#: templates/Reports/dashboard.html
+msgid "Schedules are managed on the Schedules page; the dashboard only shows what fires next."
+msgstr "Rasporedi se upravljaju na stranici Rasporedi; nadzorna ploča pokazuje samo što slijedi."
+
+#: templates/Reports/dashboard.html
+msgid "Report versions"
+msgstr "Verzije izvješća"
+
+#: templates/Reports/dashboard.html
+msgid "Enabled schedules"
+msgstr "Omogućeni rasporedi"
+
+#: templates/Reports/dashboard.html
+msgid "Report catalog"
+msgstr "Katalog izvješća"
+
+#: templates/Reports/dashboard.html
+msgid "What it answers"
+msgstr "Na što odgovara"
+
+#: templates/Reports/dashboard.html
+msgid "No reports are declared for your role."
+msgstr "Nema izvješća deklariranih za vašu ulogu."
+
+#: templates/Reports/dashboard.html
+msgid "Every status"
+msgstr "Svi statusi"
+
+#: templates/Reports/dashboard.html
+msgid "Next fire"
+msgstr "Sljedeće pokretanje"
+
+#: templates/Reports/dashboard.html
+msgid "No schedules."
+msgstr "Nema rasporeda."
+
+#: templates/Reports/reports.html
+msgid "The language of the rendered file: the language is part of the identity of the file and of its manifest."
+msgstr "Jezik prikazane datoteke: jezik je dio identiteta datoteke i njezina manifesta."
+
+#: templates/Reports/dashboard.html
+msgid "The dashboard could not be loaded."
+msgstr "Nadzornu ploču nije bilo moguće učitati."
+
+#: templates/Reports/dashboard.html
+msgid "completed"
+msgstr "završeno"
+
+#: templates/Reports/dashboard.html
+msgid "running"
+msgstr "u izvođenju"
+
+#: templates/Reports/dashboard.html
+msgid "refused"
+msgstr "odbijeno"
+
+#: templates/Reports/dashboard.html
+msgid "cancelled"
+msgstr "otkazano"
+
+#: templates/Reports/dashboard.html
+msgid "families"
+msgstr "obitelji"
+
+#: templates/Reports/dashboard.html
+msgid "next fire"
+msgstr "sljedeće pokretanje"
+
+#: templates/Reports/dashboard.html
+msgid "Open"
+msgstr "Otvori"
+
+#: templates/Reports/dashboard.html
+msgid "Manage"
+msgstr "Upravljaj"
+
+#: templates/Reports/dashboard.html
+msgid "shortened"
+msgstr "skraćeno"
+
+#: templates/Reports/dashboard.html
+msgid "all datasets"
+msgstr "svi skupovi podataka"
+
+#: templates/Reports/dashboard.html
+msgid "everyone"
+msgstr "svi"
+
+#: templates/Reports/dashboard.html
+msgid "yours"
+msgstr "vaši"
+
+#: templates/Reports/dashboard.html
+msgid "versions"
+msgstr "verzije"
+
+#: templates/Reports/dashboard.html
+msgid "datasets"
+msgstr "skupovi podataka"
+

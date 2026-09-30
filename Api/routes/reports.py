@@ -23,6 +23,11 @@
 ``GET  /api/reports/artifacts/<id>/download``                  the bytes (``DATA_EXPORTED``)
 ``GET  /api/reports/artifacts/<id>/manifest``                  the manifest file (canonical JSON;
                                                                its SHA-256 is ``manifest_sha256``)
+``GET  /reports/dashboard``                                    the Reports Dashboard page (registry
+                                                               ``reports_dashboard``; step 22)
+``GET  /api/reports/dashboard``                                the measured overview: catalog,
+                                                               runs by status, artifacts, next
+                                                               schedule fires, languages
 ============================================================  =====================================
 
 Creating a run is a write: viewers are read-only (SEC-02), so they see the
@@ -130,6 +135,11 @@ def register_report_routes(app):
     def err(exc):
         return _error(exc.code, exc.message, exc.status)
 
+    def _actor():
+        user = current_user()
+        return user, getattr(user, "id", None), bool(user and user.has_role("admin"))
+
+
     @app.route("/reports", methods=["GET"])
     @login_required
     def reports_page():
@@ -138,12 +148,83 @@ def register_report_routes(app):
         from flask import render_template
 
         user = current_user()
+        from core.reporting.i18n import available_languages
+
         return render_template("Reports/reports.html", page_data={
             "user_id": getattr(user, "id", None),
             "can_run": store.can_run(getattr(user, "role", None)),
             "is_admin": bool(user and user.has_role("admin")),
+            "languages": sorted(available_languages()),
             "list_limit": 50, "row_page": 100, "max_row_page": store.MAX_ROW_PAGE,
             "job_poll_ms": 1500, "job_poll_limit": 400,
+        })
+
+    @app.route("/reports/dashboard", methods=["GET"])
+    @login_required
+    def reports_dashboard_page():
+        """The reporting system at a glance (registry ``reports_dashboard``,
+        step 22): the catalog your role can read, runs by measured outcome,
+        the artifacts made from them, and the schedules that fire next. A
+        view over the reports, schedules and jobs APIs - no second runner."""
+        from flask import render_template
+        from core.reporting.i18n import available_languages
+
+        user = current_user()
+        return render_template("Reports/dashboard.html", page_data={
+            "can_run": store.can_run(getattr(user, "role", None)),
+            "is_admin": bool(user and user.has_role("admin")),
+            "languages": sorted(available_languages()),
+            "list_limit": 50,
+        })
+
+    @app.route("/api/reports/dashboard", methods=["GET"])
+    @login_required
+    @limiter.limit(INTERACTIVE_READ_LIMIT)
+    def api_reports_dashboard():
+        """The dashboard's numbers, measured in set-based SQL. Counts cover
+        exactly the runs ``GET /api/reports/runs`` would list for this
+        caller (``?all=1`` widens to everyone, administrators only)."""
+        import datetime
+
+        from core.reporting.i18n import available_languages
+
+        from services.scheduling import store as schedules_store
+
+        user = current_user()
+        role = getattr(user, "role", None)
+        all_users = request.args.get("all") in ("1", "true")
+        if all_users and not (user and user.has_role("admin")):
+            return _error("FORBIDDEN",
+                          "only administrators may count every user's runs", 403)
+        definitions = store.visible_definitions(role)
+        catalog = {
+            "families": len({d.report_id for d in definitions}),
+            "versions": len(definitions),
+            "can_run": store.can_run(role),
+        }
+        with get_connection() as conn:
+            runs = store.run_status_counts(conn, user=user, all_users=all_users)
+            artifacts = store.artifact_summary(conn, user=user, all_users=all_users)
+            _, uid, is_admin = _actor()
+            schedules = schedules_store.list_schedules(
+                conn, owner_user_id=uid,
+                all_users=bool(all_users and is_admin))
+        enabled = [r for r in schedules if r.get("enabled")]
+        next_fire = min((r["next_run_at"] for r in enabled
+                         if r.get("next_run_at") is not None), default=None)
+        if next_fire is not None and not isinstance(next_fire, str):
+            next_fire = next_fire.isoformat()
+        return jsonify({
+            "success": True,
+            "catalog": catalog,
+            "runs": runs,
+            "artifacts": artifacts,
+            "schedules": {"total": len(schedules), "enabled": len(enabled),
+                          "next_fire": next_fire,
+                          "scope": "all" if (all_users and is_admin) else "mine"},
+            "languages": sorted(available_languages()),
+            "generated_at": datetime.datetime.now(
+                datetime.timezone.utc).isoformat(),
         })
 
     @app.route("/api/reports/definitions", methods=["GET"])

@@ -389,6 +389,8 @@ Report runs: submit, execute (a JobManager job), read (tables of m0022).
 - `run_to_api(row: Dict[str, Any], *, registry = REGISTRY) -> Dict[str, Any]`
 - `get_run(conn, run_id: int, *, user, registry = REGISTRY) -> Dict[str, Any]` - One run with its dataset summaries (no rows).
 - `run_analyses(conn, run_id: int) -> List[Dict[str, Any]]` - A run's stored analyses (template references, not prose) in order.
+- `run_status_counts(conn, *, user, all_users: bool = False, registry = REGISTRY) -> Dict[str, Any]` - Runs by status over exactly the runs ``list_runs`` would show.
+- `artifact_summary(conn, *, user, all_users: bool = False, registry = REGISTRY) -> Dict[str, Any]` - Artifacts made from the visible runs: total and per-format counts,
 - `list_runs(conn, *, user, all_users: bool = False, report_id: Optional[str] = None, status: Optional[str] = None, limit: int = 50, offset: int = 0, registry =...`
 - `dataset_rows(conn, run_id: int, dataset_key: str, *, user, limit: int = 100, offset: int = 0, registry = REGISTRY) -> Dict[str, Any]` - A page of one dataset's stored rows, sliced in SQL.
 

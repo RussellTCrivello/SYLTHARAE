@@ -216,6 +216,33 @@ def pg_db(pg_settings, tmp_path_factory):
     os.environ["DB_PASSWORD"] = str(cfg["password"])
     os.environ["DB_NAME"] = db_name
 
+    # The settings file is gitignored runtime state; when it is absent, a
+    # fresh SettingsManager defaults database.host to localhost and every
+    # lazy pool (the app fixture, the auth service) misses the test server
+    # even though DB_* are set. Seed the file with this session's target
+    # before anything re-reads it. (It keeps any non-database settings the
+    # tests stored earlier - retention days, theme, ... - and only the
+    # database section is pinned here.)
+    try:
+        import json
+
+        settings_path = pathlib.Path(__file__).resolve().parent.parent / "data" / "settings.json"
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        data = {}
+        if settings_path.exists():
+            try:
+                data = json.loads(settings_path.read_text(encoding="utf-8"))
+            except Exception:
+                data = {}
+        if not isinstance(data, dict):
+            data = {}
+        data["database"] = {"host": str(host_dir), "port": 5432,
+                            "database": db_name, "user": "postgres",
+                            "password": ""}
+        settings_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
     # Reset ALL cached settings/config singletons from any earlier import.
     # NOTE: settings_adapter caches an adapter under `_interface_manager`
     # which wraps the manager; it must be cleared too, otherwise a stale

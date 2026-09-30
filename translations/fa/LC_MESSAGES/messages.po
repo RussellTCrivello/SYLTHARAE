@@ -12710,3 +12710,128 @@ msgstr "هر سیاست نگه‌داشت فعال"
 msgid "Retention"
 msgstr "نگه‌داشت"
 
+# --- Reports Dashboard (step 22) ---
+#: templates/Reports/dashboard.html
+msgid "Reports Dashboard"
+msgstr "داشبورد گزارش‌ها"
+
+#: templates/Reports/dashboard.html
+msgid "The reporting system at a glance: what can run, what ran, what it produced, and what fires next. Every number is counted from the stored runs."
+msgstr "نظام گزارش‌سازی در یک نگاه: چه چیزی قابل اجراست، چه اجرا شد، چه تولید کرد، و بعد چه چیزی اجرا می‌شود. هر عدد از اجراهای ذخیره‌شده شمرده شده است."
+
+#: templates/Reports/dashboard.html
+msgid "What this page counts"
+msgstr "این صفحه چه چیزی را می‌شمارد"
+
+#: templates/Reports/dashboard.html
+msgid "Runs and artifacts are counted over exactly the runs the Runs list below would show you - your own, or everyone's when an administrator turns on All users."
+msgstr "اجراها و پرونده‌ها دقیقاً روی اجراهایی شمرده می‌شوند که فهرست اجراهای زیر به شما نشان می‌دهد - اجراهای خودتان، یا همه وقتی مدیر «همه کاربران» را فعال کند."
+
+#: templates/Reports/dashboard.html
+msgid "A status with no runs is a measured zero: the counter answered, it is not an assumption."
+msgstr "وضعیتی بدون اجرا یک صفر اندازه‌گیری‌شده است: شمارنده پاسخ داده، نه یک فرض."
+
+#: templates/Reports/dashboard.html
+msgid "Open a run to read its datasets, analyses and files on the Reports page."
+msgstr "یک اجرا را باز کنید تا داده‌ها، تحلیل‌ها و پرونده‌های آن را در صفحه گزارش‌ها بخوانید."
+
+#: templates/Reports/dashboard.html
+msgid "Schedules are managed on the Schedules page; the dashboard only shows what fires next."
+msgstr "زمان‌بندی‌ها در صفحه زمان‌بندی‌ها مدیریت می‌شوند؛ داشبورد فقط نشان می‌دهد بعد چه چیزی اجرا می‌شود."
+
+#: templates/Reports/dashboard.html
+msgid "Report versions"
+msgstr "نسخه‌های گزارش"
+
+#: templates/Reports/dashboard.html
+msgid "Enabled schedules"
+msgstr "زمان‌بندی‌های فعال"
+
+#: templates/Reports/dashboard.html
+msgid "Report catalog"
+msgstr "کاتالوگ گزارش‌ها"
+
+#: templates/Reports/dashboard.html
+msgid "What it answers"
+msgstr "به چه پاسخ می‌دهد"
+
+#: templates/Reports/dashboard.html
+msgid "No reports are declared for your role."
+msgstr "هیچ گزارشی برای نقش شما اعلام نشده است."
+
+#: templates/Reports/dashboard.html
+msgid "Every status"
+msgstr "همه وضعیت‌ها"
+
+#: templates/Reports/dashboard.html
+msgid "Next fire"
+msgstr "اجرای بعدی"
+
+#: templates/Reports/dashboard.html
+msgid "No schedules."
+msgstr "زمان‌بندی‌ای وجود ندارد."
+
+#: templates/Reports/reports.html
+msgid "The language of the rendered file: the language is part of the identity of the file and of its manifest."
+msgstr "زبان پروندهٔ رندرشده: زبان بخشی از هویت پرونده و مانیفست آن است."
+
+#: templates/Reports/dashboard.html
+msgid "The dashboard could not be loaded."
+msgstr "بارگیری داشبورد ممکن نشد."
+
+#: templates/Reports/dashboard.html
+msgid "completed"
+msgstr "تکمیل‌شده"
+
+#: templates/Reports/dashboard.html
+msgid "running"
+msgstr "در حال اجرا"
+
+#: templates/Reports/dashboard.html
+msgid "refused"
+msgstr "ردشده"
+
+#: templates/Reports/dashboard.html
+msgid "cancelled"
+msgstr "لغوشده"
+
+#: templates/Reports/dashboard.html
+msgid "families"
+msgstr "خانواده‌ها"
+
+#: templates/Reports/dashboard.html
+msgid "next fire"
+msgstr "اجرای بعدی"
+
+#: templates/Reports/dashboard.html
+msgid "Open"
+msgstr "بازکردن"
+
+#: templates/Reports/dashboard.html
+msgid "Manage"
+msgstr "مدیریت"
+
+#: templates/Reports/dashboard.html
+msgid "shortened"
+msgstr "کوتاه‌شده"
+
+#: templates/Reports/dashboard.html
+msgid "all datasets"
+msgstr "همه مجموعه‌داده‌ها"
+
+#: templates/Reports/dashboard.html
+msgid "everyone"
+msgstr "همه"
+
+#: templates/Reports/dashboard.html
+msgid "yours"
+msgstr "متعلق به شما"
+
+#: templates/Reports/dashboard.html
+msgid "versions"
+msgstr "نسخه‌ها"
+
+#: templates/Reports/dashboard.html
+msgid "datasets"
+msgstr "مجموعه‌داده‌ها"
+

@@ -12596,3 +12596,128 @@ msgstr "كل سياسة احتفاظ مُمكَّنة"
 msgid "Retention"
 msgstr "الاحتفاظ"
 
+# --- Reports Dashboard (step 22) ---
+#: templates/Reports/dashboard.html
+msgid "Reports Dashboard"
+msgstr "لوحة التقارير"
+
+#: templates/Reports/dashboard.html
+msgid "The reporting system at a glance: what can run, what ran, what it produced, and what fires next. Every number is counted from the stored runs."
+msgstr "نظام التقارير بنظرة واحدة: ما يمكن تشغيله، وما تشغّل، وما أنتجه، وما سيُطلق تالٍ. كل رقم معدود من التشغيلات المخزّنة."
+
+#: templates/Reports/dashboard.html
+msgid "What this page counts"
+msgstr "ما تحسبه هذه الصفحة"
+
+#: templates/Reports/dashboard.html
+msgid "Runs and artifacts are counted over exactly the runs the Runs list below would show you - your own, or everyone's when an administrator turns on All users."
+msgstr "تُحسب التشغيلات والملفات فوق التشغيلات التي تعرضها لك قائمة التشغيلات أدناه تمامًا - تشغيلاتك أنت، أو تشغيلات الجميع عندما يُفعِّل المسؤول «كل المستخدمين»."
+
+#: templates/Reports/dashboard.html
+msgid "A status with no runs is a measured zero: the counter answered, it is not an assumption."
+msgstr "الحالة الخالية من التشغيلات هي صفر مُقاس: العدّاد أجاب، وليست افتراضًا."
+
+#: templates/Reports/dashboard.html
+msgid "Open a run to read its datasets, analyses and files on the Reports page."
+msgstr "افتح تشغيلًا لقراءة بياناته وتحليلاته وملفاته في صفحة التقارير."
+
+#: templates/Reports/dashboard.html
+msgid "Schedules are managed on the Schedules page; the dashboard only shows what fires next."
+msgstr "تُدار الجداول من صفحة الجداول؛ لوحة القياس تعرض فقط ما سيُطلق تالٍ."
+
+#: templates/Reports/dashboard.html
+msgid "Report versions"
+msgstr "إصدارات التقارير"
+
+#: templates/Reports/dashboard.html
+msgid "Enabled schedules"
+msgstr "الجداول المُمكَّنة"
+
+#: templates/Reports/dashboard.html
+msgid "Report catalog"
+msgstr "كتالوج التقارير"
+
+#: templates/Reports/dashboard.html
+msgid "What it answers"
+msgstr "ما تجيب عنه"
+
+#: templates/Reports/dashboard.html
+msgid "No reports are declared for your role."
+msgstr "لا توجد تقارير معلنة لدورك."
+
+#: templates/Reports/dashboard.html
+msgid "Every status"
+msgstr "كل الحالات"
+
+#: templates/Reports/dashboard.html
+msgid "Next fire"
+msgstr "الإطلاق التالي"
+
+#: templates/Reports/dashboard.html
+msgid "No schedules."
+msgstr "لا توجد جداول."
+
+#: templates/Reports/reports.html
+msgid "The language of the rendered file: the language is part of the identity of the file and of its manifest."
+msgstr "لغة الملف المُصيَّر: اللغة جزء من هوية الملف ومن بياناته الوصفية."
+
+#: templates/Reports/dashboard.html
+msgid "The dashboard could not be loaded."
+msgstr "تعذّر تحميل لوحة القياس."
+
+#: templates/Reports/dashboard.html
+msgid "completed"
+msgstr "مكتمل"
+
+#: templates/Reports/dashboard.html
+msgid "running"
+msgstr "قيد التنفيذ"
+
+#: templates/Reports/dashboard.html
+msgid "refused"
+msgstr "مرفوض"
+
+#: templates/Reports/dashboard.html
+msgid "cancelled"
+msgstr "ملغى"
+
+#: templates/Reports/dashboard.html
+msgid "families"
+msgstr "عائلات"
+
+#: templates/Reports/dashboard.html
+msgid "next fire"
+msgstr "الإطلاق التالي"
+
+#: templates/Reports/dashboard.html
+msgid "Open"
+msgstr "فتح"
+
+#: templates/Reports/dashboard.html
+msgid "Manage"
+msgstr "إدارة"
+
+#: templates/Reports/dashboard.html
+msgid "shortened"
+msgstr "مُختصَر"
+
+#: templates/Reports/dashboard.html
+msgid "all datasets"
+msgstr "كل مجموعات البيانات"
+
+#: templates/Reports/dashboard.html
+msgid "everyone"
+msgstr "الجميع"
+
+#: templates/Reports/dashboard.html
+msgid "yours"
+msgstr "لك"
+
+#: templates/Reports/dashboard.html
+msgid "versions"
+msgstr "إصدارات"
+
+#: templates/Reports/dashboard.html
+msgid "datasets"
+msgstr "مجموعات البيانات"
+

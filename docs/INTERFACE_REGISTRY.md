@@ -67,12 +67,12 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 ## Generated reference
 
 <!-- BEGIN GENERATED REGISTRY TABLE -->
-- Interfaces: **33** (features declared separately: **1**)
-- Endpoints owned: **77**
-- With a keyboard shortcut: **17**; with a help topic: **31**
-- By domain: ADMINISTRATION 3, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 4, SETTINGS 3, WORK 1
-- By status: ACTIVE 32, DEPRECATED 1
-- By kind: INTERNAL 1, PAGE 31, SECTION 1
+- Interfaces: **34** (features declared separately: **1**)
+- Endpoints owned: **78**
+- With a keyboard shortcut: **17**; with a help topic: **32**
+- By domain: ADMINISTRATION 3, ANALYZE 3, CLASSIFY 2, DISCOVER 11, INGEST 2, INTERNAL 1, OPERATE 3, REPORT 5, SETTINGS 3, WORK 1
+- By status: ACTIVE 33, DEPRECATED 1
+- By kind: INTERNAL 1, PAGE 32, SECTION 1
 
 
 ### WORK (1)
@@ -119,12 +119,13 @@ in `LEGACY_INTERFACE_IDS` and resolve through `resolve_interface_id()`; see
 | `analyst_categorization` | Analyst Categories | CLASSIFY | `analyst_categorization_page` | — | any | on | `file_library` | classify/analyst-categories | — | ACTIVE |
 | `classification` | Classification | CLASSIFY | `file_classification_page` | — | any | on | `file_library`, `words` | classify/classification | — | ACTIVE |
 
-### REPORT (4)
+### REPORT (5)
 
 | ID | Name | Domain | Route | Aliases | Role | Default | Depends on | Help | Shortcut | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `comprehensive_dashboard` | Comprehensive Dashboard | REPORT | `comprehensive_dashboard` | — | any | on | `file_library` | report/detailed-dashboard | — | ACTIVE |
 | `reports` | Reports | REPORT | `reports_page` | — | any | on | `search`, `jobs` | report/reports | g r | ACTIVE |
+| `reports_dashboard` | Reports Dashboard | REPORT | `reports_dashboard_page` | — | any | on | `reports`, `jobs`, `schedules` | report/dashboard | — | ACTIVE |
 | `schedules` | Schedules | REPORT | `schedules_page` | — | any | on | `reports`, `jobs`, `monitoring` | report/schedules | — | ACTIVE |
 | `charts_dashboard` | Charts Dashboard | REPORT | `charts_dashboard` | — | any | on | `file_library` | report/charts | — | ACTIVE |
 

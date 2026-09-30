@@ -69,7 +69,8 @@ const RUN = {
 const FILE = { id: 9, run_id: 5, format: 'csv', dataset_key: 'search_results.matches@1',
   renderer_version: 'report-csv/1', filename: 'report_search_results_v1_run5_search_results.csv',
   media_type: 'text/csv', byte_size: 120, sha256: 'c'.repeat(64), manifest_sha256: 'd'.repeat(64),
-  creator_username: HOSTILE, creator_role: 'analyst', job_id: 'J2', created_at: '2026-09-28T10:01:00+00:00' };
+  creator_username: HOSTILE, creator_role: 'analyst', job_id: 'J2', created_at: '2026-09-28T10:01:00+00:00',
+  language: 'en' };
 const ARTIFACTS = { success: true, items: [FILE],
   formats: [{ format: 'csv', renderer_version: 'report-csv/1', single_dataset: true },
             { format: 'json', renderer_version: 'report-json/1', single_dataset: false }],
@@ -156,7 +157,8 @@ const baseRoutes = (run) => [
   const routes = baseRoutes(RUN).map(([re, f]) => (String(re).includes('artifacts$')
     ? [re, (url, init) => { if (init && init.method === 'POST') posted.push(JSON.parse(init.body)); return f(url, init); }]
     : [re, f]));
-  const { byId, calls } = await run({ data: { can_run: true, is_admin: false, list_limit: 50, row_page: 100,
+  const { byId, calls } = await run({ data: { can_run: true, is_admin: false, languages: ['en', 'ar'],
+                                              list_limit: 50, row_page: 100,
                                               max_row_page: 500, job_poll_ms: 1, job_poll_limit: 3 },
                                       routes });
   check('files section shown', !byId.runFiles.classList.contains('d-none'));
@@ -165,18 +167,24 @@ const baseRoutes = (run) => [
   check('csv offers the run datasets', !byId.fileDataset.disabled
         && byId.fileDataset.children.map((o) => o.attrs.value).join() === 'search_results.matches@1');
   const row = byId.fileRows.children[0];
-  const links = row.children[6].children;
+  const links = row.children[7].children;
   check('download link', links[0].attrs.href === '/api/reports/artifacts/9/download'
         && links[0].attrs.download === FILE.filename, links[0].attrs);
   check('manifest link', links[1].attrs.href === '/api/reports/artifacts/9/manifest');
-  check('sha shown', row.children[4].textContent === FILE.sha256);
+  check('sha shown', row.children[5].textContent === FILE.sha256);
+  check('language column shows the file language', row.children[2].textContent === FILE.language,
+        row.children[2].textContent);
+  check('language picker offers the shipped languages',
+        byId.fileLanguage.children.map((o) => o.attrs.value).join() === 'en,ar',
+        byId.fileLanguage.children.map((o) => o.attrs.value));
   check('creator is text', !row.innerHTML.includes('<img') && row.textContent.includes(HOSTILE));
   check('unavailable format stated as text', byId.fileUnavailable.textContent.includes('PDF')
         && !byId.fileUnavailable.innerHTML.includes('<img'), byId.fileUnavailable.textContent);
   for (const f of byId.fileCreate.listeners.click || []) f();
   await new Promise((r) => setTimeout(r, 30));
-  check('create posts format and dataset', posted.length === 1 && posted[0].format === 'csv'
-        && posted[0].dataset_key === 'search_results.matches@1', posted);
+  check('create posts format, dataset and language', posted.length === 1
+        && posted[0].format === 'csv' && posted[0].dataset_key === 'search_results.matches@1'
+        && posted[0].language === 'en', posted);
   check('existing file reported', byId.fileJob.textContent === LABELS.file_existing, byId.fileJob.textContent);
   byId.fileFormat.value = 'json';
   for (const f of byId.fileFormat.listeners.change || []) f();

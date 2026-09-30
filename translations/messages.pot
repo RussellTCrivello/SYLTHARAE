@@ -14920,3 +14920,132 @@ msgstr ""
 msgid "Retention"
 msgstr ""
 
+# --- Reports Dashboard (step 22) ---
+#: templates/Reports/dashboard.html
+msgid "Reports Dashboard"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "The reporting system at a glance: what can run, what ran, what it produced, and what fires next. Every number is counted from the stored runs."
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "What this page counts"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Runs and artifacts are counted over exactly the runs the Runs list below would show you - your own, or everyone's when an administrator turns on All users."
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "A status with no runs is a measured zero: the counter answered, it is not an assumption."
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Open a run to read its datasets, analyses and files on the Reports page."
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Schedules are managed on the Schedules page; the dashboard only shows what fires next."
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Report versions"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Enabled schedules"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Report catalog"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "What it answers"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "No reports are declared for your role."
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Every status"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Next fire"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "No schedules."
+msgstr ""
+
+#: templates/Reports/reports.html
+msgid "The language of the rendered file: the language is part of the identity of the file and of its manifest."
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "The dashboard could not be loaded."
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "completed"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "failed"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "running"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "refused"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "cancelled"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "families"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "next fire"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Open"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "Manage"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "shortened"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "all datasets"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "everyone"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "yours"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "versions"
+msgstr ""
+
+#: templates/Reports/dashboard.html
+msgid "datasets"
+msgstr ""
+

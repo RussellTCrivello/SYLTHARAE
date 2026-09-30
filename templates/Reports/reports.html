@@ -117,6 +117,9 @@
                     <select class="form-select form-select-sm w-auto" id="fileFormat"></select>
                     <label class="small" for="fileDataset">{{ _('Dataset') }}</label>
                     <select class="form-select form-select-sm w-auto" id="fileDataset"></select>
+                    <label class="small" for="fileLanguage">{{ _('Language') }}</label>
+                    <select class="form-select form-select-sm w-auto" id="fileLanguage"
+                            title="{{ _('The language of the rendered file: the language is part of the identity of the file and of its manifest.') }}"></select>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="fileCreate"><i class="bi bi-file-earmark-arrow-down me-1"></i>{{ _('Create file') }}</button>
                     <div id="fileJob" class="small" aria-live="polite"></div>
                 </div>
@@ -124,7 +127,7 @@
                 <div id="fileVerify" class="small mb-2" role="status"></div>
                 {% call data_table(id='fileTable', variant='sm align-middle') %}
                     <thead><tr>
-                        <th>{{ _('Format') }}</th><th>{{ _('Dataset') }}</th><th>{{ _('File') }}</th>
+                        <th>{{ _('Format') }}</th><th>{{ _('Dataset') }}</th><th>{{ _('Language') }}</th><th>{{ _('File') }}</th>
                         <th>{{ _('Size') }}</th><th>SHA-256</th><th>{{ _('Created') }}</th><th></th>
                     </tr></thead>
                     <tbody id="fileRows"></tbody>

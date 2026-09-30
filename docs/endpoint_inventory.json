@@ -1093,6 +1093,18 @@
     "internal": true
   },
   {
+    "endpoint": "api_reports_dashboard",
+    "rule": "/api/reports/dashboard",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_retention_overview",
     "rule": "/api/retention",
     "methods": [
@@ -4235,6 +4247,18 @@
     "classification": "API_ENDPOINT",
     "owned_by": null,
     "internal": true
+  },
+  {
+    "endpoint": "reports_dashboard_page",
+    "rule": "/reports/dashboard",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "reports",
+    "classification": "USER_INTERFACE",
+    "owned_by": "reports_dashboard",
+    "internal": false
   },
   {
     "endpoint": "reports_page",

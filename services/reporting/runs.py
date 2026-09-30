@@ -674,6 +674,84 @@ def run_analyses(conn, run_id: int) -> List[Dict[str, Any]]:
     return rows
 
 
+def _visible_pairs(user, all_users: bool, registry) -> Optional[list]:
+    """The (report_id, version) pairs the user can read, for count filters.
+
+    ``None`` means "no definition filter" (administrators: list_runs shows
+    them everything, retired definitions included)."""
+    if all_users and user.has_role("admin"):
+        return None
+    return [(d.report_id, d.version)
+            for d in visible_definitions(getattr(user, "role", None), registry)]
+
+
+def run_status_counts(conn, *, user, all_users: bool = False,
+                      registry=REGISTRY) -> Dict[str, Any]:
+    """Runs by status over exactly the runs ``list_runs`` would show.
+
+    One grouped query; the definition filter is applied in SQL *before*
+    counting (role filtering before retrieval, never after rendering). An
+    absent status is a measured zero - the GROUP BY answered, not an
+    assumption."""
+    if all_users and not user.has_role("admin"):
+        raise ReportRunError("FORBIDDEN",
+                             "only administrators can count every user's runs", 403)
+    where, params = [], []
+    if not all_users:
+        where.append("requested_by = %s")
+        params.append(getattr(user, "id", None))
+        pairs = _visible_pairs(user, False, registry)
+        if not pairs:
+            return {"counts": {s: 0 for s in STATUSES}, "total": 0,
+                    "scope": "mine"}
+        where.append("(report_id, report_version) IN"
+                     " (SELECT * FROM unnest(%s::text[], %s::int[]))")
+        params.append([p[0] for p in pairs])
+        params.append([p[1] for p in pairs])
+    clause = (" WHERE " + " AND ".join(where)) if where else ""
+    conn.rollback()
+    with _dict_cur(conn) as cur:
+        cur.execute("SET LOCAL statement_timeout = '15s'")
+        cur.execute("SELECT status, count(*) AS n FROM report_runs"  # nosec B608 # fixed fragments; filters are bound parameters
+                    + clause + " GROUP BY status", params)
+        found = {row["status"]: int(row["n"]) for row in cur.fetchall()}
+    conn.rollback()
+    counts = {status: found.get(status, 0) for status in STATUSES}
+    return {"counts": counts, "total": sum(counts.values()),
+            "scope": "all" if all_users else "mine"}
+
+
+def artifact_summary(conn, *, user, all_users: bool = False,
+                     registry=REGISTRY) -> Dict[str, Any]:
+    """Artifacts made from the visible runs: total and per-format counts,
+    from one grouped join (the same visibility as ``list_runs``)."""
+    if all_users and not user.has_role("admin"):
+        raise ReportRunError("FORBIDDEN",
+                             "only administrators can count every user's artifacts", 403)
+    where, params = [], []
+    if not all_users:
+        where.append("r.requested_by = %s")
+        params.append(getattr(user, "id", None))
+        pairs = _visible_pairs(user, False, registry)
+        if not pairs:
+            return {"total": 0, "by_format": {}, "scope": "mine"}
+        where.append("(r.report_id, r.report_version) IN"
+                     " (SELECT * FROM unnest(%s::text[], %s::int[]))")
+        params.append([p[0] for p in pairs])
+        params.append([p[1] for p in pairs])
+    clause = (" WHERE " + " AND ".join(where)) if where else ""
+    conn.rollback()
+    with _dict_cur(conn) as cur:
+        cur.execute("SET LOCAL statement_timeout = '15s'")
+        cur.execute("SELECT a.format, count(*) AS n"  # nosec B608 # fixed fragments; filters are bound parameters
+                    " FROM report_runs r JOIN report_artifacts a ON a.run_id = r.id"
+                    + clause + " GROUP BY a.format ORDER BY a.format", params)
+        by_format = {row["format"]: int(row["n"]) for row in cur.fetchall()}
+    conn.rollback()
+    return {"total": sum(by_format.values()), "by_format": by_format,
+            "scope": "all" if all_users else "mine"}
+
+
 def list_runs(conn, *, user, all_users: bool = False, report_id: Optional[str] = None,
               status: Optional[str] = None, limit: int = 50, offset: int = 0,
               registry=REGISTRY) -> Dict[str, Any]:

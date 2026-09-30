@@ -12414,3 +12414,128 @@ msgstr "כל מדיניות שימור פעילה"
 msgid "Retention"
 msgstr "שימור"
 
+# --- Reports Dashboard (step 22) ---
+#: templates/Reports/dashboard.html
+msgid "Reports Dashboard"
+msgstr "לוח הדוחות"
+
+#: templates/Reports/dashboard.html
+msgid "The reporting system at a glance: what can run, what ran, what it produced, and what fires next. Every number is counted from the stored runs."
+msgstr "מערכת הדוחות במבט אחד: מה יכול לרוץ, מה רץ, מה הניב, ומה יופעל הבא. כל מספר נספר מהריצות השמורות."
+
+#: templates/Reports/dashboard.html
+msgid "What this page counts"
+msgstr "מה העמוד הזה סופר"
+
+#: templates/Reports/dashboard.html
+msgid "Runs and artifacts are counted over exactly the runs the Runs list below would show you - your own, or everyone's when an administrator turns on All users."
+msgstr "הריצות והקבצים נספרים בדיוק על הריצות שרשימת הריצות למטה הייתה מציגה לך - שלך, או של כולם כאשר מנהל מפעיל את כל המשתמשים."
+
+#: templates/Reports/dashboard.html
+msgid "A status with no runs is a measured zero: the counter answered, it is not an assumption."
+msgstr "מצב ללא ריצות הוא אפס נמדד: המונה ענה, זו איננה הנחה."
+
+#: templates/Reports/dashboard.html
+msgid "Open a run to read its datasets, analyses and files on the Reports page."
+msgstr "פתחו ריצה כדי לקרוא את מערכי הנתונים, הניתוחים והקבצים שלה בעמוד הדוחות."
+
+#: templates/Reports/dashboard.html
+msgid "Schedules are managed on the Schedules page; the dashboard only shows what fires next."
+msgstr "התזמונים מנוהלים בעמוד התזמונים; לוח הבקרה מציג רק מה יופעל הבא."
+
+#: templates/Reports/dashboard.html
+msgid "Report versions"
+msgstr "גרסאות דוח"
+
+#: templates/Reports/dashboard.html
+msgid "Enabled schedules"
+msgstr "תזמונים פעילים"
+
+#: templates/Reports/dashboard.html
+msgid "Report catalog"
+msgstr "קטלוג הדוחות"
+
+#: templates/Reports/dashboard.html
+msgid "What it answers"
+msgstr "על מה הוא עונה"
+
+#: templates/Reports/dashboard.html
+msgid "No reports are declared for your role."
+msgstr "אין דוחות מוצהרים לתפקיד שלך."
+
+#: templates/Reports/dashboard.html
+msgid "Every status"
+msgstr "כל המצבים"
+
+#: templates/Reports/dashboard.html
+msgid "Next fire"
+msgstr "ההפעלה הבאה"
+
+#: templates/Reports/dashboard.html
+msgid "No schedules."
+msgstr "אין תזמונים."
+
+#: templates/Reports/reports.html
+msgid "The language of the rendered file: the language is part of the identity of the file and of its manifest."
+msgstr "שפת הקובץ המעובד: השפה היא חלק מזהות הקובץ ומהמניפסט שלו."
+
+#: templates/Reports/dashboard.html
+msgid "The dashboard could not be loaded."
+msgstr "טעינת לוח הבקרה נכשלה."
+
+#: templates/Reports/dashboard.html
+msgid "completed"
+msgstr "הושלם"
+
+#: templates/Reports/dashboard.html
+msgid "running"
+msgstr "בהרצה"
+
+#: templates/Reports/dashboard.html
+msgid "refused"
+msgstr "נדחה"
+
+#: templates/Reports/dashboard.html
+msgid "cancelled"
+msgstr "בוטל"
+
+#: templates/Reports/dashboard.html
+msgid "families"
+msgstr "משפחות"
+
+#: templates/Reports/dashboard.html
+msgid "next fire"
+msgstr "ההפעלה הבאה"
+
+#: templates/Reports/dashboard.html
+msgid "Open"
+msgstr "פתיחה"
+
+#: templates/Reports/dashboard.html
+msgid "Manage"
+msgstr "ניהול"
+
+#: templates/Reports/dashboard.html
+msgid "shortened"
+msgstr "מקוצר"
+
+#: templates/Reports/dashboard.html
+msgid "all datasets"
+msgstr "כל מערכי הנתונים"
+
+#: templates/Reports/dashboard.html
+msgid "everyone"
+msgstr "כולם"
+
+#: templates/Reports/dashboard.html
+msgid "yours"
+msgstr "שלך"
+
+#: templates/Reports/dashboard.html
+msgid "versions"
+msgstr "גרסאות"
+
+#: templates/Reports/dashboard.html
+msgid "datasets"
+msgstr "מערכי נתונים"
+

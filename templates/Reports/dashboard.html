@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% from 'components/table.html' import record_table %}
+{% from 'components/page_tips.html' import page_tips %}
+
+{% block title %}{{ _('Reports Dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="page-container" id="reportsDashboardPage">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="bi bi-speedometer2 me-2"></i>
+                {{ _('Reports Dashboard') }}
+            </h1>
+            <p class="text-muted mb-0">{{ _('The reporting system at a glance: what can run, what ran, what it produced, and what fires next. Every number is counted from the stored runs.') }}</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            {% if page_data.is_admin %}
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="dashAllUsers">
+                <label class="form-check-label" for="dashAllUsers">{{ _('All users') }}</label>
+            </div>
+            {% endif %}
+            <button class="btn btn-outline-primary" data-on-click="refresh(true)"><i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}</button>
+        </div>
+    </div>
+
+    {% call page_tips() %}
+    <div class="tips-section">
+        <div class="tips-section-title"><i class="bi bi-info-circle"></i> {{ _('What this page counts') }}</div>
+        <ul class="tips-list">
+            <li>{{ _('Runs and artifacts are counted over exactly the runs the Runs list below would show you - your own, or everyone\'s when an administrator turns on All users.') }}</li>
+            <li>{{ _('A status with no runs is a measured zero: the counter answered, it is not an assumption.') }}</li>
+            <li>{{ _('Open a run to read its datasets, analyses and files on the Reports page.') }}</li>
+            <li>{{ _('Schedules are managed on the Schedules page; the dashboard only shows what fires next.') }}</li>
+        </ul>
+    </div>
+    {% endcall %}
+
+    <div id="dashError" class="d-none">
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <p class="state-message mb-0"></p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3" id="dashTiles">
+        <div class="col-6 col-md-3">
+            <div class="card h-100"><div class="card-body py-3">
+                <div class="text-muted small">{{ _('Report versions') }}</div>
+                <div class="fs-4 fw-semibold" id="tileVersions">–</div>
+                <div class="text-muted small" id="tileFamilies"></div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100"><div class="card-body py-3">
+                <div class="text-muted small">{{ _('Runs') }}</div>
+                <div class="fs-4 fw-semibold" id="tileRuns">–</div>
+                <div class="text-muted small" id="tileRunsBreakdown"></div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100"><div class="card-body py-3">
+                <div class="text-muted small">{{ _('Files') }}</div>
+                <div class="fs-4 fw-semibold" id="tileArtifacts">–</div>
+                <div class="text-muted small" id="tileArtifactsBreakdown"></div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100"><div class="card-body py-3">
+                <div class="text-muted small">{{ _('Enabled schedules') }}</div>
+                <div class="fs-4 fw-semibold" id="tileSchedules">–</div>
+                <div class="text-muted small" id="tileNextFire"></div>
+            </div></div>
+        </div>
+    </div>
+
+    <h2 class="fs-5 mt-2">{{ _('Report catalog') }}</h2>
+    {% call record_table(
+            id='catalogTable',
+            columns=[
+                {'key': 'report_id', 'label': _('Report'), 'sortable': True, 'type': 'text'},
+                {'key': 'version', 'label': _('Version'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '90px'},
+                {'key': 'datasets', 'label': _('Datasets'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '100px'},
+                {'key': 'analyses', 'label': _('Analyses'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '100px'},
+                {'key': 'description', 'label': _('What it answers'), 'sortable': False},
+                {'kind': 'actions', 'width': '120px'}
+            ],
+            mode='client',
+            empty_message=_('No reports are declared for your role.')) %}
+        <tbody id="catalogTableBody"></tbody>
+    {% endcall %}
+
+    <div class="d-flex align-items-center gap-2 mt-4 mb-2 flex-wrap">
+        <h2 class="fs-5 m-0">{{ _('Runs') }}</h2>
+        <select class="form-select form-select-sm w-auto" id="dashRunStatus">
+            <option value="">{{ _('Every status') }}</option>
+            <option value="queued">{{ _('Queued') }}</option>
+            <option value="running">{{ _('Running') }}</option>
+            <option value="completed">{{ _('Completed') }}</option>
+            <option value="failed">{{ _('Failed') }}</option>
+            <option value="refused">{{ _('Refused') }}</option>
+            <option value="cancelled">{{ _('Cancelled') }}</option>
+        </select>
+    </div>
+    {% call record_table(
+            id='runsTable',
+            columns=[
+                {'key': 'id', 'label': _('Run'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '90px'},
+                {'key': 'report', 'label': _('Report'), 'sortable': True, 'type': 'text'},
+                {'key': 'status', 'label': _('Status'), 'sortable': True, 'type': 'text', 'width': '120px'},
+                {'key': 'requester', 'label': _('Requested by'), 'sortable': True, 'type': 'text'},
+                {'key': 'requested_at', 'label': _('Requested'), 'sortable': True, 'type': 'date', 'width': '180px'},
+                {'key': 'datasets', 'label': _('Datasets'), 'sortable': False, 'align': 'end', 'width': '100px'},
+                {'kind': 'actions', 'width': '90px'}
+            ],
+            mode='server',
+            page=1,
+            total_pages=2,
+            total_count=0,
+            rows_shown=0,
+            append=True,
+            empty_message=_('No runs yet.')) %}
+        <tbody id="runsTableBody"></tbody>
+    {% endcall %}
+
+    <h2 class="fs-5 mt-4 mb-2">{{ _('Schedules') }}</h2>
+    {% call record_table(
+            id='schedulesTable',
+            columns=[
+                {'key': 'name', 'label': _('Name'), 'sortable': True, 'type': 'text'},
+                {'key': 'schedule_type', 'label': _('What runs'), 'sortable': True, 'type': 'text', 'width': '180px'},
+                {'key': 'interval_minutes', 'label': _('Every (minutes)'), 'sortable': True, 'type': 'number', 'align': 'end', 'width': '140px'},
+                {'key': 'next_run_at', 'label': _('Next fire'), 'sortable': True, 'type': 'date', 'width': '180px'},
+                {'key': 'enabled', 'label': _('Status'), 'sortable': True, 'type': 'text', 'width': '110px'},
+                {'kind': 'actions', 'width': '90px'}
+            ],
+            mode='client',
+            empty_message=_('No schedules.')) %}
+        <tbody id="schedulesTableBody"></tbody>
+    {% endcall %}
+</div>
+
+<script type="application/json" id="reports-dashboard-page-data">{{ page_data|tojson }}</script>
+<script type="application/json" id="reports-dashboard-labels">{{ {
+    "load_failed": _('The dashboard could not be loaded.'),
+    "completed": _('completed'),
+    "failed": _('failed'),
+    "running": _('running'),
+    "queued": _('queued'),
+    "refused": _('refused'),
+    "cancelled": _('cancelled'),
+    "families": _('families'),
+    "versions": _('versions'),
+    "schedules_enabled": _('of'),
+    "next_fire": _('next fire'),
+    "never": _('never'),
+    "open": _('Open'),
+    "manage": _('Manage'),
+    "truncated": _('shortened'),
+    "all_datasets": _('all datasets'),
+    "dataset_word": _('datasets'),
+    "all_scope": _('everyone'),
+    "mine_scope": _('yours'),
+}|tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/reports-dashboard-page.js') }}"></script>
+{% endblock %}

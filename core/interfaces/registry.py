@@ -302,6 +302,17 @@ REGISTRY: Tuple[Interface, ...] = (
         help_topic="report/reports", keyboard_shortcut="g r",
     ),
     _if(
+        "reports_dashboard", "Reports Dashboard",
+        "The reporting system at a glance: the report versions your role can "
+        "read, the runs by measured outcome (yours, or everyone's for an "
+        "administrator), the artifacts made from them, and the schedules "
+        "that fire next. Every number is counted from the stored runs - "
+        "never assumed.",
+        Domain.REPORT, "reports_dashboard_page", "bi-speedometer2",
+        dependencies=("reports", "jobs", "schedules"),
+        help_topic="report/dashboard",
+    ),
+    _if(
         "retention", "Retention",
         "The pruning policies for everything that grows: finished jobs, the "
         "rule ledger and evaluation log, scenario outcomes, notifications, "

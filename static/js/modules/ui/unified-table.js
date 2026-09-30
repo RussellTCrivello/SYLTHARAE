@@ -485,14 +485,20 @@
         const nowShown = Math.min(total, shown + appended);
         block.setAttribute('data-shown', String(nowShown));
         block.setAttribute('data-page', String(page + 1));
-        const counter = block.querySelector('[data-ut-shown]');
-        if (counter) counter.textContent = global.UnifiedTable.fmt.number(nowShown);
-        const totalEl = block.querySelector('[data-ut-total]');
-        if (totalEl) totalEl.textContent = global.UnifiedTable.fmt.number(total);
+        // The wrapper's counters, toolbar and block alike: "Showing X of Y"
+        // must move with every batch, not only the block's own copy.
+        const wrapper = wrapperOf(table);
+        if (wrapper) {
+            wrapper.querySelectorAll('[data-ut-shown]').forEach((node) => {
+                node.textContent = global.UnifiedTable.fmt.number(nowShown);
+            });
+            wrapper.querySelectorAll('[data-ut-total]').forEach((node) => {
+                node.textContent = global.UnifiedTable.fmt.number(total);
+            });
+        }
         if (page + 1 >= totalPages + 1 || nowShown >= total) {
             block.hidden = true;
         }
-        const wrapper = wrapperOf(table);
         if (wrapper) {
             wrapper.dispatchEvent(new CustomEvent('ut:loadmore', {
                 bubbles: true,
@@ -789,6 +795,27 @@
             syncSelection(table);
             updateLoadMoreBlock(table, Math.max(0, appended), configOf(table));
             return Math.max(0, appended);
+        },
+        /** A page that fetched its own FIRST page (an API table) reports the
+         *  real shown/total here: the Load More block's counters and
+         *  visibility follow the same rules as a server-rendered batch. */
+        syncLoadMore(tableId, shown, total, pageSize) {
+            const table = tableOf(tableId);
+            if (!table) return;
+            const block = loadMoreBlock(table);
+            if (!block) return;
+            const size = Math.max(1, pageSize
+                || (parseInt(block.getAttribute('data-page-size'), 10) || 0));
+            block.setAttribute('data-shown', String(Math.max(0, shown)));
+            block.setAttribute('data-total', String(Math.max(0, total)));
+            const counter = block.querySelector('[data-ut-shown]');
+            if (counter) counter.textContent = global.UnifiedTable.fmt.number(Math.max(0, shown));
+            const totalEl = block.querySelector('[data-ut-total]');
+            if (totalEl) totalEl.textContent = global.UnifiedTable.fmt.number(Math.max(0, total));
+            const page = parseInt(block.getAttribute('data-page'), 10) || 1;
+            const totalPages = Math.max(1, Math.ceil(Math.max(0, total) / size));
+            block.setAttribute('data-total-pages', String(totalPages));
+            block.hidden = !(page < totalPages && shown < total);
         },
         /** Re-read selection after the page replaced rows itself. */
         refresh(tableId) {

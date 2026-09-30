@@ -103,7 +103,7 @@ Counted by scanning `templates/**`. These are the places a shared component has 
 | --- | --- | --- |
 | Hand-written empty state | `states` | 3 templates |
 | Hand-written loading indicator | `states` | 9 templates |
-| Hand-written inline error | `states` | 8 templates |
+| Hand-written inline error | `states` | 9 templates |
 | Hand-written table | `table` | 10 templates |
 | Hand-written pagination markup | `pagination` | 0 templates |
 | Pagination mount (filled by the shared renderer) | `pagination` | 8 templates |
@@ -121,7 +121,7 @@ How much of the repeated markup has moved onto its component. Standardized count
 | Markup | Standardized | Hand-written | Adoption |
 | --- | --- | --- | --- |
 | Hand-written empty state | 5 | 3 | 62% |
-| Hand-written table | 15 | 10 | 60% |
+| Hand-written table | 16 | 10 | 62% |
 | Hand-written pagination markup | 10 | 0 | 100% |
 | Hand-written search input | 8 | 7 | 53% |
 | Hand-written filter control | 7 | 8 | 47% |

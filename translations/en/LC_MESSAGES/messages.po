@@ -12593,3 +12593,132 @@ msgstr "every enabled retention policy"
 msgid "Retention"
 msgstr "Retention"
 
+# --- Reports Dashboard (step 22) ---
+#: templates/Reports/dashboard.html
+msgid "Reports Dashboard"
+msgstr "Reports Dashboard"
+
+#: templates/Reports/dashboard.html
+msgid "The reporting system at a glance: what can run, what ran, what it produced, and what fires next. Every number is counted from the stored runs."
+msgstr "The reporting system at a glance: what can run, what ran, what it produced, and what fires next. Every number is counted from the stored runs."
+
+#: templates/Reports/dashboard.html
+msgid "What this page counts"
+msgstr "What this page counts"
+
+#: templates/Reports/dashboard.html
+msgid "Runs and artifacts are counted over exactly the runs the Runs list below would show you - your own, or everyone's when an administrator turns on All users."
+msgstr "Runs and artifacts are counted over exactly the runs the Runs list below would show you - your own, or everyone's when an administrator turns on All users."
+
+#: templates/Reports/dashboard.html
+msgid "A status with no runs is a measured zero: the counter answered, it is not an assumption."
+msgstr "A status with no runs is a measured zero: the counter answered, it is not an assumption."
+
+#: templates/Reports/dashboard.html
+msgid "Open a run to read its datasets, analyses and files on the Reports page."
+msgstr "Open a run to read its datasets, analyses and files on the Reports page."
+
+#: templates/Reports/dashboard.html
+msgid "Schedules are managed on the Schedules page; the dashboard only shows what fires next."
+msgstr "Schedules are managed on the Schedules page; the dashboard only shows what fires next."
+
+#: templates/Reports/dashboard.html
+msgid "Report versions"
+msgstr "Report versions"
+
+#: templates/Reports/dashboard.html
+msgid "Enabled schedules"
+msgstr "Enabled schedules"
+
+#: templates/Reports/dashboard.html
+msgid "Report catalog"
+msgstr "Report catalog"
+
+#: templates/Reports/dashboard.html
+msgid "What it answers"
+msgstr "What it answers"
+
+#: templates/Reports/dashboard.html
+msgid "No reports are declared for your role."
+msgstr "No reports are declared for your role."
+
+#: templates/Reports/dashboard.html
+msgid "Every status"
+msgstr "Every status"
+
+#: templates/Reports/dashboard.html
+msgid "Next fire"
+msgstr "Next fire"
+
+#: templates/Reports/dashboard.html
+msgid "No schedules."
+msgstr "No schedules."
+
+#: templates/Reports/reports.html
+msgid "The language of the rendered file: the language is part of the identity of the file and of its manifest."
+msgstr "The language of the rendered file: the language is part of the identity of the file and of its manifest."
+
+#: templates/Reports/dashboard.html
+msgid "The dashboard could not be loaded."
+msgstr "The dashboard could not be loaded."
+
+#: templates/Reports/dashboard.html
+msgid "completed"
+msgstr "completed"
+
+#: templates/Reports/dashboard.html
+msgid "failed"
+msgstr "failed"
+
+#: templates/Reports/dashboard.html
+msgid "running"
+msgstr "running"
+
+#: templates/Reports/dashboard.html
+msgid "refused"
+msgstr "refused"
+
+#: templates/Reports/dashboard.html
+msgid "cancelled"
+msgstr "cancelled"
+
+#: templates/Reports/dashboard.html
+msgid "families"
+msgstr "families"
+
+#: templates/Reports/dashboard.html
+msgid "next fire"
+msgstr "next fire"
+
+#: templates/Reports/dashboard.html
+msgid "Open"
+msgstr "Open"
+
+#: templates/Reports/dashboard.html
+msgid "Manage"
+msgstr "Manage"
+
+#: templates/Reports/dashboard.html
+msgid "shortened"
+msgstr "shortened"
+
+#: templates/Reports/dashboard.html
+msgid "all datasets"
+msgstr "all datasets"
+
+#: templates/Reports/dashboard.html
+msgid "everyone"
+msgstr "everyone"
+
+#: templates/Reports/dashboard.html
+msgid "yours"
+msgstr "yours"
+
+#: templates/Reports/dashboard.html
+msgid "versions"
+msgstr "versions"
+
+#: templates/Reports/dashboard.html
+msgid "datasets"
+msgstr "datasets"
+

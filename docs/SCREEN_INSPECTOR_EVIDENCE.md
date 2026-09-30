@@ -46,11 +46,11 @@ document with what it writes.
 
 | Measurement | Count |
 | --- | --- |
-| Interfaces | 33 |
-| Navigable interfaces | 31 |
+| Interfaces | 34 |
+| Navigable interfaces | 32 |
 | Interfaces with a described screen | 5 |
 | Interfaces declaring no help topic | 2 |
-| Interfaces declaring no keyboard shortcut | 16 |
+| Interfaces declaring no keyboard shortcut | 17 |
 | Registered actions | 34 |
 | Actions bound to a control | 6 |
 | Presented actions nothing binds | 28 |
@@ -138,6 +138,7 @@ with the evidence.
 | `classification` | CLASSIFY | `file_classification_page` | classify/classification | Not declared | 0 |
 | `comprehensive_dashboard` | REPORT | `comprehensive_dashboard` | report/detailed-dashboard | Not declared | 0 |
 | `reports` | REPORT | `reports_page` | report/reports | g r | 0 |
+| `reports_dashboard` | REPORT | `reports_dashboard_page` | report/dashboard | Not declared | 0 |
 | `retention` | ADMINISTRATION | `retention_page` | operate/retention | Not declared | 0 |
 | `schedules` | REPORT | `schedules_page` | report/schedules | Not declared | 0 |
 | `charts_dashboard` | REPORT | `charts_dashboard` | report/charts | Not declared | 0 |
@@ -159,8 +160,8 @@ with the evidence.
 | binding | 6 | 34 |
 | component | 22 | 22 |
 | execution | 29 | 34 |
-| help | 31 | 33 |
-| interface | 33 | 33 |
+| help | 32 | 34 |
+| interface | 34 | 34 |
 | permission | 34 | 34 |
 | scope | 34 | 34 |
 | state | 34 | 34 |
