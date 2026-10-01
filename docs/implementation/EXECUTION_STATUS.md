@@ -43,6 +43,17 @@ now requested; the current browser runs below exercise only the named paths.
   **9/9**; 12 standalone JS smoke scripts passed. Browser acceptance remains
   blocked by the Chrome download `ECONNRESET`. This is not overall D1-D15
   acceptance.
+- **Post-pull Windows browser report (2026-09-30):** the user's local run
+  reached schema m0034 but reported memory at 96.9%, Werkzeug `MemoryError`
+  while reading a request, and PostgreSQL `CacheMemoryContext` OOM on a 16-byte
+  allocation. The browser also reported `navigateToSection` missing after an
+  Archives content swap and `/api/jobs/summary` 429s. Fixes on this branch
+  expose the Archives navigation bridge on module load, prevent shell scripts
+  from replaying during swaps, replace route JSON islands, dispose page-scoped
+  pollers before content replacement, and make the notification poll
+  idempotent. Node lifecycle/compatibility smokes pass; this Windows
+  resource-pressure failure was not reproduced here and still needs a
+  browser retest with adequate RAM / a production WSGI server.
 - **Intelligence-chain acceptance:** `tools/verify/final_chain_acceptance.py` was
   strengthened after its previous false-positive (the old NOTIFY step passed
   with zero alerts). A live run now calls `term_keyness@2` over stored target

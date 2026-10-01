@@ -230,17 +230,36 @@
         return true;
     }
 
+    function syncRouteJsonData(newDoc, nextMain) {
+        // JSON islands often live beside #mainContent rather than inside it.
+        // Replace those route-scoped islands with the response's values so a
+        // page initializer never reads duplicate or stale data by ID.
+        const target = Array.from(newDoc.querySelectorAll('script[type="application/json"][id]'))
+            .filter((script) => !newDoc.head.contains(script))
+            .filter((script) => !nextMain || !nextMain.contains(script));
+        const currentMain = document.getElementById(MAIN_ID);
+        document.querySelectorAll('script[type="application/json"][id]').forEach((script) => {
+            if (document.head.contains(script) || (currentMain && currentMain.contains(script))) return;
+            script.remove();
+        });
+        for (const old of target) {
+            document.body.appendChild(document.importNode(old, true));
+        }
+    }
+
     function runPageScripts(newDoc) {
-        // Only the page's own scripts re-run: classic scripts from the BODY
-        // are re-created so their functions exist for the new content's
-        // declarative handlers. Shell scripts (the head: declarative-events,
-        // this module, csrf/locale fixtures) already ran on the full load -
-        // re-running them would pile up timers and document listeners - and
-        // module scripts are cached by URL (re-appending is a no-op), so the
-        // page modules' init is invoked explicitly afterwards.
+        // Only route scripts re-run. Base-shell classic scripts are marked
+        // data-navigation-shell so they cannot accumulate timers/listeners;
+        // JSON data islands are synchronized separately, not executed.
+        // Module page scripts are initialized through the universal
+        // initializer, which handles cached modules explicitly.
         const scripts = Array.from(newDoc.querySelectorAll('script'))
             .filter((old) => !newDoc.head.contains(old))
-            .filter((old) => (old.getAttribute('type') || '') !== 'module');
+            .filter((old) => !old.hasAttribute('data-navigation-shell'))
+            .filter((old) => {
+                const type = (old.getAttribute('type') || '').toLowerCase();
+                return !type || type === 'text/javascript' || type === 'application/javascript';
+            });
         for (const old of scripts) {
             const script = document.createElement('script');
             for (const attr of old.attributes) {
@@ -272,12 +291,19 @@
         const currentMain = document.getElementById(MAIN_ID);
         if (!nextMain || !currentMain) return false;
 
+        // Let page-scoped pollers and listeners release requests/timers before
+        // their DOM is removed. Persistent shell handlers are not disposed.
+        window.dispatchEvent(new CustomEvent('syltharae:before-page-swap', {
+            detail: { from: window.location.pathname, to: url }
+        }));
+
         // Ordinary route changes leave the sidebar subtree alone. Settings
         // changes may opt in to synchronizing its content, while retaining
         // the outer sidebar node and its scroll/open state.
         if (refreshSidebar) syncSidebarFromDocument(parsed);
         const imported = document.importNode(nextMain, true);
         currentMain.replaceChildren(...imported.childNodes);
+        syncRouteJsonData(parsed, nextMain);
 
         document.title = parsed.title || document.title;
         updateSidebarActiveState();

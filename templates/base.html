@@ -487,29 +487,29 @@
     {% endif %}
     
 
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}" defer crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer crossorigin="anonymous"></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/jquery.min.js') }}" defer crossorigin="anonymous"></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer crossorigin="anonymous"></script>
     
     <!-- Chart Libraries (Non-Critical: Load After Page) -->
-    <script src="{{ url_for('static', filename='js/chart.umd.js') }}" defer crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='js/jspdf.umd.min.js') }}" defer crossorigin="anonymous"></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/chart.umd.js') }}" defer crossorigin="anonymous"></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/jspdf.umd.min.js') }}" defer crossorigin="anonymous"></script>
     
     <!-- Chart Modules (Lazy Load) -->
-    <script src="{{ url_for('static', filename='js/modules/charts/chart-customizer.js') }}" defer></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/modules/charts/chart-customizer.js') }}" defer></script>
     <script type="module" src="{{ url_for('static', filename='js/modules/charts/chart-export.js') }}" defer></script>
     
     <!-- Rendering Modules (Lazy Load) -->
     <script type="module" src="{{ url_for('static', filename='js/modules/rendering/cursor-pagination.js') }}" defer></script>
     <script type="module" src="{{ url_for('static', filename='js/modules/ui/table-export.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/modules/ui/file-actions.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/modules/ui/documents-panel.js') }}" defer></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/modules/ui/file-actions.js') }}" defer></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/modules/ui/documents-panel.js') }}" defer></script>
     <script type="module" src="{{ url_for('static', filename='js/modules/ui/documents-panel-exports.js') }}" defer></script>
     
     <!-- Language Initialization (Run Immediately, Before DOM Ready) -->
     <script type="application/json" id="language-init-data">{{ {
     "currentLanguage": current_language|default("en")
 }|tojson }}</script>
-    <script src="{{ url_for('static', filename='js/modules/core/language-init.js') }}"></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/modules/core/language-init.js') }}"></script>
     
     <!-- Language Persistence Manager (CRITICAL: Load First to Intercept All Requests) -->
     <script type="module" src="{{ url_for('static', filename='js/modules/core/language-persistence.js') }}"></script>
@@ -551,7 +551,7 @@
     {% if inspector_enabled %}
     {% from 'components/screen_inspector.html' import screen_inspector %}
     {{ screen_inspector(enabled=True, interface_id=inspector_interface) }}
-    <script src="{{ url_for('static', filename='js/modules/core/screen-inspector-init.js') }}"></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/modules/core/screen-inspector-init.js') }}"></script>
     {% endif %}
 
     {#- One live region for the whole application: an action that finished
@@ -564,7 +564,7 @@
     
     <!-- Universal Page Initializer (Load Last) -->
     <!-- User account menu (logout / change password) -->
-    <script src="{{ url_for('static', filename='js/user-menu.js') }}" defer></script>
+    <script data-navigation-shell src="{{ url_for('static', filename='js/user-menu.js') }}" defer></script>
     <script type="module" src="{{ url_for('static', filename='js/pages/universal-initializer.js') }}" defer></script>
 </body>
 </html>

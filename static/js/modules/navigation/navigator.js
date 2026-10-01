@@ -256,10 +256,26 @@ export function handleFilePerPageChange() {
     }
 }
 
-// Expose handleSortChange globally for HTML onclick
-window.handleSortChange = handleSortChange;
-// Expose handlePerPageChange globally for HTML onclick
-window.handlePerPageChange = handlePerPageChange;
-// Expose handleFilePerPageChange globally for HTML onclick
-window.handleFilePerPageChange = handleFilePerPageChange;
+// Keep the legacy declarative/keyboard controls usable when this page is
+// reached by a content swap (the full FunctionManager module may not have
+// been loaded in the original document).
+if (typeof window !== 'undefined') {
+    const fms = window.fms || (window.fms = {});
+    fms.navigation = fms.navigation || {};
+    Object.assign(fms.navigation, {
+        initNavigation,
+        navigateToRoot,
+        navigateToSection,
+        navigateToItem,
+        handleSortChange,
+        handlePerPageChange,
+        handleFilePerPageChange
+    });
+    window.navigateToRoot = navigateToRoot;
+    window.navigateToSection = navigateToSection;
+    window.navigateToItem = navigateToItem;
+    window.handleSortChange = handleSortChange;
+    window.handlePerPageChange = handlePerPageChange;
+    window.handleFilePerPageChange = handleFilePerPageChange;
+}
 

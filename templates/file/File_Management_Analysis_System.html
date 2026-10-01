@@ -898,7 +898,7 @@
 
 {% block extra_js %}
 <!-- Chart.js for charts -->
-<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+<script data-navigation-shell src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
 <!-- Chart export functionality -->
 <script type="module" src="{{ url_for('static', filename='js/modules/charts/chart-export.js') }}"></script>
 

@@ -454,6 +454,24 @@ try {
               false, 'no .unified-pagination-jump-btn on /words');
     }
 
+    // Archives may be reached from a different interface through the content
+    // swap, where file-management-system.js has not run in the original load.
+    // Its legacy data-on-click section controls still need the navigator bridge.
+    const archiveSwap = await page.evaluate(async () => {
+        if (typeof window.swapNavigate !== 'function') return false;
+        return window.swapNavigate('/archives');
+    });
+    check('Archives route swaps into the existing shell', archiveSwap);
+    await page.waitForSelector('#unifiedContentView .explorer-item', { timeout: 15000 });
+    const sectionBridge = await page.evaluate(() =>
+        typeof window.fms?.navigation?.navigateToSection === 'function'
+        && typeof window.navigateToSection === 'function');
+    check('swapped Archives route exposes section navigation', sectionBridge);
+    await page.click('#sidebar .sidebar-item[data-section="category"]');
+    await page.waitForSelector('#unifiedContentView .section-header', { timeout: 15000 });
+    check('Archives section navigation renders after the swap',
+          await page.$('#unifiedContentView .section-header') !== null);
+
     // sidebar on a normal page reflects nothing broken (no JS errors)
     check('no page/console errors during the run', consoleErrors.length === 0,
           consoleErrors.slice(0, 3).join(' | '));
