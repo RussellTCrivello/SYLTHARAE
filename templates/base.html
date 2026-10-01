@@ -500,9 +500,10 @@
     
     <!-- Rendering Modules (Lazy Load) -->
     <script type="module" src="{{ url_for('static', filename='js/modules/rendering/cursor-pagination.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/modules/ui/table-export.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/modules/ui/table-export.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/modules/ui/file-actions.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/modules/ui/documents-panel.js') }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='js/modules/ui/documents-panel-exports.js') }}" defer></script>
     
     <!-- Language Initialization (Run Immediately, Before DOM Ready) -->
     <script type="application/json" id="language-init-data">{{ {

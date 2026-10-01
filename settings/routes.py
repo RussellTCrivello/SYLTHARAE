@@ -1107,6 +1107,9 @@ def settings_page():
             return "3.0.0"
     
     interface_manager = get_interface_manager()
+    from core.security import ROLE_ADMIN
+    from core.security.flask_ext import current_user
+    can_manage_places = getattr(current_user(), "role", None) == ROLE_ADMIN
     interfaces_by_category = interface_manager.get_interfaces_by_domain()
     all_interfaces = interface_manager.get_all_interfaces()
     interface_state = interface_manager.get_state()
@@ -1118,7 +1121,8 @@ def settings_page():
         interface_summary=interface_state.summary(),
         interface_state_report=interface_state.state_report(),
         user_settings=interface_manager,
-        version=get_version()
+        version=get_version(),
+        can_manage_places=can_manage_places,
     )
 
 
@@ -1138,6 +1142,9 @@ def register_settings_page_route(app):
     def settings_page_direct():
         """Settings Page (direct route)"""
         interface_manager = get_interface_manager()
+        from core.security import ROLE_ADMIN
+        from core.security.flask_ext import current_user
+        can_manage_places = getattr(current_user(), "role", None) == ROLE_ADMIN
         interfaces_by_category = interface_manager.get_interfaces_by_domain()
         all_interfaces = interface_manager.get_all_interfaces()
         interface_state = interface_manager.get_state()
@@ -1149,7 +1156,8 @@ def register_settings_page_route(app):
             interface_summary=interface_state.summary(),
             interface_state_report=interface_state.state_report(),
             user_settings=interface_manager,
-            version=get_version()
+            version=get_version(),
+            can_manage_places=can_manage_places,
         )
 
 

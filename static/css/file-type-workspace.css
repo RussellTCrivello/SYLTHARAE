@@ -277,6 +277,21 @@
 
 .file-type-panel-search { min-width: 11rem; }
 
+.file-type-panel-bulk:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    flex-basis: 100%;
+    justify-content: flex-end;
+}
+
+.file-type-panel-bulk-count {
+    color: var(--bs-secondary-color, #6c757d);
+    font-size: 0.85rem;
+    margin-inline-end: 0.25rem;
+}
+
 .file-type-panel-body {
     overflow: auto;
     padding: 0.5rem 0.75rem 0.75rem;

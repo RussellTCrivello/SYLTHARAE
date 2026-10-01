@@ -1,12 +1,14 @@
 <!-- templates/settings.html - Comprehensive Settings Interface -->
 {% extends "base.html" %}
 {% from 'components/status_badge.html' import status_badge %}
+{% from 'components/table.html' import record_table %}
 
 {% block title %}{{ _('Settings') }}{% endblock %}
 
 {% block extra_css %}
 <link href="{{ url_for('static', filename='css/Settings.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/language-picker.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/unified-table.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -2821,88 +2823,110 @@
             </div>
         </div>
 
-        <!-- Geographic Locations (Places Management) -->
-        <div class="tab-pane fade" id="places" role="tabpanel">
+        <!-- Geographic Locations, Names, and immutable Gazetteer revision history -->
+        {% set place_columns = [
+            {'key': 'place_key', 'label': _('Key'), 'sortable': true, 'width': '18%'},
+            {'key': 'label', 'label': _('Label'), 'sortable': true, 'width': '18%'},
+            {'key': 'feature_type', 'label': _('Type'), 'sortable': true},
+            {'key': 'country_codes', 'label': _('Countries')},
+            {'key': 'coordinates', 'label': _('Coordinates')},
+            {'key': 'source', 'label': _('Source'), 'sortable': true},
+            {'key': 'retired', 'label': _('Status'), 'sortable': true},
+            {'kind': 'actions', 'label': _('Actions'), 'width': '15rem'}
+        ] %}
+        {% set place_name_columns = [
+            {'key': 'name', 'label': _('Name'), 'sortable': true, 'width': '20%'},
+            {'key': 'language', 'label': _('Language'), 'sortable': true},
+            {'key': 'name_type', 'label': _('Name type'), 'sortable': true},
+            {'key': 'place_label', 'label': _('Place'), 'sortable': true},
+            {'key': 'place_key', 'label': _('Place key'), 'sortable': true},
+            {'key': 'source', 'label': _('Source'), 'sortable': true},
+            {'key': 'homograph', 'label': _('Homograph'), 'sortable': true},
+            {'kind': 'actions', 'label': _('Actions'), 'width': '12rem'}
+        ] %}
+        {% set gazetteer_load_columns = [
+            {'key': 'id', 'label': _('Revision'), 'sortable': true},
+            {'key': 'seed_version', 'label': _('Seed version'), 'sortable': true},
+            {'key': 'loaded_at', 'label': _('Loaded at'), 'sortable': true},
+            {'key': 'place_count', 'label': _('Places'), 'sortable': true},
+            {'key': 'name_count', 'label': _('Names'), 'sortable': true},
+            {'key': 'loaded_by', 'label': _('Applied by'), 'sortable': true},
+            {'kind': 'actions', 'label': _('Details'), 'width': '8rem'}
+        ] %}
+        <div class="tab-pane fade" id="places" role="tabpanel" data-can-manage="{{ 'true' if can_manage_places else 'false' }}">
             <div class="card border mb-3">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
                         <div>
                             <h5 class="card-title mb-1">
-                                <i class="bi bi-geo-alt me-2"></i>
-                                {{ _('Geographic Locations & Gazetteers') }}
+                                <i class="bi bi-geo-alt me-2"></i>{{ _('Geographic Gazetteer') }}
                             </h5>
-                            <p class="text-muted small mb-0">
-                                {{ _('Manage geographic entities, coordinates, and multilingual place names used by the Places detector. Fully front-end manageable with fields and buttons.') }}
+                            <p class="text-muted small mb-1">
+                                {{ _('Browse places, multilingual names, and immutable load history. Seed-managed facts stay source-controlled; administrators may retire seed places, but the next seed refresh can reactivate entries still present in the committed seed. Curated detector-visible changes create fingerprint revisions and audit events.') }}
                             </p>
+                            <div id="gazetteerSummary" class="small text-muted" aria-live="polite">{{ _('Loading Gazetteer status…') }}</div>
                         </div>
+                        {% if can_manage_places %}
                         <button type="button" class="btn btn-primary btn-sm" id="placesAddBtn">
-                            <i class="bi bi-plus-lg me-1"></i>{{ _('Add New Location') }}
+                            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ _('Add Location') }}
                         </button>
+                        {% endif %}
                     </div>
 
-                    <!-- Search and Filters Bar -->
-                    <div class="row g-2 align-items-center mb-3">
-                        <div class="col-md-4">
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" id="placesSearchInput" placeholder="{{ _('Search name, alias, or place key…') }}">
-                                <button class="btn btn-outline-secondary" type="button" id="placesSearchBtn"><i class="bi bi-search"></i></button>
+                    <ul class="nav nav-pills mb-3" id="gazetteerViews" role="tablist">
+                        <li class="nav-item" role="presentation"><button class="nav-link active" id="places-list-tab" data-bs-toggle="tab" data-bs-target="#places-list-panel" type="button" role="tab">{{ _('Places') }}</button></li>
+                        <li class="nav-item" role="presentation"><button class="nav-link" id="place-names-tab" data-bs-toggle="tab" data-bs-target="#place-names-panel" type="button" role="tab">{{ _('Place Names') }}</button></li>
+                        <li class="nav-item" role="presentation"><button class="nav-link" id="gazetteer-loads-tab" data-bs-toggle="tab" data-bs-target="#gazetteer-loads-panel" type="button" role="tab">{{ _('Load History') }}</button></li>
+                    </ul>
+                    <div class="tab-content">
+                        <section class="tab-pane fade show active" id="places-list-panel" role="tabpanel" aria-labelledby="places-list-tab">
+                            <div class="row g-2 align-items-center mb-3">
+                                <div class="col-md-4"><label class="visually-hidden" for="placesSearchInput">{{ _('Search places') }}</label><input type="search" class="form-control form-control-sm" id="placesSearchInput" placeholder="{{ _('Search name, alias, or key…') }}"></div>
+                                <div class="col-md-2"><label class="visually-hidden" for="placesFilterType">{{ _('Feature type') }}</label><select class="form-select form-select-sm" id="placesFilterType"><option value="">{{ _('All feature types') }}</option><option value="city">{{ _('City') }}</option><option value="country">{{ _('Country') }}</option><option value="region">{{ _('Region') }}</option></select></div>
+                                <div class="col-md-2"><label class="visually-hidden" for="placesFilterCountry">{{ _('Country code') }}</label><input type="text" class="form-control form-control-sm" id="placesFilterCountry" placeholder="{{ _('Country (e.g. NL)') }}" maxlength="2"></div>
+                                <div class="col-md-2"><label class="visually-hidden" for="placesFilterSource">{{ _('Source') }}</label><select class="form-select form-select-sm" id="placesFilterSource"><option value="all">{{ _('All sources') }}</option><option value="wikidata">{{ _('Seed-managed') }}</option><option value="user">{{ _('User-curated') }}</option></select></div>
+                                <div class="col-md-2"><label class="visually-hidden" for="placesFilterStatus">{{ _('Status') }}</label><select class="form-select form-select-sm" id="placesFilterStatus"><option value="all">{{ _('Active & retired') }}</option><option value="active">{{ _('Active only') }}</option><option value="retired">{{ _('Retired only') }}</option></select></div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select form-select-sm" id="placesFilterType">
-                                <option value="">{{ _('All Feature Types') }}</option>
-                                <option value="city">{{ _('City') }}</option>
-                                <option value="country">{{ _('Country') }}</option>
-                                <option value="region">{{ _('Region') }}</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <input type="text" class="form-control form-control-sm" id="placesFilterCountry" placeholder="{{ _('Country (e.g. NL)') }}" maxlength="2">
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select form-select-sm" id="placesFilterStatus">
-                                <option value="all">{{ _('Status: All (Active & Retired)') }}</option>
-                                <option value="active">{{ _('Status: Active Only') }}</option>
-                                <option value="retired">{{ _('Status: Retired Only') }}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Unified Places Table -->
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle" id="placesTable">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ _('Key') }}</th>
-                                    <th scope="col">{{ _('Label') }}</th>
-                                    <th scope="col">{{ _('Type') }}</th>
-                                    <th scope="col">{{ _('Countries') }}</th>
-                                    <th scope="col">{{ _('Coordinates') }}</th>
-                                    <th scope="col">{{ _('Source') }}</th>
-                                    <th scope="col">{{ _('Status') }}</th>
-                                    <th scope="col">{{ _('Actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody id="placesTableBody">
-                                <tr>
-                                    <td colspan="8" class="text-muted text-center py-3">
-                                        {{ _('Loading locations…') }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination and Status Bar -->
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2">
-                        <span id="placesCount" class="text-muted small"></span>
-                        <div class="d-flex align-items-center gap-2">
-                            <span id="placesStatus"></span>
-                            <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-outline-secondary" id="placesPrevBtn" disabled>&laquo; {{ _('Previous') }}</button>
-                                <button type="button" class="btn btn-outline-secondary" id="placesNextBtn" disabled>{{ _('Next') }} &raquo;</button>
+                            {{ record_table('placesTable', place_columns, mode='server', per_page=25,
+                                per_page_id='placesPerPage', per_page_options=(25, 50, 100),
+                                info_id='placesTableInfo', loading=True,
+                                loading_message=_('Loading places…'), caption=_('Geographic places')) }}
+                            <div class="d-flex justify-content-between align-items-center gap-2 mt-2 flex-wrap">
+                                <span id="placesStatus" class="small" role="status" aria-live="polite"></span>
+                                <div class="btn-group btn-group-sm"><button type="button" class="btn btn-outline-secondary" id="placesPrevBtn" disabled>{{ _('Previous') }}</button><button type="button" class="btn btn-outline-secondary" id="placesNextBtn" disabled>{{ _('Next') }}</button></div>
                             </div>
-                        </div>
+                        </section>
+
+                        <section class="tab-pane fade" id="place-names-panel" role="tabpanel" aria-labelledby="place-names-tab">
+                            <div class="row g-2 align-items-center mb-3">
+                                <div class="col-md-5"><label class="visually-hidden" for="placeNamesSearch">{{ _('Search names or places') }}</label><input type="search" class="form-control form-control-sm" id="placeNamesSearch" placeholder="{{ _('Search name, place, or key…') }}"></div>
+                                <div class="col-md-2"><label class="visually-hidden" for="placeNamesLanguage">{{ _('Language') }}</label><select class="form-select form-select-sm" id="placeNamesLanguage"><option value="">{{ _('All languages') }}</option>{% for code, label in [('en','English'),('ar','Arabic'),('he','Hebrew'),('fa','Persian'),('hr','Croatian')] %}<option value="{{ code }}">{{ _(label) }} ({{ code }})</option>{% endfor %}</select></div>
+                                <div class="col-md-2"><label class="visually-hidden" for="placeNamesType">{{ _('Name type') }}</label><select class="form-select form-select-sm" id="placeNamesType"><option value="">{{ _('All name types') }}</option>{% for kind in ['endonym','exonym','historical','variant','unclassified'] %}<option value="{{ kind }}">{{ _(kind|title) }}</option>{% endfor %}</select></div>
+                                <div class="col-md-2"><label class="visually-hidden" for="placeNamesSource">{{ _('Name source') }}</label><select class="form-select form-select-sm" id="placeNamesSource"><option value="all">{{ _('All sources') }}</option><option value="seed">{{ _('Seed-managed') }}</option><option value="user">{{ _('User-curated') }}</option></select></div>
+                                {% if can_manage_places %}<div class="col-md-1 text-end"><button type="button" class="btn btn-primary btn-sm" id="placeNameAddBtn" aria-label="{{ _('Add place name') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button></div>{% endif %}
+                            </div>
+                            {{ record_table('placeNamesTable', place_name_columns, mode='server', per_page=25,
+                                per_page_id='placeNamesPerPage', per_page_options=(25, 50, 100),
+                                info_id='placeNamesTableInfo', loading=True,
+                                loading_message=_('Loading place names…'), caption=_('Multilingual place names')) }}
+                            <div class="d-flex justify-content-between align-items-center gap-2 mt-2 flex-wrap">
+                                <span id="placeNamesStatus" class="small" role="status" aria-live="polite"></span>
+                                <div class="btn-group btn-group-sm"><button type="button" class="btn btn-outline-secondary" id="placeNamesPrevBtn" disabled>{{ _('Previous') }}</button><button type="button" class="btn btn-outline-secondary" id="placeNamesNextBtn" disabled>{{ _('Next') }}</button></div>
+                            </div>
+                        </section>
+
+                        <section class="tab-pane fade" id="gazetteer-loads-panel" role="tabpanel" aria-labelledby="gazetteer-loads-tab">
+                            <p class="text-muted small">{{ _('Revision records are append-only and read-only. A curation that changes detection matching creates a new fingerprint revision; details below include the recorded action statistics.') }}</p>
+                            <div class="row g-2 mb-3"><div class="col-md-5"><label class="visually-hidden" for="gazetteerLoadsSearch">{{ _('Search load history') }}</label><input type="search" class="form-control form-control-sm" id="gazetteerLoadsSearch" placeholder="{{ _('Search version, fingerprint, or actor…') }}"></div></div>
+                            {{ record_table('gazetteerLoadsTable', gazetteer_load_columns, mode='server', per_page=25,
+                                per_page_id='gazetteerLoadsPerPage', per_page_options=(25, 50, 100),
+                                info_id='gazetteerLoadsTableInfo', loading=True,
+                                loading_message=_('Loading load history…'), caption=_('Gazetteer load history')) }}
+                            <div class="d-flex justify-content-between align-items-center gap-2 mt-2 flex-wrap">
+                                <span id="gazetteerLoadsStatus" class="small" role="status" aria-live="polite"></span>
+                                <div class="btn-group btn-group-sm"><button type="button" class="btn btn-outline-secondary" id="gazetteerLoadsPrevBtn" disabled>{{ _('Previous') }}</button><button type="button" class="btn btn-outline-secondary" id="gazetteerLoadsNextBtn" disabled>{{ _('Next') }}</button></div>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>
@@ -3642,7 +3666,8 @@
         "moveUp": _('Move up'),
         "moveDown": _('Move down'),
         "showInSidebar": _('Show in sidebar'),
-        "navSaved": _('Sidebar saved. It applies on your next navigation.'),
+        "navPosition": _('Position'),
+        "navSaved": _('Saved.'),
         "navResetDone": _('Back to the default sidebar.'),
         "navSaveFailed": _('Saving failed.'),
         "navLoadFailed": _('The sidebar preferences could not be loaded.')
@@ -3660,72 +3685,70 @@
 <!-- Geographic Locations (Places) preferences & management -->
 <script src="{{ url_for('static', filename='js/settings/places-settings.js') }}"></script>
 
-<!-- Add/Edit Place Modal -->
-<div class="modal fade" id="placeModal" tabindex="-1" aria-labelledby="placeModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form id="placeForm" autocomplete="off">
-                <input type="hidden" id="placeModalIsEdit" value="0">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="placeModalTitle">{{ _('Add New Geographic Location') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="placeModalError" class="alert alert-danger d-none py-2 mb-3"></div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-8">
-                            <label class="form-label small fw-semibold" for="placeModalLabel">{{ _('Name / Label') }} *</label>
-                            <input type="text" class="form-control form-control-sm" id="placeModalLabel" required maxlength="200" placeholder="{{ _('e.g. Amsterdam') }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold" for="placeModalType">{{ _('Feature Type') }} *</label>
-                            <select class="form-select form-select-sm" id="placeModalType" required>
-                                <option value="city">{{ _('City') }}</option>
-                                <option value="country">{{ _('Country') }}</option>
-                                <option value="region">{{ _('Region') }}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold" for="placeModalKey">{{ _('Custom Key (optional)') }}</label>
-                            <input type="text" class="form-control form-control-sm" id="placeModalKey" placeholder="{{ _('e.g. user:amsterdam') }}" maxlength="100">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold" for="placeModalCountries">{{ _('Country Code(s)') }}</label>
-                            <input type="text" class="form-control form-control-sm" id="placeModalCountries" placeholder="{{ _('e.g. NL, BE') }}">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-semibold" for="placeModalLat">{{ _('Latitude') }}</label>
-                            <input type="number" step="any" min="-90" max="90" class="form-control form-control-sm" id="placeModalLat" placeholder="52.37">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-semibold" for="placeModalLon">{{ _('Longitude') }}</label>
-                            <input type="number" step="any" min="-180" max="180" class="form-control form-control-sm" id="placeModalLon" placeholder="4.89">
-                        </div>
-                    </div>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="placeModalRetired">
-                        <label class="form-check-label small" for="placeModalRetired">{{ _('Retired (inactive - excluded from future detections)') }}</label>
-                    </div>
+<script src="{{ url_for('static', filename='js/modules/ui/unified-table.js') }}?v=20260930a" defer></script>
 
-                    <!-- Multilingual Names & Aliases -->
-                    <div class="card border">
-                        <div class="card-header bg-transparent py-2 d-flex justify-content-between align-items-center">
-                            <span class="small fw-semibold"><i class="bi bi-translate me-1"></i>{{ _('Multilingual Names & Aliases') }}</span>
-                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="btnAddAliasRow"><i class="bi bi-plus-lg me-1"></i>{{ _('Add Name / Alias') }}</button>
-                        </div>
-                        <div class="card-body p-2" id="placeModalNamesList">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
+<!-- Place create/edit modal: aliases have their own CRUD table and API. -->
+<div class="modal fade" id="placeModal" tabindex="-1" aria-labelledby="placeModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <form id="placeForm" autocomplete="off">
+            <input type="hidden" id="placeModalIsEdit" value="0">
+            <div class="modal-header"><h5 class="modal-title" id="placeModalTitle">{{ _('Add Geographic Location') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button></div>
+            <div class="modal-body">
+                <div id="placeModalError" class="alert alert-danger d-none py-2 mb-3" role="alert"></div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-8"><label class="form-label" for="placeModalLabel">{{ _('Name / Label') }} *</label><input type="text" class="form-control" id="placeModalLabel" required maxlength="200"></div>
+                    <div class="col-md-4"><label class="form-label" for="placeModalType">{{ _('Feature Type') }} *</label><select class="form-select" id="placeModalType" required><option value="city">{{ _('City') }}</option><option value="country">{{ _('Country') }}</option><option value="region">{{ _('Region') }}</option></select></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                    <button type="submit" class="btn btn-primary btn-sm" id="btnSavePlace"><i class="bi bi-save me-1"></i>{{ _('Save Location') }}</button>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4"><label class="form-label" for="placeModalKey">{{ _('Custom Key (optional)') }}</label><input type="text" class="form-control" id="placeModalKey" maxlength="100" placeholder="user:amsterdam"></div>
+                    <div class="col-md-4"><label class="form-label" for="placeModalCountries">{{ _('Country code(s)') }}</label><input type="text" class="form-control" id="placeModalCountries" placeholder="NL, BE"></div>
+                    <div class="col-md-2"><label class="form-label" for="placeModalLat">{{ _('Latitude') }}</label><input type="number" step="any" min="-90" max="90" class="form-control" id="placeModalLat"></div>
+                    <div class="col-md-2"><label class="form-label" for="placeModalLon">{{ _('Longitude') }}</label><input type="number" step="any" min="-180" max="180" class="form-control" id="placeModalLon"></div>
                 </div>
-            </form>
-        </div>
-    </div>
+                <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="placeModalRetired"><label class="form-check-label" for="placeModalRetired">{{ _('Retired (excluded from future detection)') }}</label></div>
+                <p class="text-muted small mt-3 mb-0">{{ _('The label is added as an English endonym. Add, edit, and remove additional multilingual aliases in the Place Names tab.') }}</p>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button><button type="submit" class="btn btn-primary" id="btnSavePlace">{{ _('Save Location') }}</button></div>
+        </form>
+    </div></div>
+</div>
+
+<!-- Multilingual alias create/edit modal. -->
+<div class="modal fade" id="placeNameModal" tabindex="-1" aria-labelledby="placeNameModalTitle" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content">
+        <form id="placeNameForm" autocomplete="off">
+            <input type="hidden" id="placeNameModalId">
+            <div class="modal-header"><h5 class="modal-title" id="placeNameModalTitle">{{ _('Add Place Name') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button></div>
+            <div class="modal-body">
+                <div id="placeNameModalError" class="alert alert-danger d-none py-2 mb-3" role="alert"></div>
+                <label class="form-label" for="placeNamePlaceKey">{{ _('Related active place') }} *</label>
+                <input type="search" class="form-control mb-3" id="placeNamePlaceKey" list="placeNamePlaceOptions" autocomplete="off" required placeholder="{{ _('Search by place name or key…') }}" aria-describedby="placeNamePlaceHelp">
+                <datalist id="placeNamePlaceOptions"></datalist><div id="placeNamePlaceHelp" class="form-text mb-3">{{ _('Choose a result; the saved relationship uses its immutable place key.') }}</div>
+                <label class="form-label" for="placeNameText">{{ _('Name') }} *</label><input type="text" class="form-control mb-3" id="placeNameText" maxlength="200" required>
+                <div class="row g-2 mb-3"><div class="col-6"><label class="form-label" for="placeNameLanguage">{{ _('Language') }}</label><select class="form-select" id="placeNameLanguage"><option value="en">English (en)</option><option value="ar">Arabic (ar)</option><option value="he">Hebrew (he)</option><option value="fa">Persian (fa)</option><option value="hr">Croatian (hr)</option></select></div><div class="col-6"><label class="form-label" for="placeNameType">{{ _('Name type') }}</label><select class="form-select" id="placeNameType"><option value="endonym">{{ _('Endonym') }}</option><option value="exonym">{{ _('Exonym') }}</option><option value="historical">{{ _('Historical') }}</option><option value="variant">{{ _('Variant') }}</option><option value="unclassified">{{ _('Unclassified') }}</option></select></div></div>
+                <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="placeNameHomograph"><label class="form-check-label" for="placeNameHomograph">{{ _('Homograph: this name may refer to multiple places') }}</label></div>
+                <label class="form-label" for="placeNameNote">{{ _('Curator note') }}</label><textarea class="form-control" id="placeNameNote" rows="3" maxlength="2000"></textarea>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button><button type="submit" class="btn btn-primary">{{ _('Save Place Name') }}</button></div>
+        </form>
+    </div></div>
+</div>
+
+<!-- Place detail inspector. -->
+<div class="modal fade" id="placeDetailsModal" tabindex="-1" aria-labelledby="placeDetailsModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="placeDetailsModalTitle">{{ _('Place details') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button></div>
+        <div class="modal-body"><div id="placeDetailStatus" class="text-muted small mb-2" role="status" aria-live="polite"></div><div id="placeDetailBody"></div></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button></div>
+    </div></div>
+</div>
+
+<!-- Read-only Gazetteer revision inspector. -->
+<div class="modal fade" id="gazetteerLoadModal" tabindex="-1" aria-labelledby="gazetteerLoadModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="gazetteerLoadModalTitle">{{ _('Gazetteer Revision') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button></div>
+        <div class="modal-body"><div id="gazetteerLoadDetailStatus" class="text-muted small mb-2" role="status" aria-live="polite"></div><pre id="gazetteerLoadDetail" class="small bg-light border rounded p-3 text-break mb-0"></pre></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button></div>
+    </div></div>
 </div>
 {% endblock %}

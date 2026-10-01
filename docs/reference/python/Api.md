@@ -287,6 +287,9 @@ The Experience Contract as a read-only surface.
 
 Database-column export for the list interfaces.
 
+- **class `ExportTooLarge`**(ValueError) - An export would exceed the declared synchronous row ceiling.
+  - `__init__(self, observed: int, *, exact: bool)`
+- **class `ExportIncomplete`**(RuntimeError) - A paged export could not retrieve the complete counted result set.
 - `export_interface(interface_id: str)` <sub>exports_bp.route('/api/export/<interface_id>', methods=['GET'])</sub> - One view, every row, the reader's chosen columns, CSV or Excel.
 - `export_interface_for(endpoint)`
 - `register_exports_routes(app)` - Register the export blueprint with the Flask app
@@ -858,10 +861,10 @@ _No module docstring._
 - `get_connection()` - Get a database connection from the DatabaseHub.
 - `return_connection(conn)` - Return a database connection to the pool.
 - `get_categories_with_stats(limit: int = 100) -> list` - Get categories with statistics (file count, word count)
-- `get_categories_paged(search: str = None, page: int = 1, per_page: int = 20, sort_by: str = 'files', sort_order: str = 'desc') -> tuple` - Get one page of categories with statistics, searched, sorted server-side.
+- `get_categories_paged(search: str = None, page: int = 1, per_page: int = 20, sort_by: str = 'files', sort_order: str = 'desc', known_total: int = None) -> tuple` - Get one page of categories with statistics, searched, sorted server-side.
 - `get_category(category_id: int) -> dict` - Get a category by ID
 - `get_words_by_category(category_id: int, limit: int = 100) -> list` - Get words in a category
-- `get_words_by_category_paged(category_id: int, search: str = None, page: int = 1, per_page: int = 20, sort_by: str = 'word', sort_order: str = 'asc') -> tuple` - Get one page of a category's words, searched and sorted server-side.
+- `get_words_by_category_paged(category_id: int, search: str = None, page: int = 1, per_page: int = 20, sort_by: str = 'word', sort_order: str = 'asc', known_to...` - Get one page of a category's words, searched and sorted server-side.
 - `get_word_id(word: str) -> int` - Get word ID by word string
 - `insert_word(word: str) -> int` - Insert a word and return its ID
 - `get_words_with_usage(search_term: str = None, page: int = 1, per_page: int = 10, sort_by: str = 'usage_count', sort_order: str = 'desc', status_filter: str =...` - Get words with usage statistics

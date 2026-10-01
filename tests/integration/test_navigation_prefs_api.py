@@ -104,7 +104,8 @@ def test_navigation_prefs_http_and_sidebar_render(app, pg_db, sync_jobs):  # noq
     assert listing.status_code == 200
     entries = listing.get_json()["entries"]
     assert entries and all({"interface_id", "label", "domain", "hidden",
-                            "position", "icon"} <= set(e) for e in entries)
+                            "position", "icon", "url", "route", "description",
+                            "shortcut", "badge", "note"} <= set(e) for e in entries)
     ids = [e["interface_id"] for e in entries]
     assert "reports" in ids
 

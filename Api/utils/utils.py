@@ -1328,7 +1328,8 @@ def get_categories_paged(
     page: int = 1,
     per_page: int = 20,
     sort_by: str = 'files',
-    sort_order: str = 'desc'
+    sort_order: str = 'desc',
+    known_total: int = None,
 ) -> tuple:
     """
     Get one page of categories with statistics, searched, sorted server-side.
@@ -1343,6 +1344,7 @@ def get_categories_paged(
         per_page: Results per page
         sort_by: One of name | files | words | id
         sort_order: 'asc' or 'desc'
+        known_total: Optional first-page count reused by bounded export batches
 
     Returns:
         Tuple of (categories_list, total_count)
@@ -1369,8 +1371,11 @@ def get_categories_paged(
             JOIN words w ON c.word_id = w.id
             {where_sql}
         """
-        total_result = execute_query(count_query, tuple(params), fetch="one")
-        total = total_result[0] if total_result else 0
+        if known_total is None:
+            total_result = execute_query(count_query, tuple(params), fetch="one")
+            total = total_result[0] if total_result else 0
+        else:
+            total = known_total
 
         offset = (page - 1) * per_page
         query = f"""
@@ -1489,7 +1494,8 @@ def get_words_by_category_paged(
     page: int = 1,
     per_page: int = 20,
     sort_by: str = 'word',
-    sort_order: str = 'asc'
+    sort_order: str = 'asc',
+    known_total: int = None,
 ) -> tuple:
     """
     Get one page of a category's words, searched and sorted server-side.
@@ -1504,6 +1510,7 @@ def get_words_by_category_paged(
         per_page: Results per page
         sort_by: One of word | usage_count | id
         sort_order: 'asc' or 'desc'
+        known_total: Optional first-page count reused by bounded export batches
 
     Returns:
         Tuple of (words_list, total_count)
@@ -1531,8 +1538,11 @@ def get_words_by_category_paged(
             JOIN words w ON w.id = wc.word_id
             {where_sql}
         """
-        total_result = execute_query(count_query, tuple(params), fetch="one")
-        total = total_result[0] if total_result else 0
+        if known_total is None:
+            total_result = execute_query(count_query, tuple(params), fetch="one")
+            total = total_result[0] if total_result else 0
+        else:
+            total = known_total
 
         offset = (page - 1) * per_page
         query = f"""

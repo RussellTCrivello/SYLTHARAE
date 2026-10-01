@@ -42,6 +42,53 @@ exports_bp = Blueprint('exports', __name__)
 #: the pagination exists to prevent.
 MAX_EXPORT_ROWS = 100_000
 
+
+class ExportTooLarge(ValueError):
+    """An export would exceed the declared synchronous row ceiling."""
+
+    def __init__(self, observed: int, *, exact: bool):
+        self.observed = int(observed)
+        self.exact = bool(exact)
+        super().__init__("Export exceeds the synchronous row limit")
+
+
+class ExportIncomplete(RuntimeError):
+    """A paged export could not retrieve the complete counted result set."""
+
+
+def _raise_if_over_limit(total: int, *, exact: bool = True) -> None:
+    if total > MAX_EXPORT_ROWS:
+        raise ExportTooLarge(total, exact=exact)
+
+
+def _paged_rows(loader, *, search, sort_by, sort_order) -> List[Dict[str, Any]]:
+    """Read the paged category APIs completely, without their 200-row ceiling.
+
+    Those APIs intentionally cap a browser page at 200. An export must either
+    collect all rows (up to the export ceiling) or refuse; returning page one
+    would silently produce a partial artifact.
+    """
+    page_size = 200  # the shared list APIs enforce this maximum
+    first, total = loader(page=1, per_page=page_size, search=search,
+                          sort_by=sort_by, sort_order=sort_order,
+                          known_total=None)
+    _raise_if_over_limit(total)
+    rows = list(first or [])
+    for page in range(2, (total + page_size - 1) // page_size + 1):
+        batch, _page_total = loader(page=page, per_page=page_size,
+                                    search=search, sort_by=sort_by,
+                                    sort_order=sort_order,
+                                    known_total=total)
+        rows.extend(batch or [])
+        if len(rows) > MAX_EXPORT_ROWS:
+            raise ExportTooLarge(len(rows), exact=False)
+    if len(rows) != total:
+        raise ExportIncomplete(
+            "The result set changed or could not be fully read; retry the export."
+        )
+    return rows
+
+
 #: Each interface's exportable columns: ``(key, label)`` plus the SQL
 #: expression a key means. ``None`` marks a column the exporter derives in
 #: Python from the row (a status word, not a database value).
@@ -166,10 +213,13 @@ def _file_rows() -> List[Dict[str, Any]]:
         if not raw:
             continue
         try:
-            where_parts.append(clause)
-            where_params.append(int(raw))
-        except ValueError:
-            logger.warning('Invalid %s on export: %s', name, raw)
+            panel_id = int(raw)
+        except ValueError as exc:
+            raise ValueError(f"{name} must be a positive integer") from exc
+        if panel_id < 1:
+            raise ValueError(f"{name} must be a positive integer")
+        where_parts.append(clause)
+        where_params.append(panel_id)
     where_clause = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
 
     sort_key = request.args.get('sort', '')
@@ -190,7 +240,7 @@ def _file_rows() -> List[Dict[str, Any]]:
         {' '.join(LIBRARY_JOINS)}
         {where_clause}
         ORDER BY {order_by}
-        LIMIT {MAX_EXPORT_ROWS}
+        LIMIT {MAX_EXPORT_ROWS + 1}
     """
     rows = execute_query(query, tuple(where_params) if where_params else None,
                          fetch='all') or []
@@ -209,7 +259,7 @@ def _file_type_rows() -> List[Dict[str, Any]]:
         GROUP BY COALESCE(NULLIF(BTRIM(file_type), ''), 'Unknown')
         ORDER BY file_count DESC, file_type ASC
         LIMIT {limit}
-    """.format(limit=MAX_EXPORT_ROWS)
+    """.format(limit=MAX_EXPORT_ROWS + 1)
     rows = execute_query(query, fetch='all') or []
     return [
         {
@@ -236,8 +286,9 @@ def _search_result_rows() -> List[Dict[str, Any]]:
     scope = request.args.get('scope')
     sort = request.args.get('sort', '')
     order = request.args.get('order', '')
-    rows, _total = search_files_by_word(
-        query, 1, MAX_EXPORT_ROWS, analyst_scope=scope, sort=sort, order=order)
+    rows, total = search_files_by_word(
+        query, 1, MAX_EXPORT_ROWS + 1, analyst_scope=scope, sort=sort, order=order)
+    _raise_if_over_limit(total)
     return [
         {
             'id': row['id'],
@@ -287,7 +338,7 @@ def _source_rows() -> List[Dict[str, Any]]:
         {where}
         GROUP BY s.id, w.word
         ORDER BY {order_by}
-        LIMIT {MAX_EXPORT_ROWS}
+        LIMIT {MAX_EXPORT_ROWS + 1}
         """,
         params,
         fetch='all',
@@ -328,7 +379,7 @@ def _side_rows() -> List[Dict[str, Any]]:
         {where}
         GROUP BY si.id
         ORDER BY {order_by}
-        LIMIT {MAX_EXPORT_ROWS}
+        LIMIT {MAX_EXPORT_ROWS + 1}
         """,
         params,
         fetch='all',
@@ -346,13 +397,14 @@ def _keyword_rows() -> List[Dict[str, Any]]:
     if sort_order not in ('asc', 'desc'):
         sort_order = 'desc'
 
-    keyword_rows, _total = get_keywords_with_usage(
+    keyword_rows, total = get_keywords_with_usage(
         search_term=search if search else None,
         page=1,
-        per_page=MAX_EXPORT_ROWS,
+        per_page=MAX_EXPORT_ROWS + 1,
         sort_by=sort_by,
         sort_order=sort_order,
     )
+    _raise_if_over_limit(total)
     from Api.utils.utils import batch_load_keywords_from_rows
     text_map = batch_load_keywords_from_rows(keyword_rows) if keyword_rows else {}
 
@@ -395,13 +447,14 @@ def _word_rows() -> List[Dict[str, Any]]:
     if sort_order not in ('asc', 'desc'):
         sort_order = 'desc'
 
-    words, _total = get_words_with_usage(
+    words, total = get_words_with_usage(
         search_term=search if search else None,
         page=1,
-        per_page=MAX_EXPORT_ROWS,
+        per_page=MAX_EXPORT_ROWS + 1,
         sort_by=sort_by,
         sort_order=sort_order,
     )
+    _raise_if_over_limit(total)
     for record in words:
         record['status'] = _status_word(record.get('usage_count'))
     return words
@@ -415,10 +468,9 @@ def _category_rows() -> List[Dict[str, Any]]:
         sort_by = 'files'
     if sort_order not in ('asc', 'desc'):
         sort_order = 'desc'
-    categories, _total = get_categories_paged(
+    categories = _paged_rows(
+        lambda **kwargs: get_categories_paged(**kwargs),
         search=search if search else None,
-        page=1,
-        per_page=MAX_EXPORT_ROWS,
         sort_by=sort_by,
         sort_order=sort_order,
     )
@@ -440,15 +492,12 @@ def _category_word_rows() -> List[Dict[str, Any]]:
         sort_by = 'word'
     if sort_order not in ('asc', 'desc'):
         sort_order = 'asc'
-    words, _total = get_words_by_category_paged(
-        category_id,
+    return _paged_rows(
+        lambda **kwargs: get_words_by_category_paged(category_id, **kwargs),
         search=search if search else None,
-        page=1,
-        per_page=MAX_EXPORT_ROWS,
         sort_by=sort_by,
         sort_order=sort_order,
     )
-    return words
 
 
 #: interface_id -> title, column spec, row loader. The loader reads its
@@ -507,8 +556,10 @@ def _resolve_columns(interface_id: str) -> Tuple[List[Tuple[str, str]], Optional
     """The requested columns, or an error when a name is not in the spec."""
     spec = EXPORT_SPECS[interface_id]
     requested = (request.args.get('columns') or '').strip()
-    if not requested:
+    if 'columns' not in request.args:
         return [(key, label) for key, label, _expr in spec['columns']], None
+    if not requested:
+        return [], "choose at least one export column"
     known = {key: label for key, label, _expr in spec['columns']}
     chosen: List[Tuple[str, str]] = []
     for key in [k.strip() for k in requested.split(',') if k.strip()]:
@@ -516,7 +567,9 @@ def _resolve_columns(interface_id: str) -> Tuple[List[Tuple[str, str]], Optional
             return [], f"unknown column '{key}' for interface '{interface_id}'"
         if key not in [c[0] for c in chosen]:
             chosen.append((key, known[key]))
-    return chosen or [(key, label) for key, label, _expr in spec['columns']], None
+    if not chosen:
+        return [], "choose at least one export column"
+    return chosen, None
 
 
 def _cell(value: Any) -> Any:
@@ -526,10 +579,32 @@ def _cell(value: Any) -> Any:
         return int(value)
     if hasattr(value, 'isoformat'):
         return value.isoformat()
+    if isinstance(value, str):
+        from Api.services.document_intelligence import spreadsheet_safe_text
+        return spreadsheet_safe_text(value)
     return value
 
 
-def _csv_response(title: str, columns: List[Tuple[str, str]], records: List[Dict[str, Any]]) -> Response:
+def _export_filename(interface_id: str, export_format: str) -> str:
+    """Return a safe, extension-correct download name for the audit record."""
+    extension = 'xlsx' if export_format in ('xlsx', 'excel') else 'csv'
+    requested = request.args.get('filename')
+    if not requested:
+        stamp = datetime.now().strftime('%Y%m%d_%H%M')
+        return f"{interface_id}_export_{stamp}.{extension}"
+
+    from werkzeug.utils import secure_filename
+    safe = secure_filename(requested.strip())
+    if not safe:
+        raise ValueError('filename must contain at least one letter or number')
+    stem = safe.rsplit('.', 1)[0] if '.' in safe else safe
+    stem = stem[:160].rstrip(' ._-')
+    if not stem:
+        raise ValueError('filename must contain at least one letter or number')
+    return f'{stem}.{extension}'
+
+
+def _csv_response(filename: str, columns: List[Tuple[str, str]], records: List[Dict[str, Any]]) -> Response:
     buffer = io.StringIO()
     buffer.write('\ufeff')  # Excel opens UTF-8 CSVs correctly with a BOM
     writer = csv.writer(buffer)
@@ -539,16 +614,16 @@ def _csv_response(title: str, columns: List[Tuple[str, str]], records: List[Dict
     return Response(
         buffer.getvalue(),
         mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment; filename="{title}.csv"'},
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
     )
 
 
-def _xlsx_response(title: str, columns: List[Tuple[str, str]], records: List[Dict[str, Any]]) -> Response:
+def _xlsx_response(filename: str, columns: List[Tuple[str, str]], records: List[Dict[str, Any]]) -> Response:
     from openpyxl import Workbook
 
     workbook = Workbook()
     sheet = workbook.active
-    sheet.title = title[:31] or 'Export'
+    sheet.title = filename.rsplit('.', 1)[0][:31] or 'Export'
     sheet.append([label for _key, label in columns])
     for record in records:
         sheet.append([_cell(record.get(key)) for key, _label in columns])
@@ -558,7 +633,7 @@ def _xlsx_response(title: str, columns: List[Tuple[str, str]], records: List[Dic
     return Response(
         buffer.getvalue(),
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        headers={'Content-Disposition': f'attachment; filename="{title}.xlsx"'},
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
     )
 
 
@@ -583,23 +658,39 @@ def export_interface(interface_id: str):
         return jsonify({'success': False, 'error': 'format must be csv or xlsx'}), 400
 
     try:
+        filename = _export_filename(interface_id, export_format)
         records = spec['rows']()
+        if len(records) > MAX_EXPORT_ROWS:
+            raise ExportTooLarge(len(records), exact=False)
+    except ExportIncomplete as e:
+        return jsonify({
+            'success': False,
+            'code': 'export_incomplete',
+            'error': str(e),
+        }), 409
+    except ExportTooLarge as e:
+        detail = {'max_rows': MAX_EXPORT_ROWS}
+        detail['row_count' if e.exact else 'observed_at_least'] = e.observed
+        return jsonify({
+            'success': False,
+            'code': 'export_limit_exceeded',
+            'error': f"Export exceeds the {MAX_EXPORT_ROWS:,}-row limit. Narrow the view and try again.",
+            **detail,
+        }), 413
     except ValueError as e:
         return jsonify({'success': False, 'error': str(e)}), 400
     except Exception as e:  # pragma: no cover - defensive, logged
         logger.error(f"Export failed for {interface_id}: {e}", exc_info=True)
         return jsonify({'success': False, 'error': 'Export failed'}), 500
 
-    stamp = datetime.now().strftime('%Y%m%d_%H%M')
-    title = f"{spec['title']}_export_{stamp}"
     note_disclosure(kind='list_export', scope=f"interface:{interface_id}",
                     unit='row', row_count=len(records),
                     format='xlsx' if export_format == 'xlsx' or export_format == 'excel' else 'csv',
                     columns=[key for key, _label in columns])
 
     if export_format in ('xlsx', 'excel'):
-        return _xlsx_response(title, columns, records)
-    return _csv_response(title, columns, records)
+        return _xlsx_response(filename, columns, records)
+    return _csv_response(filename, columns, records)
 
 
 #: The list route a table lives on -> the export spec that serves it. The

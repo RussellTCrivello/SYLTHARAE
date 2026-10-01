@@ -232,6 +232,8 @@ class TestTheFileTypesDashboard:
             encoding="utf-8")
         assert "file_library_table(" in text
         assert "show_per_page=False" in text
+        assert "row_select_onchange=none" in text, (
+            "the page-only bulk toolbar handler must not be emitted in a panel")
         assert "export_params=view_string" in text, (
             "the panel's Export speaks about the panel's view, not the page's")
 
@@ -251,6 +253,10 @@ class TestTheFileTypesDashboard:
         body = resp.get_data(as_text=True)
         assert 'id="panelFilesTable"' in body
         assert "alpha-report.pdf" in body and "beta-scan.pdf" in body
+        assert 'class="file-checkbox ut-row-check"' in body
+        assert 'data-on-change="updateBulkToolbar()"' not in body, (
+            "the panel's own selection controller must not invoke the "
+            "File Library page toolbar")
         assert "data-ut-load-more" in body or "data-unified-table" in body
         # The panel's export menu speaks about the panel's own view.
         assert 'data-export-params="file_type=pdf' in body
@@ -290,6 +296,30 @@ class TestTheFileTypesDashboard:
         body = resp.get_data(as_text=True)
         assert 'id="fileTypesTable"' in body
         assert "data-panel-open" in body
+
+
+class TestCategoryWordsExportScope:
+    def test_page_and_export_keep_the_category_from_the_route(self, app, admin_client, pg_db):
+        tag = next(_SEQ)
+        conn = connect(pg_db)
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO words (word) VALUES (%s) RETURNING id", (f"cw-{tag}",))
+            word_id = cur.fetchone()[0]
+            cur.execute("INSERT INTO categorys (word_id) VALUES (%s) RETURNING id", (word_id,))
+            category_id = cur.fetchone()[0]
+            cur.execute("INSERT INTO words_categorys (word_id, category_id) VALUES (%s, %s)",
+                        (word_id, category_id))
+        conn.commit()
+        conn.close()
+
+        page = admin_client.get(f"/categories/{category_id}/words?search=cw")
+        assert page.status_code == 200
+        assert f'data-export-scope-base="category_id={category_id}"' in page.get_data(as_text=True)
+
+        exported = admin_client.get(
+            f"/api/export/category_words?format=csv&columns=word&category_id={category_id}&search=cw")
+        assert exported.status_code == 200
+        assert f"cw-{tag}" in exported.get_data(as_text=True)
 
 
 class TestTheDocumentsPanels:

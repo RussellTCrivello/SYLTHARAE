@@ -24,12 +24,28 @@ def clean_user_places(pg_db):
     with conn, conn.cursor() as cur:
         cur.execute("DELETE FROM geo_place_names WHERE source = 'user'")
         cur.execute("DELETE FROM geo_places WHERE source = 'user'")
+        # Curation tests append immutable revisions. Remove test-only curation
+        # rows after restoring the canonical seed so other migration tests
+        # still observe the migration's initial history row.
+        cur.execute("DELETE FROM geo_gazetteer_loads WHERE stats->>'kind' = 'admin_curation'")
     conn.close()
 
 
 def _csrf(client):
     with client.session_transaction() as sess:
         return sess.get("csrf_token") or sess.get("_csrf_token") or ""
+
+
+def _audit_detail(pg_db, action, resource):
+    conn = connect(pg_db)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT detail FROM audit_log WHERE action = %s AND resource = %s"
+                        " ORDER BY id DESC LIMIT 1", (action, resource))
+            row = cur.fetchone()
+            return row[0] if row else None
+    finally:
+        conn.close()
 
 
 def test_places_crud_authorization(client, client_factory):
@@ -83,6 +99,9 @@ def test_places_create_and_read_back(client_factory, pg_db):
     assert body["place"]["place_key"] == place_key
     assert body["place"]["source"] == "user"
     assert body["place"]["latitude"] == 52.37
+    place_audit = _audit_detail(pg_db, "places.create", f"place:{place_key}")
+    assert place_audit and place_audit["label"] == f"New Metropolis {_U}"
+    assert place_audit["target_type"] == "place" and place_audit["target_id"] == place_key
 
     # Read back via individual GET
     get_resp = admin.get(f"/api/places/{place_key}")
@@ -202,3 +221,173 @@ def test_places_create_validation(client_factory):
     assert p1.status_code == 201
     p2 = admin.post("/api/places", json={"place_key": f"user:dup_{_U}", "label": "Dup 2", "feature_type": "city"}, headers={"X-CSRFToken": csrf})
     assert p2.status_code == 409
+
+
+def test_place_names_and_immutable_load_history_are_browsable(client_factory):
+    """Authenticated readers can browse names and inspect immutable revisions."""
+    viewer = client_factory("viewer")
+    names = viewer.get("/api/place-names?place_key=wikidata:Q1435&source=seed&per_page=5")
+    assert names.status_code == 200, names.get_data(as_text=True)
+    name_rows = names.get_json()["data"]
+    assert name_rows and all(row["place_key"] == "wikidata:Q1435" for row in name_rows)
+    assert all(row["editable"] is False for row in name_rows)
+
+    history = viewer.get("/api/gazetteer/loads?per_page=5")
+    assert history.status_code == 200, history.get_data(as_text=True)
+    body = history.get_json()
+    assert body["immutable"] is True
+    assert body["data"]
+    detail = viewer.get(f"/api/gazetteer/loads/{body['data'][0]['id']}")
+    assert detail.status_code == 200
+    assert detail.get_json()["load"]["immutable"] is True
+
+    # No mutation endpoint exists for append-only load records (with valid CSRF).
+    admin = client_factory("admin")
+    assert admin.delete(f"/api/gazetteer/loads/{body['data'][0]['id']}",
+                        headers={"X-CSRFToken": _csrf(admin)}).status_code == 405
+
+
+def test_admin_curates_place_names_with_fingerprint_revision_and_audit(client_factory, pg_db):
+    """Curated aliases are searchable, auditable, versioned, and seed aliases stay protected."""
+    from services.geo.gazetteer import current_detector_version
+
+    admin = client_factory("admin")
+    viewer = client_factory("viewer")
+    csrf = _csrf(admin)
+    before_status = admin.get("/api/gazetteer").get_json()
+    before_version = before_status["detector_ver"]
+
+    place_key = "wikidata:Q1435"
+    seed_names = admin.get(f"/api/place-names?place_key={place_key}&source=seed&per_page=1").get_json()["data"]
+    seed_id = seed_names[0]["id"]
+    assert viewer.put(f"/api/place-names/{seed_id}", json={"name": "Not allowed"},
+                      headers={"X-CSRFToken": _csrf(viewer)}).status_code == 403
+    assert admin.put(f"/api/place-names/{seed_id}", json={"name": "Changed seed alias"},
+                     headers={"X-CSRFToken": csrf}).status_code == 403
+    assert admin.put(f"/api/places/{place_key}", json={"label": "Changed seed label"},
+                     headers={"X-CSRFToken": csrf}).status_code == 403
+
+    alias = f"Zagreb Curated {_U}"
+    created = admin.post("/api/place-names", json={
+        "place_key": place_key,
+        "name": alias,
+        "language": "en",
+        "name_type": "variant",
+        "homograph": True,
+        "note": "curated integration test alias",
+    }, headers={"X-CSRFToken": csrf})
+    assert created.status_code == 201, created.get_data(as_text=True)
+    name_id = created.get_json()["id"]
+    assert created.get_json()["gazetteer_revision"]["changed"] is True
+    create_audit = _audit_detail(pg_db, "places.name.create", f"place_name:{name_id}")
+    assert create_audit and create_audit["name"] == alias
+    assert create_audit["target_type"] == "place_name"
+
+    # Place-list alias previews are bounded but expose the exact total.
+    for index in range(5):
+        extra = admin.post("/api/place-names", json={
+            "place_key": place_key,
+            "name": f"Zagreb Variant {index} {_U}",
+            "language": "en",
+            "name_type": "variant",
+        }, headers={"X-CSRFToken": csrf})
+        assert extra.status_code == 201, extra.get_data(as_text=True)
+    place_result = admin.get(f"/api/places?q={place_key}&per_page=20").get_json()
+    place_preview = next(item for item in place_result["data"] if item["place_key"] == place_key)
+    assert len(place_preview["names"]) == 5
+    assert place_preview["names_total"] > len(place_preview["names"])
+    assert place_preview["names_preview_truncated"] is True
+
+    after_create = admin.get("/api/gazetteer").get_json()
+    assert after_create["detector_ver"] != before_version
+
+    # Notes are detector-visible for homographs, even if the alias spelling is unchanged.
+    note_only = admin.put(f"/api/place-names/{name_id}", json={
+        "note": "updated homograph evidence note",
+    }, headers={"X-CSRFToken": csrf})
+    assert note_only.status_code == 200, note_only.get_data(as_text=True)
+    assert note_only.get_json()["gazetteer_revision"]["changed"] is True
+    after_note = admin.get("/api/gazetteer").get_json()
+    assert after_note["detector_ver"] != after_create["detector_ver"]
+
+    search = admin.get(f"/api/place-names?q={_U}&source=user&language=en")
+    assert search.status_code == 200
+    rows = search.get_json()["data"]
+    assert any(row["id"] == name_id and row["place_key"] == place_key for row in rows)
+
+    changed_alias = f"Zagreb Curated Updated {_U}"
+    updated = admin.put(f"/api/place-names/{name_id}", json={
+        "name": changed_alias, "language": "en", "name_type": "historical",
+        "homograph": False, "note": "revised curator note",
+    }, headers={"X-CSRFToken": csrf})
+    assert updated.status_code == 200, updated.get_data(as_text=True)
+    assert updated.get_json()["gazetteer_revision"]["changed"] is True
+    update_audit = _audit_detail(pg_db, "places.name.update", f"place_name:{name_id}")
+    assert update_audit and update_audit["name"] == changed_alias
+    assert update_audit["previous"]["name"] == alias
+    version_after_update = admin.get("/api/gazetteer").get_json()["detector_ver"]
+    assert version_after_update != after_note["detector_ver"]
+
+    # Seed refresh is idempotent and does not erase user-curated aliases.
+    from services.geo.gazetteer import load_seed_file, sync_seed
+    conn = connect(pg_db)
+    try:
+        with conn.cursor() as cur:
+            result = sync_seed(cur, load_seed_file(), loaded_by="integration-test")
+            assert result["changed"] is False
+            cur.execute("SELECT 1 FROM geo_place_names WHERE id = %s AND name = %s AND source = 'user'",
+                        (name_id, changed_alias))
+            assert cur.fetchone() == (1,)
+        conn.rollback()
+    finally:
+        conn.close()
+
+    deleted = admin.delete(f"/api/place-names/{name_id}", headers={"X-CSRFToken": csrf})
+    assert deleted.status_code == 200, deleted.get_data(as_text=True)
+    assert deleted.get_json()["gazetteer_revision"]["changed"] is True
+    delete_audit = _audit_detail(pg_db, "places.name.delete", f"place_name:{name_id}")
+    assert delete_audit and delete_audit["name"] == changed_alias
+    assert delete_audit["place_key"] == place_key
+    assert admin.get("/api/gazetteer").get_json()["detector_ver"] != version_after_update
+
+    history = admin.get("/api/gazetteer/loads?per_page=100&sort=id&order=desc").get_json()["data"]
+    curation = [item for item in history if item["loaded_by"].startswith("admin:")]
+    assert len(curation) >= 3
+    inspected = admin.get(f"/api/gazetteer/loads/{curation[0]['id']}").get_json()["load"]
+    assert inspected["immutable"] is True
+    assert inspected["stats"]["kind"] == "admin_curation"
+
+
+def test_place_search_sort_pagination_and_mutation_authorization(client_factory):
+    admin = client_factory("admin")
+    viewer = client_factory("viewer")
+    csrf = _csrf(admin)
+    viewer_csrf = _csrf(viewer)
+    key = f"user:sort_test_{_U}"
+    made = admin.post("/api/places", json={
+        "place_key": key, "label": f"Sortable City {_U}", "feature_type": "city",
+        "country_codes": ["NL"], "names": [{"name": f"Sortable City {_U}", "language": "en"}],
+    }, headers={"X-CSRFToken": csrf})
+    assert made.status_code == 201, made.get_data(as_text=True)
+
+    page = viewer.get(f"/api/places?q={_U}&sort=place_key&order=desc&per_page=1")
+    assert page.status_code == 200
+    assert page.get_json()["pagination"]["per_page"] == 1
+    assert page.get_json()["sort"] == "place_key" and page.get_json()["order"] == "desc"
+    assert viewer.get(f"/api/places?sort=not_a_column").status_code == 400
+    assert viewer.get("/api/places?status=unknown").status_code == 400
+    assert viewer.get("/api/places?country=ÉÉ").status_code == 400
+
+    assert viewer.post("/api/place-names", json={"place_key": key, "name": "Denied"},
+                       headers={"X-CSRFToken": viewer_csrf}).status_code == 403
+    assert viewer.delete(f"/api/place-names/999999", headers={"X-CSRFToken": viewer_csrf}).status_code == 403
+
+    for invalid_name in ("---", "Zagreb القاهرة"):
+        response = admin.post("/api/place-names", json={
+            "place_key": "wikidata:Q1435", "name": invalid_name, "language": "en",
+        }, headers={"X-CSRFToken": csrf})
+        assert response.status_code == 400, response.get_data(as_text=True)
+    mismatch = admin.post("/api/place-names", json={
+        "place_key": "wikidata:Q1435", "name": "القاهرة", "language": "en",
+    }, headers={"X-CSRFToken": csrf})
+    assert mismatch.status_code == 400

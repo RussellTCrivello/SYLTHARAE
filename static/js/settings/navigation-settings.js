@@ -41,7 +41,7 @@
         if (status) status.textContent = message || '';
     }
 
-    function rowFor(entry) {
+    function rowFor(entry, index) {
         const tr = document.createElement('tr');
         tr.setAttribute('data-interface', entry.interface_id);
         if (entry.hidden) tr.classList.add('text-muted');
@@ -61,6 +61,21 @@
 
         const position = document.createElement('td');
         position.className = 'text-center';
+        const domainPosition = entries.slice(0, index)
+            .filter(function (candidate) { return candidate.domain === entry.domain; }).length + 1;
+        const domainCount = entries.filter(function (candidate) {
+            return candidate.domain === entry.domain;
+        }).length;
+        const positionInput = document.createElement('input');
+        positionInput.type = 'number';
+        positionInput.min = '1';
+        positionInput.max = String(domainCount);
+        positionInput.value = String(domainPosition);
+        positionInput.className = 'form-control form-control-sm d-inline-block w-auto me-1';
+        positionInput.setAttribute('data-position-index', '1');
+        positionInput.setAttribute('aria-label',
+            t('navPosition', 'Position') + ' ' + domainPosition + ': ' + (entry.label || entry.interface_id));
+        position.appendChild(positionInput);
         const up = document.createElement('button');
         up.type = 'button';
         up.className = 'btn btn-sm btn-outline-secondary me-1';
@@ -68,6 +83,8 @@
         up.setAttribute('aria-label', t('moveUp', 'Move up'));
         up.setAttribute('title', t('moveUp', 'Move up'));
         up.appendChild(document.createTextNode('↑'));
+        const previous = entries[index - 1];
+        up.disabled = !previous || previous.domain !== entry.domain;
         const down = document.createElement('button');
         down.type = 'button';
         down.className = 'btn btn-sm btn-outline-secondary';
@@ -75,6 +92,8 @@
         down.setAttribute('aria-label', t('moveDown', 'Move down'));
         down.setAttribute('title', t('moveDown', 'Move down'));
         down.appendChild(document.createTextNode('↓'));
+        const next = entries[index + 1];
+        down.disabled = !next || next.domain !== entry.domain;
         position.appendChild(up);
         position.appendChild(down);
         tr.appendChild(position);
@@ -97,18 +116,38 @@
         const body = document.getElementById('navigationPrefsBody');
         if (!body) return;
         body.textContent = '';
-        for (const entry of entries) {
-            body.appendChild(rowFor(entry));
-        }
+        entries.forEach(function (entry, index) {
+            body.appendChild(rowFor(entry, index));
+        });
     }
 
     function move(interfaceId, direction) {
         const index = entries.findIndex(function (e) { return e.interface_id === interfaceId; });
         const target = index + direction;
-        if (index < 0 || target < 0 || target >= entries.length) return;
+        if (index < 0 || target < 0 || target >= entries.length
+            || entries[index].domain !== entries[target].domain) return;
         const swapped = entries[index];
         entries[index] = entries[target];
         entries[target] = swapped;
+        render();
+        setStatus('');
+    }
+
+    function moveToPosition(interfaceId, requestedPosition) {
+        const index = entries.findIndex(function (e) { return e.interface_id === interfaceId; });
+        if (index < 0 || !Number.isInteger(requestedPosition)) return;
+        const domain = entries[index].domain;
+        const first = entries.findIndex(function (e) { return e.domain === domain; });
+        const group = entries.filter(function (e) { return e.domain === domain; });
+        if (requestedPosition < 1 || requestedPosition > group.length) {
+            render();
+            setStatus('');
+            return;
+        }
+        const current = group.findIndex(function (e) { return e.interface_id === interfaceId; });
+        const moved = group.splice(current, 1)[0];
+        group.splice(requestedPosition - 1, 0, moved);
+        entries.splice(first, group.length, ...group);
         render();
         setStatus('');
     }
@@ -146,12 +185,19 @@
             });
             const body = await response.json();
             if (!response.ok || !body.success) {
-                setStatus((body.error && body.error.message) || t('saveFailed', 'Saving failed.'));
+                setStatus((body.error && body.error.message) || t('navSaveFailed', 'Saving failed.'));
                 return;
             }
-            setStatus(t('saved', 'Sidebar saved. It applies on your next navigation.'));
+            if (typeof window.refreshSidebarNavigation === 'function') {
+                const updated = await window.refreshSidebarNavigation();
+                setStatus(updated
+                    ? t('navSaved', 'Saved.')
+                    : t('navLoadFailed', 'The sidebar preferences could not be loaded.'));
+            } else {
+                setStatus(t('navLoadFailed', 'The sidebar preferences could not be loaded.'));
+            }
         } catch (error) {
-            setStatus(t('saveFailed', 'Saving failed.'));
+            setStatus(t('navSaveFailed', 'Saving failed.'));
         }
     }
 
@@ -164,13 +210,17 @@
             });
             const body = await response.json();
             if (!response.ok || !body.success) {
-                setStatus((body.error && body.error.message) || t('saveFailed', 'Saving failed.'));
+                setStatus((body.error && body.error.message) || t('navSaveFailed', 'Saving failed.'));
                 return;
             }
             await load();
-            setStatus(t('resetDone', 'Back to the default sidebar.'));
+            const updated = typeof window.refreshSidebarNavigation === 'function'
+                ? await window.refreshSidebarNavigation() : false;
+            setStatus(updated
+                ? t('navResetDone', 'Back to the default sidebar.')
+                : t('navLoadFailed', 'The sidebar preferences could not be loaded.'));
         } catch (error) {
-            setStatus(t('saveFailed', 'Saving failed.'));
+            setStatus(t('navSaveFailed', 'Saving failed.'));
         }
     }
 
@@ -194,7 +244,7 @@
             const cell = document.createElement('td');
             cell.colSpan = 4;
             cell.className = 'text-muted';
-            cell.textContent = t('loadFailed', 'The sidebar preferences could not be loaded.');
+            cell.textContent = t('navLoadFailed', 'The sidebar preferences could not be loaded.');
             const row = document.createElement('tr');
             row.appendChild(cell);
             body.appendChild(row);
@@ -212,6 +262,13 @@
                 if (!row) return;
                 move(row.getAttribute('data-interface'),
                      button.getAttribute('data-move') === 'up' ? -1 : 1);
+            });
+            body.addEventListener('change', function (event) {
+                const input = event.target.closest('input[data-position-index]');
+                if (!input) return;
+                const row = input.closest('tr[data-interface]');
+                if (!row) return;
+                moveToPosition(row.getAttribute('data-interface'), Number(input.value));
             });
         }
         const saveButton = document.getElementById('navigationPrefsSave');

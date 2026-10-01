@@ -865,6 +865,30 @@
     "internal": true
   },
   {
+    "endpoint": "api_gazetteer_load_detail",
+    "rule": "/api/gazetteer/loads/<int:load_id>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_gazetteer_loads",
+    "rule": "/api/gazetteer/loads",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
     "endpoint": "api_get_category",
     "rule": "/api/categories/<int:category_id>",
     "methods": [
@@ -951,6 +975,54 @@
   {
     "endpoint": "api_place",
     "rule": "/api/places/<string:place_key>",
+    "methods": [
+      "GET"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_place_name_create",
+    "rule": "/api/place-names",
+    "methods": [
+      "POST"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_place_name_delete",
+    "rule": "/api/place-names/<int:name_id>",
+    "methods": [
+      "DELETE"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_place_name_update",
+    "rule": "/api/place-names/<int:name_id>",
+    "methods": [
+      "PUT"
+    ],
+    "blueprint": "(app)",
+    "module": "places",
+    "classification": "API_ENDPOINT",
+    "owned_by": null,
+    "internal": true
+  },
+  {
+    "endpoint": "api_place_names",
+    "rule": "/api/place-names",
     "methods": [
       "GET"
     ],

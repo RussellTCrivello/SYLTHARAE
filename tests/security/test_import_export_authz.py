@@ -13,6 +13,16 @@ import pytest
 
 
 class TestImportExportAuthz:
+    def test_shared_table_export_requires_authentication(self, app, client):
+        assert client.get("/api/export/words?format=csv").status_code == 401
+
+    def test_viewer_can_export_the_same_safe_list_they_can_view(
+            self, app, client_factory):
+        response = client_factory("viewer").get("/api/export/words?format=csv")
+        assert response.status_code == 200, response.get_data(as_text=True)
+        assert "attachment" in response.headers.get("Content-Disposition", "")
+        assert response.headers.get("X-Disclosure-Audit-Id")
+
     def test_anon_gets_401(self, app, client):
         assert client.get("/api/import-export/backup/export").status_code == 401
         assert client.post("/api/import-export/backup/import").status_code in (401, 403)

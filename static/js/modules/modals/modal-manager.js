@@ -1411,6 +1411,8 @@ export async function saveCategory() {
             setTimeout(() => {
                 if (window.loadRootView) {
                     window.loadRootView();
+                } else if (typeof window.refreshMainContent === 'function') {
+                    window.refreshMainContent();
                 } else {
                     window.location.reload();
                 }
@@ -2088,6 +2090,8 @@ export async function saveWordsCategorys() {
             setTimeout(() => {
                 if (window.loadRootView) {
                     window.loadRootView();
+                } else if (typeof window.refreshMainContent === 'function') {
+                    window.refreshMainContent();
                 } else {
                     window.location.reload();
                 }
@@ -2842,6 +2846,8 @@ export async function saveKeywordFromArchives() {
             setTimeout(() => {
                 if (window.loadRootView) {
                     window.loadRootView();
+                } else if (typeof window.refreshMainContent === 'function') {
+                    window.refreshMainContent();
                 } else {
                     window.location.reload();
                 }

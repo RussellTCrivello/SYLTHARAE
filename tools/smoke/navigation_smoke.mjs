@@ -9,9 +9,9 @@
  *       survives, and a first-load marker on window survives (no full
  *       navigation); history.back() returns under the same rules;
  *  D12  Settings -> Navigation lists every sidebar interface (hidden ones
- *       included, so hiding is never a one-way door); moving a row with
- *       the Up button, saving, and REALLY reloading brings the saved order
- *       back; Reset restores the declared order.
+ *       included, so hiding is never a one-way door); moving a row with the
+ *       Up button and saving updates the existing sidebar node in place,
+ *       without a page load; a later real load still restores the saved order.
  *
  * Usage (against a running, installed server - see docs/TESTING.md):
  *
@@ -61,9 +61,20 @@ const page = await browser.newPage();
 await page.setViewport({ width: 1440, height: 900 });  // desktop: sidebar open (>= 992px)
 page.setDefaultTimeout(30000);
 const consoleErrors = [];
-page.on('pageerror', (e) => consoleErrors.push('pageerror: ' + e.message));
+let expectedNavigationFailure = false;
+page.on('pageerror', (e) => {
+    if (expectedNavigationFailure && /Failed to fetch/i.test(e.message)) return;
+    consoleErrors.push('pageerror: ' + e.message);
+});
 page.on('console', (m) => {
-    if (m.type() === 'error') consoleErrors.push('console: ' + m.text());
+    if (m.type() !== 'error') return;
+    const text = m.text();
+    // The smoke deliberately aborts one navigation fetch below. Its two
+    // browser-console messages are evidence of that expected failure, not a
+    // product console regression; other errors remain fatal.
+    if (expectedNavigationFailure &&
+        (text.includes('net::ERR_FAILED') || text === 'Fetch error: TypeError: Failed to fetch')) return;
+    consoleErrors.push('console: ' + text);
 });
 
 try {
@@ -156,6 +167,49 @@ try {
     check('sidebar survived back-navigation', back.marker === 'syl-smoke-42', back.marker);
     check('still no full reload after back', back.firstLoad === true);
 
+    // A failed same-origin fetch must remain an in-content failure with a
+    // retry, not degrade into a full-page navigation.
+    await page.evaluate(() => {
+        const sb = document.getElementById('sidebar');
+        if (sb) sb.__navSmokeMarker = 'syl-smoke-42';
+        window.__navSmokeFirstLoad = true;
+    });
+    let failedOnce = false;
+    const failTargetFetch = (request) => {
+        const expected = new URL(target, BASE).href;
+        if (!failedOnce && request.resourceType() === 'fetch'
+            && request.url().startsWith(expected)) {
+            failedOnce = true;
+            request.abort();
+        } else {
+            request.continue();
+        }
+    };
+    await page.setRequestInterception(true);
+    page.on('request', failTargetFetch);
+    expectedNavigationFailure = true;
+    await page.evaluate((href) => document.querySelector(`#sidebar a[href="${href}"]`).click(), target);
+    await page.waitForSelector('#mainContent [data-navigation-swap-status][role="alert"]',
+                               { timeout: 10000 });
+    expectedNavigationFailure = false;
+    const failedNavigation = await page.evaluate(() => ({
+        marker: document.getElementById('sidebar')?.__navSmokeMarker,
+        firstLoad: window.__navSmokeFirstLoad,
+        error: !!document.querySelector('#mainContent [data-navigation-swap-status][role="alert"]'),
+    }));
+    check('failed navigation stays in the content area with retry',
+          failedOnce && failedNavigation.error
+          && failedNavigation.marker === 'syl-smoke-42'
+          && failedNavigation.firstLoad === true, JSON.stringify(failedNavigation));
+    page.off('request', failTargetFetch);
+    await page.setRequestInterception(false);
+    await page.click('#mainContent [data-navigation-swap-status] button');
+    await page.waitForFunction((path) => location.pathname === path,
+                               { timeout: 15000 }, target);
+    check('retry completes the route without replacing the sidebar',
+          await page.evaluate(() => window.__navSmokeFirstLoad === true
+              && document.getElementById('sidebar')?.__navSmokeMarker === 'syl-smoke-42'));
+
     // ── D12: Settings → Navigation tab ─────────────────────────────────
     await page.goto(BASE + '/settings', { waitUntil: 'networkidle0' });
     await page.click('#navigation-tab');
@@ -180,9 +234,10 @@ try {
         (rows) => rows.map((r) => r.getAttribute('data-interface')));
     check('catalog loaded with rows', order1.length >= 2, `${order1.length} rows`);
 
-    // move the second of the pair up (swap the two) and save. Click via
-    // dispatch on the exact button: a coordinate click can graze a
-    // neighbouring checkbox and silently hide an interface.
+    // Mark the existing shell, then move the second of the pair up (swap
+    // the two) and save. The navigation preference action must not reload
+    // or replace the sidebar node. Click the exact button: a coordinate
+    // click can graze a neighbouring checkbox and silently hide an entry.
     await page.evaluate((iid) => {
         const btn = document.querySelector(
             `#navigationPrefsBody tr[data-interface="${iid}"] button[data-move="up"]`);
@@ -194,14 +249,48 @@ try {
     check('move reorders the table',
           order2[i1] === pair.second && order2[i1 + 1] === pair.first,
           `expected ${pair.second},${pair.first} got ${order2[i1]},${order2[i1 + 1]}`);
+    const positionControl = await page.$eval(
+        `#navigationPrefsBody tr[data-interface="${pair.second}"] input[data-position-index]`,
+        (input) => Number(input.value));
+    check('the position field displays the specific within-group index',
+          positionControl === 1, `position=${positionControl}`);
+    const numericReorder = await page.evaluate((iid) => {
+        let input = document.querySelector(
+            `#navigationPrefsBody tr[data-interface="${iid}"] input[data-position-index]`);
+        input.value = '2';
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        const restored = [...document.querySelectorAll('#navigationPrefsBody tr[data-interface]')]
+            .map((row) => row.getAttribute('data-interface'));
+        input = document.querySelector(
+            `#navigationPrefsBody tr[data-interface="${iid}"] input[data-position-index]`);
+        input.value = '1';
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        return { restored, final: [...document.querySelectorAll('#navigationPrefsBody tr[data-interface]')]
+            .map((row) => row.getAttribute('data-interface')) };
+    }, pair.second);
+    check('entering a position index reorders the same group',
+          numericReorder.restored.indexOf(pair.first) < numericReorder.restored.indexOf(pair.second)
+          && numericReorder.final.indexOf(pair.second) < numericReorder.final.indexOf(pair.first),
+          JSON.stringify(numericReorder));
 
+    await page.evaluate(() => {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.__prefsSmokeMarker = 'same-sidebar';
+        window.__prefsSmokeLoadMarker = true;
+    });
     await page.click('#navigationPrefsSave');
     await page.waitForFunction(() =>
-        /saved|saved\./i.test(document.getElementById('navigationPrefsStatus').textContent),
+        /saved\.|updated/i.test(document.getElementById('navigationPrefsStatus').textContent),
         { timeout: 15000 });
-    check('save reported success', true);
+    const afterSave = await page.evaluate(() => ({
+        sidebarMarker: document.getElementById('sidebar')?.__prefsSmokeMarker,
+        loadMarker: window.__prefsSmokeLoadMarker,
+    }));
+    check('saving order updates the current sidebar without a full page load',
+          afterSave.sidebarMarker === 'same-sidebar' && afterSave.loadMarker === true,
+          JSON.stringify(afterSave));
 
-    // real reload: the new order must come back from the server
+    // A later real load proves the order came from PostgreSQL, not only local state.
     await page.reload({ waitUntil: 'networkidle0' });
     await page.click('#navigation-tab');
     await page.waitForSelector('#navigationPrefsBody tr[data-interface]', { timeout: 15000 });
@@ -217,8 +306,21 @@ try {
 
     // reset restores the declared order
     page.once('dialog', (d) => d.accept());
+    await page.evaluate(() => {
+        document.getElementById('sidebar').__resetSmokeMarker = 'same-sidebar';
+        window.__resetSmokeLoadMarker = true;
+    });
     await page.click('#navigationPrefsReset');
-    await new Promise((r) => setTimeout(r, 1500));
+    await page.waitForFunction(() =>
+        /default sidebar/i.test(document.getElementById('navigationPrefsStatus').textContent),
+        { timeout: 15000 });
+    const afterReset = await page.evaluate(() => ({
+        sidebarMarker: document.getElementById('sidebar')?.__resetSmokeMarker,
+        loadMarker: window.__resetSmokeLoadMarker,
+    }));
+    check('reset updates preferences without replacing the shell',
+          afterReset.sidebarMarker === 'same-sidebar' && afterReset.loadMarker === true,
+          JSON.stringify(afterReset));
     await page.reload({ waitUntil: 'networkidle0' });
     await page.click('#navigation-tab');
     await page.waitForSelector('#navigationPrefsBody tr[data-interface]', { timeout: 15000 });

@@ -20,8 +20,9 @@
  *   scripts the app ships re-run their per-page init through the universal
  *   initializer (ES modules are cached, so re-appending them is a no-op -
  *   initializePage() is invoked explicitly instead).
- * - Failure fallback: any fetch/parse error falls back to a full
- *   navigation. The swap is an enhancement, never a dependency.
+ * - Failure handling: navigation errors are rendered inside the main content
+ *   with a retry action. Network failures and malformed page responses never
+ *   force a full-page refresh; only an authentication redirect leaves the shell.
  */
 
 (function () {
@@ -96,6 +97,139 @@
         }
     }
 
+    function localizedMessage(key, fallback) {
+        try {
+            const source = (window.translations && window.translations[key]) || fallback;
+            if (typeof window.t !== 'function') return source;
+            const translated = window.t(source);
+            return translated && translated !== source ? translated : source;
+        } catch (_error) {
+            return fallback;
+        }
+    }
+
+    function showNavigationStatus(main, kind, targetUrl, push) {
+        if (!main) return;
+        let status = main.querySelector('[data-navigation-swap-status]');
+        if (!status) {
+            status = document.createElement('div');
+            status.setAttribute('data-navigation-swap-status', '');
+            main.insertBefore(status, main.firstChild);
+        }
+        status.className = kind === 'error'
+            ? 'alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-2'
+            : 'alert alert-info';
+        status.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+        status.textContent = '';
+        const message = document.createElement('span');
+        message.textContent = kind === 'error'
+            ? localizedMessage('navigationLoadFailed', 'Error loading data')
+            : localizedMessage('navigationLoading', 'Loading...');
+        status.appendChild(message);
+        if (kind === 'error') {
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'btn btn-sm btn-outline-danger';
+            retry.textContent = localizedMessage('retry', 'Retry');
+            retry.addEventListener('click', function () {
+                navigateTo(targetUrl, Boolean(push), false);
+            }, { once: true });
+            status.appendChild(retry);
+        }
+    }
+
+    function syncSidebarFromDocument(newDoc) {
+        const currentSidebar = document.getElementById('sidebar');
+        const nextSidebar = newDoc.getElementById('sidebar');
+        if (!currentSidebar || !nextSidebar) return false;
+
+        // Keep the shell, scroll position, mobile-open state and any listeners
+        // on #sidebar itself. Only synchronize its content after an explicit
+        // settings change (ordinary page swaps never touch the sidebar).
+        ['.sidebar-logo', 'nav'].forEach((selector) => {
+            const current = currentSidebar.querySelector(selector);
+            const next = nextSidebar.querySelector(selector);
+            if (current && next) {
+                const imported = document.importNode(next, true);
+                current.replaceWith(imported);
+            }
+        });
+        updateSidebarActiveState();
+        return true;
+    }
+
+    function translatedLabel(value) {
+        if (typeof value !== 'string') return '';
+        try {
+            return typeof window.t === 'function' ? (window.t(value) || value) : value;
+        } catch (_error) {
+            return value;
+        }
+    }
+
+    function syncSidebarFromEntries(entries) {
+        const sidebar = document.getElementById('sidebar');
+        const nav = sidebar && sidebar.querySelector('nav');
+        if (!nav || !Array.isArray(entries)) return false;
+
+        const list = document.createElement('ul');
+        list.className = 'sidebar-nav';
+        let currentDomain = null;
+        for (const entry of entries) {
+            if (!entry || entry.hidden) continue;
+            if (entry.domain !== currentDomain) {
+                currentDomain = entry.domain;
+                const section = document.createElement('li');
+                section.className = 'sidebar-nav-item';
+                const label = document.createElement('span');
+                label.className = 'sidebar-section-label';
+                label.textContent = translatedLabel(entry.domain_label || entry.domain || '');
+                section.appendChild(label);
+                list.appendChild(section);
+            }
+
+            let destination;
+            try {
+                destination = new URL(entry.url, window.location.origin);
+            } catch (_error) {
+                continue;
+            }
+            if (destination.origin !== window.location.origin
+                || !['http:', 'https:'].includes(destination.protocol)) continue;
+
+            const item = document.createElement('li');
+            item.className = 'sidebar-nav-item';
+            const link = document.createElement('a');
+            link.setAttribute('href', destination.pathname + destination.search + destination.hash);
+            link.className = 'sidebar-nav-link';
+            link.setAttribute('data-interface', entry.interface_id || '');
+            if (entry.route) link.setAttribute('data-endpoint', entry.route);
+            if (entry.description) {
+                link.title = translatedLabel(entry.description)
+                    + (entry.note ? ' — ' + translatedLabel(entry.note) : '');
+            }
+            if (entry.shortcut) link.setAttribute('data-shortcut', entry.shortcut);
+            const icon = document.createElement('i');
+            icon.className = 'bi ' + (entry.icon || 'bi-circle');
+            icon.setAttribute('aria-hidden', 'true');
+            link.appendChild(icon);
+            const text = document.createElement('span');
+            text.textContent = translatedLabel(entry.label || entry.interface_id || '');
+            link.appendChild(text);
+            if (entry.badge) {
+                const badge = document.createElement('span');
+                badge.className = 'sidebar-nav-badge';
+                badge.textContent = translatedLabel(entry.badge);
+                link.appendChild(badge);
+            }
+            item.appendChild(link);
+            list.appendChild(item);
+        }
+        nav.replaceChildren(list);
+        updateSidebarActiveState();
+        return true;
+    }
+
     function runPageScripts(newDoc) {
         // Only the page's own scripts re-run: classic scripts from the BODY
         // are re-created so their functions exist for the new content's
@@ -132,14 +266,16 @@
                                      delegation) */ });
     }
 
-    function swapFromResponse(url, html, push) {
+    function swapFromResponse(url, html, push, refreshSidebar) {
         const parsed = new DOMParser().parseFromString(html, 'text/html');
         const nextMain = parsed.getElementById(MAIN_ID);
         const currentMain = document.getElementById(MAIN_ID);
         if (!nextMain || !currentMain) return false;
 
-        // The sidebar element is deliberately NOT touched: it keeps its
-        // scroll position, its state and any focus inside it.
+        // Ordinary route changes leave the sidebar subtree alone. Settings
+        // changes may opt in to synchronizing its content, while retaining
+        // the outer sidebar node and its scroll/open state.
+        if (refreshSidebar) syncSidebarFromDocument(parsed);
         const imported = document.importNode(nextMain, true);
         currentMain.replaceChildren(...imported.childNodes);
 
@@ -158,47 +294,100 @@
 
     let inFlight = null;
 
-    async function navigateTo(url, push) {
-        if (inFlight) inFlight.abort = true;
-        const token = { abort: false };
-        inFlight = token;
+    async function navigateTo(url, push, refreshSidebar) {
+        if (inFlight) inFlight.abort();
+        const controller = new AbortController();
+        inFlight = controller;
         const main = document.getElementById(MAIN_ID);
-        if (main) main.setAttribute('aria-busy', 'true');
+        if (main) {
+            main.setAttribute('aria-busy', 'true');
+            showNavigationStatus(main, 'loading', url, push);
+        }
         try {
             const response = await fetch(url, {
                 headers: { 'X-Navigate': 'swap' },
                 credentials: 'same-origin',
-                redirect: 'follow'
+                redirect: 'follow',
+                signal: controller.signal
             });
-            if (token.abort) return;
+            if (controller.signal.aborted) return false;
             if (!response.ok) throw new Error('HTTP ' + response.status);
             const html = await response.text();
-            if (token.abort) return;
-            if (!swapFromResponse(url, html, push)) {
-                window.location.href = url;   // unexpected shape: full load
-                return;
+            if (controller.signal.aborted) return false;
+            if (!swapFromResponse(url, html, push, refreshSidebar)) {
+                const destination = new URL(response.url || url, window.location.href);
+                if (destination.pathname.startsWith('/auth/')) {
+                    // An expired session must reach the standalone login page
+                    // so the old authenticated sidebar cannot remain visible.
+                    window.location.href = destination.href;
+                    return false;
+                }
+                throw new Error('The destination did not contain the application shell');
             }
+            return true;
         } catch (error) {
-            if (token.abort) return;
-            window.location.href = url;       // fallback: full navigation
+            if (controller.signal.aborted || error.name === 'AbortError') return false;
+            if (main) {
+                main.removeAttribute('aria-busy');
+                showNavigationStatus(main, 'error', url, push);
+            }
+            return false;
+        } finally {
+            if (inFlight === controller) inFlight = null;
+        }
+    }
+
+    async function refreshSidebarNavigation() {
+        try {
+            const response = await fetch('/api/preferences/navigation', {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            });
+            if (!response.ok) return false;
+            const data = await response.json();
+            if (!data || data.success !== true) return false;
+            return syncSidebarFromEntries(data.entries);
+        } catch (_error) {
+            return false;
+        }
+    }
+
+    async function refreshSidebarBranding() {
+        try {
+            const response = await fetch(window.location.href, {
+                headers: { 'X-Navigate': 'swap' },
+                credentials: 'same-origin',
+                redirect: 'follow'
+            });
+            if (!response.ok) return false;
+            const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const current = document.querySelector('#sidebar .sidebar-logo');
+            const next = parsed.querySelector('#sidebar .sidebar-logo');
+            if (!current || !next) return false;
+            current.replaceWith(document.importNode(next, true));
+            return true;
+        } catch (_error) {
+            return false;
         }
     }
 
     function onClick(event) {
         if (event.defaultPrevented || event.button !== 0) return;
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        const anchor = event.target.closest('a');
+        const target = event.target && event.target.nodeType === 1
+            ? event.target : (event.target && event.target.parentElement);
+        const anchor = target && target.closest ? target.closest('a') : null;
         if (!anchor) return;
         const url = sameOriginLink(anchor);
         if (!url) return;
         event.preventDefault();
         persistSidebarState();
-        navigateTo(url.href, true);
+        navigateTo(url.href, true, false);
     }
 
     function onPopState() {
         persistSidebarState();
-        navigateTo(window.location.href, false);
+        navigateTo(window.location.href, false, false);
     }
 
     if (!window.__navigationSwapInstalled) {
@@ -206,16 +395,17 @@
         document.addEventListener('click', onClick, true);
         window.addEventListener('popstate', onPopState);
         document.addEventListener('DOMContentLoaded', restoreSidebarState);
-        // Persist before a full load tears the page down (fallback paths).
         window.addEventListener('pagehide', persistSidebarState);
-        // In-app navigation for flows that are not link clicks - a
-        // successful add/edit/delete refreshing the data, a pagination
-        // jump. Same fetch-and-swap as a link click: only the main
-        // content changes, the sidebar element is never redrawn (owner
-        // requirement: interacting with the app must not refresh the
-        // sidebar). Callers guard with `window.swapNavigate ? ... :
-        // location.href` so an old bundle without this module still
-        // works by falling back to a full load.
-        window.swapNavigate = function (url) { return navigateTo(url, true); };
+        // All ordinary client-side destinations, including table sort/filter
+        // and keyboard navigation, share this one request/lifecycle path.
+        window.swapNavigate = function (url) { return navigateTo(url, true, false); };
+        window.refreshMainContent = function () {
+            return navigateTo(window.location.href, false, false);
+        };
+        window.refreshSidebarNavigation = refreshSidebarNavigation;
+        window.refreshSidebarBranding = refreshSidebarBranding;
+        window.refreshApplicationView = function () {
+            return navigateTo(window.location.href, false, true);
+        };
     }
 })();

@@ -131,17 +131,6 @@ def register_archives_routes(app):
                             })
             
             logger.info(f"✅ Loaded {len(keywords)} keywords from database (query returned {len(keywords_data or [])} rows)")
-            # The six section lists are a usage-ranked navigation aid, capped
-            # at ARCHIVE_LIST_CAP rows by declared policy; the section views
-            # page through the full sets server-side. The cap is declared to
-            # the user on the page when a section reaches it (step 25: no
-            # silent truncation).
-            logger.info(
-                "Archives navigation lists capped at %d rows per section "
-                "(categories=%d, keywords=%d, titles=%d, sources=%d, "
-                "sides=%d, hashs=%d); section views page the full sets",
-                ARCHIVE_LIST_CAP, len(categories), len(keywords),
-                len(titles), len(sources), len(sides), len(hashs))
             
 
             # Titles belong to canonical content (hash_id); file_count counts
@@ -277,7 +266,17 @@ def register_archives_routes(app):
                     'context_count': row[2] or 0,
                     'file_count': row[3] or 0
                 })
-            
+
+            # All six section lists are now populated. Logging their bounds
+            # before these queries run referenced unbound locals and sent the
+            # page through its empty error fallback.
+            logger.info(
+                "Archives navigation lists capped at %d rows per section "
+                "(categories=%d, keywords=%d, titles=%d, sources=%d, "
+                "sides=%d, hashs=%d); section views page the full sets",
+                ARCHIVE_LIST_CAP, len(categories), len(keywords),
+                len(titles), len(sources), len(sides), len(hashs))
+
             stats = get_archive_statistics()
             
             # Top categories by file count
