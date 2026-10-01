@@ -17,7 +17,7 @@
     <div class="d-flex gap-2 flex-wrap">
         <a href="{{ url_for('files.file_types_page') }}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-break me-1" aria-hidden="true"></i>{{ _('Browse by type') }}</a>
         <a href="{{ url_for('operations_input_page') }}" class="btn btn-outline-primary"><i class="bi bi-plus-circle" aria-hidden="true"></i>{{ _('Upload Files') }}</a>
-        <button type="button" class="btn btn-outline-primary" data-on-click="location.reload()"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>{{ _('Refresh') }}</button>
+        <button type="button" class="btn btn-outline-primary" data-on-click="refreshMainContent()"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>{{ _('Refresh') }}</button>
     </div>
 </div>
 

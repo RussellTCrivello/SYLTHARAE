@@ -7,21 +7,25 @@ export function initBasePage() {
     // Mobile menu toggle
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
-    if (menuToggle && sidebar) {
+    if (menuToggle && sidebar && menuToggle.dataset.basePageToggleBound !== 'true') {
         menuToggle.addEventListener('click', function() {
             sidebar.classList.toggle('show');
         });
+        menuToggle.dataset.basePageToggleBound = 'true';
     }
     
     // Sidebar active state management
     updateSidebarActiveState();
     
-    // Convert flash messages to notifications
+    // Convert flash messages in the newly rendered route to notifications.
     convertFlashMessages();
     
-    // Update notification badge
-    updateNotificationBadge();
-    setInterval(updateNotificationBadge, 30000);
+    // The application shell survives content swaps, so its notification
+    // poll and menu listener must be installed once per full page load.
+    if (!window.__notificationBadgeTimer) {
+        updateNotificationBadge();
+        window.__notificationBadgeTimer = window.setInterval(updateNotificationBadge, 30000);
+    }
 }
 
 /**

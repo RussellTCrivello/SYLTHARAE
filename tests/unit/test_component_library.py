@@ -500,10 +500,9 @@ class TestAdoption:
         # pattern is anchored to a class attribute: before it was, `base.html`
         # counted as an extra because a script src reads `action-toolbar.js`.
         assert counts()["pattern_toolbar"] == 2
-        # These are the seven remaining hand-written search inputs. The
-        # translation manager adds one alongside the analysis dashboards,
-        # notifications, operations input and advanced search form.
-        assert counts()["pattern_search"] == 7
+        # The existing seven hand-written search controls remain, alongside
+        # one new Gazetteer search field in the Settings management tables.
+        assert counts()["pattern_search"] == 8
         # Status badges are counted by what a badge *shows*: a status word or
         # a status variable is a status badge, a count or an id is a chip, and
         # conflating them said "22 status badges" when most were numbers.

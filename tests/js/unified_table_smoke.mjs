@@ -90,7 +90,12 @@ UnifiedTable.enhance(table);
 // Three-state sort: the URL rewrite the default server path performs
 // ---------------------------------------------------------------------
 const assigned = [];
-globalThisRef.location.assign = (url) => assigned.push(url);
+const nativeAssigns = [];
+globalThisRef.location.assign = (url) => nativeAssigns.push(url);
+globalThisRef.swapNavigate = (url) => {
+    assigned.push(String(url));
+    return Promise.resolve(true);
+};
 
 function headerClicked(key) {
     const th = sortCell(key);
@@ -104,6 +109,8 @@ headerClicked('size');
 check('first click on a number column asks descending',
       assigned.length === 1 && assigned[0].includes('sort=size&order=desc'),
       assigned[assigned.length - 1]);
+check('header sorting uses the content swap, not native navigation',
+      nativeAssigns.length === 0, JSON.stringify(nativeAssigns));
 
 // Now the header is marked sorted-desc; the module reflects that in the DOM.
 const sizeTh = sortCell('size');
@@ -188,7 +195,8 @@ check('the batch request is this view one page on',
       && new URL(servedUrls[0]).searchParams.get('sort') === 'name'
       && new URL(servedUrls[0]).searchParams.get('order') === 'asc',
       servedUrls[0]);
-check('no navigation happened', assigned.length === 0, 'assign calls: ' + assigned.length);
+check('Load More does not start a page navigation', assigned.length === 0 && nativeAssigns.length === 0,
+      'swap calls: ' + assigned.length + ', native navigations: ' + nativeAssigns.length);
 check('the new rows are in the table body', bodyRows().length === 5,
       String(bodyRows().length));
 check('the counter moved to five shown',
@@ -369,6 +377,8 @@ check('a server table re-asks with the column search parameter',
       && textUrl.searchParams.get('sort') === 'name',
       assigned[assigned.length - 1]);
 check('an applied column search closes the popover', searchPop.hidden);
+check('column sorting/filtering never calls native page navigation',
+      nativeAssigns.length === 0, JSON.stringify(nativeAssigns));
 
 // Report
 let failed = 0;

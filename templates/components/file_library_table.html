@@ -42,7 +42,8 @@
                             empty_action_label=_('Upload your first file'),
                             empty_action_href=None,
                             export_params=None, export_scope_base=None,
-                            name_search_param=None) %}
+                            name_search_param=None,
+                            row_select_onchange='updateBulkToolbar()') %}
 {% set files_info -%}
     {%- if files and files|length > 0 -%}
         {%- set start = start_position|default(1) -%}
@@ -124,7 +125,7 @@
             <input type="checkbox"
                    class="file-checkbox ut-row-check"
                    value="{{ file[0] }}"
-                   data-on-change="updateBulkToolbar()"
+                   {% if row_select_onchange %}data-on-change="{{ row_select_onchange }}"{% endif %}
                    aria-label="{{ _('Select file') }}: {{ file[1] }}">
         </td>
         <td class="ut-index-cell">{{ row_number }}</td>

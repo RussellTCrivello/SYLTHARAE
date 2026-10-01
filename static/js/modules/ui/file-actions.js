@@ -332,7 +332,11 @@
             .then((json) => {
                 if (json.success) {
                     toast(t('fileCopied', 'A copy was created.') + ' ' + (json.name || ''), 'success');
-                    setTimeout(() => window.location.reload(), 600);
+                    if (typeof window.refreshMainContent === 'function') {
+                        window.refreshMainContent();
+                    } else {
+                        window.location.reload();
+                    }
                 } else {
                     toast(json.error || t('copyFailed', 'The copy could not be created.'), 'error');
                 }
@@ -345,7 +349,11 @@
             .then((json) => {
                 if (json.success) {
                     toast(t('fileRenamed', 'Renamed.') + ' ' + (json.note || ''), 'success');
-                    setTimeout(() => window.location.reload(), 600);
+                    if (typeof window.refreshMainContent === 'function') {
+                        window.refreshMainContent();
+                    } else {
+                        window.location.reload();
+                    }
                 } else {
                     toast(json.error || t('renameFailed', 'The file could not be renamed.'), 'error');
                 }

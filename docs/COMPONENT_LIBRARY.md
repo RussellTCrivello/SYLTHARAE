@@ -107,7 +107,7 @@ Counted by scanning `templates/**`. These are the places a shared component has 
 | Hand-written table | `table` | 10 templates |
 | Hand-written pagination markup | `pagination` | 0 templates |
 | Pagination mount (filled by the shared renderer) | `pagination` | 8 templates |
-| Hand-written search input | `search_input` | 7 templates |
+| Hand-written search input | `search_input` | 8 templates |
 | Hand-written filter control | `filter_bar` | 8 templates |
 | Browser confirm() dialog | `confirm_dialog` | 0 templates |
 | Hand-written status badge | `status_badge` | 0 badges, in 0 templates |
@@ -121,9 +121,9 @@ How much of the repeated markup has moved onto its component. Standardized count
 | Markup | Standardized | Hand-written | Adoption |
 | --- | --- | --- | --- |
 | Hand-written empty state | 5 | 3 | 62% |
-| Hand-written table | 16 | 10 | 62% |
+| Hand-written table | 17 | 10 | 63% |
 | Hand-written pagination markup | 10 | 0 | 100% |
-| Hand-written search input | 8 | 7 | 53% |
+| Hand-written search input | 8 | 8 | 50% |
 | Hand-written filter control | 7 | 8 | 47% |
 | Browser confirm() dialog | 2 | 0 | 100% |
 | Hand-written status badge | 7 | 0 | 100% |
@@ -141,8 +141,8 @@ Every class a component renders has exactly one owner. **OWNED** means an SYLTHA
 
 | Ownership | Classes |
 | --- | --- |
-| OWNED (SYLTHARAE) | 154 |
-| THIRD_PARTY (Bootstrap, Bootstrap Icons) | 247 |
+| OWNED (SYLTHARAE) | 158 |
+| THIRD_PARTY (Bootstrap, Bootstrap Icons) | 257 |
 | UNKNOWN | 0 |
 
 Third-party stylesheets bundled with the application: `static/css/bootstrap.min.css`, `static/icons/bootstrap-icons.css`.
@@ -167,5 +167,7 @@ Owned by declaration rather than by a stylesheet - the component states these ar
 * `ut-export-scope-option` (table.html)
 * `ut-filter-check` (table.html)
 * `ut-head` (table.html)
+* `unified-pagination-show-more` (unified_pagination.html)
+* `unified-pagination-show-more-btn` (unified_pagination.html)
 
 <!-- END GENERATED COMPONENT AUDIT -->

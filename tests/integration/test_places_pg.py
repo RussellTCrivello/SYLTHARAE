@@ -1,6 +1,6 @@
 """Phase 2 integration: database gazetteer and place-mention signals.
 
-Executed against PostgreSQL through migration 0019 (applied by the session
+Executed against PostgreSQL through migration 0034 (applied by the session
 bootstrap), the real ingestion path, the real JobManager and the HTTP API.
 """
 
@@ -129,6 +129,33 @@ def test_sync_seed_is_idempotent_and_retires_instead_of_deleting(pg_db):
             assert cur.fetchone() == (True,), "a place leaving the seed is retired, not deleted"
             assert current_detector_version(cur) != before, \
                 "a gazetteer change must change the place detector version"
+    finally:
+        conn.rollback()
+        conn.close()
+
+
+def test_m0034_records_new_revision_when_note_fingerprint_changes(pg_db):
+    """An old stored fingerprint advances when detector-visible notes are added."""
+    from database.migrations.m0034_gazetteer_note_fingerprint import upgrade
+    from services.geo.gazetteer import compute_fingerprint, current_load
+
+    conn = connect(pg_db)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM geo_gazetteer_loads ORDER BY id DESC LIMIT 1")
+            previous_id = cur.fetchone()[0]
+            cur.execute("UPDATE geo_gazetteer_loads SET fingerprint = %s WHERE id = %s",
+                        ("0" * 64, previous_id))
+        upgrade(conn)
+        with conn.cursor() as cur:
+            load = current_load(cur)
+            fingerprint, places, names = compute_fingerprint(cur)
+            assert load["loaded_by"] == "migration:0034"
+            assert load["fingerprint"].strip() == fingerprint
+            assert (load["place_count"], load["name_count"]) == (places, names)
+            cur.execute("SELECT stats->>'kind' FROM geo_gazetteer_loads WHERE id = %s",
+                        (load["id"],))
+            assert cur.fetchone()[0] == "fingerprint_algorithm_upgrade"
     finally:
         conn.rollback()
         conn.close()

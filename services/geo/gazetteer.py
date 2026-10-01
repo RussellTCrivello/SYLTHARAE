@@ -3,7 +3,9 @@
 The gazetteer lives in PostgreSQL (``geo_places``, ``geo_place_names``,
 created by migration 0019). Its reviewed content is the committed seed
 ``data/gazetteer/places_seed.json`` (built by ``tools/gazetteer/build_seed.py``
-from Wikidata, CC0). :func:`sync_seed` is the **only** writer:
+from Wikidata, CC0). :func:`sync_seed` is the seed synchronizer; approved
+curation writes use :func:`record_curation_change` so their active detector
+fingerprint and immutable revision history stay in step:
 
 * idempotent upsert keyed on ``place_key`` / ``(place, language, match_key)``;
 * places that leave the seed are *retired*, never deleted - stored place
@@ -107,12 +109,55 @@ def compute_fingerprint(cur) -> Tuple[str, int, int]:
                None if r[4] is None else repr(float(r[4])),
                None if r[5] is None else repr(float(r[5]))] for r in cur.fetchall()]
     cur.execute("SELECT p.place_key, n.language, n.match_key, n.name, n.script, n.name_type,"
-                " n.homograph FROM geo_place_names n JOIN geo_places p ON p.id = n.place_id"
+                " n.homograph, n.note FROM geo_place_names n JOIN geo_places p ON p.id = n.place_id"
                 " WHERE NOT p.retired ORDER BY p.place_key, n.language, n.match_key")
     names = [list(r) for r in cur.fetchall()]
     payload = json.dumps({"places": places, "names": names}, ensure_ascii=False,
                          separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest(), len(places), len(names)
+
+
+def lock_curation(cur) -> None:
+    """Serialize authorized curation mutations before they change stored rows.
+
+    The lock is transaction-scoped. It keeps concurrent place/name edits from
+    recording out-of-order fingerprints or missing an intermediate revision.
+    """
+    cur.execute("SELECT pg_advisory_xact_lock(%s)", (0x47415A45545445,))
+
+
+def record_curation_change(cur, *, loaded_by: str, action: str) -> Dict[str, Any]:
+    """Record a manual curation revision when detector-visible rows changed.
+
+    ``content_sha256`` remains the digest of the reviewed seed payload that
+    anchors this database. ``fingerprint`` is computed from the active stored
+    gazetteer, so every matching change advances the detector version. The
+    load table is append-only; user-facing history endpoints are read-only.
+    """
+    latest = current_load(cur)
+    if latest is None:
+        raise GazetteerUnavailable("no gazetteer load exists for curation")
+    fingerprint, place_count, name_count = compute_fingerprint(cur)
+    changed = fingerprint != latest["fingerprint"]
+    if changed:
+        stats = {
+            "kind": "admin_curation",
+            "action": str(action)[:80],
+            "places_active": place_count,
+            "names_active": name_count,
+        }
+        cur.execute(
+            "INSERT INTO geo_gazetteer_loads (seed_version, content_sha256, fingerprint,"
+            " place_count, name_count, stats, loaded_by)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (latest["seed_version"], latest["content_sha256"], fingerprint,
+             place_count, name_count, psycopg2.extras.Json(stats), (loaded_by or "admin")[:80]),
+        )
+        load_id = cur.fetchone()[0]
+    else:
+        load_id = latest["id"]
+    return {"changed": changed, "load_id": load_id, "fingerprint": fingerprint,
+            "place_count": place_count, "name_count": name_count}
 
 
 def current_load(cur) -> Optional[Dict[str, Any]]:
@@ -140,6 +185,7 @@ def sync_seed(cur, seed: Optional[Dict[str, Any]] = None, *, loaded_by: str) -> 
         seed = load_seed_file()
     if not loaded_by:
         raise ValueError("loaded_by is required (who applied the seed)")
+    lock_curation(cur)
     places = seed["places"]
     stats = {"places_added": 0, "places_updated": 0, "places_retired": 0,
              "names_added": 0, "names_updated": 0, "names_removed": 0}
@@ -169,7 +215,7 @@ def sync_seed(cur, seed: Optional[Dict[str, Any]] = None, *, loaded_by: str) -> 
                 " match_key VARCHAR(255)) ON COMMIT DROP")
     psycopg2.extras.execute_values(cur, "INSERT INTO _gz_names VALUES %s",
                                    [(d[0], d[3], d[2]) for d in desired], page_size=1000)
-    cur.execute("DELETE FROM geo_place_names n WHERE n.place_id = ANY(%s) AND NOT EXISTS ("
+    cur.execute("DELETE FROM geo_place_names n WHERE n.place_id = ANY(%s) AND n.source <> 'user' AND NOT EXISTS ("
                 " SELECT 1 FROM _gz_names d WHERE d.place_id = n.place_id"
                 " AND d.language = n.language AND d.match_key = n.match_key)",
                 (list(ids.values()),))

@@ -25,7 +25,7 @@
             <i class="bi bi-plus-circle me-2"></i>
             {{ _('Add Word') }}
         </button>
-        <button class="btn btn-outline-primary" data-on-click="location.reload()">
+        <button class="btn btn-outline-primary" data-on-click="refreshMainContent()">
             <i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}
         </button>
         <a href="{{ url_for('categories_list') }}" class="btn btn-outline-secondary">
@@ -157,6 +157,7 @@
         export_columns=[
             {'key': 'id', 'label': _('Id')},
         ],
+        export_scope_base='category_id=' ~ category.id,
         page=page|default(1),
         total_pages=total_pages|default(1),
         total_count=total_words|default(0),

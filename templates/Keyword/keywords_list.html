@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <link href="{{ url_for('static', filename='css/unified-table.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/file-type-workspace.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/word-search.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='dist/css/select2.min.css') }}" rel="stylesheet" />
 {% endblock %}
@@ -21,7 +22,7 @@
         <button class="btn btn-success" data-on-click="updateKeywordAssociations()" id="updateKeywordsBtn" title="{{ _('Update keyword associations for all files') }}">
             <i class="bi bi-arrow-repeat me-2"></i> {{ _('Update Keywords') }}
         </button>
-        <button class="btn btn-outline-primary" data-on-click="location.reload()"><i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}</button>
+        <button class="btn btn-outline-primary" data-on-click="refreshMainContent()"><i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}</button>
     </div>
 </div>
 

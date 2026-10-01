@@ -93,6 +93,8 @@ The database gazetteer: seed loading, fingerprint and the detector index.
 - **class `GazetteerUnavailable`**(RuntimeError) - No gazetteer has been loaded into this database.
 - `load_seed_file(path: Path = DEFAULT_SEED) -> Dict[str, Any]` - Read and verify a seed file (format, SHA-256 of the places payload).
 - `compute_fingerprint(cur) -> Tuple[str, int, int]` - SHA-256 over the active gazetteer as stored (places and names, sorted).
+- `lock_curation(cur) -> None` - Serialize authorized curation mutations before they change stored rows.
+- `record_curation_change(cur, *, loaded_by: str, action: str) -> Dict[str, Any]` - Record a manual curation revision when detector-visible rows changed.
 - `current_load(cur) -> Optional[Dict[str, Any]]` - The latest gazetteer load, or None (also when migration 0019 is absent).
 - `sync_seed(cur, seed: Optional[Dict[str, Any]] = None, *, loaded_by: str) -> Dict[str, Any]` - Make the database gazetteer equal to ``seed`` (idempotent).
 - `detector_gazetteer(cur)` - The ``place_intel.Gazetteer`` for the current load, cached per fingerprint.

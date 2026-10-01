@@ -213,6 +213,9 @@ Live end-to-end smoke test against a running SYLTHARAE server.
 Final End-to-End Acceptance: The Complete SYLTHARAE Intelligence Chain (§37).
 
 - `check(link_num, name, ok, detail = '')`
+- `body(response)`
+- `poll_job(session, job_id, timeout_seconds = 60)` - Wait for a real terminal job state; return (status, job payload).
+- `run_report(session, csrf, report_id, version, parameters)`
 - `main()`
 
 ### `tools/verify/runtime_check_artifacts.py`

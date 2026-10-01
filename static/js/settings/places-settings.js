@@ -1,517 +1,579 @@
 /**
- * Geographic Locations (Places) Management (Settings → Geographic Locations).
+ * Gazetteer management for Settings → Geographic Gazetteer.
  *
- * Provides complete visual front-end management for geographic places and
- * multilingual names (Phase 2):
- * - Search, filter by feature type, country code, and active/retired status.
- * - Add new custom locations with coordinates and multilingual aliases.
- * - Edit existing locations and add aliases.
- * - Toggle Active / Retired status.
- * - Delete user-managed locations.
- * - Strict DOM construction (no innerHTML), accessible fields and buttons.
+ * Tables use the shared record_table/unified-table structure. API writes are
+ * administrator-only; seed rows and seed names are intentionally immutable
+ * from this interface. Admin curation writes advance the detector fingerprint
+ * and load history through the server's single curation service.
  */
 (function () {
     'use strict';
 
-    let currentPage = 1;
-    let totalPages = 1;
-    const perPage = 25;
+    const pane = document.getElementById('places');
+    if (!pane) return;
+    const canManage = pane.dataset.canManage === 'true';
+    const requestStates = new Map();
+    const tableState = {
+        places: { page: 1, perPage: 25, sort: 'label', order: 'asc', query: '' },
+        names: { page: 1, perPage: 25, sort: 'name', order: 'asc', query: '' },
+        loads: { page: 1, perPage: 25, sort: 'loaded_at', order: 'desc', query: '' },
+    };
+    let selectorRequest = 0;
+    let placeDetailRequest = 0;
+    let loadDetailRequest = 0;
+    let summaryRequest = 0;
+
+    const byId = id => document.getElementById(id);
 
     function csrfToken() {
         const meta = document.querySelector('meta[name="csrf-token"]');
-        if (meta) return meta.getAttribute('content');
+        if (meta) return meta.getAttribute('content') || '';
         if (window.__csrfToken) return window.__csrfToken;
-        return document.cookie.split('; ').reduce(function (acc, pair) {
-            return acc || (pair.indexOf('csrf_token=') === 0 ? pair.split('=')[1] : acc);
-        }, '');
+        const item = document.cookie.split('; ').find(part => part.startsWith('csrf_token='));
+        return item ? decodeURIComponent(item.substring('csrf_token='.length)) : '';
     }
 
-    function setStatus(message, isError) {
-        const status = document.getElementById('placesStatus');
-        if (status) {
-            status.textContent = message || '';
-            status.className = isError ? 'text-danger small' : 'text-success small';
-        }
-    }
-
-    function clearNode(node) {
+    function clear(node) {
         if (!node) return;
-        if (typeof node.replaceChildren === 'function') {
-            node.replaceChildren();
-        } else {
-            while (node.firstChild) node.removeChild(node.firstChild);
-        }
+        node.replaceChildren();
     }
 
-    function createIcon(cls, meClass) {
-        const icon = document.createElement('i');
-        icon.className = 'bi ' + cls + (meClass ? ' ' + meClass : '');
-        icon.setAttribute('aria-hidden', 'true');
-        return icon;
+    function element(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined && text !== null) node.textContent = String(text);
+        return node;
     }
 
-    async function loadPlaces(page) {
-        if (page) currentPage = page;
-        const tbody = document.getElementById('placesTableBody');
-        if (!tbody) return;
-
-        const q = (document.getElementById('placesSearchInput')?.value || '').trim();
-        const ftype = document.getElementById('placesFilterType')?.value || '';
-        const country = (document.getElementById('placesFilterCountry')?.value || '').trim().toUpperCase();
-        const status = document.getElementById('placesFilterStatus')?.value || 'all';
-
-        let url = `/api/places?page=${currentPage}&per_page=${perPage}&status=${encodeURIComponent(status)}`;
-        if (q) url += `&q=${encodeURIComponent(q)}`;
-        if (ftype) url += `&feature_type=${encodeURIComponent(ftype)}`;
-        if (country) url += `&country=${encodeURIComponent(country)}`;
-
-        clearNode(tbody);
-        const loadTr = document.createElement('tr');
-        const loadTd = document.createElement('td');
-        loadTd.setAttribute('colspan', '8');
-        loadTd.className = 'text-muted text-center py-3';
-        const spin = document.createElement('span');
-        spin.className = 'spinner-border spinner-border-sm me-2';
-        loadTd.append(spin, document.createTextNode('Loading locations…'));
-        loadTr.appendChild(loadTd);
-        tbody.appendChild(loadTr);
-
-        try {
-            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            renderPlaces(data.data || [], data.pagination || {});
-        } catch (err) {
-            clearNode(tbody);
-            const errTr = document.createElement('tr');
-            const errTd = document.createElement('td');
-            errTd.setAttribute('colspan', '8');
-            errTd.className = 'text-danger text-center py-3';
-            errTd.textContent = 'Error loading locations: ' + err.message;
-            errTr.appendChild(errTd);
-            tbody.appendChild(errTr);
-        }
+    function cell(row, content, className) {
+        const td = element('td', className || '', '');
+        if (content instanceof Node) td.appendChild(content);
+        else td.textContent = content === null || content === undefined || content === '' ? '—' : String(content);
+        row.appendChild(td);
+        return td;
     }
 
-    function renderPlaces(items, pagination) {
-        const tbody = document.getElementById('placesTableBody');
-        if (!tbody) return;
-        clearNode(tbody);
-
-        totalPages = pagination.pages || 1;
-        const countSpan = document.getElementById('placesCount');
-        if (countSpan) {
-            countSpan.textContent = `Showing ${items.length} of ${pagination.total || items.length} locations (Page ${pagination.page || 1} of ${totalPages})`;
-        }
-
-        const prevBtn = document.getElementById('placesPrevBtn');
-        const nextBtn = document.getElementById('placesNextBtn');
-        if (prevBtn) prevBtn.disabled = currentPage <= 1;
-        if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-
-        if (items.length === 0) {
-            const emptyTr = document.createElement('tr');
-            const emptyTd = document.createElement('td');
-            emptyTd.setAttribute('colspan', '8');
-            emptyTd.className = 'text-muted text-center py-4';
-            emptyTd.textContent = 'No geographic locations found matching your filter.';
-            emptyTr.appendChild(emptyTd);
-            tbody.appendChild(emptyTr);
-            return;
-        }
-
-        for (const place of items) {
-            const tr = document.createElement('tr');
-            if (place.retired) tr.classList.add('table-secondary', 'text-muted');
-
-            // Key
-            const tdKey = document.createElement('td');
-            tdKey.className = 'font-monospace small';
-            tdKey.textContent = place.place_key;
-            tr.appendChild(tdKey);
-
-            // Label
-            const tdLabel = document.createElement('td');
-            tdLabel.className = 'fw-semibold';
-            tdLabel.textContent = place.label;
-            tr.appendChild(tdLabel);
-
-            // Feature Type
-            const tdType = document.createElement('td');
-            const typeBadge = document.createElement('span');
-            typeBadge.className = 'badge ' + (place.feature_type === 'city' ? 'bg-info' : (place.feature_type === 'country' ? 'bg-primary' : 'bg-secondary'));
-            typeBadge.textContent = place.feature_type;
-            tdType.appendChild(typeBadge);
-            tr.appendChild(tdType);
-
-            // Countries
-            const tdCountries = document.createElement('td');
-            for (const cc of (place.country_codes || [])) {
-                const b = document.createElement('span');
-                b.className = 'badge bg-light text-dark border me-1';
-                b.textContent = cc;
-                tdCountries.appendChild(b);
-            }
-            tr.appendChild(tdCountries);
-
-            // Coordinates
-            const tdCoords = document.createElement('td');
-            tdCoords.className = 'small font-monospace';
-            if (place.latitude !== null && place.longitude !== null && place.latitude !== undefined && place.longitude !== undefined) {
-                tdCoords.textContent = `${Number(place.latitude).toFixed(4)}, ${Number(place.longitude).toFixed(4)}`;
-            } else {
-                const dash = document.createElement('span');
-                dash.className = 'text-muted';
-                dash.textContent = '—';
-                tdCoords.appendChild(dash);
-            }
-            tr.appendChild(tdCoords);
-
-            // Source
-            const tdSource = document.createElement('td');
-            const srcBadge = document.createElement('span');
-            srcBadge.className = 'badge ' + (place.source === 'user' ? 'bg-warning text-dark' : 'bg-light text-muted border');
-            srcBadge.textContent = place.source === 'user' ? 'User-Created' : 'Seed (Wikidata)';
-            tdSource.appendChild(srcBadge);
-            tr.appendChild(tdSource);
-
-            // Status
-            const tdStatus = document.createElement('td');
-            const statusBadge = document.createElement('span');
-            statusBadge.className = 'badge ' + (place.retired ? 'bg-secondary' : 'bg-success');
-            statusBadge.textContent = place.retired ? 'Retired' : 'Active';
-            tdStatus.appendChild(statusBadge);
-            tr.appendChild(tdStatus);
-
-            // Actions
-            const tdActions = document.createElement('td');
-            tdActions.className = 'text-nowrap';
-
-            // Edit button
-            const editBtn = document.createElement('button');
-            editBtn.type = 'button';
-            editBtn.className = 'btn btn-sm btn-outline-primary me-1';
-            editBtn.append(createIcon('bi-pencil', 'me-1'), document.createTextNode('Edit'));
-            editBtn.addEventListener('click', () => openEditModal(place));
-            tdActions.appendChild(editBtn);
-
-            // Retire/Activate toggle button
-            const toggleBtn = document.createElement('button');
-            toggleBtn.type = 'button';
-            toggleBtn.className = 'btn btn-sm ' + (place.retired ? 'btn-outline-success me-1' : 'btn-outline-warning me-1');
-            toggleBtn.append(
-                createIcon(place.retired ? 'bi-check-circle' : 'bi-pause-circle', 'me-1'),
-                document.createTextNode(place.retired ? 'Activate' : 'Retire')
-            );
-            toggleBtn.addEventListener('click', () => togglePlaceRetired(place.place_key, !place.retired));
-            tdActions.appendChild(toggleBtn);
-
-            // Delete button (if user created)
-            if (place.source === 'user') {
-                const delBtn = document.createElement('button');
-                delBtn.type = 'button';
-                delBtn.className = 'btn btn-sm btn-outline-danger';
-                delBtn.append(createIcon('bi-trash'));
-                delBtn.title = 'Delete user-created location';
-                delBtn.addEventListener('click', () => deletePlace(place.place_key));
-                tdActions.appendChild(delBtn);
-            }
-
-            tr.appendChild(tdActions);
-            tbody.appendChild(tr);
-        }
+    function button(label, className, handler, title) {
+        const result = element('button', className || 'btn btn-sm btn-outline-secondary', label);
+        result.type = 'button';
+        if (title) result.title = title;
+        result.addEventListener('click', handler);
+        return result;
     }
 
-    async function togglePlaceRetired(placeKey, newRetired) {
-        try {
-            const res = await fetch(`/api/places/${encodeURIComponent(placeKey)}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken(),
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ retired: newRetired }),
+    function setStatus(id, message, isError) {
+        const target = byId(id);
+        if (!target) return;
+        target.textContent = message || '';
+        target.classList.toggle('text-danger', Boolean(isError));
+        target.classList.toggle('text-success', Boolean(message) && !isError);
+    }
+
+    async function requestJSON(url, options) {
+        const opts = Object.assign({ headers: { Accept: 'application/json' } }, options || {});
+        opts.headers = Object.assign({ Accept: 'application/json' }, opts.headers || {});
+        const response = await fetch(url, opts);
+        let payload = {};
+        try { payload = await response.json(); } catch (_) { /* sanitized below */ }
+        if (!response.ok) {
+            throw new Error(payload.error?.message || payload.error || `HTTP ${response.status}`);
+        }
+        return payload;
+    }
+
+    function manageHeaders(method, body) {
+        const headers = { Accept: 'application/json', 'X-CSRFToken': csrfToken() };
+        if (body !== undefined) headers['Content-Type'] = 'application/json';
+        return { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) };
+    }
+
+    function showRowState(tbody, colspan, message, type) {
+        clear(tbody);
+        const tr = element('tr');
+        const td = element('td', type === 'error' ? 'text-danger text-center py-4' : 'text-muted text-center py-4', message);
+        td.colSpan = colspan;
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+    }
+
+    function searchParams(state, extra) {
+        const params = new URLSearchParams({
+            page: String(state.page), per_page: String(state.perPage),
+            sort: state.sort, order: state.order,
+        });
+        if (state.query) params.set('q', state.query);
+        Object.entries(extra || {}).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') params.set(key, value);
+        });
+        return params;
+    }
+
+    function installTableSort(tableId, state, load) {
+        if (window.UnifiedTable && typeof window.UnifiedTable.onSort === 'function') {
+            window.UnifiedTable.onSort(tableId, (key, direction) => {
+                state.sort = direction === null ? (tableId === 'gazetteerLoadsTable' ? 'loaded_at' : (tableId === 'placeNamesTable' ? 'name' : 'label')) : key;
+                state.order = direction === null ? (tableId === 'gazetteerLoadsTable' ? 'desc' : 'asc') : direction;
+                state.page = 1;
+                load();
             });
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error?.message || `HTTP ${res.status}`);
-            }
-            setStatus(`Place ${placeKey} marked as ${newRetired ? 'retired' : 'active'}.`, false);
-            loadPlaces();
-        } catch (err) {
-            setStatus(`Action failed: ${err.message}`, true);
         }
+    }
+
+    function syncTable(tableId, state, pagination, load) {
+        const info = byId(`${tableId}Info`);
+        const page = Number(pagination.page || state.page);
+        const perPage = Number(pagination.per_page || state.perPage);
+        const total = Number(pagination.total || 0);
+        const totalPages = Number(pagination.pages || 0);
+        state.page = page;
+        state.perPage = perPage;
+        if (info) info.textContent = `Showing ${Math.min((page - 1) * perPage + 1, total)}–${Math.min(page * perPage, total)} of ${total}`;
+        const prev = byId(tableId === 'placesTable' ? 'placesPrevBtn' : tableId === 'placeNamesTable' ? 'placeNamesPrevBtn' : 'gazetteerLoadsPrevBtn');
+        const next = byId(tableId === 'placesTable' ? 'placesNextBtn' : tableId === 'placeNamesTable' ? 'placeNamesNextBtn' : 'gazetteerLoadsNextBtn');
+        if (prev) prev.disabled = page <= 1;
+        if (next) next.disabled = totalPages === 0 || page >= totalPages;
+        if (window.UnifiedTable?.setSort) window.UnifiedTable.setSort(tableId, state.sort, state.order);
+        const pageSizeId = tableId === 'placesTable' ? 'placesPerPage' : tableId === 'placeNamesTable' ? 'placeNamesPerPage' : 'gazetteerLoadsPerPage';
+        const perPageSelect = byId(pageSizeId);
+        if (perPageSelect) perPageSelect.value = String(perPage);
+    }
+
+    function requestForTable(key, url, renderer, colspan, statusId) {
+        const previous = requestStates.get(key);
+        if (previous) previous.controller.abort();
+        const state = { controller: new AbortController(), generation: (previous?.generation || 0) + 1 };
+        requestStates.set(key, state);
+        const tbodyId = key === 'places' ? 'placesTableBody' : key === 'names' ? 'placeNamesTableBody' : 'gazetteerLoadsTableBody';
+        const tbody = byId(tbodyId);
+        if (!tbody) return;
+        showRowState(tbody, colspan, 'Loading…', 'loading');
+        setStatus(statusId, '', false);
+        fetch(url, { headers: { Accept: 'application/json' }, signal: state.controller.signal })
+            .then(async response => {
+                let payload = {};
+                try { payload = await response.json(); } catch (_) { /* handled below */ }
+                if (!response.ok) throw new Error(payload.error?.message || `HTTP ${response.status}`);
+                return payload;
+            })
+            .then(payload => {
+                if (requestStates.get(key) !== state) return;
+                if (!payload.success) throw new Error(payload.error?.message || 'The request was not successful');
+                renderer(tbody, payload);
+            })
+            .catch(error => {
+                if (error.name === 'AbortError' || requestStates.get(key) !== state) return;
+                showRowState(tbody, colspan, `Could not load data: ${error.message}`, 'error');
+                setStatus(statusId, error.message, true);
+            });
+    }
+
+    function placeNamesText(names, total) {
+        const labels = (names || []).map(item => item.name).filter(Boolean);
+        const visible = labels.slice(0, 5);
+        const nameCount = Number.isFinite(Number(total)) ? Math.max(visible.length, Number(total)) : labels.length;
+        return visible.join(', ') + (nameCount > visible.length ? ` +${nameCount - visible.length} more` : '');
+    }
+
+    function loadPlaces() {
+        const state = tableState.places;
+        const extra = {
+            feature_type: byId('placesFilterType')?.value,
+            country: byId('placesFilterCountry')?.value.trim().toUpperCase(),
+            status: byId('placesFilterStatus')?.value || 'all',
+            source: byId('placesFilterSource')?.value || 'all',
+        };
+        const params = searchParams(state, extra);
+        requestForTable('places', `/api/places?${params}`, (tbody, payload) => {
+            clear(tbody);
+            const rows = payload.data || [];
+            if (!rows.length) {
+                showRowState(tbody, 8, 'No places match these filters.', 'empty');
+                syncTable('placesTable', state, payload.pagination || {}, loadPlaces);
+                return;
+            }
+            rows.forEach(place => {
+                const tr = element('tr');
+                if (place.retired) tr.classList.add('table-secondary');
+                cell(tr, place.place_key, 'font-monospace small');
+                const label = element('div', 'fw-semibold', place.label);
+                const names = placeNamesText(place.names, place.names_total);
+                if (names) label.appendChild(element('div', 'small text-muted fw-normal', names));
+                cell(tr, label);
+                cell(tr, place.feature_type);
+                cell(tr, (place.country_codes || []).join(', '));
+                const coordinates = place.latitude !== null && place.longitude !== null
+                    ? `${Number(place.latitude).toFixed(4)}, ${Number(place.longitude).toFixed(4)}` : '—';
+                cell(tr, coordinates, 'font-monospace small');
+                cell(tr, place.source === 'user' ? 'User-curated' : 'Seed-managed');
+                const status = element('span', `badge ${place.retired ? 'bg-secondary' : 'bg-success'}`, place.retired ? 'Retired' : 'Active');
+                cell(tr, status);
+                const actions = element('td', 'text-nowrap');
+                actions.appendChild(button('Details', 'btn btn-sm btn-outline-secondary me-1', () => showPlaceDetails(place.place_key)));
+                if (canManage && place.source === 'user') {
+                    actions.appendChild(button('Edit', 'btn btn-sm btn-outline-primary me-1', () => openPlaceModal(place)));
+                }
+                if (canManage) {
+                    actions.appendChild(button(place.retired ? 'Activate' : 'Retire',
+                        `btn btn-sm ${place.retired ? 'btn-outline-success' : 'btn-outline-warning'} me-1`,
+                        () => togglePlace(place.place_key, !place.retired)));
+                    if (place.source === 'user') {
+                        actions.appendChild(button('Delete', 'btn btn-sm btn-outline-danger', () => deletePlace(place.place_key)));
+                    }
+                }
+                tr.appendChild(actions);
+                tbody.appendChild(tr);
+            });
+            syncTable('placesTable', state, payload.pagination || {}, loadPlaces);
+        }, 8, 'placesStatus');
+    }
+
+    function loadNames() {
+        const state = tableState.names;
+        const params = searchParams(state, {
+            language: byId('placeNamesLanguage')?.value,
+            name_type: byId('placeNamesType')?.value,
+            source: byId('placeNamesSource')?.value || 'all',
+            status: 'all',
+        });
+        requestForTable('names', `/api/place-names?${params}`, (tbody, payload) => {
+            clear(tbody);
+            const rows = payload.data || [];
+            if (!rows.length) {
+                showRowState(tbody, 8, 'No place names match these filters.', 'empty');
+                syncTable('placeNamesTable', state, payload.pagination || {}, loadNames);
+                return;
+            }
+            rows.forEach(name => {
+                const tr = element('tr');
+                cell(tr, name.name, 'fw-semibold');
+                cell(tr, `${name.language} (${name.script})`);
+                cell(tr, name.name_type);
+                cell(tr, name.place_label);
+                cell(tr, name.place_key, 'font-monospace small');
+                cell(tr, name.source === 'user' ? 'User-curated' : name.source);
+                cell(tr, name.homograph ? 'Yes' : 'No');
+                const actions = element('td', 'text-nowrap');
+                if (canManage && name.editable) {
+                    actions.appendChild(button('Edit', 'btn btn-sm btn-outline-primary me-1', () => openNameModal(name)));
+                    actions.appendChild(button('Delete', 'btn btn-sm btn-outline-danger', () => deleteName(name)));
+                } else {
+                    actions.appendChild(element('span', 'small text-muted', 'Seed-managed · read-only'));
+                }
+                tr.appendChild(actions);
+                tbody.appendChild(tr);
+            });
+            syncTable('placeNamesTable', state, payload.pagination || {}, loadNames);
+        }, 8, 'placeNamesStatus');
+    }
+
+    function loadLoads() {
+        const state = tableState.loads;
+        const params = searchParams(state);
+        requestForTable('loads', `/api/gazetteer/loads?${params}`, (tbody, payload) => {
+            clear(tbody);
+            const rows = payload.data || [];
+            if (!rows.length) {
+                showRowState(tbody, 7, 'No Gazetteer load history is available.', 'empty');
+                syncTable('gazetteerLoadsTable', state, payload.pagination || {}, loadLoads);
+                return;
+            }
+            rows.forEach(load => {
+                const tr = element('tr');
+                cell(tr, load.id, 'font-monospace');
+                cell(tr, load.seed_version);
+                cell(tr, load.loaded_at ? new Date(load.loaded_at).toLocaleString() : '—');
+                cell(tr, load.place_count);
+                cell(tr, load.name_count);
+                cell(tr, load.loaded_by);
+                const actions = element('td');
+                actions.appendChild(button('Inspect', 'btn btn-sm btn-outline-primary', () => inspectLoad(load.id)));
+                tr.appendChild(actions);
+                tbody.appendChild(tr);
+            });
+            syncTable('gazetteerLoadsTable', state, payload.pagination || {}, loadLoads);
+        }, 7, 'gazetteerLoadsStatus');
+    }
+
+    async function loadSummary() {
+        const summary = byId('gazetteerSummary');
+        if (!summary) return;
+        const generation = ++summaryRequest;
+        try {
+            const data = await requestJSON('/api/gazetteer');
+            if (generation !== summaryRequest) return;
+            if (!data.loaded) {
+                summary.textContent = 'Gazetteer is not loaded.';
+                return;
+            }
+            summary.textContent = `Seed ${data.load.seed_version} · ${data.load.place_count} places · ${data.load.name_count} names · Detector ${data.detector_ver}`;
+        } catch (error) {
+            if (generation !== summaryRequest) return;
+            summary.textContent = `Gazetteer status unavailable: ${error.message}`;
+            summary.classList.add('text-danger');
+        }
+    }
+
+    function showModal(id) {
+        const modal = byId(id);
+        if (!modal || !window.bootstrap?.Modal) return;
+        window.bootstrap.Modal.getOrCreateInstance(modal).show();
+    }
+
+    function hideModal(id) {
+        const modal = byId(id);
+        if (modal && window.bootstrap?.Modal) window.bootstrap.Modal.getInstance(modal)?.hide();
+    }
+
+    function openPlaceModal(place) {
+        byId('placeModalTitle').textContent = place ? `Edit Location: ${place.label}` : 'Add Geographic Location';
+        byId('placeModalIsEdit').value = place ? '1' : '0';
+        byId('placeModalKey').value = place?.place_key || '';
+        byId('placeModalKey').disabled = Boolean(place);
+        byId('placeModalLabel').value = place?.label || '';
+        byId('placeModalType').value = place?.feature_type || 'city';
+        byId('placeModalCountries').value = (place?.country_codes || []).join(', ');
+        byId('placeModalLat').value = place?.latitude ?? '';
+        byId('placeModalLon').value = place?.longitude ?? '';
+        byId('placeModalRetired').checked = Boolean(place?.retired);
+        const error = byId('placeModalError');
+        error.textContent = '';
+        error.classList.add('d-none');
+        showModal('placeModal');
+    }
+
+    async function showPlaceDetails(placeKey) {
+        const status = byId('placeDetailStatus');
+        const detail = byId('placeDetailBody');
+        if (!status || !detail) return;
+        const generation = ++placeDetailRequest;
+        status.textContent = 'Loading place details…';
+        clear(detail);
+        showModal('placeDetailsModal');
+        try {
+            const payload = await requestJSON(`/api/places/${encodeURIComponent(placeKey)}`);
+            if (generation !== placeDetailRequest) return;
+            const place = payload.place;
+            status.textContent = `Mention counts are scoped to the current account: ${place.mentions.scope}.`;
+            const dl = element('dl', 'row mb-0');
+            const pairs = [
+                ['Place key', place.place_key], ['Label', place.label], ['Feature type', place.feature_type],
+                ['Country codes', (place.country_codes || []).join(', ') || '—'],
+                ['Coordinates', place.latitude === null || place.longitude === null ? '—' : `${place.latitude}, ${place.longitude}`],
+                ['Source', place.source], ['Status', place.retired ? 'Retired' : 'Active'],
+                ['Identified mentions', place.mentions.identified.mentions],
+                ['Identified contents', place.mentions.identified.contents],
+                ['Ambiguous candidate mentions', place.mentions.ambiguous_candidate.mentions],
+            ];
+            for (const [label, value] of pairs) {
+                dl.append(element('dt', 'col-sm-4', label), element('dd', 'col-sm-8', value));
+            }
+            detail.appendChild(dl);
+            const namesTitle = element('h6', 'mt-3', 'Recorded names');
+            detail.appendChild(namesTitle);
+            const list = element('ul', 'mb-0');
+            for (const name of place.names || []) {
+                list.appendChild(element('li', '', `${name.name} · ${name.language} / ${name.script} · ${name.name_type} · ${name.source}${name.homograph ? ' · homograph' : ''}`));
+            }
+            detail.appendChild(list);
+        } catch (error) {
+            if (generation !== placeDetailRequest) return;
+            status.textContent = `Could not load place details: ${error.message}`;
+            status.classList.add('text-danger');
+        }
+    }
+
+    async function togglePlace(placeKey, retired) {
+        try {
+            const result = await requestJSON(`/api/places/${encodeURIComponent(placeKey)}`, manageHeaders('PUT', { retired }));
+            setStatus('placesStatus', `${placeKey} ${retired ? 'retired' : 'activated'}. Detector revision: ${result.gazetteer_revision?.load_id ?? 'unchanged'}.`, false);
+            loadPlaces(); loadSummary();
+        } catch (error) { setStatus('placesStatus', `Could not update place: ${error.message}`, true); }
     }
 
     async function deletePlace(placeKey) {
-        if (!window.confirm(`Are you sure you want to delete custom location ${placeKey}?`)) return;
+        if (!window.confirm(`Delete custom location ${placeKey}? If stored signals refer to it, it will be retired instead.`)) return;
         try {
-            const res = await fetch(`/api/places/${encodeURIComponent(placeKey)}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': csrfToken(),
-                    'Accept': 'application/json',
-                },
-            });
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error?.message || `HTTP ${res.status}`);
-            }
-            setStatus(`Place ${placeKey} deleted successfully.`, false);
-            loadPlaces();
-        } catch (err) {
-            setStatus(`Delete failed: ${err.message}`, true);
-        }
+            const result = await requestJSON(`/api/places/${encodeURIComponent(placeKey)}`, manageHeaders('DELETE'));
+            setStatus('placesStatus', result.action === 'deleted' ? 'Location deleted.' : 'Location has stored signals and was retired to preserve evidence.', false);
+            loadPlaces(); loadSummary(); loadLoads();
+        } catch (error) { setStatus('placesStatus', `Could not delete place: ${error.message}`, true); }
     }
 
-    function openAddModal() {
-        document.getElementById('placeModalTitle').textContent = 'Add New Geographic Location';
-        document.getElementById('placeModalKey').value = '';
-        document.getElementById('placeModalKey').disabled = false;
-        document.getElementById('placeModalLabel').value = '';
-        document.getElementById('placeModalType').value = 'city';
-        document.getElementById('placeModalCountries').value = '';
-        document.getElementById('placeModalLat').value = '';
-        document.getElementById('placeModalLon').value = '';
-        document.getElementById('placeModalRetired').checked = false;
-        document.getElementById('placeModalIsEdit').value = '0';
-
-        const namesContainer = document.getElementById('placeModalNamesList');
-        clearNode(namesContainer);
-        addAliasRow('', 'en', 'endonym');
-
-        const modalEl = document.getElementById('placeModal');
-        if (window.bootstrap && bootstrap.Modal) {
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
+    function openNameModal(name) {
+        byId('placeNameModalTitle').textContent = name ? 'Edit User-Curated Place Name' : 'Add Place Name';
+        byId('placeNameModalId').value = name?.id || '';
+        byId('placeNamePlaceKey').value = name?.place_key || '';
+        byId('placeNameText').value = name?.name || '';
+        byId('placeNameLanguage').value = name?.language || 'en';
+        byId('placeNameType').value = name?.name_type || 'variant';
+        byId('placeNameHomograph').checked = Boolean(name?.homograph);
+        byId('placeNameNote').value = name?.note || '';
+        const error = byId('placeNameModalError');
+        error.textContent = '';
+        error.classList.add('d-none');
+        showModal('placeNameModal');
+        if (!name) searchPlaceOptions('');
     }
 
-    async function openEditModal(place) {
-        document.getElementById('placeModalTitle').textContent = `Edit Location: ${place.label}`;
-        document.getElementById('placeModalKey').value = place.place_key;
-        document.getElementById('placeModalKey').disabled = true;
-        document.getElementById('placeModalLabel').value = place.label;
-        document.getElementById('placeModalType').value = place.feature_type || 'city';
-        document.getElementById('placeModalCountries').value = (place.country_codes || []).join(', ');
-        document.getElementById('placeModalLat').value = place.latitude !== null && place.latitude !== undefined ? place.latitude : '';
-        document.getElementById('placeModalLon').value = place.longitude !== null && place.longitude !== undefined ? place.longitude : '';
-        document.getElementById('placeModalRetired').checked = Boolean(place.retired);
-        document.getElementById('placeModalIsEdit').value = '1';
-
-        const namesContainer = document.getElementById('placeModalNamesList');
-        clearNode(namesContainer);
-        const loadDiv = document.createElement('div');
-        loadDiv.className = 'text-muted small py-2';
-        loadDiv.textContent = 'Loading aliases…';
-        namesContainer.appendChild(loadDiv);
-
-        const modalEl = document.getElementById('placeModal');
-        if (window.bootstrap && bootstrap.Modal) {
-            bootstrap.Modal.getOrCreateInstance(modalEl).show();
-        }
-
+    async function searchPlaceOptions(query) {
+        const generation = ++selectorRequest;
+        const list = byId('placeNamePlaceOptions');
+        if (!list) return;
         try {
-            const res = await fetch(`/api/places/${encodeURIComponent(place.place_key)}`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            clearNode(namesContainer);
-            const names = data.place?.names || [];
-            if (names.length === 0) {
-                addAliasRow(place.label, 'en', 'endonym');
-            } else {
-                for (const n of names) {
-                    addAliasRow(n.name, n.language, n.name_type);
-                }
+            const params = new URLSearchParams({ page: '1', per_page: '50', status: 'active' });
+            if (query.trim()) params.set('q', query.trim());
+            const data = await requestJSON(`/api/places?${params}`);
+            if (generation !== selectorRequest) return;
+            clear(list);
+            for (const place of data.data || []) {
+                const option = document.createElement('option');
+                option.value = place.place_key;
+                option.label = `${place.label} · ${place.feature_type}`;
+                list.appendChild(option);
             }
-        } catch (err) {
-            clearNode(namesContainer);
-            addAliasRow(place.label, 'en', 'endonym');
+        } catch (error) {
+            setStatus('placeNamesStatus', `Place selector could not load options: ${error.message}`, true);
         }
     }
 
-    function addAliasRow(name, lang, ntype) {
-        const container = document.getElementById('placeModalNamesList');
-        if (!container) return;
-
-        const row = document.createElement('div');
-        row.className = 'row g-1 mb-2 align-items-center alias-row';
-
-        const colName = document.createElement('div');
-        colName.className = 'col-5';
-        const inputName = document.createElement('input');
-        inputName.type = 'text';
-        inputName.className = 'form-control form-control-sm alias-name';
-        inputName.placeholder = 'Name or alias';
-        inputName.value = name || '';
-        inputName.required = true;
-        colName.appendChild(inputName);
-
-        const colLang = document.createElement('div');
-        colLang.className = 'col-3';
-        const selLang = document.createElement('select');
-        selLang.className = 'form-select form-select-sm alias-lang';
-        const langOpts = [
-            ['en', 'English (en)'], ['ar', 'Arabic (ar)'], ['he', 'Hebrew (he)'],
-            ['fa', 'Persian (fa)'], ['hr', 'Croatian (hr)']
-        ];
-        for (const [code, label] of langOpts) {
-            const opt = document.createElement('option');
-            opt.value = code;
-            opt.textContent = label;
-            if (code === lang) opt.selected = true;
-            selLang.appendChild(opt);
-        }
-        colLang.appendChild(selLang);
-
-        const colType = document.createElement('div');
-        colType.className = 'col-3';
-        const selType = document.createElement('select');
-        selType.className = 'form-select form-select-sm alias-type';
-        const typeOpts = [['endonym', 'Endonym'], ['exonym', 'Exonym'], ['variant', 'Variant']];
-        for (const [tval, tlbl] of typeOpts) {
-            const opt = document.createElement('option');
-            opt.value = tval;
-            opt.textContent = tlbl;
-            if (tval === ntype) opt.selected = true;
-            selType.appendChild(opt);
-        }
-        colType.appendChild(selType);
-
-        const colBtn = document.createElement('div');
-        colBtn.className = 'col-1 text-end';
-        const rmBtn = document.createElement('button');
-        rmBtn.type = 'button';
-        rmBtn.className = 'btn btn-sm btn-outline-danger py-0 px-2 btn-remove-alias';
-        rmBtn.append(createIcon('bi-x'));
-        rmBtn.addEventListener('click', () => {
-            if (container.querySelectorAll('.alias-row').length > 1) {
-                row.remove();
-            } else {
-                inputName.value = '';
-            }
-        });
-        colBtn.appendChild(rmBtn);
-
-        row.append(colName, colLang, colType, colBtn);
-        container.appendChild(row);
+    async function deleteName(name) {
+        if (!window.confirm(`Delete the user-curated alias “${name.name}” from ${name.place_label}?`)) return;
+        try {
+            const result = await requestJSON(`/api/place-names/${name.id}`, manageHeaders('DELETE'));
+            setStatus('placeNamesStatus', `Alias deleted. Gazetteer revision ${result.gazetteer_revision?.load_id ?? 'unchanged'}.`, false);
+            loadNames(); loadSummary(); loadLoads();
+        } catch (error) { setStatus('placeNamesStatus', `Could not delete alias: ${error.message}`, true); }
     }
 
-    async function handleModalSubmit(e) {
-        e.preventDefault();
-        const isEdit = document.getElementById('placeModalIsEdit').value === '1';
-        const key = (document.getElementById('placeModalKey').value || '').trim();
-        const label = (document.getElementById('placeModalLabel').value || '').trim();
-        const ftype = document.getElementById('placeModalType').value;
-        const rawCountries = document.getElementById('placeModalCountries').value || '';
-        const latRaw = document.getElementById('placeModalLat').value;
-        const lonRaw = document.getElementById('placeModalLon').value;
-        const retired = document.getElementById('placeModalRetired').checked;
-
-        const countries = rawCountries.split(',')
-            .map(c => c.trim().toUpperCase())
-            .filter(c => c.length === 2 && /^[A-Z]{2}$/.test(c));
-
-        const names = [];
-        const aliasRows = document.querySelectorAll('.alias-row');
-        for (const row of aliasRows) {
-            const nVal = (row.querySelector('.alias-name')?.value || '').trim();
-            const lang = row.querySelector('.alias-lang')?.value || 'en';
-            const ntype = row.querySelector('.alias-type')?.value || 'endonym';
-            if (nVal) {
-                names.push({ name: nVal, language: lang, name_type: ntype });
-            }
+    async function inspectLoad(id) {
+        const status = byId('gazetteerLoadDetailStatus');
+        const body = byId('gazetteerLoadDetail');
+        const generation = ++loadDetailRequest;
+        status.textContent = 'Loading immutable revision…';
+        body.textContent = '';
+        showModal('gazetteerLoadModal');
+        try {
+            const result = await requestJSON(`/api/gazetteer/loads/${id}`);
+            if (generation !== loadDetailRequest) return;
+            const load = result.load;
+            byId('gazetteerLoadModalTitle').textContent = `Gazetteer Revision ${load.id}`;
+            status.textContent = 'Read-only load/curation audit record.';
+            body.textContent = JSON.stringify(load, null, 2);
+        } catch (error) {
+            if (generation !== loadDetailRequest) return;
+            status.textContent = `Could not inspect revision: ${error.message}`;
         }
-        if (names.length === 0) {
-            names.push({ name: label, language: 'en', name_type: 'endonym' });
-        }
+    }
 
-        const payload = {
-            label: label,
-            feature_type: ftype,
+    async function savePlace(event) {
+        event.preventDefault();
+        const isEdit = byId('placeModalIsEdit').value === '1';
+        const key = byId('placeModalKey').value.trim();
+        const label = byId('placeModalLabel').value.trim();
+        const countries = byId('placeModalCountries').value.split(',').map(value => value.trim().toUpperCase()).filter(Boolean);
+        const latValue = byId('placeModalLat').value;
+        const lonValue = byId('placeModalLon').value;
+        const body = {
+            label,
+            feature_type: byId('placeModalType').value,
             country_codes: countries,
-            retired: retired,
-            names: names,
+            retired: byId('placeModalRetired').checked,
         };
-        if (latRaw !== '') payload.latitude = parseFloat(latRaw);
-        if (lonRaw !== '') payload.longitude = parseFloat(lonRaw);
-        if (!isEdit && key) payload.place_key = key;
-
-        const url = isEdit ? `/api/places/${encodeURIComponent(key)}` : '/api/places';
-        const method = isEdit ? 'PUT' : 'POST';
-
-        const errDiv = document.getElementById('placeModalError');
-        errDiv.textContent = '';
-        errDiv.classList.add('d-none');
-
+        if (latValue !== '') body.latitude = Number(latValue);
+        if (lonValue !== '') body.longitude = Number(lonValue);
+        if (!isEdit && key) body.place_key = key;
+        const error = byId('placeModalError');
+        error.textContent = '';
+        error.classList.add('d-none');
         try {
-            const res = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken(),
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error?.message || `HTTP ${res.status}`);
-            }
-
-            const modalEl = document.getElementById('placeModal');
-            if (window.bootstrap && bootstrap.Modal) {
-                bootstrap.Modal.getInstance(modalEl)?.hide();
-            }
-            setStatus(isEdit ? `Location ${key} updated successfully.` : `Location created successfully.`, false);
-            loadPlaces();
-        } catch (err) {
-            errDiv.textContent = err.message;
-            errDiv.classList.remove('d-none');
+            const response = await requestJSON(isEdit ? `/api/places/${encodeURIComponent(key)}` : '/api/places',
+                manageHeaders(isEdit ? 'PUT' : 'POST', body));
+            hideModal('placeModal');
+            setStatus('placesStatus', `${isEdit ? 'Location updated' : 'Location created'}. Detector revision ${response.gazetteer_revision?.load_id ?? 'unchanged'}.`, false);
+            loadPlaces(); loadSummary(); loadLoads();
+        } catch (failure) {
+            error.textContent = failure.message;
+            error.classList.remove('d-none');
         }
+    }
+
+    async function saveName(event) {
+        event.preventDefault();
+        const id = byId('placeNameModalId').value;
+        const body = {
+            place_key: byId('placeNamePlaceKey').value.trim(),
+            name: byId('placeNameText').value.trim(),
+            language: byId('placeNameLanguage').value,
+            name_type: byId('placeNameType').value,
+            homograph: byId('placeNameHomograph').checked,
+            note: byId('placeNameNote').value,
+        };
+        const error = byId('placeNameModalError');
+        error.textContent = '';
+        error.classList.add('d-none');
+        try {
+            const response = await requestJSON(id ? `/api/place-names/${id}` : '/api/place-names',
+                manageHeaders(id ? 'PUT' : 'POST', body));
+            hideModal('placeNameModal');
+            setStatus('placeNamesStatus', `${id ? 'Alias updated' : 'Alias added'}. Detector revision ${response.gazetteer_revision?.load_id ?? 'unchanged'}.`, false);
+            loadNames(); loadPlaces(); loadSummary(); loadLoads();
+        } catch (failure) {
+            error.textContent = failure.message;
+            error.classList.remove('d-none');
+        }
+    }
+
+    function wireTable(tableId, state, load, prevId, nextId, perPageId) {
+        installTableSort(tableId, state, load);
+        byId(prevId)?.addEventListener('click', () => { if (state.page > 1) { state.page -= 1; load(); } });
+        byId(nextId)?.addEventListener('click', () => { state.page += 1; load(); });
+        byId(perPageId)?.addEventListener('change', event => {
+            state.perPage = Number(event.target.value) || 25;
+            state.page = 1;
+            load();
+        });
+    }
+
+    function wireSearch(inputId, state, load) {
+        const input = byId(inputId);
+        if (!input) return;
+        input.addEventListener('input', () => {
+            state.query = input.value.trim();
+            state.page = 1;
+            load();
+        });
     }
 
     function init() {
-        const placesTab = document.getElementById('places-tab');
-        if (placesTab) {
-            placesTab.addEventListener('shown.bs.tab', () => loadPlaces(1));
+        if (window.UnifiedTable?.init) window.UnifiedTable.init(document);
+        wireTable('placesTable', tableState.places, loadPlaces, 'placesPrevBtn', 'placesNextBtn', 'placesPerPage');
+        wireTable('placeNamesTable', tableState.names, loadNames, 'placeNamesPrevBtn', 'placeNamesNextBtn', 'placeNamesPerPage');
+        wireTable('gazetteerLoadsTable', tableState.loads, loadLoads, 'gazetteerLoadsPrevBtn', 'gazetteerLoadsNextBtn', 'gazetteerLoadsPerPage');
+        wireSearch('placesSearchInput', tableState.places, loadPlaces);
+        wireSearch('placeNamesSearch', tableState.names, loadNames);
+        wireSearch('gazetteerLoadsSearch', tableState.loads, loadLoads);
+        for (const id of ['placesFilterType', 'placesFilterCountry', 'placesFilterSource', 'placesFilterStatus']) {
+            byId(id)?.addEventListener(id === 'placesFilterCountry' ? 'input' : 'change', () => {
+                tableState.places.page = 1;
+                loadPlaces();
+            });
         }
-
-        const addBtn = document.getElementById('placesAddBtn');
-        if (addBtn) addBtn.addEventListener('click', openAddModal);
-
-        const addAliasBtn = document.getElementById('btnAddAliasRow');
-        if (addAliasBtn) addAliasBtn.addEventListener('click', () => addAliasRow('', 'en', 'variant'));
-
-        const form = document.getElementById('placeForm');
-        if (form) form.addEventListener('submit', handleModalSubmit);
-
-        const searchBtn = document.getElementById('placesSearchBtn');
-        if (searchBtn) searchBtn.addEventListener('click', () => loadPlaces(1));
-
-        const searchInput = document.getElementById('placesSearchInput');
-        if (searchInput) searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); loadPlaces(1); }
-        });
-
-        for (const fId of ['placesFilterType', 'placesFilterStatus']) {
-            const sel = document.getElementById(fId);
-            if (sel) sel.addEventListener('change', () => loadPlaces(1));
+        for (const id of ['placeNamesLanguage', 'placeNamesType', 'placeNamesSource']) {
+            byId(id)?.addEventListener('change', () => { tableState.names.page = 1; loadNames(); });
         }
-
-        const prevBtn = document.getElementById('placesPrevBtn');
-        if (prevBtn) prevBtn.addEventListener('click', () => { if (currentPage > 1) loadPlaces(currentPage - 1); });
-
-        const nextBtn = document.getElementById('placesNextBtn');
-        if (nextBtn) nextBtn.addEventListener('click', () => { if (currentPage < totalPages) loadPlaces(currentPage + 1); });
+        byId('placesAddBtn')?.addEventListener('click', () => openPlaceModal(null));
+        byId('placeNameAddBtn')?.addEventListener('click', () => openNameModal(null));
+        byId('placeForm')?.addEventListener('submit', savePlace);
+        byId('placeNameForm')?.addEventListener('submit', saveName);
+        byId('placeNamePlaceKey')?.addEventListener('input', event => searchPlaceOptions(event.target.value));
+        byId('placeNamePlaceKey')?.addEventListener('focus', event => searchPlaceOptions(event.target.value));
+        byId('places-list-tab')?.addEventListener('shown.bs.tab', loadPlaces);
+        byId('place-names-tab')?.addEventListener('shown.bs.tab', loadNames);
+        byId('gazetteer-loads-tab')?.addEventListener('shown.bs.tab', loadLoads);
+        loadSummary();
+        loadPlaces();
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
 })();

@@ -8,6 +8,16 @@
 
 import settingsState from './settings-state.js';
 
+async function refreshSidebarAfterSettingsChange() {
+    if (typeof window.refreshSidebarNavigation !== 'function') return false;
+    return window.refreshSidebarNavigation();
+}
+
+async function refreshSidebarBrandingAfterSettingsChange() {
+    if (typeof window.refreshSidebarBranding !== 'function') return false;
+    return window.refreshSidebarBranding();
+}
+
 class SettingsUI {
     constructor() {
         this.state = settingsState;
@@ -305,12 +315,12 @@ class SettingsUI {
                         });
                     }
                     
-                    self.showSuccess('Interface settings saved successfully. Page will reload to apply changes...');
-                    
-                    // Reload page after a short delay to apply interface visibility changes
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
+                    const sidebarUpdated = await refreshSidebarAfterSettingsChange();
+                    if (sidebarUpdated) {
+                        self.showSuccess('Interface settings saved and the sidebar updated.');
+                    } else {
+                        self.showError('Settings were saved, but the sidebar could not be updated. Retry the change or navigate again.');
+                    }
                 } else {
                     throw new Error(data.error || 'Failed to save');
                 }
@@ -340,8 +350,12 @@ class SettingsUI {
                     // Reload settings state
                     await self.state.load();
                     
-                    // Reload page to reflect changes
-                    window.location.reload();
+                    const sidebarUpdated = await refreshSidebarAfterSettingsChange();
+                    if (sidebarUpdated) {
+                        self.showSuccess('Interface settings reset and the sidebar updated.');
+                    } else {
+                        self.showError('Settings were reset, but the sidebar could not be updated. Retry the change or navigate again.');
+                    }
                 } else {
                     throw new Error(data.error || 'Failed to reset');
                 }
@@ -368,9 +382,9 @@ class SettingsUI {
                 const data = await response.json();
                 
                 if (data.success) {
-                    self.showSuccess('Logo removed successfully');
-                    // Reload page to show changes
-                    setTimeout(() => window.location.reload(), 1000);
+                    const sidebarUpdated = await refreshSidebarBrandingAfterSettingsChange();
+                    if (sidebarUpdated) self.showSuccess('Logo removed successfully');
+                    else self.showError('Logo removed, but the sidebar could not be updated. Retry the change or navigate again.');
                 } else {
                     throw new Error(data.error || 'Failed to remove logo');
                 }
@@ -456,9 +470,9 @@ class SettingsUI {
                 const data = await response.json();
                 
                 if (data.success) {
-                    self.showSuccess('Logo uploaded successfully');
-                    // Reload page to show new logo
-                    setTimeout(() => window.location.reload(), 1000);
+                    const sidebarUpdated = await refreshSidebarBrandingAfterSettingsChange();
+                    if (sidebarUpdated) self.showSuccess('Logo uploaded successfully');
+                    else self.showError('Logo uploaded, but the sidebar could not be updated. Retry the change or navigate again.');
                 } else {
                     throw new Error(data.error || 'Failed to upload logo');
                 }
@@ -952,8 +966,8 @@ class SettingsUI {
                         // Get interface name for better message
                         const interfaceName = card ? card.querySelector('.card-title')?.textContent?.trim() || interfaceId : interfaceId;
                         
-                        // Show success message
-                        self.showSuccess(`${interfaceName} ${enabled ? 'enabled' : 'disabled'}. Page will reload to apply changes...`);
+                        // The interface registry changed: synchronize the
+                        // sidebar in place, leaving its outer shell untouched.
                         
                         // Broadcast change to other tabs
                         if (typeof BroadcastChannel !== 'undefined') {
@@ -968,10 +982,12 @@ class SettingsUI {
                             });
                         }
                         
-                        // Reload page after short delay to apply changes
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
+                        const sidebarUpdated = await refreshSidebarAfterSettingsChange();
+                        if (sidebarUpdated) {
+                            self.showSuccess(`${interfaceName} ${enabled ? 'enabled' : 'disabled'}; the sidebar is updated.`);
+                        } else {
+                            self.showError(`${interfaceName} was updated, but the sidebar could not be refreshed. Retry the change or navigate again.`);
+                        }
                     } else {
                         // Revert toggle on error
                         toggle.checked = !enabled;

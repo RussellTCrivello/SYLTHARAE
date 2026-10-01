@@ -219,7 +219,16 @@
         }
         url.searchParams.set(config.pageParam || 'page', '1');
         url.searchParams.delete('cursor');
-        global.location.assign(url.toString());
+        navigateToView(url.toString());
+    }
+
+    function navigateToView(url) {
+        if (typeof global.swapNavigate === 'function') {
+            return global.swapNavigate(url);
+        }
+        // A compatibility path for standalone use outside the application
+        // shell. In the app, navigation-swap.js is present on every page.
+        global.location.assign(url);
     }
 
     // ------------------------------------------------------------------
@@ -325,7 +334,7 @@
             }
         });
         url.searchParams.set('page', '1');
-        global.location.assign(url.toString());
+        navigateToView(url.toString());
     }
 
     /** A client-mode table filters the rows it has, in place. Every active

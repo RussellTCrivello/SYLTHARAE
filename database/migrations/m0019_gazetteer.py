@@ -11,9 +11,10 @@ Tables:
   ``unclassified`` when the source records no native name to compare with),
   a curated ``homograph`` flag and the normalised ``match_key`` the detector
   matches on.
-* ``geo_gazetteer_loads`` - every seed load that changed the gazetteer: seed
-  version and SHA-256, a fingerprint computed from the stored rows, counts,
-  who applied it.
+* ``geo_gazetteer_loads`` - every seed load or detector-visible curation
+  revision: the anchored seed version and SHA-256, a fingerprint computed from
+  active stored rows, counts, and who applied it. History is appended to by
+  application services and exposed read-only.
 * ``content_signal_places`` - the candidate places of each place-mention
   signal. One candidate = identified; several = ambiguous (kept, not picked).
 

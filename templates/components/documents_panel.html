@@ -8,7 +8,8 @@
    classes: documents-panel, file-type-panel, file-type-panel-head,
             file-type-panel-heading, file-type-panel-title,
             file-type-panel-sub, file-type-panel-tools,
-            file-type-panel-search, file-type-panel-body,
+            file-type-panel-search, file-type-panel-bulk,
+            file-type-panel-bulk-count, file-type-panel-body,
             file-type-panel-placeholder
    styles: static/css/file-type-workspace.css
    notes: Shared with the File Types dashboard, the Keywords page and the
@@ -38,6 +39,20 @@
             <button type="button" class="btn btn-sm btn-outline-secondary" data-panel-close
                     aria-label="{{ close_label }}">
                 <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="file-type-panel-bulk" data-panel-export-toolbar hidden
+             role="group" aria-label="{{ _('Bulk Actions:') }}">
+            <span class="file-type-panel-bulk-count" aria-live="polite">
+                <span data-panel-selected-count>0</span> {{ _('selected') }}
+            </span>
+            <button type="button" class="btn btn-sm btn-outline-primary"
+                    data-bulk-file-export="text" disabled>
+                <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>{{ _('Export Content') }}
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary"
+                    data-bulk-file-export="originals" disabled>
+                <i class="bi bi-file-zip me-1" aria-hidden="true"></i>{{ _('Export Originals') }}
             </button>
         </div>
     </div>

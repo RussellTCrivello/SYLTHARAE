@@ -197,6 +197,8 @@ def _exports(data):
         ("post", "/api/files/first-pages/export", {"file_ids": [pid]},
          "first_pages_export", "selection", 1),
         ("get", f"/api/files/{pid}/export", None, "file_text_export", f"file:{pid}", 1),
+        ("get", "/api/export/words?format=csv&columns=word&filename=named-table.csv", None,
+         "list_export", "interface:words", None),
         ("get", "/api/import-export/backup/export", None, "database_backup",
          "tables:evidence", "unknown"),
         ("get", "/api/import-export/settings/export", None, "settings_export",
@@ -225,6 +227,11 @@ def test_every_export_route_writes_a_complete_record(pg_db, admin_client, export
             problems.append((url, "kind", detail["kind"]))
         if detail.get("scope") != scope:
             problems.append((url, "scope", detail.get("scope")))
+        if kind == "list_export":
+            if detail.get("filename") != "named-table.csv":
+                problems.append((url, "filename", detail.get("filename")))
+            if detail.get("columns") != ["word"]:
+                problems.append((url, "columns", detail.get("columns")))
         if not detail.get("format") or detail["format"] == "unknown":
             problems.append((url, "format", detail.get("format")))
         if count == "unknown":

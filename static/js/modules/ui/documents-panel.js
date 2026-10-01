@@ -91,6 +91,7 @@
         if (global.UnifiedTable && typeof global.UnifiedTable.init === 'function') {
             global.UnifiedTable.init(body);
         }
+        global.DocumentsPanelExports?.sync(body.closest('.documents-panel'));
         const total = body.querySelector('[data-ut-total]');
         if (total) state.total = parseTotal(total.textContent);
     }
@@ -128,6 +129,7 @@
                 html: incoming.innerHTML,
                 total: state.total,
             });
+            global.DocumentsPanelExports?.sync(el('#' + state.panelId));
             const sub = el('[data-panel-sub]');
             if (sub) {
                 sub.textContent = state.search
@@ -164,6 +166,7 @@
             body.innerHTML = '<div class="file-type-panel-placeholder">'
                 + '<div class="spinner-border" role="status"></div></div>';
         }
+        global.DocumentsPanelExports?.sync(aside);
         if (aside) aside.hidden = false;
         document.body.classList.add('documents-panel-open');
         reload();
